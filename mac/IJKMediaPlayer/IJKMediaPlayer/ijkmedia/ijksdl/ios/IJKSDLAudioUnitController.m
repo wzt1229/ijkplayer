@@ -43,27 +43,27 @@
             return nil;
         }
         _spec = *aSpec;
-
+        
         if (aSpec->format != AUDIO_S16SYS) {
             NSLog(@"aout_open_audio: unsupported format %d\n", (int)aSpec->format);
             return nil;
         }
-
+        
         if (aSpec->channels > 6) {
             NSLog(@"aout_open_audio: unsupported channels %d\n", (int)aSpec->channels);
             return nil;
         }
-
+        
         AudioComponentDescription desc;
         IJKSDLGetAudioComponentDescriptionFromSpec(&_spec, &desc);
-
+        
         AudioComponent auComponent = AudioComponentFindNext(NULL, &desc);
         if (auComponent == NULL) {
             ALOGE("AudioUnit: AudioComponentFindNext failed");
             self = nil;
             return nil;
         }
-
+        
         AudioUnit auUnit;
         OSStatus status = AudioComponentInstanceNew(auComponent, &auUnit);
         if (status != noErr) {
@@ -71,7 +71,7 @@
             self = nil;
             return nil;
         }
-
+        
         UInt32 flag = 1;
         status = AudioUnitSetProperty(auUnit,
                                       kAudioOutputUnitProperty_EnableIO,
@@ -82,13 +82,13 @@
         if (status != noErr) {
             ALOGE("AudioUnit: failed to set IO mode (%d)", (int)status);
         }
-
+        
         /* Get the current format */
         _spec.format = AUDIO_S16SYS;
         _spec.channels = 2;
         AudioStreamBasicDescription streamDescription;
         IJKSDLGetAudioStreamBasicDescriptionFromSpec(&_spec, &streamDescription);
-
+        
         /* Set the desired format */
         UInt32 i_param_size = sizeof(streamDescription);
         status = AudioUnitSetProperty(auUnit,
@@ -102,7 +102,7 @@
             self = nil;
             return nil;
         }
-
+        
         /* Retrieve actual format */
         status = AudioUnitGetProperty(auUnit,
                                       kAudioUnitProperty_StreamFormat,
@@ -113,7 +113,7 @@
         if (status != noErr) {
             ALOGE("AudioUnit: failed to verify stream format (%d)\n", (int)status);
         }
-
+        
         AURenderCallbackStruct callback;
         callback.inputProc = (AURenderCallback) RenderCallback;
         callback.inputProcRefCon = (__bridge void*) self;
@@ -126,9 +126,9 @@
             self = nil;
             return nil;
         }
-
+        
         SDL_CalculateAudioSpec(&_spec);
-
+        
         /* AU initiliaze */
         status = AudioUnitInitialize(auUnit);
         if (status != noErr) {
@@ -136,7 +136,7 @@
             self = nil;
             return nil;
         }
-
+        
         _auUnit = auUnit;
     }
     return self;
@@ -150,62 +150,63 @@
 - (void)play
 {
     if (!_auUnit)
-        return;
-
+    return;
+    
     _isPaused = NO;
+#if TARGET_OS_IOS
     NSError *error = nil;
     if (NO == [[AVAudioSession sharedInstance] setActive:YES error:&error]) {
         NSLog(@"AudioUnit: AVAudioSession.setActive(YES) failed: %@\n", error ? [error localizedDescription] : @"nil");
     }
-
+#endif
     OSStatus status = AudioOutputUnitStart(_auUnit);
     if (status != noErr)
-        NSLog(@"AudioUnit: AudioOutputUnitStart failed (%d)\n", (int)status);
+    NSLog(@"AudioUnit: AudioOutputUnitStart failed (%d)\n", (int)status);
 }
 
 - (void)pause
 {
     if (!_auUnit)
-        return;
-
+    return;
+    
     _isPaused = YES;
     OSStatus status = AudioOutputUnitStop(_auUnit);
     if (status != noErr)
-        ALOGE("AudioUnit: failed to stop AudioUnit (%d)\n", (int)status);
+    ALOGE("AudioUnit: failed to stop AudioUnit (%d)\n", (int)status);
 }
 
 - (void)flush
 {
     if (!_auUnit)
-        return;
-
+    return;
+    
     AudioUnitReset(_auUnit, kAudioUnitScope_Global, 0);
 }
 
 - (void)stop
 {
     if (!_auUnit)
-        return;
-
+    return;
+    
     OSStatus status = AudioOutputUnitStop(_auUnit);
     if (status != noErr)
-        ALOGE("AudioUnit: failed to stop AudioUnit (%d)", (int)status);
+    ALOGE("AudioUnit: failed to stop AudioUnit (%d)", (int)status);
 }
 
 - (void)close
 {
     [self stop];
-
+    
     if (!_auUnit)
-        return;
-
+    return;
+    
     AURenderCallbackStruct callback;
     memset(&callback, 0, sizeof(AURenderCallbackStruct));
     AudioUnitSetProperty(_auUnit,
                          kAudioUnitProperty_SetRenderCallback,
                          kAudioUnitScope_Input, 0, &callback,
                          sizeof(callback));
-
+    
     AudioComponentInstanceDispose(_auUnit);
     _auUnit = NULL;
 }
@@ -219,7 +220,7 @@ static OSStatus RenderCallback(void                        *inRefCon,
 {
     @autoreleasepool {
         IJKSDLAudioUnitController* auController = (__bridge IJKSDLAudioUnitController *) inRefCon;
-
+        
         if (!auController || auController->_isPaused) {
             for (UInt32 i = 0; i < ioData->mNumberBuffers; i++) {
                 AudioBuffer *ioBuffer = &ioData->mBuffers[i];
@@ -227,12 +228,12 @@ static OSStatus RenderCallback(void                        *inRefCon,
             }
             return noErr;
         }
-
+        
         for (int i = 0; i < (int)ioData->mNumberBuffers; i++) {
             AudioBuffer *ioBuffer = &ioData->mBuffers[i];
             (*auController.spec.callback)(auController.spec.userdata, ioBuffer->mData, ioBuffer->mDataByteSize);
         }
-
+        
         return noErr;
     }
 }

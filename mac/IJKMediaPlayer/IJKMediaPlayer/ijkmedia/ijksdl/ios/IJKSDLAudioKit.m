@@ -28,7 +28,11 @@
 extern void IJKSDLGetAudioComponentDescriptionFromSpec(const SDL_AudioSpec *spec, AudioComponentDescription *desc)
 {
     desc->componentType = kAudioUnitType_Output;
+#if TARGET_OS_IOS
     desc->componentSubType = kAudioUnitSubType_RemoteIO;
+#else
+    desc->componentSubType = kAudioUnitSubType_DefaultOutput;
+#endif
     desc->componentManufacturer = kAudioUnitManufacturer_Apple;
     desc->componentFlags = 0;
     desc->componentFlagsMask = 0;
@@ -41,15 +45,15 @@ extern void IJKSDLGetAudioStreamBasicDescriptionFromSpec(const SDL_AudioSpec *sp
     desc->mFormatFlags = kLinearPCMFormatFlagIsPacked;
     desc->mChannelsPerFrame = spec->channels;
     desc->mFramesPerPacket = 1;
-
+    
     desc->mBitsPerChannel = SDL_AUDIO_BITSIZE(spec->format);
     if (SDL_AUDIO_ISBIGENDIAN(spec->format))
-        desc->mFormatFlags |= kLinearPCMFormatFlagIsBigEndian;
+    desc->mFormatFlags |= kLinearPCMFormatFlagIsBigEndian;
     if (SDL_AUDIO_ISFLOAT(spec->format))
-        desc->mFormatFlags |= kLinearPCMFormatFlagIsFloat;
+    desc->mFormatFlags |= kLinearPCMFormatFlagIsFloat;
     if (SDL_AUDIO_ISSIGNED(spec->format))
-        desc->mFormatFlags |= kLinearPCMFormatFlagIsSignedInteger;
-
+    desc->mFormatFlags |= kLinearPCMFormatFlagIsSignedInteger;
+    
     desc->mBytesPerFrame = desc->mBitsPerChannel * desc->mChannelsPerFrame / 8;
     desc->mBytesPerPacket = desc->mBytesPerFrame * desc->mFramesPerPacket;
 }

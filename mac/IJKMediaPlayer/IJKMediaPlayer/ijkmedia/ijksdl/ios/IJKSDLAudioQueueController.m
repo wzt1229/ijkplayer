@@ -36,7 +36,7 @@
     AudioQueueBufferRef _audioQueueBufferRefArray[kIJKAudioQueueNumberBuffers];
     BOOL _isPaused;
     BOOL _isStopped;
-
+    
     volatile BOOL _isAborted;
     NSLock *_lock;
 }
@@ -50,28 +50,28 @@
             return nil;
         }
         _spec = *aSpec;
-
+        
         if (aSpec->format != AUDIO_S16SYS) {
             NSLog(@"aout_open_audio: unsupported format %d\n", (int)aSpec->format);
             return nil;
         }
-
+        
         if (aSpec->channels > 2) {
             NSLog(@"aout_open_audio: unsupported channels %d\n", (int)aSpec->channels);
             return nil;
         }
-
+        
         /* Get the current format */
         AudioStreamBasicDescription streamDescription;
         IJKSDLGetAudioStreamBasicDescriptionFromSpec(&_spec, &streamDescription);
-
+        
         SDL_CalculateAudioSpec(&_spec);
-
+        
         if (_spec.size == 0) {
             NSLog(@"aout_open_audio: unexcepted audio spec size %u", _spec.size);
             return nil;
         }
-
+        
         /* Set the desired format */
         AudioQueueRef audioQueueRef;
         OSStatus status = AudioQueueNewOutput(&streamDescription,
@@ -86,23 +86,23 @@
             self = nil;
             return nil;
         }
-
+        
         UInt32 propValue = 1;
         AudioQueueSetProperty(audioQueueRef, kAudioQueueProperty_EnableTimePitch, &propValue, sizeof(propValue));
         propValue = 1;
         AudioQueueSetProperty(_audioQueueRef, kAudioQueueProperty_TimePitchBypass, &propValue, sizeof(propValue));
         propValue = kAudioQueueTimePitchAlgorithm_Spectral;
         AudioQueueSetProperty(_audioQueueRef, kAudioQueueProperty_TimePitchAlgorithm, &propValue, sizeof(propValue));
-
+        
         status = AudioQueueStart(audioQueueRef, NULL);
         if (status != noErr) {
             NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
             self = nil;
             return nil;
         }
-
+        
         _audioQueueRef = audioQueueRef;
-
+        
         for (int i = 0;i < kIJKAudioQueueNumberBuffers; i++)
         {
             AudioQueueAllocateBuffer(audioQueueRef, _spec.size, &_audioQueueBufferRefArray[i]);
@@ -111,16 +111,16 @@
             AudioQueueEnqueueBuffer(audioQueueRef, _audioQueueBufferRefArray[i], 0, NULL);
         }
         /*-
-        status = AudioQueueStart(audioQueueRef, NULL);
-        if (status != noErr) {
-            NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
-            self = nil;
-            return nil;
-        }
+         status = AudioQueueStart(audioQueueRef, NULL);
+         if (status != noErr) {
+         NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
+         self = nil;
+         return nil;
+         }
          */
-
+        
         _isStopped = NO;
-
+        
         _lock = [[NSLock alloc] init];
     }
     return self;
@@ -134,48 +134,50 @@
 - (void)play
 {
     if (!_audioQueueRef)
-        return;
-
+    return;
+    
     self.spec.callback(self.spec.userdata, NULL, 0);
-
+    
     @synchronized(_lock) {
         _isPaused = NO;
+#if TARGET_OS_IOS
         NSError *error = nil;
         if (NO == [[AVAudioSession sharedInstance] setActive:YES error:&error]) {
             NSLog(@"AudioQueue: AVAudioSession.setActive(YES) failed: %@\n", error ? [error localizedDescription] : @"nil");
         }
-
+        
         OSStatus status = AudioQueueStart(_audioQueueRef, NULL);
         if (status != noErr)
-            NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
+        NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
+#endif
     }
 }
 
 - (void)pause
 {
     if (!_audioQueueRef)
-        return;
-
+    return;
+    
     @synchronized(_lock) {
         if (_isStopped)
-            return;
-
+        return;
+        
         _isPaused = YES;
         OSStatus status = AudioQueuePause(_audioQueueRef);
         if (status != noErr)
-            NSLog(@"AudioQueue: AudioQueuePause failed (%d)\n", (int)status);
+        NSLog(@"AudioQueue: AudioQueuePause failed (%d)\n", (int)status);
     }
 }
 
 - (void)flush
 {
     if (!_audioQueueRef)
-        return;
-
+    return;
+    
     @synchronized(_lock) {
         if (_isStopped)
-            return;
-
+        return;
+        
         if (_isPaused == YES) {
             for (int i = 0; i < kIJKAudioQueueNumberBuffers; i++)
             {
@@ -193,15 +195,15 @@
 - (void)stop
 {
     if (!_audioQueueRef)
-        return;
-
+    return;
+    
     @synchronized(_lock) {
         if (_isStopped)
-            return;
-
+        return;
+        
         _isStopped = YES;
     }
-
+    
     // do not lock AudioQueueStop, or may be run into deadlock
     AudioQueueStop(_audioQueueRef, true);
     AudioQueueDispose(_audioQueueRef, true);
@@ -244,7 +246,7 @@
 static void IJKSDLAudioQueueOuptutCallback(void * inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer) {
     @autoreleasepool {
         IJKSDLAudioQueueController* aqController = (__bridge IJKSDLAudioQueueController *) inUserData;
-
+        
         if (!aqController) {
             // do nothing;
         } else if (aqController->_isPaused || aqController->_isStopped) {
@@ -252,7 +254,7 @@ static void IJKSDLAudioQueueOuptutCallback(void * inUserData, AudioQueueRef inAQ
         } else {
             (*aqController.spec.callback)(aqController.spec.userdata, inBuffer->mAudioData, inBuffer->mAudioDataByteSize);
         }
-
+        
         AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
     }
 }

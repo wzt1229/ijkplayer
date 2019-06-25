@@ -442,8 +442,13 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
                           kCVPixelBufferWidthKey, width);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
                           kCVPixelBufferHeightKey, height);
+#if TARGET_OS_IOS
+    CFStringRef key = kCVPixelBufferOpenGLESCompatibilityKey;
+#else
+    CFStringRef key = kCVPixelBufferIOSurfacePropertiesKey;
+#endif
     CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                          kCVPixelBufferOpenGLESCompatibilityKey, YES);
+                          key, YES);
     outputCallback.decompressionOutputCallback = VTDecoderCallback;
     outputCallback.decompressionOutputRefCon = context  ;
     status = VTDecompressionSessionCreate(

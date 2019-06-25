@@ -22,9 +22,10 @@
  */
 
 #import "ijkplayer_ios.h"
-
+#if TARGET_OS_IOS
 #import "ijksdl/ios/ijksdl_ios.h"
-
+#endif
+//#include "IJKSDLGLView.h"
 #include <stdio.h>
 #include <assert.h>
 #include "ijkplayer/ff_fferror.h"
@@ -37,18 +38,18 @@ IjkMediaPlayer *ijkmp_ios_create(int (*msg_loop)(void*))
 {
     IjkMediaPlayer *mp = ijkmp_create(msg_loop);
     if (!mp)
-        goto fail;
-
+    goto fail;
+    
     mp->ffplayer->vout = SDL_VoutIos_CreateForGLES2();
     if (!mp->ffplayer->vout)
-        goto fail;
-
+    goto fail;
+    
     mp->ffplayer->pipeline = ffpipeline_create_from_ios(mp->ffplayer);
     if (!mp->ffplayer->pipeline)
-        goto fail;
-
+    goto fail;
+    
     return mp;
-
+    
 fail:
     ijkmp_dec_ref_p(&mp);
     return NULL;
@@ -59,25 +60,25 @@ void ijkmp_ios_set_glview_l(IjkMediaPlayer *mp, IJKSDLGLView *glView)
     assert(mp);
     assert(mp->ffplayer);
     assert(mp->ffplayer->vout);
-
+    
     SDL_VoutIos_SetGLView(mp->ffplayer->vout, glView);
 }
 
 void ijkmp_ios_set_glview(IjkMediaPlayer *mp, IJKSDLGLView *glView)
 {
     assert(mp);
-    MPTRACE("ijkmp_ios_set_view(glView=%p)\n", (void*)glView);
+    MPTRACE("ijkmp_ios_set_view(glView=%p)\n", (__bridge void*)glView);
     pthread_mutex_lock(&mp->mutex);
     ijkmp_ios_set_glview_l(mp, glView);
     pthread_mutex_unlock(&mp->mutex);
-    MPTRACE("ijkmp_ios_set_view(glView=%p)=void\n", (void*)glView);
+    MPTRACE("ijkmp_ios_set_view(glView=%p)=void\n", (__bridge void*)glView);
 }
 
 bool ijkmp_ios_is_videotoolbox_open_l(IjkMediaPlayer *mp)
 {
     assert(mp);
     assert(mp->ffplayer);
-
+    
     return false;
 }
 
