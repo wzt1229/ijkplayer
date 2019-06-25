@@ -36,6 +36,26 @@
 
     NSMutableArray *sampleList = [[NSMutableArray alloc] init];
 
+    NSString *str =@"ffconcat version 1.0";
+    
+    NSArray *urls = @[@"http://27.209.180.18/sohu/p2p/TGwgoEHUTGPUTCsRaf-MSk-8Sm59xLvmsfMwJCs-sSxN49rA/fhXdmQTJ?key=3yQMcAar-gluGEHRF81nQSJulGN6BFEhUBElQg..&q=bj0yJmE8mhiamA&rs=1&hash=NQ7EI4JQSWIXC2PAWT3WMT25CETKYX6Q&size=38154214&plat=ifox_mac&ch=tv&catcode=101100;101104;101107&uid=12B84742-2781-4C08-85D8-9C6EB21B03E9",
+      @"http://27.209.180.10/sohu/p2p/TGwgoExyTGQUTGhqtwxiS5Y5JSv8-CsTj5xUXSkFsAHN49rA/2MpD9PPE?key=ZgUITZn2FhP_a8IavIF_-chfZNxss-7VqMylNw..&q=bj0yJmE8mhiamA&rs=1&hash=V4KXOKN5CRJHOUOAZUUZWVHFTY6IEMFF&size=38203424&plat=ifox_mac&ch=tv&catcode=101100;101104;101107&uid=12B84742-2781-4C08-85D8-9C6EB21B03E9",
+      @"http://27.209.180.20/sohu/p2p/TGQgoGrgo6oGTm1YxSqhXAXak5HiaWhgqvhDsCXNaLQN49rA/XAACIwGV?key=Pi9V35dCRYQ-M5ER8cVseXiCGrbA7bNizJhE9A..&q=bj0yJmE8mhiamA&rs=1&hash=LSGJPPFGX3YTCEG3MY4NRQZPSSAIJ74F&size=38177980&plat=ifox_mac&ch=tv&catcode=101100;101104;101107&uid=12B84742-2781-4C08-85D8-9C6EB21B03E9",
+      @"http://27.209.180.14/sohu/p2p/TGogo6wATGwyqKVl05rGqS2ijwkWSCulqam6JauqawXoTlmyqr/f8P35O9x?key=8X6MTOLFxpwd7tJOIGIMvUXoDgbGELbAKAKLxQ..&q=bj0yJmE8mhiamA&rs=1&hash=G3ZP2BQUDB4AVJJPJA57GCQYQZLE4KP4&size=38143053&plat=ifox_mac&ch=tv&catcode=101100;101104;101107&uid=12B84742-2781-4C08-85D8-9C6EB21B03E9"
+                      ];
+    
+    for (NSString *url in urls) {
+        
+        str = [NSString stringWithFormat:@"%@\nhttp %@\nduration %.0f",str,url,300.0];
+        
+    }
+    
+    NSLog(@"分片视频数据：%@",str);
+    
+    [sampleList addObject:@[@"多段mp4",
+                            @"http://localhost:8080/ffmpeg-test/test.ffcat"]];
+    
+    
     [sampleList addObject:@[@"bipbop basic master playlist",
                             @"http://devimages.apple.com.edgekey.net/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8"]];
     [sampleList addObject:@[@"bipbop basic 400x300 @ 232 kbps",

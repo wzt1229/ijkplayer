@@ -239,6 +239,11 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
         ijkmp_ios_set_glview(_mediaPlayer, _glView);
         ijkmp_set_option(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "overlay-format", "fcc-_es2");
+//        ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"safe", 0);
+        
+//        ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_PLAYER,"protocol_whitelist","ffconcat,file,http,https");
+        
+//        ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","concat,http,tcp,https,tls,file");
 #ifdef DEBUG
         [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
 #else
@@ -1506,7 +1511,7 @@ static int onInjectOnHttpEvent(IJKFFMoviePlayerController *mpc, int type, void *
             elapsed = calculateElapsed(monitor.httpOpenTick, SDL_GetTickHR());
             monitor.httpError = realData->error;
             monitor.httpCode  = realData->http_code;
-            monitor.filesize  = realData->filesize;
+//            monitor.filesize  = realData->filesize;
             monitor.httpOpenCount++;
             monitor.httpOpenTick = 0;
             monitor.lastHttpOpenDuration = elapsed;
@@ -1518,7 +1523,7 @@ static int onInjectOnHttpEvent(IJKFFMoviePlayerController *mpc, int type, void *
                 dict[IJKMediaEventAttrKey_host]             = [NSString ijk_stringBeEmptyIfNil:host];
                 dict[IJKMediaEventAttrKey_error]            = @(realData->error).stringValue;
                 dict[IJKMediaEventAttrKey_http_code]        = @(realData->http_code).stringValue;
-                dict[IJKMediaEventAttrKey_file_size]        = @(realData->filesize).stringValue;
+//                dict[IJKMediaEventAttrKey_file_size]        = @(realData->filesize).stringValue;
                 [delegate invoke:type attributes:dict];
             }
             break;
