@@ -97,8 +97,6 @@ typedef enum IJKLogLevel {
 - (void)setPauseInBackground:(BOOL)pause;
 - (BOOL)isVideoToolboxOpen;
 
-- (void)setHudValue:(NSString *)value forKey:(NSString *)key;
-
 + (void)setLogReport:(BOOL)preferLogReport;
 + (void)setLogLevel:(IJKLogLevel)logLevel;
 + (BOOL)checkIfFFmpegVersionMatch:(BOOL)showAlert;
@@ -107,7 +105,6 @@ typedef enum IJKLogLevel {
 
 @property(nonatomic, readonly) CGFloat fpsInMeta;
 @property(nonatomic, readonly) CGFloat fpsAtOutput;
-@property(nonatomic) BOOL shouldShowHudView;
 
 - (void)setOptionValue:(NSString *)value
                 forKey:(NSString *)key
