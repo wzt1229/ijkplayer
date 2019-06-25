@@ -1,5 +1,5 @@
 /*
- * IJKSDLGLView.h
+ * IJKSDLGLView.m
  *
  * Copyright (c) 2013 Bilibili
  * Copyright (c) 2013 Zhang Rui <bbcallen@gmail.com>
@@ -23,23 +23,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#if TARGET_OS_IOS
-#import <UIKit/UIKit.h>
-#else
-#import <APPKit/AppKit.h>
-typedef NSView UIView;
-typedef NSImage UIImage;
-#endif
-#import "IJKSDLGLViewProtocol.h"
+#import "IJKSDLGLView.h"
+#include "ijksdl/ijksdl_timer.h"
 
-#include "ijksdl/ijksdl_vout.h"
+typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
+    IJKSDLGLViewApplicationUnknownState = 0,
+    IJKSDLGLViewApplicationForegroundState = 1,
+    IJKSDLGLViewApplicationBackgroundState = 2
+};
 
-@interface IJKSDLGLView : UIView <IJKSDLGLViewProtocol>
+@interface IJKSDLGLView()
+@property(atomic,strong) NSRecursiveLock *glActiveLock;
+@property(atomic) BOOL glActivePaused;
+@end
 
-- (id) initWithFrame:(CGRect)frame;
-- (void) display: (SDL_VoutOverlay *) overlay;
+@implementation IJKSDLGLView {
+    
+}
 
-- (UIImage*) snapshot;
-- (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));
+@synthesize isThirdGLView              = _isThirdGLView;
+@synthesize scaleFactor                = _scaleFactor;
+@synthesize fps                        = _fps;
 
 @end

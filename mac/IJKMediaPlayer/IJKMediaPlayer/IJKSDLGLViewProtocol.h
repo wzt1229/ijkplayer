@@ -23,9 +23,11 @@
 
 #ifndef IJKSDLGLViewProtocol_h
 #define IJKSDLGLViewProtocol_h
-
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
-
+#else
+#import <AppKit/AppKit.h>
+#endif
 typedef struct IJKOverlay IJKOverlay;
 struct IJKOverlay {
     int w;
@@ -40,7 +42,12 @@ struct IJKOverlay {
 };
 
 @protocol IJKSDLGLViewProtocol <NSObject>
+#if TARGET_OS_IOS
 - (UIImage*) snapshot;
+#else
+- (NSImage*) snapshot;
+#endif
+
 @property(nonatomic, readonly) CGFloat  fps;
 @property(nonatomic)        CGFloat  scaleFactor;
 @property(nonatomic)        BOOL  isThirdGLView;

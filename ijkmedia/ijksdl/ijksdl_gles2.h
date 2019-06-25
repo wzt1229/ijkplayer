@@ -23,8 +23,12 @@
 #define IJKSDL__IJKSDL_GLES2_H
 
 #ifdef __APPLE__
+#if TARGET_OS_IOS
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
+#else
+#include <OpenGL/OpenGL.h>
+#endif
 #else
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

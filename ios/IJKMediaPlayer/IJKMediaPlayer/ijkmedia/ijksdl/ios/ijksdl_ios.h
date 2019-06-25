@@ -24,7 +24,11 @@
 #include "ijksdl/ijksdl.h"
 #include "ijksdl_aout_ios_audiounit.h"
 #include "ijksdl_vout_ios_gles2.h"
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
+#else
+#import <AppKit/AppKit.h>
+#endif
 
 
 

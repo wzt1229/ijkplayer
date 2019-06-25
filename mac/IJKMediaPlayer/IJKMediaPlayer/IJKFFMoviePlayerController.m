@@ -23,7 +23,11 @@
 
 #import "IJKFFMoviePlayerController.h"
 
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
+#else
+#import <AppKit/AppKit.h>
+#endif
 #import "IJKFFMoviePlayerDef.h"
 #import "IJKMediaPlayback.h"
 #import "IJKMediaModule.h"
@@ -209,7 +213,13 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "start-on-prepared", _shouldAutoplay ? 1 : 0);
 
         // init video sink
-        _glView = [[IJKSDLGLView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+#if TARGET_OS_IOS
+        CGRect rect = [[UIScreen mainScreen] bounds];
+#else
+        CGRect rect = [[NSScreen mainScreen]frame];
+        rect.origin = CGPointZero;
+#endif
+        _glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         _glView.isThirdGLView = NO;
         _view = _glView;
         ijkmp_ios_set_glview(_mediaPlayer, _glView);
@@ -470,6 +480,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     } else {
         NSString *message = [NSString stringWithFormat:@"actual: %s\n expect: %s\n", actualVersion, expectVersion];
         NSLog(@"\n!!!!!!!!!!\n%@\n!!!!!!!!!!\n", message);
+#if TARGET_OS_IOS
         if (showAlert) {
             UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Unexpected FFmpeg version"
                                                                 message:message
@@ -478,6 +489,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
                                                       otherButtonTitles:nil];
             [alertView show];
         }
+#endif
         return NO;
     }
 }
@@ -490,6 +502,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     if (0 == strcmp(actualVersion, expectVersion)) {
         return YES;
     } else {
+#if TARGET_OS_IOS
         if (showAlert) {
             NSString *message = [NSString stringWithFormat:@"actual: %s\n expect: %s\n",
                                  actualVersion, expectVersion];
@@ -500,6 +513,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
                                                       otherButtonTitles:nil];
             [alertView show];
         }
+#endif
         return NO;
     }
 }
@@ -668,23 +682,26 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
 - (void)setScalingMode: (IJKMPMovieScalingMode) aScalingMode
 {
     IJKMPMovieScalingMode newScalingMode = aScalingMode;
+#if TARGET_OS_IOS
     switch (aScalingMode) {
-        case IJKMPMovieScalingModeNone:
+            case IJKMPMovieScalingModeNone:
             [_view setContentMode:UIViewContentModeCenter];
             break;
-        case IJKMPMovieScalingModeAspectFit:
+            case IJKMPMovieScalingModeAspectFit:
             [_view setContentMode:UIViewContentModeScaleAspectFit];
             break;
-        case IJKMPMovieScalingModeAspectFill:
+            case IJKMPMovieScalingModeAspectFill:
             [_view setContentMode:UIViewContentModeScaleAspectFill];
             break;
-        case IJKMPMovieScalingModeFill:
+            case IJKMPMovieScalingModeFill:
             [_view setContentMode:UIViewContentModeScaleToFill];
             break;
         default:
             newScalingMode = _scalingMode;
     }
-
+#else
+#warning TODO IJKMPMovieScalingMode
+#endif
     _scalingMode = newScalingMode;
 }
 
@@ -1384,7 +1401,11 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
         _glView.scaleFactor = 1.0f;
     }
     else {
+#if TARGET_OS_IOS
         CGFloat scale = [[UIScreen mainScreen] scale];
+#else
+        CGFloat scale = 2.0;
+#endif
         if (scale < 0.1f)
             scale = 1.0f;
         _glView.scaleFactor = scale;
@@ -1444,6 +1465,7 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
 
 - (void)registerApplicationObservers
 {
+#if TARGET_OS_IOS
     [_notificationManager addObserver:self
                              selector:@selector(audioSessionInterrupt:)
                                  name:AVAudioSessionInterruptionNotification
@@ -1473,6 +1495,7 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
                              selector:@selector(applicationWillTerminate)
                                  name:UIApplicationWillTerminateNotification
                                object:nil];
+#endif
 }
 
 - (void)unregisterApplicationObservers
@@ -1482,6 +1505,7 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
 
 - (void)audioSessionInterrupt:(NSNotification *)notification
 {
+#if TARGET_OS_IOS
     int reason = [[[notification userInfo] valueForKey:AVAudioSessionInterruptionTypeKey] intValue];
     switch (reason) {
         case AVAudioSessionInterruptionTypeBegan: {
@@ -1508,8 +1532,10 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
             break;
         }
     }
+#endif
 }
 
+#if TARGET_OS_IOS
 - (void)applicationWillEnterForeground
 {
     NSLog(@"IJKFFMoviePlayerController:applicationWillEnterForeground: %d", (int)[UIApplication sharedApplication].applicationState);
@@ -1549,5 +1575,5 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
         }
     });
 }
-
+#endif
 @end

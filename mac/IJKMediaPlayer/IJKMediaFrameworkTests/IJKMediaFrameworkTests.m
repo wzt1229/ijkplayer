@@ -6,7 +6,11 @@
 //  Copyright (c) 2015年 bilibili. All rights reserved.
 //
 
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
+#else
+#import <AppKit/AppKit.h>
+#endif
 #import <XCTest/XCTest.h>
 
 @interface IJKMediaFrameworkTests : XCTestCase

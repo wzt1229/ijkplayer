@@ -6,7 +6,11 @@
 //  Copyright © 2017 bilibili. All rights reserved.
 //
 
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
+#else
+#import <AppKit/AppKit.h>
+#endif
 
 //! Project version number for IJKMediaFrameworkWithSSL.
 FOUNDATION_EXPORT double IJKMediaFrameworkWithSSLVersionNumber;

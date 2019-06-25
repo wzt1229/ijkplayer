@@ -22,7 +22,11 @@
  */
 
 #import "IJKMediaModule.h"
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
+#else
+#import <AppKit/AppKit.h>
+#endif
 
 @implementation IJKMediaModule
 
@@ -63,11 +67,13 @@
 
 - (void)updateIdleTimer
 {
+#if TARGET_OS_IOS
     if (self.appIdleTimerDisabled || self.mediaModuleIdleTimerDisabled) {
         [UIApplication sharedApplication].idleTimerDisabled = YES;
     } else {
         [UIApplication sharedApplication].idleTimerDisabled = NO;
     }
+#endif
 }
 
 @end
