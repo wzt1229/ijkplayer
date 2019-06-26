@@ -37,12 +37,23 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 @property(atomic) BOOL glActivePaused;
 @end
 
-@implementation IJKSDLGLView {
-    
-}
+@implementation IJKSDLGLView
 
 @synthesize isThirdGLView              = _isThirdGLView;
 @synthesize scaleFactor                = _scaleFactor;
 @synthesize fps                        = _fps;
 
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        
+    }
+    return self;
+}
+
+- (void) display: (SDL_VoutOverlay *) overlay
+{
+#warning TODO dispaly
+}
 @end

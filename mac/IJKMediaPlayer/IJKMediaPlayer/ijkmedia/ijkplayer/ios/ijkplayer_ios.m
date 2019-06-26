@@ -22,10 +22,7 @@
  */
 
 #import "ijkplayer_ios.h"
-#if TARGET_OS_IOS
 #import "ijksdl/ios/ijksdl_ios.h"
-#endif
-//#include "IJKSDLGLView.h"
 #include <stdio.h>
 #include <assert.h>
 #include "ijkplayer/ff_fferror.h"
