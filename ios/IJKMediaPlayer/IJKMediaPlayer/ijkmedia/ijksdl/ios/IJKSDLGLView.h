@@ -23,13 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
-#else
-#import <APPKit/AppKit.h>
-typedef NSView UIView;
-typedef NSImage UIImage;
-#endif
 #import "IJKSDLGLViewProtocol.h"
 
 #include "ijksdl/ijksdl_vout.h"
