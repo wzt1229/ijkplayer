@@ -27,7 +27,7 @@
 #import <UIKit/UIKit.h>
 #else
 #import <APPKit/AppKit.h>
-typedef NSView UIView;
+typedef NSOpenGLView UIView;
 typedef NSImage UIImage;
 #endif
 #import "IJKSDLGLViewProtocol.h"

@@ -145,6 +145,8 @@
 		54CF8A521E15287D00309DD5 /* ijktree.h in Headers */ = {isa = PBXBuildFile; fileRef = 54CF8A461E15287D00309DD5 /* ijktree.h */; };
 		54CF8A531E15287D00309DD5 /* ijkutils.c in Sources */ = {isa = PBXBuildFile; fileRef = 54CF8A471E15287D00309DD5 /* ijkutils.c */; };
 		54CF8A541E15287D00309DD5 /* ijkutils.h in Headers */ = {isa = PBXBuildFile; fileRef = 54CF8A481E15287D00309DD5 /* ijkutils.h */; };
+		DD5D67C822C37B3600A421BF /* OpenGLRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = DD5D67C622C37B3600A421BF /* OpenGLRenderer.m */; };
+		DD5D67CC22C37BC800A421BF /* ProgramTools.m in Sources */ = {isa = PBXBuildFile; fileRef = DD5D67CA22C37BC800A421BF /* ProgramTools.m */; };
 		DD9B12ED22C224BC002D1D79 /* IJKKVOController.m in Sources */ = {isa = PBXBuildFile; fileRef = E65DC3B819D93D5F004F8A08 /* IJKKVOController.m */; };
 		DD9B12EE22C224BC002D1D79 /* ijksdl_vout.c in Sources */ = {isa = PBXBuildFile; fileRef = E690401117EAFC6100CFD954 /* ijksdl_vout.c */; };
 		DD9B12F022C224BC002D1D79 /* allformats.c in Sources */ = {isa = PBXBuildFile; fileRef = E69BE54A1B93FED300AFBA3F /* allformats.c */; };
@@ -379,6 +381,11 @@
 		54CF8A461E15287D00309DD5 /* ijktree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ijktree.h; sourceTree = "<group>"; };
 		54CF8A471E15287D00309DD5 /* ijkutils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ijkutils.c; sourceTree = "<group>"; };
 		54CF8A481E15287D00309DD5 /* ijkutils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ijkutils.h; sourceTree = "<group>"; };
+		DD5D67C522C37B3600A421BF /* OpenGLRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenGLRenderer.h; sourceTree = "<group>"; };
+		DD5D67C622C37B3600A421BF /* OpenGLRenderer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenGLRenderer.m; sourceTree = "<group>"; };
+		DD5D67C922C37BB100A421BF /* glUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = glUtil.h; sourceTree = "<group>"; };
+		DD5D67CA22C37BC800A421BF /* ProgramTools.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProgramTools.m; sourceTree = "<group>"; };
+		DD5D67CB22C37BC800A421BF /* ProgramTools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgramTools.h; sourceTree = "<group>"; };
 		DD9B136922C224BC002D1D79 /* IJKMediaMacFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = IJKMediaMacFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B137322C23247002D1D79 /* IJKSDLGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJKSDLGLView.m; sourceTree = "<group>"; };
 		DD9B137B22C23373002D1D79 /* IJKSDLGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKSDLGLView.h; sourceTree = "<group>"; };
@@ -597,6 +604,11 @@
 		DD9B137222C23247002D1D79 /* mac */ = {
 			isa = PBXGroup;
 			children = (
+				DD5D67C922C37BB100A421BF /* glUtil.h */,
+				DD5D67CB22C37BC800A421BF /* ProgramTools.h */,
+				DD5D67CA22C37BC800A421BF /* ProgramTools.m */,
+				DD5D67C522C37B3600A421BF /* OpenGLRenderer.h */,
+				DD5D67C622C37B3600A421BF /* OpenGLRenderer.m */,
 				DD9B137322C23247002D1D79 /* IJKSDLGLView.m */,
 			);
 			name = mac;
@@ -1439,6 +1451,7 @@
 				DD9B12F022C224BC002D1D79 /* allformats.c in Sources */,
 				DD9B12F122C224BC002D1D79 /* ffpipenode_ffplay_vdec.c in Sources */,
 				DD9B12F322C224BC002D1D79 /* ijkthreadpool.c in Sources */,
+				DD5D67C822C37B3600A421BF /* OpenGLRenderer.m in Sources */,
 				DD9B12F422C224BC002D1D79 /* IJKFFMoviePlayerDef.m in Sources */,
 				DD9B12F722C224BC002D1D79 /* ijkioprotocol.c in Sources */,
 				DD9B12F822C224BC002D1D79 /* ijksdl_vout_dummy.c in Sources */,
@@ -1459,6 +1472,7 @@
 				DD9B130B22C224BC002D1D79 /* ijkurlhook.c in Sources */,
 				DD9B13FF22C24B82002D1D79 /* ffpipenode_ios_videotoolbox_vdec.m in Sources */,
 				DD9B130D22C224BC002D1D79 /* IJKMediaPlayback.m in Sources */,
+				DD5D67CC22C37BC800A421BF /* ProgramTools.m in Sources */,
 				DD9B130E22C224BC002D1D79 /* ijkdict.c in Sources */,
 				DD9B130F22C224BC002D1D79 /* ff_ffpipeline.c in Sources */,
 				DD9B131022C224BC002D1D79 /* ijkiourlhook.c in Sources */,
