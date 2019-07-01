@@ -29,6 +29,8 @@
     
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     NSString *urlString = @"http://10.7.36.50/ffmpeg-test/xp5.mp4";
+//    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/1.mp4";
+//    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/test.ffcat";
     NSURL *url = [NSURL URLWithString:urlString];
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
 //    self.player.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
