@@ -4,6 +4,7 @@
  -------- | ------------
  Android | [![Build Status](https://travis-ci.org/Bilibili/ci-ijk-ffmpeg-android.svg?branch=master)](https://travis-ci.org/Bilibili/ci-ijk-ffmpeg-android)
  iOS | [![Build Status](https://travis-ci.org/Bilibili/ci-ijk-ffmpeg-ios.svg?branch=master)](https://travis-ci.org/Bilibili/ci-ijk-ffmpeg-ios)
+macOS | **todo**
 
 Video player based on [ffplay](http://ffmpeg.org)
 
@@ -11,6 +12,7 @@ Video player based on [ffplay](http://ffmpeg.org)
 
 - Android:
  - Gradle
+
 ```
 # required
 allprojects {
@@ -34,26 +36,31 @@ dependencies {
     compile 'tv.danmaku.ijk.media:ijkplayer-exo:0.8.8'
 }
 ```
+
 - iOS
  - in coming...
 
 ### My Build Environment
 - Common
- - Mac OS X 10.11.5
+ - macOS 10.14.5
 - Android
  - [NDK r10e](http://developer.android.com/tools/sdk/ndk/index.html)
  - Android Studio 2.1.3
  - Gradle 2.14.1
 - iOS
  - Xcode 7.3 (7D175)
+- macOS
+ - Xcode 10.2.1 (10E1001)
 - [HomeBrew](http://brew.sh)
  - ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
  - brew install git
 
 ### Latest Changes
+
 - [NEWS.md](NEWS.md)
 
 ### Features
+
 - Common
  - remove rarely used ffmpeg components to reduce binary size [config/module-lite.sh](config/module-lite.sh)
  - workaround for some buggy online video.
@@ -75,12 +82,14 @@ dependencies {
  - alternative-backend: AVFoundation.Framework.AVPlayer, MediaPlayer.Framework.MPMoviePlayerControlelr (obselete since iOS 8)
 
 ### NOT-ON-PLAN
+
 - obsolete platforms (Android: API-8 and below; iOS: pre-6.0)
 - obsolete cpu: ARMv5, ARMv6, MIPS (I don't even have these types of devices…)
 - native subtitle render
 - avfilter support
 
 ### Before Build
+
 ```
 # install homebrew, git, yasm
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -96,6 +105,7 @@ brew install yasm
 ```
 
 - If you prefer more codec/format
+
 ```
 cd config
 rm module.sh
@@ -106,6 +116,7 @@ sh compile-ffmpeg.sh clean
 ```
 
 - If you prefer less codec/format for smaller binary size (include hevc function)
+
 ```
 cd config
 rm module.sh
@@ -116,6 +127,7 @@ sh compile-ffmpeg.sh clean
 ```
 
 - If you prefer less codec/format for smaller binary size (by default)
+
 ```
 cd config
 rm module.sh
@@ -126,6 +138,7 @@ sh compile-ffmpeg.sh clean
 ```
 
 - For Ubuntu/Debian users.
+
 ```
 # choose [No] to use bash
 sudo dpkg-reconfigure dash
@@ -133,7 +146,51 @@ sudo dpkg-reconfigure dash
 
 - If you'd like to share your config, pull request is welcome.
 
+### Build macOS
+
+```
+git clone https://github.com/Bilibili/ijkplayer.git ijkplayer-mac
+cd ijkplayer-mac
+git checkout -B latest k0.8.8
+
+./init-mac.sh
+
+cd mac
+./compile-ffmpeg.sh clean
+./compile-ffmpeg.sh all
+
+# Demo
+#     open mac/IJKMediaDemo/IJKMediaDemo.xcodeproj with Xcode
+# 
+# Import into Your own Application
+#     Select your project in Xcode.
+#     File -> Add Files to ... -> Select mac/IJKMediaPlayer/IJKMediaPlayer.xcodeproj
+#     Select your Application's target.
+#     Build Phases -> Target Dependencies -> Select IJKMediaFramework
+#     Build Phases -> Link Binary with Libraries -> Add:
+#         IJKMediaFramework.framework
+#
+#					VideoDecodeAcceleration.framework
+#					CoreAudio.framework
+#					AudioUnit.framework
+#         AudioToolbox.framework
+#         OpenGL.framework
+#         QuartzCore.framework
+#         AVFoundation.framework
+#         CoreGraphics.framework
+#         CoreMedia.framework
+#         CoreVideo.framework
+#         VideoToolbox.framework
+#         libbz2.tbd
+#         libz.tbd
+#					libc++.tbd
+#
+#         ... (Maybe something else, if you get any link error)
+# 
+```
+
 ### Build Android
+
 ```
 git clone https://github.com/Bilibili/ijkplayer.git ijkplayer-android
 cd ijkplayer-android
@@ -186,8 +243,8 @@ cd ..
 
 ```
 
-
 ### Build iOS
+
 ```
 git clone https://github.com/Bilibili/ijkplayer.git ijkplayer-ios
 cd ijkplayer-ios
@@ -228,11 +285,10 @@ cd ios
 # 
 ```
 
-
 ### Support (支持) ###
+
 - Please do not send e-mail to me. Public technical discussion on github is preferred.
 - 请尽量在 github 上公开讨论[技术问题](https://github.com/bilibili/ijkplayer/issues)，不要以邮件方式私下询问，恕不一一回复。
-
 
 ### License
 
@@ -273,6 +329,7 @@ ijkplayer's build scripts are based on or derives from projects below:
 - [kewlbear/FFmpeg-iOS-build-script](https://github.com/kewlbear/FFmpeg-iOS-build-script) 
 
 ### Commercial Use
+
 ijkplayer is licensed under LGPLv2.1 or later, so itself is free for commercial use under LGPLv2.1 or later
 
 But ijkplayer is also based on other different projects under various licenses, which I have no idea whether they are compatible to each other or to your product.
