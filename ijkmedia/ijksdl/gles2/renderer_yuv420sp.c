@@ -76,6 +76,14 @@ static GLboolean yuv420sp_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOv
             ALOGE("[yuv420sp] unexpected format %x\n", overlay->format);
             return GL_FALSE;
     }
+///macos
+#ifndef GL_RED_EXT
+#define GL_RED_EXT GL_RED
+#endif
+
+#ifndef GL_RG_EXT
+#define GL_RG_EXT GL_RG
+#endif
 
     glBindTexture(GL_TEXTURE_2D, renderer->plane_textures[0]);
     glTexImage2D(GL_TEXTURE_2D,

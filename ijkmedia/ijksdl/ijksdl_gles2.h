@@ -23,17 +23,20 @@
 #define IJKSDL__IJKSDL_GLES2_H
 
 #ifdef __APPLE__
-#if TARGET_OS_OSX
-#include <OpenGL/OpenGL.h>
+    #include <TargetConditionals.h>
+    #if TARGET_OS_OSX
+        #include <OpenGL/OpenGL.h>
+        #include <OpenGL/gl.h>
+        #include <OpenGL/glext.h>
+    #else
+        #include <OpenGLES/ES2/gl.h>
+        #include <OpenGLES/ES2/glext.h>
+    #endif /* TARGET_OS_OSX */
 #else
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
-#endif
-#else
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-#include <GLES2/gl2platform.h>
-#endif
+    #include <GLES2/gl2.h>
+    #include <GLES2/gl2ext.h>
+    #include <GLES2/gl2platform.h>
+#endif /* __APPLE__ */
 
 typedef struct SDL_VoutOverlay SDL_VoutOverlay;
 

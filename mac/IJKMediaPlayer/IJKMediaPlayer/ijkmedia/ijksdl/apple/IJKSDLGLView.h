@@ -29,6 +29,14 @@
 #import <APPKit/AppKit.h>
 typedef NSOpenGLView UIView;
 typedef NSImage UIImage;
+
+typedef NS_ENUM(NSInteger, UIViewContentMode) {
+    UIViewContentModeScaleToFill,
+    UIViewContentModeScaleAspectFit,      // contents scaled to fit with fixed aspect. remainder is transparent
+    UIViewContentModeScaleAspectFill,     // contents scaled to fill with fixed aspect. some portion of content may be clipped.
+    UIViewContentModeResizeAspect
+};
+
 #endif
 #import "IJKSDLGLViewProtocol.h"
 
