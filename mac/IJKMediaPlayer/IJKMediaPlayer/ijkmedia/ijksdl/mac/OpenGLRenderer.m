@@ -125,7 +125,7 @@ static const char FLAT_FSH_NV12_STR[] = RC_GLES_STRINGIZE(
     GLuint aTextureCoordLocation;
     GLuint mMVPMatrixHandle;
     GLuint program;
-    RcFrame* overLay;
+    SDL_VoutOverlay *overLay;
     int index;
     NSLock* renderLock;
 }
@@ -173,9 +173,27 @@ static const char FLAT_FSH_NV12_STR[] = RC_GLES_STRINGIZE(
     }
 }
 
+//static void drawAnObject ()
+//{
+//    glColor3f(1.0f, 0.85f, 0.35f);
+//    glBegin(GL_TRIANGLES);
+//    {
+//        glVertex3f(  0.0,  0.6, 0.0);
+//        glVertex3f( -0.2, -0.3, 0.0);
+//        glVertex3f(  0.2, -0.3 ,0.0);
+//    }
+//    glEnd();
+//}
 
 - (void) render
 {
+//    glClearColor(0, 0, 0, 0);
+//    glClear(GL_COLOR_BUFFER_BIT);
+//    drawAnObject();
+//    glFlush();
+//
+//    return;
+    
     glClearColor(0.f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -190,15 +208,15 @@ static const char FLAT_FSH_NV12_STR[] = RC_GLES_STRINGIZE(
         }
     }
     if(/* DISABLES CODE */ (0)) {
-        int ySize = overLay->width * overLay->height;
+        int ySize = overLay->w * overLay->h;
         static FILE* file = NULL;
         if (!file) {
            file = fopen("/Users/qianlongxu/Desktop/ijk.yuv", "wb+");
         }
         
-        fwrite(overLay->data[0], 1, ySize, file);
-        fwrite(overLay->data[1], 1, ySize / 4, file);
-        fwrite(overLay->data[2], 1, ySize / 4, file);
+        fwrite(overLay->pixels[0], 1, ySize, file);
+        fwrite(overLay->pixels[1], 1, ySize / 4, file);
+        fwrite(overLay->pixels[2], 1, ySize / 4, file);
         fflush(file);
         //fclose(file);
     }
@@ -213,25 +231,25 @@ static const char FLAT_FSH_NV12_STR[] = RC_GLES_STRINGIZE(
     int heights[3] = {0};
     int formats[3] = {0};
     switch (overLay->format) {
-        case FMT_YUV420P:
+        case SDL_FCC_I420:
 //            widths[0] = overLay->linesize[0];
 //            widths[1] = widths[2] = (overLay->linesize[0] >> 1);
 //            heights[0] = overLay->height;
 //            heights[1] = heights[2] = (heights[0] >> 1);
 //            formats[0] = formats[1] = formats[2] = GL_LUMINANCE;
-            widths[0] = overLay->linesize[0];
-            widths[1] = overLay->linesize[1];
-            widths[2] = overLay->linesize[2];
+            widths[0] = overLay->pitches[0];
+            widths[1] = overLay->pitches[1];
+            widths[2] = overLay->pitches[2];
             
-            heights[0] = overLay->height;
+            heights[0] = overLay->h;
             heights[1] = heights[2] = (heights[0] >> 1);
             formats[0] = formats[1] = formats[2] = GL_LUMINANCE;
             break;
-        case FMT_NV12:
-            widths[0] = overLay->linesize[0];
-            widths[1] = overLay->linesize[0] / 2;
-            heights[0] = overLay->height;
-            heights[1] = overLay->height / 2;
+        case SDL_FCC_NV12:
+            widths[0] = overLay->pitches[0];
+            widths[1] = overLay->pitches[0] / 2;
+            heights[0] = overLay->h;
+            heights[1] = overLay->h / 2;
             formats[0] = GL_LUMINANCE;
             formats[1] = GL_LUMINANCE_ALPHA;
             break;
@@ -249,7 +267,7 @@ static const char FLAT_FSH_NV12_STR[] = RC_GLES_STRINGIZE(
                      0,
                      formats[i],
                      GL_UNSIGNED_BYTE,
-                     overLay->data[i]);
+                     overLay->pixels[i]);
         glUniform1i(uniformSamplers[i], i);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -287,9 +305,9 @@ static const char FLAT_FSH_NV12_STR[] = RC_GLES_STRINGIZE(
     }
 }
 
-- (BOOL)initShader:(RcColorFormat) format{
+- (BOOL)initShader:(Uint32) format{
     ProgramTools* programTools = [[ProgramTools alloc]init];
-    program = [programTools compileProgram:FLAT_VSH_STR frag:(format == FMT_YUV420P ? FLAT_FSH_YUV420P_STR : FLAT_FSH_NV12_STR)];
+    program = [programTools compileProgram:FLAT_VSH_STR frag:(format == SDL_FCC_I420 ? FLAT_FSH_YUV420P_STR : FLAT_FSH_NV12_STR)];
     if (program > 0) {
         glUseProgram(program);
         aPostionLocation = glGetAttribLocation(program, "a_Position");
@@ -305,9 +323,9 @@ static const char FLAT_FSH_NV12_STR[] = RC_GLES_STRINGIZE(
     }
 }
 
-- (void)setImage:(RcFrame*)cacheOverlay {
+- (void)setImage:(SDL_VoutOverlay *)aOverlay {
     [renderLock lock];
-    overLay = cacheOverlay;
+    overLay = aOverlay;
     [renderLock unlock];
 }
 

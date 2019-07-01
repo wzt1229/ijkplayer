@@ -59,33 +59,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 - (void) display: (SDL_VoutOverlay *) overlay
 {
-    RcFrame frame = {0};
-    if(overlay->format == SDL_FCC__VTB){
-        NSLog(@"vtb");
-    } else if(overlay->format == SDL_FCC_I420){
-        //https://blog.csdn.net/leixiaohua1020/article/details/12234821
-        NSLog(@"yuv420p");
-        //软解数据,YUV420P
-        frame.width = overlay->w;
-        frame.height = overlay->h;
-        frame.format = FMT_YUV420P;
-        
-        int planes = overlay->planes;
-        frame.planes = planes;
-        for(int i = 0; i < planes; i++) {
-            frame.data[i] = overlay->pixels[i];
-            frame.linesize[i] = overlay->pitches[i];
-        }
-    }
-    else {
-        //TODO
-    }
-    
-    [self setImage:&frame];
-}
-
-- (void) setImage:(RcFrame*)overlay
-{
     [_renderer setImage:overlay];
 }
 
