@@ -41,3 +41,6 @@ xcuserdata
 xcshareddata
 *.xccheckout
 
+mac/openssl-x86_64
+configdata.pm
+OpenSSL_1_1_1.tar.gz

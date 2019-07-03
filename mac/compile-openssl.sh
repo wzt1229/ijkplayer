@@ -18,11 +18,8 @@
 #----------
 # modify for your build tool
 
-FF_ALL_ARCHS_IOS6_SDK="armv7 armv7s i386"
-FF_ALL_ARCHS_IOS7_SDK="armv7 armv7s arm64 i386 x86_64"
-FF_ALL_ARCHS_IOS8_SDK="x86_64"
-
-FF_ALL_ARCHS=$FF_ALL_ARCHS_IOS8_SDK
+FF_ALL_ARCHS="x86_64"
+openSSLTag='1_1_1'
 
 #----------
 UNI_BUILD_ROOT=`pwd`
@@ -62,15 +59,23 @@ do_lipo_all () {
         do_lipo "$FF_LIB.a";
     done
 
-    cp -R $UNI_BUILD_ROOT/build/openssl-armv7/output/include $UNI_BUILD_ROOT/build/universal/
+    cp -R $UNI_BUILD_ROOT/build/openssl-x86_64/output/include $UNI_BUILD_ROOT/build/universal/
 }
 
 #----------
-if [ "$FF_TARGET" = "armv7" -o "$FF_TARGET" = "armv7s" -o "$FF_TARGET" = "arm64" ]; then
+
+openSSL=OpenSSL_${openSSLTag}.tar.gz
+if [ ! -f $openSSL ];then
+    echo "======== download OpenSSL v${openSSLTag} ========"
+    curl -LO https://github.com/openssl/openssl/archive/$openSSL
+fi
+
+
+if [ "$FF_TARGET" = "x86_64" ]; then
     echo_archs
-    sh tools/do-compile-openssl.sh $FF_TARGET
-elif [ "$FF_TARGET" = "i386" -o "$FF_TARGET" = "x86_64" ]; then
-    echo_archs
+    dst="openssl-$FF_TARGET"
+    mkdir -p "$dst"
+    tar -zxpf $openSSL -C "$dst" --strip-components 1
     sh tools/do-compile-openssl.sh $FF_TARGET
 elif [ "$FF_TARGET" = "lipo" ]; then
     echo_archs
@@ -93,8 +98,7 @@ elif [ "$FF_TARGET" = "clean" ]; then
     done
 else
     echo "Usage:"
-    echo "  compile-openssl.sh armv7|arm64|i386|x86_64"
-    echo "  compile-openssl.sh armv7s (obselete)"
+    echo "  compile-openssl.sh x86_64"
     echo "  compile-openssl.sh lipo"
     echo "  compile-openssl.sh all"
     echo "  compile-openssl.sh clean"

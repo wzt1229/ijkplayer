@@ -51,7 +51,7 @@ esac
 # common defines
 FF_ARCH=$1
 if [ -z "$FF_ARCH" ]; then
-    echo "You must specific an architecture 'armv7, armv7s, arm64, i386, x86_64, ...'.\n"
+    echo "You must specific an architecture 'i386, x86_64, ...'.\n"
     exit 1
 fi
 
@@ -67,13 +67,6 @@ OPENSSL_CFG_FLAGS=
 OPENSSL_EXTRA_CFLAGS=
 OPENSSL_CFG_CPU=
 
-# i386, x86_64
-OPENSSL_CFG_FLAGS_SIMULATOR=
-
-# armv7, armv7s, arm64
-OPENSSL_CFG_FLAGS_ARM=
-OPENSSL_CFG_FLAGS_ARM="iphoneos-cross"
-
 echo "build_root: $FF_BUILD_ROOT"
 
 #--------------------
@@ -82,39 +75,15 @@ echo "[*] config arch $FF_ARCH"
 echo "===================="
 
 FF_BUILD_NAME="unknown"
-FF_XCRUN_PLATFORM="iPhoneOS"
+FF_XCRUN_PLATFORM="MacOSX"
 FF_XCRUN_OSVERSION=
 FF_GASPP_EXPORT=
 FF_XCODE_BITCODE=
 
-if [ "$FF_ARCH" = "i386" ]; then
-    FF_BUILD_NAME="openssl-i386"
-    FF_XCRUN_PLATFORM="iPhoneSimulator"
-    FF_XCRUN_OSVERSION="-mios-simulator-version-min=6.0"
-    OPENSSL_CFG_FLAGS="darwin-i386-cc $OPENSSL_CFG_FLAGS"
-elif [ "$FF_ARCH" = "x86_64" ]; then
+if [ "$FF_ARCH" = "x86_64" ]; then
     FF_BUILD_NAME="openssl-x86_64"
-    FF_XCRUN_PLATFORM="iPhoneSimulator"
-    FF_XCRUN_OSVERSION="-mios-simulator-version-min=7.0"
-    OPENSSL_CFG_FLAGS="darwin64-x86_64-cc $OPENSSL_CFG_FLAGS"
-elif [ "$FF_ARCH" = "armv7" ]; then
-    FF_BUILD_NAME="openssl-armv7"
-    FF_XCRUN_OSVERSION="-miphoneos-version-min=6.0"
-    FF_XCODE_BITCODE="-fembed-bitcode"
-    OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS_ARM $OPENSSL_CFG_FLAGS"
-#    OPENSSL_CFG_CPU="--cpu=cortex-a8"
-elif [ "$FF_ARCH" = "armv7s" ]; then
-    FF_BUILD_NAME="openssl-armv7s"
-    OPENSSL_CFG_CPU="--cpu=swift"
-    FF_XCRUN_OSVERSION="-miphoneos-version-min=6.0"
-    FF_XCODE_BITCODE="-fembed-bitcode"
-    OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS_ARM $OPENSSL_CFG_FLAGS"
-elif [ "$FF_ARCH" = "arm64" ]; then
-    FF_BUILD_NAME="openssl-arm64"
-    FF_XCRUN_OSVERSION="-miphoneos-version-min=7.0"
-    FF_XCODE_BITCODE="-fembed-bitcode"
-    OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS_ARM $OPENSSL_CFG_FLAGS"
-    FF_GASPP_EXPORT="GASPP_FIX_XCODE5=1"
+    FF_XCRUN_OSVERSION="-mmacosx-version-min=10.10"
+    OPENSSL_CFG_FLAGS="darwin64-x86_64-cc enable-ec_nistp_64_gcc_128 $OPENSSL_CFG_FLAGS"
 else
     echo "unknown architecture $FF_ARCH";
     exit 1
@@ -126,7 +95,7 @@ echo "osversion:  $FF_XCRUN_OSVERSION"
 
 #--------------------
 echo "===================="
-echo "[*] make ios toolchain $FF_BUILD_NAME"
+echo "[*] make macOS toolchain $FF_BUILD_NAME"
 echo "===================="
 
 
@@ -159,7 +128,7 @@ echo "[*] configurate openssl"
 echo "--------------------"
 
 OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS $FF_XCODE_BITCODE"
-OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS --openssldir=$FF_BUILD_PREFIX"
+OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS --prefix=$FF_BUILD_PREFIX --openssldir=$FF_BUILD_PREFIX"
 
 # xcode configuration
 export DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
