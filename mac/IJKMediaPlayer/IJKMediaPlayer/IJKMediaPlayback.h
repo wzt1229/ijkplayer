@@ -110,8 +110,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 @property (nonatomic) float playbackVolume;
 #if TARGET_OS_IOS
 - (UIImage *)thumbnailImageAtCurrentTime;
-#else
-- (NSImage *)thumbnailImageAtCurrentTime;
 #endif
 
 #pragma mark Notifications

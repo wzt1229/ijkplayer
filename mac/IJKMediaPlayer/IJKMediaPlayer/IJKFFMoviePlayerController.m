@@ -705,6 +705,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     _scalingMode = newScalingMode;
 }
 
+#if TARGET_OS_IOS
 // deprecated, for MPMoviePlayerController compatiable
 - (UIImage *)thumbnailImageAtTime:(NSTimeInterval)playbackTime timeOption:(IJKMPMovieTimeOption)option
 {
@@ -720,7 +721,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
 
     return nil;
 }
-
+#endif
 - (CGFloat)fpsAtOutput
 {
     return _glView.fps;

@@ -23,9 +23,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#if TARGET_OS_IOS
-#import <UIKit/UIKit.h>
-#else
+#import <TargetConditionals.h>
+#if TARGET_OS_OSX
 #import <APPKit/AppKit.h>
 typedef NSOpenGLView UIView;
 typedef NSImage UIImage;
@@ -36,10 +35,11 @@ typedef NS_ENUM(NSInteger, UIViewContentMode) {
     UIViewContentModeScaleAspectFill,     // contents scaled to fill with fixed aspect. some portion of content may be clipped.
     UIViewContentModeResizeAspect
 };
-
+#else
+#import <UIKit/UIKit.h>
 #endif
-#import "IJKSDLGLViewProtocol.h"
 
+#import "IJKSDLGLViewProtocol.h"
 #include "ijksdl/ijksdl_vout.h"
 
 @interface IJKSDLGLView : UIView <IJKSDLGLViewProtocol>
@@ -47,7 +47,11 @@ typedef NS_ENUM(NSInteger, UIViewContentMode) {
 - (id) initWithFrame:(CGRect)frame;
 - (void) display: (SDL_VoutOverlay *) overlay;
 
+#if TARGET_OS_OSX
+- (void)setContentMode:(UIViewContentMode)contentMode;
+#else
 - (UIImage*) snapshot;
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));
+#endif
 
 @end

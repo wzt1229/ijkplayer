@@ -109,9 +109,11 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
             ijk_overlay.pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
         }
 #endif
+#if TARGET_OS_IOS
         if ([gl_view respondsToSelector:@selector(display_pixels:)]) {
-             [gl_view display_pixels:&ijk_overlay];
+            [gl_view display_pixels:&ijk_overlay];
         }
+#endif
     } else {
         [gl_view display:overlay];
     }
