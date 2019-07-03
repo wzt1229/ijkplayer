@@ -20,7 +20,10 @@
  */
 
 #include "ijksdl/gles2/internal.h"
-
+/**
+ uniform sampler2D : 纹理单元，2D采样器，用来访问纹理对象；
+    默认纹理单元是0；当有多个纹理单元时需要使用 glUniform1i
+ */
 static const char g_shader[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform mat3 um3_ColorConversion;

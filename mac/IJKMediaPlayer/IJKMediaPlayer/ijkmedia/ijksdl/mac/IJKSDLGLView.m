@@ -29,6 +29,8 @@
 #import <CoreVideo/CVDisplayLink.h>
 #include "ijksdl/ijksdl_gles2.h"
 #import <OpenGL/gl.h>
+#import <CoreVideo/CoreVideo.h>
+#include "ijksdl_vout_overlay_videotoolbox.h"
 
 typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     IJKSDLGLViewApplicationUnknownState = 0,
@@ -70,8 +72,10 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     NSOpenGLPixelFormatAttribute attrs[] =
     {
         NSOpenGLPFADoubleBuffer,
-        //        NSOpenGLPFAColorSize, 32,
-        //        NSOpenGLPFAAccelerated,
+        NSOpenGLPFASampleAlpha,
+        NSOpenGLPFAColorSize, 32,
+        NSOpenGLPFASamples, 8,
+        NSOpenGLPFAAccelerated,
         NSOpenGLPFADepthSize, 16,
         // Must specify the 3.2 Core Profile to use OpenGL 3.2
 #if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
@@ -80,7 +84,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 #endif
         0
     };
-    
+    //kEAGLDrawablePropertyColorFormat kEAGLColorFormatRGBA8
     NSOpenGLPixelFormat *pf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
     
     if (!pf)

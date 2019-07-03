@@ -22,9 +22,8 @@
 #include "ijksdl/gles2/internal.h"
 
 static const char g_shader[] = IJK_GLES_STRING(
-    precision highp float;
-    varying   highp vec2 vv2_Texcoord;
-    uniform   lowp  sampler2D us2_SamplerX;
+    varying vec2 vv2_Texcoord;
+    uniform sampler2D us2_SamplerX;
 
     void main()
     {

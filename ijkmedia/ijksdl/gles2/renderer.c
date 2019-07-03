@@ -20,6 +20,9 @@
  */
 
 #include "internal.h"
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
 
 static void IJK_GLES2_printProgramInfo(GLuint program)
 {
@@ -169,7 +172,13 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
         case SDL_FCC_RV32:      renderer = IJK_GLES2_Renderer_create_rgbx8888(); break;
 #ifdef __APPLE__
         case SDL_FCC_NV12:      renderer = IJK_GLES2_Renderer_create_yuv420sp(); break;
-//        case SDL_FCC__VTB:      renderer = IJK_GLES2_Renderer_create_yuv420sp_vtb(overlay); break;
+        case SDL_FCC__VTB:      {
+            #if TARGET_OS_OSX
+            renderer = IJK_GLES2_Renderer_create_bgra32();
+            #else
+            renderer = IJK_GLES2_Renderer_create_yuv420sp_vtb(overlay);
+            #endif
+        } break;
 #endif
         case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
         case SDL_FCC_I420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
@@ -352,7 +361,8 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
         return GL_FALSE;
 
     IJK_GLES_Matrix modelViewProj;
-    IJK_GLES2_loadOrtho(&modelViewProj, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+    //原本的缩放，导致mac上渲染 bgr32时右边一半有问题！故而默认不做任何缩放；后续再行研究；
+    IJK_GLES2_loadOrtho(&modelViewProj, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f);
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, modelViewProj.m);                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
 
     IJK_GLES2_Renderer_TexCoords_reset(renderer);

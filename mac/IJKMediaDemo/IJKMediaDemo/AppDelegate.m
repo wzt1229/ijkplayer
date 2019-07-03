@@ -28,9 +28,21 @@
     [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_UNKNOWN];
     
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
+    BOOL isVideoToolBox = YES;
+    if(isVideoToolBox){
+//        [options setPlayerOptionValue:@"fcc-_es2"          forKey:@"overlay-format"];
+        [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];
+        //[options setPlayerOptionIntValue:4096    forKey:@"videotoolbox-max-frame-width"];
+    }else{
+        //     [options setPlayerOptionValue:@"fcc-rv24"          forKey:@"overlay-format"];
+        [options setPlayerOptionValue:@"fcc-i420"          forKey:@"overlay-format"];
+    }
+    
     NSString *urlString = @"http://10.7.36.50/ffmpeg-test/xp5.mp4";
 //    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/1.mp4";
-//    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/test.ffcat";
+    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/test.ffcat";
+    urlString = @"http://10.7.36.50/ifox/m3u8/9035543-5441294-31.m3u8";
+    
     NSURL *url = [NSURL URLWithString:urlString];
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
 //    self.player.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
@@ -39,6 +51,7 @@
     self.player.view.frame = rect;
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
+    self.player.playbackRate = 2.0;
     [self.player prepareToPlay];
     self.window.contentView = self.player.view;
 }

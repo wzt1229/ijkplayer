@@ -404,7 +404,7 @@ static void VTDecoderCallback(void *decompressionOutputRefCon,
 #endif
 
         OSType format_type = CVPixelBufferGetPixelFormatType(imageBuffer);
-        if (format_type != kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
+        if (format_type != kCVPixelFormatType_32BGRA) {
             ALOGI("format_type error \n");
             goto failed;
         }
@@ -555,18 +555,13 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
                                                                  &kCFTypeDictionaryKeyCallBacks,
                                                                  &kCFTypeDictionaryValueCallBacks);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
-                          kCVPixelBufferPixelFormatTypeKey, kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange);
+                          kCVPixelBufferPixelFormatTypeKey, kCVPixelFormatType_32BGRA);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
                           kCVPixelBufferWidthKey, width);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
                           kCVPixelBufferHeightKey, height);
-#if TARGET_OS_IOS
-    CFStringRef key = kCVPixelBufferOpenGLESCompatibilityKey;
-#else
-    CFStringRef key = kCVPixelBufferIOSurfacePropertiesKey;
-#endif
     CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                          key, YES);
+                          kCVPixelBufferOpenGLCompatibilityKey, YES);
     outputCallback.decompressionOutputCallback = VTDecoderCallback;
     outputCallback.decompressionOutputRefCon = context  ;
     status = VTDecompressionSessionCreate(

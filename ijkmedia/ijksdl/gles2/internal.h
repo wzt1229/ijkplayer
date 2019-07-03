@@ -100,5 +100,6 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *over
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_rgb565();
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_rgb888();
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_rgbx8888();
-
+///macos opengl use bgra32
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_bgra32();
 #endif
