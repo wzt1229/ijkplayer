@@ -754,7 +754,7 @@ static inline void DuplicatePkt(Ijk_VideoToolBox_Opaque* context, const AVPacket
         ResetPktBuffer(context);
     }
     AVPacket* avpkt = &context->m_buffer_packet[context->m_buffer_deep];
-    av_copy_packet(avpkt, pkt);
+    av_packet_ref(avpkt, pkt);
     context->m_buffer_deep++;
 }
 

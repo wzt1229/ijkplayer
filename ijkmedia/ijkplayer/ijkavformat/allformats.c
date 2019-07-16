@@ -71,7 +71,7 @@ void ijkav_register_all(void)
         return;
     initialized = 1;
 
-    av_register_all();
+    //av_register_all();
 
     /* protocols */
     av_log(NULL, AV_LOG_INFO, "===== custom modules begin =====\n");
