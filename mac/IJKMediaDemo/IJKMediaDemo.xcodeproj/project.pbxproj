@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		DD1B345422CCB6D200022FCA /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD1B344F22CCB6D200022FCA /* libcrypto.a */; };
 		DD1B345522CCB6D200022FCA /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD1B345322CCB6D200022FCA /* libssl.a */; };
+		DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */; };
 		DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DD9B138C22C23A79002D1D79 /* AppDelegate.m */; };
 		DD9B138F22C23A7A002D1D79 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD9B138E22C23A7A002D1D79 /* Assets.xcassets */; };
 		DD9B139222C23A7A002D1D79 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = DD9B139022C23A7A002D1D79 /* MainMenu.xib */; };
@@ -79,6 +80,7 @@
 /* Begin PBXFileReference section */
 		DD1B344F22CCB6D200022FCA /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcrypto.a; sourceTree = "<group>"; };
 		DD1B345322CCB6D200022FCA /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libssl.a; sourceTree = "<group>"; };
+		DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "996747-5277368-31.m3u8"; sourceTree = "<group>"; };
 		DD9B138822C23A79002D1D79 /* IJKMediaDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJKMediaDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B138B22C23A79002D1D79 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		DD9B138C22C23A79002D1D79 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -176,6 +178,7 @@
 				DD9B138E22C23A7A002D1D79 /* Assets.xcassets */,
 				DD9B139022C23A7A002D1D79 /* MainMenu.xib */,
 				DD9B139322C23A7A002D1D79 /* Info.plist */,
+				DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */,
 				DD9B139422C23A7A002D1D79 /* main.m */,
 				DD9B139622C23A7A002D1D79 /* IJKMediaDemo.entitlements */,
 			);
@@ -335,6 +338,7 @@
 			files = (
 				DD9B138F22C23A7A002D1D79 /* Assets.xcassets in Resources */,
 				DD9B139222C23A7A002D1D79 /* MainMenu.xib in Resources */,
+				DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

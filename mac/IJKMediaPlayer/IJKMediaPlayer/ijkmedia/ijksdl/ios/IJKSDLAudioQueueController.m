@@ -145,11 +145,10 @@
         if (NO == [[AVAudioSession sharedInstance] setActive:YES error:&error]) {
             NSLog(@"AudioQueue: AVAudioSession.setActive(YES) failed: %@\n", error ? [error localizedDescription] : @"nil");
         }
-        
+#endif
         OSStatus status = AudioQueueStart(_audioQueueRef, NULL);
         if (status != noErr)
-        NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
-#endif
+            NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
     }
 }
 
