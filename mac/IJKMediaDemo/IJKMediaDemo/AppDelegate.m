@@ -19,6 +19,7 @@
 @end
 
 @implementation AppDelegate
+
 - (IBAction)pauseOrPlay:(NSButton *)sender {
     if ([sender.title isEqualToString:@"Pause"]) {
         [sender setTitle:@"Play"];
@@ -82,6 +83,9 @@
 //    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/1.mp4";
 //    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/test.ffcat";
     urlString = @"http://10.7.36.50/ifox/m3u8/9035543-5441294-31.m3u8";
+//    urlString = @"http://10.7.36.50/ifox/m3u8/9513306-5546836-21.m3u8";
+    urlString = @"http://10.7.36.50/ifox/m3u8/9513306-5546836-31.m3u8";
+    
 //    urlString = @"http://10.7.36.50/ffmpeg-test/Roof.of.the.World.E04.4K.WEB-DL.H265.mp4";
     
     NSURL *url = [NSURL URLWithString:urlString];
@@ -102,7 +106,9 @@
     [self.playbackView setWantsLayer:YES];
     self.playbackView.layer.backgroundColor = [[NSColor redColor] CGColor];
     [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
-        self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%0.2f",self.player.currentPlaybackTime];
+        NSTimeInterval interval = self.player.currentPlaybackTime;
+        self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",
+                                         (int)interval/60,(int)interval%60];
     }];
 
 }

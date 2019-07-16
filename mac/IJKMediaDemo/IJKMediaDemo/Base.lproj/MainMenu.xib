@@ -688,7 +688,7 @@
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
             <view key="contentView" id="EiT-Mj-1SZ">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                <autoresizingMask key="autoresizingMask"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="D9X-bf-3oG">
                         <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
@@ -698,7 +698,7 @@
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bsp-sy-05y">
-                                <rect key="frame" x="0.0" y="58" width="150" height="21"/>
+                                <rect key="frame" x="0.0" y="58" width="154" height="21"/>
                                 <subviews>
                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="H15-S1-ls9">
                                         <rect key="frame" x="-2" y="4" width="36" height="17"/>
@@ -719,8 +719,8 @@
                                         </connections>
                                     </button>
                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="yYt-mI-Sf6">
-                                        <rect key="frame" x="111" y="4" width="41" height="17"/>
-                                        <textFieldCell key="cell" lineBreakMode="clipping" title="00:00" id="iVw-5r-8yb">
+                                        <rect key="frame" x="113" y="4" width="41" height="17"/>
+                                        <textFieldCell key="cell" lineBreakMode="clipping" title="00:00" drawsBackground="YES" id="iVw-5r-8yb">
                                             <font key="font" metaFont="system"/>
                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
