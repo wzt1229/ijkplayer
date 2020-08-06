@@ -154,10 +154,13 @@ cd ijkplayer-mac
 git checkout -B latest k0.8.8
 
 ./init-mac.sh
+./init-openssl.sh mac
 
 cd mac
 ./compile-ffmpeg.sh clean
+./compile-openssl.sh clean
 ./compile-ffmpeg.sh all
+./compile-openssl.sh all
 
 # Demo
 #     open mac/IJKMediaDemo/IJKMediaDemo.xcodeproj with Xcode
@@ -251,10 +254,13 @@ cd ijkplayer-ios
 git checkout -B latest k0.8.8
 
 ./init-ios.sh
+./init-openssl.sh ios
 
 cd ios
 ./compile-ffmpeg.sh clean
+./compile-openssl.sh clean
 ./compile-ffmpeg.sh all
+./compile-openssl.sh all
 
 # Demo
 #     open ios/IJKMediaDemo/IJKMediaDemo.xcodeproj with Xcode

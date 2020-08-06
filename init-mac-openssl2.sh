@@ -1,6 +1,5 @@
 #! /usr/bin/env bash
 #
-# Copyright (C) 2013-2014 Bilibili
 # Copyright (C) 2013-2014 Zhang Rui <bbcallen@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +19,7 @@
 # modify for your build tool
 
 FF_ALL_ARCHS="x86_64"
+openSSLTag='1_1_1'
 
 #----------
 UNI_BUILD_ROOT=`pwd`
@@ -63,8 +63,19 @@ do_lipo_all () {
 }
 
 #----------
+
+openSSL=OpenSSL_${openSSLTag}.tar.gz
+if [ ! -f $openSSL ];then
+    echo "======== download OpenSSL v${openSSLTag} ========"
+    curl -LO https://github.com/openssl/openssl/archive/$openSSL
+fi
+
+
 if [ "$FF_TARGET" = "x86_64" ]; then
     echo_archs
+    dst="openssl-$FF_TARGET"
+    mkdir -p "$dst"
+    tar -zxpf $openSSL -C "$dst" --strip-components 1
     sh tools/do-compile-openssl.sh $FF_TARGET
 elif [ "$FF_TARGET" = "lipo" ]; then
     echo_archs
@@ -79,18 +90,11 @@ elif [ "$FF_TARGET" = "all" ]; then
     do_lipo_all
 elif [ "$FF_TARGET" = "check" ]; then
     echo_archs
-elif [ "$FF_TARGET" = "clean" ]; then
-    echo_archs
-    for ARCH in $FF_ALL_ARCHS
-    do
-        cd openssl-$ARCH && git clean -xdf && cd -
-    done
 else
     echo "Usage:"
     echo "  compile-openssl.sh x86_64"
     echo "  compile-openssl.sh lipo"
     echo "  compile-openssl.sh all"
-    echo "  compile-openssl.sh clean"
     echo "  compile-openssl.sh check"
     exit 1
 fi

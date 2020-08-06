@@ -115,11 +115,7 @@ do_lipo_all () {
 }
 
 #----------
-if [ "$FF_TARGET" = "i386" -o "$FF_TARGET" = "x86_64" ]; then
-    echo_archs
-    sh tools/do-compile-ffmpeg.sh $FF_TARGET $FF_TARGET_EXTRA
-    do_lipo_all
-elif [ "$FF_TARGET" = "lipo" ]; then
+if [ "$FF_TARGET" = "lipo" ]; then
     echo_archs
     do_lipo_all
 elif [ "$FF_TARGET" = "all" ]; then
@@ -144,9 +140,8 @@ elif [ "$FF_TARGET" = "clean" ]; then
     rm -rf build/universal/lib
 else
     echo "Usage:"
-    echo "  compile-ffmpeg.sh i386|x86_64"
-    echo "  compile-ffmpeg.sh lipo"
     echo "  compile-ffmpeg.sh all"
+    echo "  compile-ffmpeg.sh lipo"
     echo "  compile-ffmpeg.sh clean"
     echo "  compile-ffmpeg.sh check"
     exit 1

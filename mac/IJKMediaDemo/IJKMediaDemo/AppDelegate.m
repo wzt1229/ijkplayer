@@ -79,15 +79,9 @@
         [options setPlayerOptionValue:@"fcc-i420"          forKey:@"overlay-format"];
     }
     
-    NSString *urlString = @"ijkhttphook:http://10.7.36.50/ffmpeg-test/xp5.mp4";
-//    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/1.mp4";
-//    urlString = @"http://10.7.36.50/ffmpeg-test/ff-concat-2/test.ffcat";
-    urlString = @"http://10.7.36.50/ifox/m3u8/9035543-5441294-31.m3u8";
-//    urlString = @"http://10.7.36.50/ifox/m3u8/9513306-5546836-21.m3u8";
-    urlString = @"http://10.7.36.50/ifox/m3u8/9513306-5546836-31.m3u8";
-    
-//    urlString = @"http://10.7.36.50/ffmpeg-test/Roof.of.the.World.E04.4K.WEB-DL.H265.mp4";
-    
+    NSString *urlString = @"ijkhttphook:http://10.7.36.148/ffmpeg-test/xp5.mp4";
+    urlString = @"http://10.7.36.148/ffmpeg-test/xp5.mp4";
+    urlString = @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox";
     NSURL *url = [NSURL URLWithString:urlString];
     
 //    NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
