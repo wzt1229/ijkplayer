@@ -19,7 +19,8 @@
 # modify for your build tool
 
 FF_ALL_ARCHS="x86_64"
-openSSLTag='1_1_1'
+# openSSLTag='1_1_1'
+openSSLTag='1_0_2q'
 
 #----------
 UNI_BUILD_ROOT=`pwd`
@@ -92,9 +93,9 @@ elif [ "$FF_TARGET" = "check" ]; then
     echo_archs
 else
     echo "Usage:"
-    echo "  compile-openssl.sh x86_64"
-    echo "  compile-openssl.sh lipo"
-    echo "  compile-openssl.sh all"
-    echo "  compile-openssl.sh check"
+    echo "  $0 x86_64"
+    echo "  $0 lipo"
+    echo "  $0 all"
+    echo "  $0 check"
     exit 1
 fi

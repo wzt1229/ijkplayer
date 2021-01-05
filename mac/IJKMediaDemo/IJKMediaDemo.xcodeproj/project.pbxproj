@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DD1B345422CCB6D200022FCA /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD1B344F22CCB6D200022FCA /* libcrypto.a */; };
-		DD1B345522CCB6D200022FCA /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD1B345322CCB6D200022FCA /* libssl.a */; };
 		DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */; };
 		DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DD9B138C22C23A79002D1D79 /* AppDelegate.m */; };
 		DD9B138F22C23A7A002D1D79 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD9B138E22C23A7A002D1D79 /* Assets.xcassets */; };
@@ -30,12 +28,6 @@
 		DD9B13D422C2408E002D1D79 /* VideoDecodeAcceleration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13D322C2408E002D1D79 /* VideoDecodeAcceleration.framework */; };
 		DD9B13D622C24095002D1D79 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13D522C24095002D1D79 /* libxml2.tbd */; };
 		DD9B13D822C240A5002D1D79 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13D722C240A5002D1D79 /* libiconv.tbd */; };
-		DD9B13E122C248EF002D1D79 /* libavutil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13DB22C248EF002D1D79 /* libavutil.a */; };
-		DD9B13E222C248EF002D1D79 /* libavfilter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13DC22C248EF002D1D79 /* libavfilter.a */; };
-		DD9B13E322C248EF002D1D79 /* libavcodec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13DD22C248EF002D1D79 /* libavcodec.a */; };
-		DD9B13E422C248EF002D1D79 /* libavformat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13DE22C248EF002D1D79 /* libavformat.a */; };
-		DD9B13E522C248EF002D1D79 /* libswresample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13DF22C248EF002D1D79 /* libswresample.a */; };
-		DD9B13E622C248EF002D1D79 /* libswscale.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13E022C248EF002D1D79 /* libswscale.a */; };
 		DD9B13E822C24971002D1D79 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13E722C24971002D1D79 /* libz.tbd */; };
 /* End PBXBuildFile section */
 
@@ -78,8 +70,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		DD1B344F22CCB6D200022FCA /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcrypto.a; sourceTree = "<group>"; };
-		DD1B345322CCB6D200022FCA /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libssl.a; sourceTree = "<group>"; };
 		DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "996747-5277368-31.m3u8"; sourceTree = "<group>"; };
 		DD9B138822C23A79002D1D79 /* IJKMediaDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJKMediaDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B138B22C23A79002D1D79 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -106,12 +96,6 @@
 		DD9B13D322C2408E002D1D79 /* VideoDecodeAcceleration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoDecodeAcceleration.framework; path = System/Library/Frameworks/VideoDecodeAcceleration.framework; sourceTree = SDKROOT; };
 		DD9B13D522C24095002D1D79 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		DD9B13D722C240A5002D1D79 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
-		DD9B13DB22C248EF002D1D79 /* libavutil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libavutil.a; sourceTree = "<group>"; };
-		DD9B13DC22C248EF002D1D79 /* libavfilter.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libavfilter.a; sourceTree = "<group>"; };
-		DD9B13DD22C248EF002D1D79 /* libavcodec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libavcodec.a; sourceTree = "<group>"; };
-		DD9B13DE22C248EF002D1D79 /* libavformat.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libavformat.a; sourceTree = "<group>"; };
-		DD9B13DF22C248EF002D1D79 /* libswresample.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libswresample.a; sourceTree = "<group>"; };
-		DD9B13E022C248EF002D1D79 /* libswscale.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libswscale.a; sourceTree = "<group>"; };
 		DD9B13E722C24971002D1D79 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -121,16 +105,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				DD9B13E822C24971002D1D79 /* libz.tbd in Frameworks */,
-				DD9B13E222C248EF002D1D79 /* libavfilter.a in Frameworks */,
-				DD1B345422CCB6D200022FCA /* libcrypto.a in Frameworks */,
 				DD9B13D822C240A5002D1D79 /* libiconv.tbd in Frameworks */,
-				DD9B13E622C248EF002D1D79 /* libswscale.a in Frameworks */,
 				DD9B13D622C24095002D1D79 /* libxml2.tbd in Frameworks */,
-				DD9B13E422C248EF002D1D79 /* libavformat.a in Frameworks */,
 				DD9B13D422C2408E002D1D79 /* VideoDecodeAcceleration.framework in Frameworks */,
 				DD9B13D222C24084002D1D79 /* CoreAudio.framework in Frameworks */,
 				DD9B13D022C2407B002D1D79 /* AudioUnit.framework in Frameworks */,
-				DD1B345522CCB6D200022FCA /* libssl.a in Frameworks */,
 				DD9B13CE22C24073002D1D79 /* AudioToolbox.framework in Frameworks */,
 				DD9B13CC22C2406C002D1D79 /* QuartzCore.framework in Frameworks */,
 				DD9B13CA22C24063002D1D79 /* OpenGL.framework in Frameworks */,
@@ -139,12 +118,9 @@
 				DD9B13C422C24040002D1D79 /* CoreMedia.framework in Frameworks */,
 				DD9B13C222C24037002D1D79 /* CoreGraphics.framework in Frameworks */,
 				DD9B13C022C2402D002D1D79 /* GLKit.framework in Frameworks */,
-				DD9B13E322C248EF002D1D79 /* libavcodec.a in Frameworks */,
 				DD9B13BE22C24026002D1D79 /* AVFoundation.framework in Frameworks */,
 				DD9B13BC22C2401F002D1D79 /* libbz2.tbd in Frameworks */,
 				DD9B13BA22C24017002D1D79 /* libc++.tbd in Frameworks */,
-				DD9B13E522C248EF002D1D79 /* libswresample.a in Frameworks */,
-				DD9B13E122C248EF002D1D79 /* libavutil.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,7 +147,6 @@
 		DD9B138A22C23A79002D1D79 /* IJKMediaDemo */ = {
 			isa = PBXGroup;
 			children = (
-				DD9B13DA22C248EF002D1D79 /* lib */,
 				DD9B139C22C23AA4002D1D79 /* IJKMediaPlayer.xcodeproj */,
 				DD9B138B22C23A79002D1D79 /* AppDelegate.h */,
 				DD9B138C22C23A79002D1D79 /* AppDelegate.m */,
@@ -218,22 +193,6 @@
 				DD9B13B922C24017002D1D79 /* libc++.tbd */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		DD9B13DA22C248EF002D1D79 /* lib */ = {
-			isa = PBXGroup;
-			children = (
-				DD1B344F22CCB6D200022FCA /* libcrypto.a */,
-				DD1B345322CCB6D200022FCA /* libssl.a */,
-				DD9B13DB22C248EF002D1D79 /* libavutil.a */,
-				DD9B13DC22C248EF002D1D79 /* libavfilter.a */,
-				DD9B13DD22C248EF002D1D79 /* libavcodec.a */,
-				DD9B13DE22C248EF002D1D79 /* libavformat.a */,
-				DD9B13DF22C248EF002D1D79 /* libswresample.a */,
-				DD9B13E022C248EF002D1D79 /* libswscale.a */,
-			);
-			name = lib;
-			path = ../../build/universal/lib;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
