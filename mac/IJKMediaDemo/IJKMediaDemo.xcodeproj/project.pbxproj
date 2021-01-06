@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9625A43A1300F01E2F /* MRUtil.m */; };
+		DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9C25A43A1300F01E2F /* MRDragView.m */; };
 		DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */; };
 		DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DD9B138C22C23A79002D1D79 /* AppDelegate.m */; };
 		DD9B138F22C23A7A002D1D79 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD9B138E22C23A7A002D1D79 /* Assets.xcassets */; };
@@ -70,6 +72,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		DD050F9525A43A1300F01E2F /* MRUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRUtil.h; sourceTree = "<group>"; };
+		DD050F9625A43A1300F01E2F /* MRUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRUtil.m; sourceTree = "<group>"; };
+		DD050F9B25A43A1300F01E2F /* MRDragView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRDragView.h; sourceTree = "<group>"; };
+		DD050F9C25A43A1300F01E2F /* MRDragView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRDragView.m; sourceTree = "<group>"; };
 		DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "996747-5277368-31.m3u8"; sourceTree = "<group>"; };
 		DD9B138822C23A79002D1D79 /* IJKMediaDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJKMediaDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B138B22C23A79002D1D79 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -127,6 +133,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DD050F9425A43A1300F01E2F /* MRUtil */ = {
+			isa = PBXGroup;
+			children = (
+				DD050F9525A43A1300F01E2F /* MRUtil.h */,
+				DD050F9625A43A1300F01E2F /* MRUtil.m */,
+			);
+			path = MRUtil;
+			sourceTree = "<group>";
+		};
+		DD050F9A25A43A1300F01E2F /* DragView */ = {
+			isa = PBXGroup;
+			children = (
+				DD050F9B25A43A1300F01E2F /* MRDragView.h */,
+				DD050F9C25A43A1300F01E2F /* MRDragView.m */,
+			);
+			path = DragView;
+			sourceTree = "<group>";
+		};
 		DD9B137F22C23A79002D1D79 = {
 			isa = PBXGroup;
 			children = (
@@ -150,6 +174,8 @@
 				DD9B139C22C23AA4002D1D79 /* IJKMediaPlayer.xcodeproj */,
 				DD9B138B22C23A79002D1D79 /* AppDelegate.h */,
 				DD9B138C22C23A79002D1D79 /* AppDelegate.m */,
+				DD050F9A25A43A1300F01E2F /* DragView */,
+				DD050F9425A43A1300F01E2F /* MRUtil */,
 				DD9B138E22C23A7A002D1D79 /* Assets.xcassets */,
 				DD9B139022C23A7A002D1D79 /* MainMenu.xib */,
 				DD9B139322C23A7A002D1D79 /* Info.plist */,
@@ -310,6 +336,8 @@
 			files = (
 				DD9B139522C23A7A002D1D79 /* main.m in Sources */,
 				DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */,
+				DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */,
+				DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
