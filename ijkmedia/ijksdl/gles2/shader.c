@@ -65,6 +65,17 @@ GLuint IJK_GLES2_loadShader(GLenum shader_type, const char *shader_source)
     glShaderSource(shader, 1, &shader_source, NULL);    IJK_GLES2_checkError_TRACE("glShaderSource");
     glCompileShader(shader);                            IJK_GLES2_checkError_TRACE("glCompileShader");
 
+#if defined(DEBUG)
+    GLint logLength;
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+    if (logLength > 0) {
+        GLchar *log = (GLchar *)malloc(logLength);
+        glGetShaderInfoLog(shader, logLength, &logLength, log);
+        printf("Shader compile log:\n%s", log);
+        free(log);
+    }
+#endif
+    
     GLint compile_status = 0;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
     if (!compile_status)
