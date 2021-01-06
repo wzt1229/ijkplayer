@@ -1,1 +1,1 @@
-module-lite.sh
+module-full.sh
