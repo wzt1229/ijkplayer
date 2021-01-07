@@ -1077,6 +1077,8 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar)
             format_id = kCMVideoCodecType_HEVC;
             if (@available(macOS 10.13, *)) {
                 isHevcSupported = VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC);
+#warning force as support hevc
+                isHevcSupported = true;
             } else {
                 // Fallback on earlier versions
                 isHevcSupported = false;

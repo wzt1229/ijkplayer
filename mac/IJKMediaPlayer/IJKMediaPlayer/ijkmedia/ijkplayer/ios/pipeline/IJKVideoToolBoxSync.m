@@ -70,6 +70,7 @@ typedef struct VTBFormatDesc
     int32_t                     max_ref_frames;
     bool                        convert_bytestream;
     bool                        convert_3byteTo4byteNALSize;
+    int                         pixelBufferPixelFormat;
 } VTBFormatDesc;
 
 struct Ijk_VideoToolBox_Opaque {
@@ -311,8 +312,8 @@ static void VTDecoderCallback(void *decompressionOutputRefCon,
 #endif
 
         OSType format_type = CVPixelBufferGetPixelFormatType(imageBuffer);
-        if (format_type != kCVPixelFormatType_32BGRA) {
-            ALOGI("format_type error \n");
+        if (format_type != ctx->fmt_desc.pixelBufferPixelFormat) {
+            ALOGE("format_type error \n");
             goto failed;
         }
         if (kVTDecodeInfo_FrameDropped & infoFlags) {
@@ -437,14 +438,24 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
                                                                  &kCFTypeDictionaryKeyCallBacks,
                                                                  &kCFTypeDictionaryValueCallBacks);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
-                          kCVPixelBufferPixelFormatTypeKey, kCVPixelFormatType_32BGRA);
+                          kCVPixelBufferPixelFormatTypeKey, context->fmt_desc.pixelBufferPixelFormat);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
                           kCVPixelBufferWidthKey, width);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
                           kCVPixelBufferHeightKey, height);
     ///https://stackoverflow.com/questions/12976188/create-a-cvpixelbufferref-with-openglcompatibility
     CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                          kCVPixelBufferOpenGLCompatibilityKey, YES);
+                          kCVPixelBufferOpenGLCompatibilityKey, NO);
+    CFDictionarySetBoolean(destinationPixelBufferAttributes,
+                           kCVPixelBufferOpenGLTextureCacheCompatibilityKey, YES);
+    CFDictionarySetBoolean(destinationPixelBufferAttributes,
+                           kCVPixelBufferMetalCompatibilityKey, NO);
+    CFDictionarySetBoolean(destinationPixelBufferAttributes,
+                           kCVPixelBufferCGImageCompatibilityKey, YES);
+    CFDictionarySetBoolean(destinationPixelBufferAttributes,
+                           kCVPixelBufferCGBitmapContextCompatibilityKey, NO);
+    
+    
     outputCallback.decompressionOutputCallback = VTDecoderCallback;
     outputCallback.decompressionOutputRefCon = context  ;
     status = VTDecompressionSessionCreate(
@@ -466,8 +477,6 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
 
     return vt_session;
 }
-
-
 
 static int decode_video_internal(Ijk_VideoToolBox_Opaque* context, AVCodecContext *avctx, const AVPacket *avpkt, int* got_picture_ptr)
 {
@@ -942,10 +951,19 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar)
             format_id = kCMVideoCodecType_HEVC;
             if (@available(macOS 10.13, *)) {
                 isHevcSupported = VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC);
+                
+//                CFMutableDictionaryRef encoderSpecification = CFDictionaryCreateMutable( NULL,0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+//                        CFDictionarySetValue(encoderSpecification, kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_HEVC_Main_AutoLevel);
+//                        CFDictionarySetValue(encoderSpecification, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
+//                        OSStatus status = VTCopySupportedPropertyDictionaryForEncoder(3840, 2160, kCMVideoCodecType_HEVC, encoderSpecification, nil, nil);
+//                isHevcSupported = status == kVTCouldNotFindVideoEncoderErr;
+#warning force as support hevc
+                isHevcSupported = true;
             } else {
                 // Fallback on earlier versions
                 isHevcSupported = false;
             }
+            
             if (!isHevcSupported) {
                 goto fail;
             }
@@ -1017,7 +1035,29 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar)
 
     fmt_desc->max_ref_frames = FFMAX(fmt_desc->max_ref_frames, 2);
     fmt_desc->max_ref_frames = FFMIN(fmt_desc->max_ref_frames, 5);
-
+    
+    int pixelFormatType = -1;
+    //video toolbox 不支持
+    pixelFormatType = kCVPixelFormatType_16LE565;
+    pixelFormatType = kCVPixelFormatType_16BE565;
+    pixelFormatType = kCVPixelFormatType_16LE555;
+    pixelFormatType = kCVPixelFormatType_24BGR;
+    pixelFormatType = kCVPixelFormatType_32RGBA;
+    pixelFormatType = kCVPixelFormatType_32ABGR;
+    //支持
+    pixelFormatType = kCVPixelFormatType_24RGB;
+    pixelFormatType = kCVPixelFormatType_32ARGB;
+    pixelFormatType = kCVPixelFormatType_32BGRA;
+    
+    
+    bool fullRange = codecpar->color_range != AVCOL_RANGE_MPEG;
+    pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
+    //for AV_PIX_FMT_NV21: later will swap VU. we won't modify the avframe data, because the frame can be dispaly again!
+    
+    if (pixelFormatType != -1) {
+        fmt_desc->pixelBufferPixelFormat = pixelFormatType;
+    }
+    
     ALOGI("m_max_ref_frames %d \n", fmt_desc->max_ref_frames);
 
     return 0;

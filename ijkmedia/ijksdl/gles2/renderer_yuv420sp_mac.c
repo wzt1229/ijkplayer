@@ -65,26 +65,10 @@ static GLboolean yuv420sp_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOv
     if (!renderer || !overlay)
         return GL_FALSE;
 
-    CVPixelBufferRef pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
-    
-    int pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
-    if (pixel_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
-        printf("OK");
-    }
-    assert(CVPixelBufferGetPlaneCount(pixel_buffer) == 2);
-    
-    int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);
-    int bufferWidth = (int) CVPixelBufferGetWidth(pixel_buffer);
-    
-    const GLsizei widths[2] = { bufferWidth, bufferWidth / 2 };
-    const GLsizei heights[2] = { bufferHeight, bufferHeight / 2 };
-    
-    CVPixelBufferLockBaseAddress(pixel_buffer, 0);
-    const GLubyte *pixel_y = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, 0);
-    const GLubyte *pixel_uv = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, kCVPixelBufferLock_ReadOnly);
-    //const GLubyte *pixels[2]   = { overlay->pixels[0],  overlay->pixels[1] };
-    const GLubyte *pixels[2]   = { pixel_y, pixel_uv };
-    
+    const GLsizei widths[2]    = { overlay->pitches[0], overlay->pitches[1] / 2 };
+    const GLsizei heights[2]   = { overlay->h,          overlay->h / 2 };
+    const GLubyte *pixels[2]   = { overlay->pixels[0],  overlay->pixels[1] };
+
     switch (overlay->format) {
         case SDL_FCC__VTB:
             break;
@@ -116,11 +100,11 @@ static GLboolean yuv420sp_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOv
                  GL_RG,
                  GL_UNSIGNED_BYTE,
                  pixels[1]);
-    CVPixelBufferUnlockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
+
     return GL_TRUE;
 }
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay)
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp()
 {
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
     if (!renderer)

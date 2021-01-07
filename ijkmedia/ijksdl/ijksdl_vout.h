@@ -37,6 +37,7 @@ struct SDL_VoutOverlay {
     int w; /**< Read-only */
     int h; /**< Read-only */
     Uint32 format; /**< Read-only */
+    Uint32 ff_format;/**< FFmpeg AV_PIXEL_FORMAT */
     int planes; /**< Read-only */
     Uint16 *pitches; /**< in bytes, Read-only */
     Uint8 **pixels; /**< Read-write */

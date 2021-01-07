@@ -25,7 +25,6 @@
 
 #import "IJKSDLGLView.h"
 #include "ijksdl/ijksdl_timer.h"
-#import "OpenGLRenderer.h"
 #import <CoreVideo/CVDisplayLink.h>
 #include "ijksdl/ijksdl_gles2.h"
 #import <OpenGL/gl.h>

@@ -59,9 +59,15 @@
 #define SDL_FCC_NV12    SDL_FOURCC('N', 'V', '1', '2')
 
 // RGB formats
-#define SDL_FCC_RV16    SDL_FOURCC('R', 'V', '1', '6')    /**< bpp=16, RGB565 */
-#define SDL_FCC_RV24    SDL_FOURCC('R', 'V', '2', '4')    /**< bpp=24, RGB888 */
-#define SDL_FCC_RV32    SDL_FOURCC('R', 'V', '3', '2')    /**< bpp=32, RGBX8888 */
+#define SDL_FCC_RGB565   SDL_FOURCC('R', 'G', 'B', 565)   /**< bpp=16, RGB565 */
+#warning TODO: my bmp not support bgr565!
+#define SDL_FCC_BGR565   SDL_FOURCC('B', 'G', 'R', 565)   /**< bpp=16, BGR565 */
+#define SDL_FCC_BGR24    SDL_FOURCC('B', 'G', 'R', 24)    /**< bpp=24,  BGR888*/
+#define SDL_FCC_RGB24    SDL_FOURCC('R', 'G', 'B', 24)    /**< bpp=24, RGB888 */
+#define SDL_FCC_RGB0     SDL_FOURCC('R', 'G', 'B', 0)     /**< bpp=32, RGBXRGBX */
+#define SDL_FCC_RGBA     SDL_FOURCC('R', 'G', 'B', 'A')   /**< bpp=32, RGBARGBA */
+#define SDL_FCC_BGR0     SDL_FOURCC('B', 'G', 'R', 0)     /**< bpp=32, BGRXBGRX */
+#define SDL_FCC_BGRA     SDL_FOURCC('B', 'G', 'R', 'A')   /**< bpp=32, BGRABGRA */
 
 // opaque formats
 #define SDL_FCC__AMC    SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */

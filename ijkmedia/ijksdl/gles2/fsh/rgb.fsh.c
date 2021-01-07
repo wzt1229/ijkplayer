@@ -31,7 +31,23 @@ static const char g_shader[] = IJK_GLES_STRING(
     }
 );
 
+static const char argb_g_shader[] = IJK_GLES_STRING(
+    varying vec2 vv2_Texcoord;
+    uniform sampler2D us2_SamplerX;
+
+    void main()
+    {
+        gl_FragColor = vec4(texture2D(us2_SamplerX, vv2_Texcoord).gba, 1);
+    }
+);
+
 const char *IJK_GLES2_getFragmentShader_rgb()
 {
     return g_shader;
+}
+
+
+const char *IJK_GLES2_getFragmentShader_argb()
+{
+    return argb_g_shader;
 }

@@ -111,20 +111,31 @@
     [options setPlayerOptionIntValue:16      forKey:@"video-pictq-size"];
 //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
 //    [options setPlayerOptionIntValue:50*1024*1024      forKey:@"max-buffer-size"];
-    [options setPlayerOptionIntValue:30      forKey:@"max-fps"];
+    [options setPlayerOptionIntValue:30     forKey:@"max-fps"];
     [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
-    [options setPlayerOptionIntValue:1      forKey:@"videotoolbox-async"];
+    [options setPlayerOptionIntValue:0      forKey:@"videotoolbox-async"];
     
-    BOOL isVideoToolBox = NO;
-    if(isVideoToolBox){
-        [options setPlayerOptionValue:@"fcc-_es2"          forKey:@"overlay-format"];
+    BOOL isVideoToolBox = YES;
+    if (isVideoToolBox) {
+//        [options setPlayerOptionValue:@"fcc-_es2"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-nv12"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-bgr0"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-i420"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-bgra"          forKey:@"overlay-format"];
         [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];
         [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
-    }else{
-        //     [options setPlayerOptionValue:@"fcc-rv24"          forKey:@"overlay-format"];
+    } else {
+//        [options setPlayerOptionValue:@"fcc-bgr565"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-rgb565"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-rgb24"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-bgr24"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-rgba"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-rgb0"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-bgra"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-bgr0"          forKey:@"overlay-format"];
+
 //        [options setPlayerOptionValue:@"fcc-i420"          forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-yv12"          forKey:@"overlay-format"];
-        
+        [options setPlayerOptionValue:@"fcc-nv12"          forKey:@"overlay-format"];
     }
     
     if (self.player) {

@@ -161,17 +161,14 @@
 		DD050DA125A3FF2100F01E2F /* ijklas.c in Sources */ = {isa = PBXBuildFile; fileRef = DD050D9125A3FF2100F01E2F /* ijklas.c */; };
 		DD050DC025A4015700F01E2F /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD050DBE25A4015700F01E2F /* libssl.a */; };
 		DD050DC125A4015700F01E2F /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD050DBF25A4015700F01E2F /* libcrypto.a */; };
+		DD050FD925A54D8A00F01E2F /* renderer_yuv420p_mac.c in Sources */ = {isa = PBXBuildFile; fileRef = DD050FD625A54D8A00F01E2F /* renderer_yuv420p_mac.c */; };
+		DD05101125A564D800F01E2F /* renderer_yuv420sp_mac.c in Sources */ = {isa = PBXBuildFile; fileRef = DD05101025A564D800F01E2F /* renderer_yuv420sp_mac.c */; };
 		DD1B343022CA0A9700022FCA /* yuv420p.fsh.c in Sources */ = {isa = PBXBuildFile; fileRef = DD1B342F22CA0A9700022FCA /* yuv420p.fsh.c */; };
 		DD1B343722CA0B4400022FCA /* mvp.vsh.c in Sources */ = {isa = PBXBuildFile; fileRef = DD1B343622CA0B4400022FCA /* mvp.vsh.c */; };
 		DD1B343C22CB2A6800022FCA /* renderer_yuv420sp_vtb_mac.m in Sources */ = {isa = PBXBuildFile; fileRef = DD1B343B22CB2A6800022FCA /* renderer_yuv420sp_vtb_mac.m */; };
 		DD1B344B22CC98A900022FCA /* renderer_rgb.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C459BE1C708CAF004831EC /* renderer_rgb.c */; };
 		DD1B344D22CC9ACB00022FCA /* yuv420sp.fsh.c in Sources */ = {isa = PBXBuildFile; fileRef = DD1B344C22CC9ACB00022FCA /* yuv420sp.fsh.c */; };
-		DD5D67C822C37B3600A421BF /* OpenGLRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = DD5D67C622C37B3600A421BF /* OpenGLRenderer.m */; };
-		DD5D67CC22C37BC800A421BF /* ProgramTools.m in Sources */ = {isa = PBXBuildFile; fileRef = DD5D67CA22C37BC800A421BF /* ProgramTools.m */; };
 		DD5D67D622C9E26C00A421BF /* renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C4598C1C7030B6004831EC /* renderer.c */; };
-		DD5D67D822C9E35A00A421BF /* renderer_yuv420p.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C4598D1C7030B6004831EC /* renderer_yuv420p.c */; };
-		DD5D67D922C9E39C00A421BF /* renderer_yuv420sp.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C459CA1C70967F004831EC /* renderer_yuv420sp.c */; };
-		DD5D67DA22C9E3A200A421BF /* renderer_yuv444p10le.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C4598E1C7030B6004831EC /* renderer_yuv444p10le.c */; };
 		DD5D67DB22C9E3A900A421BF /* shader.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C4598F1C7030B6004831EC /* shader.c */; };
 		DD5D67DC22C9EAC100A421BF /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C459871C7030B6004831EC /* common.c */; };
 		DD5D67DD22C9EAD400A421BF /* color.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C459861C7030B6004831EC /* color.c */; };
@@ -416,15 +413,13 @@
 		DD050D9125A3FF2100F01E2F /* ijklas.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ijklas.c; sourceTree = "<group>"; };
 		DD050DBE25A4015700F01E2F /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../build/universal/lib/libssl.a; sourceTree = "<group>"; };
 		DD050DBF25A4015700F01E2F /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../build/universal/lib/libcrypto.a; sourceTree = "<group>"; };
+		DD050FD625A54D8A00F01E2F /* renderer_yuv420p_mac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = renderer_yuv420p_mac.c; sourceTree = "<group>"; };
+		DD05101025A564D800F01E2F /* renderer_yuv420sp_mac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = renderer_yuv420sp_mac.c; sourceTree = "<group>"; };
 		DD1B342F22CA0A9700022FCA /* yuv420p.fsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = yuv420p.fsh.c; sourceTree = "<group>"; };
 		DD1B343622CA0B4400022FCA /* mvp.vsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mvp.vsh.c; sourceTree = "<group>"; };
 		DD1B343B22CB2A6800022FCA /* renderer_yuv420sp_vtb_mac.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = renderer_yuv420sp_vtb_mac.m; sourceTree = "<group>"; };
 		DD1B344C22CC9ACB00022FCA /* yuv420sp.fsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = yuv420sp.fsh.c; sourceTree = "<group>"; };
-		DD5D67C522C37B3600A421BF /* OpenGLRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenGLRenderer.h; sourceTree = "<group>"; };
-		DD5D67C622C37B3600A421BF /* OpenGLRenderer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenGLRenderer.m; sourceTree = "<group>"; };
 		DD5D67C922C37BB100A421BF /* glUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = glUtil.h; sourceTree = "<group>"; };
-		DD5D67CA22C37BC800A421BF /* ProgramTools.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProgramTools.m; sourceTree = "<group>"; };
-		DD5D67CB22C37BC800A421BF /* ProgramTools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgramTools.h; sourceTree = "<group>"; };
 		DD9B136922C224BC002D1D79 /* IJKMediaMacFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = IJKMediaMacFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B137322C23247002D1D79 /* IJKSDLGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJKSDLGLView.m; sourceTree = "<group>"; };
 		DD9B137B22C23373002D1D79 /* IJKSDLGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKSDLGLView.h; sourceTree = "<group>"; };
@@ -662,10 +657,6 @@
 			isa = PBXGroup;
 			children = (
 				DD5D67C922C37BB100A421BF /* glUtil.h */,
-				DD5D67CB22C37BC800A421BF /* ProgramTools.h */,
-				DD5D67CA22C37BC800A421BF /* ProgramTools.m */,
-				DD5D67C522C37B3600A421BF /* OpenGLRenderer.h */,
-				DD5D67C622C37B3600A421BF /* OpenGLRenderer.m */,
 				DD9B137322C23247002D1D79 /* IJKSDLGLView.m */,
 			);
 			name = mac;
@@ -1030,10 +1021,12 @@
 				E6C459881C7030B6004831EC /* fsh */,
 				E6C4598B1C7030B6004831EC /* internal.h */,
 				E6C459BE1C708CAF004831EC /* renderer_rgb.c */,
+				DD050FD625A54D8A00F01E2F /* renderer_yuv420p_mac.c */,
 				E6C4598D1C7030B6004831EC /* renderer_yuv420p.c */,
 				E6E1B9A71C741F72000C6C72 /* renderer_yuv420sp_vtb.m */,
 				DD1B343B22CB2A6800022FCA /* renderer_yuv420sp_vtb_mac.m */,
 				E6C459CA1C70967F004831EC /* renderer_yuv420sp.c */,
+				DD05101025A564D800F01E2F /* renderer_yuv420sp_mac.c */,
 				E6C4598E1C7030B6004831EC /* renderer_yuv444p10le.c */,
 				E6C4598C1C7030B6004831EC /* renderer.c */,
 				E6C4598F1C7030B6004831EC /* shader.c */,
@@ -1517,7 +1510,6 @@
 				DD9B12F022C224BC002D1D79 /* allformats.c in Sources */,
 				DD9B12F122C224BC002D1D79 /* ffpipenode_ffplay_vdec.c in Sources */,
 				DD9B12F322C224BC002D1D79 /* ijkthreadpool.c in Sources */,
-				DD5D67C822C37B3600A421BF /* OpenGLRenderer.m in Sources */,
 				DD9B12F422C224BC002D1D79 /* IJKFFMoviePlayerDef.m in Sources */,
 				DD9B12F722C224BC002D1D79 /* ijkioprotocol.c in Sources */,
 				DD9B12F822C224BC002D1D79 /* ijksdl_vout_dummy.c in Sources */,
@@ -1543,10 +1535,8 @@
 				DD9B130B22C224BC002D1D79 /* ijkurlhook.c in Sources */,
 				DD9B13FF22C24B82002D1D79 /* ffpipenode_ios_videotoolbox_vdec.m in Sources */,
 				DD9B130D22C224BC002D1D79 /* IJKMediaPlayback.m in Sources */,
-				DD5D67CC22C37BC800A421BF /* ProgramTools.m in Sources */,
 				DD1B343022CA0A9700022FCA /* yuv420p.fsh.c in Sources */,
 				DD9B130E22C224BC002D1D79 /* ijkdict.c in Sources */,
-				DD5D67D922C9E39C00A421BF /* renderer_yuv420sp.c in Sources */,
 				DD9B130F22C224BC002D1D79 /* ff_ffpipeline.c in Sources */,
 				DD9B131022C224BC002D1D79 /* ijkiourlhook.c in Sources */,
 				DD9B131122C224BC002D1D79 /* IJKSDLAudioKit.m in Sources */,
@@ -1564,10 +1554,10 @@
 				DD9B131D22C224BC002D1D79 /* ijksdl_audio.c in Sources */,
 				DD050D9E25A3FF2100F01E2F /* ijkmediadatasource.c in Sources */,
 				DD050D9825A3FF2100F01E2F /* cJSON.c in Sources */,
+				DD050FD925A54D8A00F01E2F /* renderer_yuv420p_mac.c in Sources */,
 				DD9B131E22C224BC002D1D79 /* ijksdl_thread_ios.m in Sources */,
 				DD9B131F22C224BC002D1D79 /* ijkmeta.c in Sources */,
 				DD9B132022C224BC002D1D79 /* ijkasync.c in Sources */,
-				DD5D67DA22C9E3A200A421BF /* renderer_yuv444p10le.c in Sources */,
 				DD9B132222C224BC002D1D79 /* ijkutils.c in Sources */,
 				DD5D67DB22C9E3A900A421BF /* shader.c in Sources */,
 				DD9B132422C224BC002D1D79 /* ijksdl_timer.c in Sources */,
@@ -1578,13 +1568,13 @@
 				DD9B140322C24B82002D1D79 /* ffpipeline_ios.c in Sources */,
 				DD9B132B22C224BC002D1D79 /* ijkplayer.c in Sources */,
 				DD9B132C22C224BC002D1D79 /* IJKFFOptions.m in Sources */,
-				DD5D67D822C9E35A00A421BF /* renderer_yuv420p.c in Sources */,
 				DD9B137822C23263002D1D79 /* IJKSDLGLView.m in Sources */,
 				DD9B132D22C224BC002D1D79 /* IJKSDLAudioUnitController.m in Sources */,
 				DD9B132E22C224BC002D1D79 /* IJKFFMonitor.m in Sources */,
 				DD5D67DE22C9EAE400A421BF /* rgb.fsh.c in Sources */,
 				DD9B132F22C224BC002D1D79 /* IJKFFMoviePlayerController.m in Sources */,
 				DD9B133022C224BC002D1D79 /* IJKNotificationManager.m in Sources */,
+				DD05101125A564D800F01E2F /* renderer_yuv420sp_mac.c in Sources */,
 				DD9B133122C224BC002D1D79 /* IJKMediaModule.m in Sources */,
 				DD9B140122C24B82002D1D79 /* IJKVideoToolBoxSync.m in Sources */,
 				DD9B133222C224BC002D1D79 /* ff_cmdutils.c in Sources */,
