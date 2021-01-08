@@ -68,6 +68,8 @@
 #define SDL_FCC_RGBA     SDL_FOURCC('R', 'G', 'B', 'A')   /**< bpp=32, RGBARGBA */
 #define SDL_FCC_BGR0     SDL_FOURCC('B', 'G', 'R', 0)     /**< bpp=32, BGRXBGRX */
 #define SDL_FCC_BGRA     SDL_FOURCC('B', 'G', 'R', 'A')   /**< bpp=32, BGRABGRA */
+#define SDL_FCC_ARGB     SDL_FOURCC('A', 'R', 'G', 'B')   /**< bpp=32, ARGBARGB */
+#define SDL_FCC_0RGB     SDL_FOURCC('0', 'R', 'G', 'B')   /**< bpp=32, XRGBXRGB */
 
 // opaque formats
 #define SDL_FCC__AMC    SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */

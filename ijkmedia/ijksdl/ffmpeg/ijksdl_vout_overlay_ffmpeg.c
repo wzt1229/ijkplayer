@@ -419,6 +419,18 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
             opaque->planes = 1;
             break;
         }
+        case SDL_FCC_ARGB: {
+            ff_format = AV_PIX_FMT_ARGB;
+            buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
+            opaque->planes = 1;
+            break;
+        }
+        case SDL_FCC_0RGB: {
+            ff_format = AV_PIX_FMT_0RGB;
+            buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
+            opaque->planes = 1;
+            break;
+        }
         default:
             ALOGE("SDL_VoutFFmpeg_CreateOverlay(...): unknown format %.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
             goto fail;

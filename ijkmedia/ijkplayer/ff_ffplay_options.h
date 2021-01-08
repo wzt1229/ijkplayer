@@ -110,15 +110,17 @@ static const AVOption ffp_context_options[] = {
     { "fcc-i420",                       "", 0, OPTION_CONST(SDL_FCC_I420), .unit = "overlay-format" },
     { "fcc-yv12",                       "", 0, OPTION_CONST(SDL_FCC_YV12), .unit = "overlay-format" },
     { "fcc-nv12",                       "", 0, OPTION_CONST(SDL_FCC_NV12), .unit = "overlay-format" },
-    { "fcc-rgb565",                       "", 0, OPTION_CONST(SDL_FCC_RGB565), .unit = "overlay-format" },
-    { "fcc-bgr565",                       "", 0, OPTION_CONST(SDL_FCC_BGR565), .unit = "overlay-format" },
-    { "fcc-rgb24",                       "", 0, OPTION_CONST(SDL_FCC_RGB24), .unit = "overlay-format" },
+    { "fcc-rgb565",                     "", 0, OPTION_CONST(SDL_FCC_RGB565), .unit = "overlay-format" },
+    { "fcc-bgr565",                     "", 0, OPTION_CONST(SDL_FCC_BGR565), .unit = "overlay-format" },
+    { "fcc-rgb24",                      "", 0, OPTION_CONST(SDL_FCC_RGB24), .unit = "overlay-format" },
     { "fcc-bgr24",                      "", 0, OPTION_CONST(SDL_FCC_BGR24), .unit = "overlay-format" },
     { "fcc-rgba",                       "", 0, OPTION_CONST(SDL_FCC_RGBA), .unit = "overlay-format" },
     { "fcc-rgb0",                       "", 0, OPTION_CONST(SDL_FCC_RGB0), .unit = "overlay-format" },
     { "fcc-bgra",                       "", 0, OPTION_CONST(SDL_FCC_BGRA), .unit = "overlay-format" },
     { "fcc-bgr0",                       "", 0, OPTION_CONST(SDL_FCC_BGR0), .unit = "overlay-format" },
-
+    { "fcc-argb",                       "", 0, OPTION_CONST(SDL_FCC_ARGB), .unit = "overlay-format" },
+    { "fcc-0rgb",                       "", 0, OPTION_CONST(SDL_FCC_0RGB), .unit = "overlay-format" },
+    
     { "start-on-prepared",                  "automatically start playing on prepared",
         OPTION_OFFSET(start_on_prepared),   OPTION_INT(1, 0, 1) },
 

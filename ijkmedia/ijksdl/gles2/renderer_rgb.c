@@ -95,7 +95,7 @@ static GLsizei bgrx_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay
         return overlay->pitches[0] / 2;
     } else if (overlay->format == SDL_FCC_BGR24 || overlay->format == SDL_FCC_RGB24) {
         return overlay->pitches[0] / 3;
-    } else if (overlay->format == SDL_FCC_RGB0 || overlay->format == SDL_FCC_RGBA || overlay->format == SDL_FCC_BGRA || overlay->format == SDL_FCC_BGR0) {
+    } else if (overlay->format == SDL_FCC_RGB0 || overlay->format == SDL_FCC_RGBA || overlay->format == SDL_FCC_BGRA || overlay->format == SDL_FCC_BGR0 || overlay->format == SDL_FCC_ARGB || overlay->format == SDL_FCC_0RGB) {
         return overlay->pitches[0] / 4;
     } else {
         assert(0);
@@ -183,6 +183,8 @@ static GLboolean bgrx_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
         case SDL_FCC_RGBA:
         case SDL_FCC_BGRA:
         case SDL_FCC_BGR0:
+        case SDL_FCC_ARGB:
+        case SDL_FCC_0RGB:
         {
             int planes[1] = { 0 };
             int bpp = 1;
@@ -208,6 +210,10 @@ static GLboolean bgrx_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
             } else if (overlay->format == SDL_FCC_BGRA || overlay->format == SDL_FCC_BGR0) {
                 bpp = 4;
                 src_format = GL_BGRA;
+            } else if (overlay->format == SDL_FCC_ARGB || overlay->format == SDL_FCC_0RGB) {
+                //使用的是 argb 的 fsh
+                bpp = 4;
+                src_format = GL_RGBA;
             }
             const GLsizei widths[1] = { overlay->pitches[0] / bpp };
             const GLsizei heights[3] = { overlay->h };

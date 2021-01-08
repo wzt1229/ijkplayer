@@ -133,9 +133,12 @@
 //        [options setPlayerOptionValue:@"fcc-rgb0"          forKey:@"overlay-format"];
 //        [options setPlayerOptionValue:@"fcc-bgra"          forKey:@"overlay-format"];
 //        [options setPlayerOptionValue:@"fcc-bgr0"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-argb"          forKey:@"overlay-format"];
+        [options setPlayerOptionValue:@"fcc-0rgb"          forKey:@"overlay-format"];
 
+        
 //        [options setPlayerOptionValue:@"fcc-i420"          forKey:@"overlay-format"];
-        [options setPlayerOptionValue:@"fcc-nv12"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-nv12"          forKey:@"overlay-format"];
     }
     
     if (self.player) {

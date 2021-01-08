@@ -192,6 +192,10 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
         case SDL_FCC_BGR0:
             renderer = IJK_GL_Renderer_create_rgbx();
             break;
+        case SDL_FCC_ARGB:
+        case SDL_FCC_0RGB:
+            renderer = IJK_GL_Renderer_create_xrgb();
+            break;
         default:
             assert(0);
             break;

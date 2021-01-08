@@ -4192,6 +4192,8 @@ void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
         case SDL_FCC_RGB0:
         case SDL_FCC_BGRA:
         case SDL_FCC_BGR0:
+        case SDL_FCC_ARGB:
+        case SDL_FCC_0RGB:
             ffp->overlay_format = chroma_fourcc;
             break;
 #ifdef __APPLE__
