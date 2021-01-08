@@ -22,6 +22,7 @@
 #include "internal.h"
 #ifdef __APPLE__
 #include <TargetConditionals.h>
+#import <CoreVideo/CoreVideo.h>
 #endif
 
 static void IJK_GLES2_printProgramInfo(GLuint program)
@@ -154,7 +155,6 @@ fail:
     return NULL;
 }
 
-
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 {
     if (!overlay)
@@ -170,17 +170,25 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 #if TARGET_OS_OSX
     switch (overlay->format)
     {
+        case SDL_FCC__VTB:
+            if (overlay->ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || overlay->ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+                renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
+            } else if (overlay->ff_format == kCVPixelFormatType_32BGRA) {
+                renderer = IJK_GL_Renderer_create_rgbx();
+            } else if (overlay->ff_format == kCVPixelFormatType_24RGB) {
+                renderer = IJK_GL_Renderer_create_rgbx();
+            } else if (overlay->ff_format == kCVPixelFormatType_32ARGB) {
+                renderer = IJK_GL_Renderer_create_xrgb();
+            } else {
+                ALOGE("unknown pixformat!");
+                assert(0);
+            }
+            break;
         case SDL_FCC_I420:
             renderer = IJK_GL_Renderer_create_yuv420p();
             break;
         case SDL_FCC_NV12:
             renderer = IJK_GL_Renderer_create_yuv420sp();
-            break;
-        case SDL_FCC__VTB:
-//            renderer = IJK_GL_Renderer_create_rgbx();
-//            renderer = IJK_GL_Renderer_create_xrgb();
-//            renderer = IJK_GL_Renderer_create_yuv420p();
-            renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
             break;
         case SDL_FCC_RGB565:
         case SDL_FCC_BGR565:

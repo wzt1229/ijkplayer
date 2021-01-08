@@ -104,7 +104,7 @@ struct Ijk_VideoToolBox_Opaque {
 };
 
 static void vtbformat_destroy(VTBFormatDesc *fmt_desc);
-static int  vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar);
+static int  vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, int overlay_format);
 
 static const char *vtb_get_error_string(OSStatus status) {
     switch (status) {
@@ -422,7 +422,7 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
     VTDecompressionOutputCallbackRecord outputCallback;
     OSStatus status;
 
-    ret = vtbformat_init(&context->fmt_desc, context->codecpar);
+    ret = vtbformat_init(&context->fmt_desc, context->codecpar, ffp->overlay_format);
 
     if (ffp->vtb_max_frame_width > 0 && width > ffp->vtb_max_frame_width) {
         double w_scaler = (float)ffp->vtb_max_frame_width / width;
@@ -905,7 +905,7 @@ static void vtbformat_destroy(VTBFormatDesc *fmt_desc)
     fmt_desc->fmt_desc = NULL;
 }
 
-static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar)
+static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, int overlay_format)
 {
     int width           = codecpar->width;
     int height          = codecpar->height;
@@ -1036,27 +1036,29 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar)
     fmt_desc->max_ref_frames = FFMAX(fmt_desc->max_ref_frames, 2);
     fmt_desc->max_ref_frames = FFMIN(fmt_desc->max_ref_frames, 5);
     
-    int pixelFormatType = -1;
-    //video toolbox 不支持
-    pixelFormatType = kCVPixelFormatType_16LE565;
-    pixelFormatType = kCVPixelFormatType_16BE565;
-    pixelFormatType = kCVPixelFormatType_16LE555;
-    pixelFormatType = kCVPixelFormatType_24BGR;
-    pixelFormatType = kCVPixelFormatType_32RGBA;
-    pixelFormatType = kCVPixelFormatType_32ABGR;
+//    //video toolbox 不支持
+//    pixelFormatType = kCVPixelFormatType_16LE565;
+//    pixelFormatType = kCVPixelFormatType_16BE565;
+//    pixelFormatType = kCVPixelFormatType_16LE555;
+//    pixelFormatType = kCVPixelFormatType_24BGR;
+//    pixelFormatType = kCVPixelFormatType_32RGBA;
+//    pixelFormatType = kCVPixelFormatType_32ABGR;
     //支持
-    pixelFormatType = kCVPixelFormatType_24RGB;
-    pixelFormatType = kCVPixelFormatType_32ARGB;
-    pixelFormatType = kCVPixelFormatType_32BGRA;
-    
-    
-    bool fullRange = codecpar->color_range != AVCOL_RANGE_MPEG;
-    pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
-    //for AV_PIX_FMT_NV21: later will swap VU. we won't modify the avframe data, because the frame can be dispaly again!
-    
-    if (pixelFormatType != -1) {
-        fmt_desc->pixelBufferPixelFormat = pixelFormatType;
+    int pixelFormatType = -1;
+    if (overlay_format == SDL_FCC_VTB_BGRA) {
+        pixelFormatType = kCVPixelFormatType_32BGRA;
+    } else if (overlay_format == SDL_FCC_VTB_RGB24) {
+        pixelFormatType = kCVPixelFormatType_24RGB;
+    } else if (overlay_format == SDL_FCC_VTB_ARGB) {
+        pixelFormatType = kCVPixelFormatType_32ARGB;
+    } else {
+        bool fullRange = codecpar->color_range != AVCOL_RANGE_MPEG;
+        pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
     }
+    
+    assert(pixelFormatType != -1);
+    
+    fmt_desc->pixelBufferPixelFormat = pixelFormatType;
     
     ALOGI("m_max_ref_frames %d \n", fmt_desc->max_ref_frames);
 
@@ -1092,7 +1094,7 @@ Ijk_VideoToolBox_Opaque* videotoolbox_sync_create(FFPlayer* ffp, AVCodecContext*
     context_vtb->ffp = ffp;
     context_vtb->idr_based_identified = true;
 
-    ret = vtbformat_init(&context_vtb->fmt_desc, context_vtb->codecpar);
+    ret = vtbformat_init(&context_vtb->fmt_desc, context_vtb->codecpar, ffp->overlay_format);
     if (ret)
         goto fail;
     assert(context_vtb->fmt_desc.fmt_desc);

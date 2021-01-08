@@ -47,29 +47,34 @@
  */
 
 // YUV formats
-#define SDL_FCC_YV12    SDL_FOURCC('Y', 'V', '1', '2')  /**< bpp=12, Planar mode: Y + V + U  (3 planes) */
-#define SDL_FCC_IYUV    SDL_FOURCC('I', 'Y', 'U', 'V')  /**< bpp=12, Planar mode: Y + U + V  (3 planes) */
-#define SDL_FCC_I420    SDL_FOURCC('I', '4', '2', '0')  /**< bpp=12, Planar mode: Y + U + V  (3 planes) */
+#define SDL_FCC_YV12        SDL_FOURCC('Y', 'V', '1', '2')  /**< bpp=12, Planar mode: Y + V + U  (3 planes) */
+#define SDL_FCC_IYUV        SDL_FOURCC('I', 'Y', 'U', 'V')  /**< bpp=12, Planar mode: Y + U + V  (3 planes) */
+#define SDL_FCC_I420        SDL_FOURCC('I', '4', '2', '0')  /**< bpp=12, Planar mode: Y + U + V  (3 planes) */
 #define SDL_FCC_I444P10LE   SDL_FOURCC('I', '4', 'A', 'L')
 
-#define SDL_FCC_YUV2    SDL_FOURCC('Y', 'U', 'V', '2')  /**< bpp=16, Packed mode: Y0+U0+Y1+V0 (1 plane) */
-#define SDL_FCC_UYVY    SDL_FOURCC('U', 'Y', 'V', 'Y')  /**< bpp=16, Packed mode: U0+Y0+V0+Y1 (1 plane) */
-#define SDL_FCC_YVYU    SDL_FOURCC('Y', 'V', 'Y', 'U')  /**< bpp=16, Packed mode: Y0+V0+Y1+U0 (1 plane) */
+#define SDL_FCC_YUV2        SDL_FOURCC('Y', 'U', 'V', '2')  /**< bpp=16, Packed mode: Y0+U0+Y1+V0 (1 plane) */
+#define SDL_FCC_UYVY        SDL_FOURCC('U', 'Y', 'V', 'Y')  /**< bpp=16, Packed mode: U0+Y0+V0+Y1 (1 plane) */
+#define SDL_FCC_YVYU        SDL_FOURCC('Y', 'V', 'Y', 'U')  /**< bpp=16, Packed mode: Y0+V0+Y1+U0 (1 plane) */
 
-#define SDL_FCC_NV12    SDL_FOURCC('N', 'V', '1', '2')
+#define SDL_FCC_NV12        SDL_FOURCC('N', 'V', '1', '2')
 
 // RGB formats
-#define SDL_FCC_RGB565   SDL_FOURCC('R', 'G', 'B', 565)   /**< bpp=16, RGB565 */
+#define SDL_FCC_RGB565      SDL_FOURCC('R', 'G', 'B', 565)   /**< bpp=16, RGB565 */
 #warning TODO: my bmp not support bgr565!
-#define SDL_FCC_BGR565   SDL_FOURCC('B', 'G', 'R', 565)   /**< bpp=16, BGR565 */
-#define SDL_FCC_BGR24    SDL_FOURCC('B', 'G', 'R', 24)    /**< bpp=24,  BGR888*/
-#define SDL_FCC_RGB24    SDL_FOURCC('R', 'G', 'B', 24)    /**< bpp=24, RGB888 */
-#define SDL_FCC_RGB0     SDL_FOURCC('R', 'G', 'B', 0)     /**< bpp=32, RGBXRGBX */
-#define SDL_FCC_RGBA     SDL_FOURCC('R', 'G', 'B', 'A')   /**< bpp=32, RGBARGBA */
-#define SDL_FCC_BGR0     SDL_FOURCC('B', 'G', 'R', 0)     /**< bpp=32, BGRXBGRX */
-#define SDL_FCC_BGRA     SDL_FOURCC('B', 'G', 'R', 'A')   /**< bpp=32, BGRABGRA */
-#define SDL_FCC_ARGB     SDL_FOURCC('A', 'R', 'G', 'B')   /**< bpp=32, ARGBARGB */
-#define SDL_FCC_0RGB     SDL_FOURCC('0', 'R', 'G', 'B')   /**< bpp=32, XRGBXRGB */
+#define SDL_FCC_BGR565      SDL_FOURCC('B', 'G', 'R', 565)   /**< bpp=16, BGR565 */
+#define SDL_FCC_BGR24       SDL_FOURCC('B', 'G', 'R', 24)    /**< bpp=24,  BGR888*/
+#define SDL_FCC_RGB24       SDL_FOURCC('R', 'G', 'B', 24)    /**< bpp=24, RGB888 */
+#define SDL_FCC_RGB0        SDL_FOURCC('R', 'G', 'B', 0)     /**< bpp=32, RGBXRGBX */
+#define SDL_FCC_RGBA        SDL_FOURCC('R', 'G', 'B', 'A')   /**< bpp=32, RGBARGBA */
+#define SDL_FCC_BGR0        SDL_FOURCC('B', 'G', 'R', 0)     /**< bpp=32, BGRXBGRX */
+#define SDL_FCC_BGRA        SDL_FOURCC('B', 'G', 'R', 'A')   /**< bpp=32, BGRABGRA */
+#define SDL_FCC_ARGB        SDL_FOURCC('A', 'R', 'G', 'B')   /**< bpp=32, ARGBARGB */
+#define SDL_FCC_0RGB        SDL_FOURCC('0', 'R', 'G', 'B')   /**< bpp=32, XRGBXRGB */
+#define SDL_FCC_VTB_RGB24   SDL_FOURCC('V', 'T', 'R' + 'G' + 'B', 24)    /**< iOS VideoToolbox kCVPixelFormatType_24RGB */
+#define SDL_FCC_VTB_ARGB    SDL_FOURCC('V', 'T', 'A' + 'R' + 'G', 'B')    /**< iOS VideoToolbox kCVPixelFormatType_32ARGB */
+#define SDL_FCC_VTB_BGRA    SDL_FOURCC('V', 'T', 'B' + 'R' + 'G', 'A')    /**< iOS VideoToolbox kCVPixelFormatType_32BGRA */
+#define SDL_FCC_VTB_NV12    SDL_FOURCC('V', 'T', 'N' + 'V', 12)    /**< iOS VideoToolbox kCVPixelFormatType_24RGB */
+
 
 // opaque formats
 #define SDL_FCC__AMC    SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */

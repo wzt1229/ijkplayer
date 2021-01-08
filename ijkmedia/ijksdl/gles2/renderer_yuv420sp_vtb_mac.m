@@ -67,10 +67,6 @@ static GLboolean yuv420sp_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOv
 
     CVPixelBufferRef pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
     
-    int pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
-    if (pixel_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
-        printf("OK");
-    }
     assert(CVPixelBufferGetPlaneCount(pixel_buffer) == 2);
     
     int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);

@@ -110,10 +110,7 @@ static GLboolean yuv420p_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOve
             CVPixelBufferLockBaseAddress(pixel_buffer, 0);
             int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);
             int bufferWidth = (int) CVPixelBufferGetWidth(pixel_buffer);
-            int pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
-            if (pixel_format == kCVPixelFormatType_420YpCbCr8Planar) {
-                printf("OK");
-            }
+            
             for (int i = 0; i < planeCount; i ++) {
                 const GLubyte *pixel = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, i);
                 glBindTexture(GL_TEXTURE_2D, renderer->plane_textures[i]);

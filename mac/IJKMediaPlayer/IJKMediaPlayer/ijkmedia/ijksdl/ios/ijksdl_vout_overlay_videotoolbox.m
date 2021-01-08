@@ -94,6 +94,7 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
     }
     opaque->pixel_buffer = pixel_buffer;
     overlay->format = SDL_FCC__VTB;
+    overlay->ff_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
     overlay->planes = 2;
 
 #if 1
