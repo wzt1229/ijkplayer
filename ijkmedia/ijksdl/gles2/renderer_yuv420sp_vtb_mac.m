@@ -72,13 +72,12 @@ static GLboolean yuv420sp_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOv
     int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);
     int bufferWidth = (int) CVPixelBufferGetWidth(pixel_buffer);
     
-    const GLsizei widths[2] = { bufferWidth, bufferWidth / 2 };
+    const GLsizei widths[2]  = { bufferWidth, bufferWidth / 2 };
     const GLsizei heights[2] = { bufferHeight, bufferHeight / 2 };
     
     CVPixelBufferLockBaseAddress(pixel_buffer, 0);
     const GLubyte *pixel_y = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, 0);
     const GLubyte *pixel_uv = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, kCVPixelBufferLock_ReadOnly);
-    //const GLubyte *pixels[2]   = { overlay->pixels[0],  overlay->pixels[1] };
     const GLubyte *pixels[2]   = { pixel_y, pixel_uv };
     
     switch (overlay->format) {

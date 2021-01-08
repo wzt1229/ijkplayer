@@ -90,44 +90,6 @@ static GLboolean yuv420p_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOve
             planes[1] = 2;
             planes[2] = 1;
             break;
-        case SDL_FCC__VTB:
-        {
-            CVPixelBufferRef pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
-            if (!pixel_buffer) {
-                ALOGE("nil pixelBuffer in overlay\n");
-                return GL_FALSE;
-            }
-            
-            CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
-            
-            if (CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-                glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt601());
-            } else /* kCVImageBufferYCbCrMatrix_ITU_R_709_2 */ {
-                glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
-            }
-            
-            size_t planeCount = CVPixelBufferGetPlaneCount(pixel_buffer);
-            CVPixelBufferLockBaseAddress(pixel_buffer, 0);
-            int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);
-            int bufferWidth = (int) CVPixelBufferGetWidth(pixel_buffer);
-            
-            for (int i = 0; i < planeCount; i ++) {
-                const GLubyte *pixel = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, i);
-                glBindTexture(GL_TEXTURE_2D, renderer->plane_textures[i]);
-                //Using BGRA extension to pull in video frame data directly
-                glTexImage2D(GL_TEXTURE_2D,
-                             0,
-                             GL_LUMINANCE,
-                             bufferWidth,
-                             bufferHeight,
-                             0,
-                             GL_LUMINANCE,
-                             GL_UNSIGNED_BYTE,
-                             pixel);
-            }
-            CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
-            return GL_TRUE;
-        }
         default:
             ALOGE("[yuv420p] unexpected format %x\n", overlay->format);
             return GL_FALSE;
