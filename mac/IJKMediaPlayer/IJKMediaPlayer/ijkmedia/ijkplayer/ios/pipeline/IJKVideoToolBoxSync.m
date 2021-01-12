@@ -444,20 +444,19 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
                           kCVPixelBufferHeightKey, height);
     ///https://stackoverflow.com/questions/12976188/create-a-cvpixelbufferref-with-openglcompatibility
-    CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                          kCVPixelBufferOpenGLCompatibilityKey, NO);
-    CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                           kCVPixelBufferOpenGLTextureCacheCompatibilityKey, YES);
-    CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                           kCVPixelBufferMetalCompatibilityKey, NO);
-    CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                           kCVPixelBufferCGImageCompatibilityKey, YES);
-    CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                           kCVPixelBufferCGBitmapContextCompatibilityKey, NO);
-    
+    CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferOpenGLCompatibilityKey, YES);
+//    CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferIOSurfacePropertiesKey, YES);
+//    CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferOpenGLTextureCacheCompatibilityKey, YES);
+//    CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey, YES);
+//    CFDictionarySetBoolean(destinationPixelBufferAttributes,
+//                           kCVPixelBufferMetalCompatibilityKey, NO);
+//    CFDictionarySetBoolean(destinationPixelBufferAttributes,
+//                           kCVPixelBufferCGImageCompatibilityKey, NO);
+//    CFDictionarySetBoolean(destinationPixelBufferAttributes,
+//                           kCVPixelBufferCGBitmapContextCompatibilityKey, NO);
     
     outputCallback.decompressionOutputCallback = VTDecoderCallback;
-    outputCallback.decompressionOutputRefCon = context  ;
+    outputCallback.decompressionOutputRefCon = context;
     status = VTDecompressionSessionCreate(
                                           kCFAllocatorDefault,
                                           context->fmt_desc.fmt_desc,
@@ -1052,7 +1051,7 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
     } else if (overlay_format == SDL_FCC_VTB_ARGB) {
         pixelFormatType = kCVPixelFormatType_32ARGB;
     } else {
-        bool fullRange = codecpar->color_range != AVCOL_RANGE_MPEG;
+        bool fullRange = false;//codecpar->color_range != AVCOL_RANGE_MPEG;
         pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
     }
     

@@ -70,15 +70,15 @@
 #define SDL_FCC_BGRA        SDL_FOURCC('B', 'G', 'R', 'A')   /**< bpp=32, BGRABGRA */
 #define SDL_FCC_ARGB        SDL_FOURCC('A', 'R', 'G', 'B')   /**< bpp=32, ARGBARGB */
 #define SDL_FCC_0RGB        SDL_FOURCC('0', 'R', 'G', 'B')   /**< bpp=32, XRGBXRGB */
-#define SDL_FCC_VTB_RGB24   SDL_FOURCC('V', 'T', 'R' + 'G' + 'B', 24)    /**< iOS VideoToolbox kCVPixelFormatType_24RGB */
-#define SDL_FCC_VTB_ARGB    SDL_FOURCC('V', 'T', 'A' + 'R' + 'G', 'B')    /**< iOS VideoToolbox kCVPixelFormatType_32ARGB */
-#define SDL_FCC_VTB_BGRA    SDL_FOURCC('V', 'T', 'B' + 'R' + 'G', 'A')    /**< iOS VideoToolbox kCVPixelFormatType_32BGRA */
-#define SDL_FCC_VTB_NV12    SDL_FOURCC('V', 'T', 'N' + 'V', 12)    /**< iOS VideoToolbox kCVPixelFormatType_24RGB */
+#define SDL_FCC_VTB_RGB24   SDL_FOURCC('V', 'T', 'R' + 'G' + 'B', 24)       /**< Apple VideoToolbox kCVPixelFormatType_24RGB */
+#define SDL_FCC_VTB_ARGB    SDL_FOURCC('V', 'T', 'A' + 'R' + 'G', 'B')      /**< Apple VideoToolbox kCVPixelFormatType_32ARGB */
+#define SDL_FCC_VTB_BGRA    SDL_FOURCC('V', 'T', 'B' + 'R' + 'G', 'A')      /**< Apple VideoToolbox kCVPixelFormatType_32BGRA */
+#define SDL_FCC_VTB_NV12    SDL_FOURCC('V', 'T', 'N' + 'V', 12)             /**< Apple VideoToolbox kCVPixelFormatType_420YpCbCr8BiPlanar */
 
 
 // opaque formats
 #define SDL_FCC__AMC    SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */
-#define SDL_FCC__VTB    SDL_FOURCC('_', 'V', 'T', 'B')    /**< iOS VideoToolbox */
+#define SDL_FCC__VTB    SDL_FOURCC('_', 'V', 'T', 'B')    /**< Apple VideoToolbox */
 #define SDL_FCC__GLES2  SDL_FOURCC('_', 'E', 'S', '2')    /**< let Vout choose format */
 
 // undefine

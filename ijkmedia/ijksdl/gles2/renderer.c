@@ -188,7 +188,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
             renderer = IJK_GL_Renderer_create_yuv420p();
             break;
         case SDL_FCC_NV12:
-            renderer = IJK_GL_Renderer_create_yuv420sp();
+            renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
             break;
         case SDL_FCC_RGB565:
         case SDL_FCC_BGR565:

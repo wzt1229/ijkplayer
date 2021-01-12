@@ -86,6 +86,7 @@
     [IJKFFMoviePlayerController setLogReport:YES];
     [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
     
+    [self.playList addObject:[NSURL URLWithString:@"http://localhost/ffmpeg-test/11.mp4"]];
     [self.playList addObject:[NSURL URLWithString:@"ijkhttphook:http://localhost/ffmpeg-test/xp5.mp4"]];
     [self.playList addObject:[NSURL URLWithString:@"http://localhost/ffmpeg-test/xp5.mp4"]];
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
@@ -119,7 +120,7 @@
     if (isVideoToolBox) {
 //        [options setPlayerOptionValue:@"fcc-vtb-RGB24"         forKey:@"overlay-format"];
 //        [options setPlayerOptionValue:@"fcc-vtb-ARGB"          forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-vtb-BGRA"          forKey:@"overlay-format"];
+        [options setPlayerOptionValue:@"fcc-vtb-BGRA"          forKey:@"overlay-format"];
         //default is NV12 for videotoolbox
 //        [options setPlayerOptionValue:@"fcc-vtb-NV12"          forKey:@"overlay-format"];
         [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];

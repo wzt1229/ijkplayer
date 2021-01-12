@@ -31,13 +31,19 @@
 #endif
 #endif
 #include "ijksdl_vout_overlay_videotoolbox.h"
+#include "renderer_pixfmt.h"
+
+#define RBG_REDNER_NORMAL 1
+#define RBG_REDNER_FAST_UPLOAD 2
+#define RBG_REDNER_IO_SURFACE  4
+
+#define RBG_REDNER_TYPE RBG_REDNER_NORMAL
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
     CVOpenGLTextureCacheRef cv_texture_cache;
-    CVOpenGLTextureRef      cv_texture[1];
-
-    CFTypeRef                 color_attachments;
+    CVOpenGLTextureRef      rgb_texture;
+    CFTypeRef               color_attachments;
 } IJK_GL_Renderer_Opaque;
 
 static GLboolean rgb_use(IJK_GLES2_Renderer *renderer)
@@ -46,25 +52,20 @@ static GLboolean rgb_use(IJK_GLES2_Renderer *renderer)
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
-    
+
+#if RBG_REDNER_TYPE == RBG_REDNER_NORMAL || RBG_REDNER_TYPE == RBG_REDNER_IO_SURFACE
     if (0 == renderer->plane_textures[0])
         glGenTextures(1, renderer->plane_textures);
+#endif
     
     for (int i = 0; i < 1; ++i) {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, renderer->plane_textures[i]);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        
         glUniform1i(renderer->us2_sampler[i], i);
     }
     
     return GL_TRUE;
 }
 
+#if RBG_REDNER_TYPE == RBG_REDNER_FAST_UPLOAD
 static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
@@ -72,17 +73,16 @@ static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 
     IJK_GL_Renderer_Opaque *opaque = renderer->opaque;
 
-    for (int i = 0; i < 1; ++i) {
-        if (opaque->cv_texture[i]) {
-            CFRelease(opaque->cv_texture[i]);
-            opaque->cv_texture[i] = nil;
-        }
+    if (opaque->rgb_texture) {
+        CFRelease(opaque->rgb_texture);
+        opaque->rgb_texture = nil;
     }
 
     // Periodic texture cache flush every frame
     if (opaque->cv_texture_cache)
         CVOpenGLTextureCacheFlush(opaque->cv_texture_cache, 0);
 }
+#endif
 
 static GLsizei bgrx_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
@@ -103,6 +103,147 @@ static GLsizei bgrx_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay
     return 0;
 }
 
+#if RBG_REDNER_TYPE == RBG_REDNER_IO_SURFACE
+static int upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
+{
+    IOSurfaceRef surface  = CVPixelBufferGetIOSurface(pixel_buffer);
+    
+    if (!surface) {
+        printf("CVPixelBuffer has no IOSurface\n");
+        return -1;
+    }
+    GLsizei w = (GLsizei)IOSurfaceGetWidth(surface);
+    GLsizei h = (GLsizei)IOSurfaceGetHeight(surface);
+
+    uint32_t cvpixfmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
+    struct vt_format *f = vt_get_gl_format(cvpixfmt);
+    if (!f) {
+        printf("CVPixelBuffer has unsupported format type\n");
+        return -1;
+    }
+
+    const bool planar = CVPixelBufferIsPlanar(pixel_buffer);
+    const int planes  = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+    assert(planar && planes == f->planes || f->planes == 1);
+//#define GL_TEXTURE_RECTANGLE              0x84F5
+    GLenum gl_target = GL_TEXTURE_RECTANGLE_ARB;
+    glBindTexture(gl_target, renderer->plane_textures[0]);
+
+    CGLError err = CGLTexImageIOSurface2D(
+        CGLGetCurrentContext(), gl_target,
+        f->gl[0].gl_internal_format,
+        w,
+        h,
+        f->gl[0].gl_format, f->gl[0].gl_type, surface, 0);
+
+    if (err != kCGLNoError)
+        printf("error creating IOSurface texture for plane %d: %s\n",
+               0, CGLErrorString(err));
+
+//        gl->BindTexture(gl_target, 0);
+//    glBindTexture(gl_target, 0);
+            
+//
+//    GLuint format = GL_BGRA;
+//    GLuint type = GL_UNSIGNED_INT_8_8_8_8_REV;
+//    GLuint internalFormat = GL_RGBA;
+//    CGLContextObj context = CGLGetCurrentContext();
+//    if (!context)
+//        return;
+//
+////    GLint prevTexture;
+////    glGetIntegerv(GL_TEXTURE_RECTANGLE_ARB, &prevTexture);
+//
+//    CGLError err = CGLTexImageIOSurface2D(CGLGetCurrentContext(), GL_TEXTURE_RECTANGLE_ARB, internalFormat, w, h, format, type, surface, 0);
+//    if (err != kCGLNoError) {
+//        ALOGE("error creating IOSurface texture at plane %d: %s\n", 0, CGLErrorString(err));
+//    }
+//
+//    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, renderer->plane_textures[0]);
+    
+//    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, prevTexture);
+    return 0;
+}
+#endif
+
+static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+{
+    CVPixelBufferRef pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
+    
+    if (!pixel_buffer) {
+        ALOGE("nil pixelBuffer in overlay\n");
+        return GL_FALSE;
+    }
+    
+    assert(kCVPixelFormatType_32BGRA == CVPixelBufferGetPixelFormatType(pixel_buffer));
+    
+    CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
+    
+    if (CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
+        glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt601());
+    } else /* kCVImageBufferYCbCrMatrix_ITU_R_709_2 */ {
+        glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
+    }
+    glActiveTexture(GL_TEXTURE0);
+    
+#if RBG_REDNER_TYPE == RBG_REDNER_FAST_UPLOAD
+    IJK_GL_Renderer_Opaque *opaque = renderer->opaque;
+    yuv420sp_vtb_clean_textures(renderer);
+//            CVPixelBufferLockBaseAddress(pixel_buffer,kCVPixelBufferLock_ReadOnly);
+    CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, opaque->cv_texture_cache, pixel_buffer, NULL, &opaque->rgb_texture);
+//            CVPixelBufferUnlockBaseAddress(pixel_buffer,kCVPixelBufferLock_ReadOnly);
+    if (kCVReturnSuccess != err) {
+        printf("CreateTextureFromImage:%d",err);
+        return GL_FALSE;
+    }
+    
+    glBindTexture(CVOpenGLTextureGetTarget(opaque->rgb_texture), CVOpenGLTextureGetName(opaque->rgb_texture));
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#elif RBG_REDNER_TYPE == RBG_REDNER_IO_SURFACE
+    upload_texture_use_IOSurface(pixel_buffer, renderer);
+#else
+    
+    CVPixelBufferLockBaseAddress(pixel_buffer, 0);
+    
+    const GLubyte *pixel = CVPixelBufferGetBaseAddress(pixel_buffer);
+    
+    int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);
+    int bufferWidth  = (int) CVPixelBufferGetWidth(pixel_buffer);
+
+    GLenum src_format = 0;
+    int src_type = GL_UNSIGNED_BYTE;
+    int pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
+    if (pixel_format == kCVPixelFormatType_32BGRA) {
+        src_format = GL_BGRA;
+    } else if (pixel_format == kCVPixelFormatType_24RGB) {
+        src_format = GL_RGB;
+    } else if (pixel_format == kCVPixelFormatType_32ARGB) {
+        //使用的是 argb 的 fsh
+        src_format = GL_RGBA;
+    }
+    //Using BGRA extension to pull in video frame data directly
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA,
+                 bufferWidth,
+                 bufferHeight,
+                 0,
+                 src_format,
+                 src_type,
+                 pixel);
+    CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#endif
+    return GL_TRUE;
+}
+
 static GLboolean bgrx_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
     if (!renderer || !overlay)
@@ -110,71 +251,7 @@ static GLboolean bgrx_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     
     switch (overlay->format) {
         case SDL_FCC__VTB:
-        {
-            CVPixelBufferRef pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
-            if (!pixel_buffer) {
-                ALOGE("nil pixelBuffer in overlay\n");
-                return GL_FALSE;
-            }
-            
-            CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
-            
-            if (CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-                glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt601());
-            } else /* kCVImageBufferYCbCrMatrix_ITU_R_709_2 */ {
-                glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
-            }
-            yuv420sp_vtb_clean_textures(renderer);
-
-            IJK_GL_Renderer_Opaque *opaque = renderer->opaque;
-            
-            CVPixelBufferLockBaseAddress(pixel_buffer, 0);
-            int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);
-            int bufferWidth = (int) CVPixelBufferGetWidth(pixel_buffer);
-
-            const GLubyte *pixel = CVPixelBufferGetBaseAddress(pixel_buffer);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, CVOpenGLTextureGetName(opaque->cv_texture[0]));
-            
-            GLenum src_format = 0;
-            int src_type = GL_UNSIGNED_BYTE;
-            int pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
-            if (pixel_format == kCVPixelFormatType_32BGRA) {
-                src_format = GL_BGRA;
-            } else if (pixel_format == kCVPixelFormatType_24RGB) {
-                src_format = GL_RGB;
-            } else if (pixel_format == kCVPixelFormatType_32ARGB) {
-                //使用的是 argb 的 fsh 
-                src_format = GL_RGBA;
-            }
-            
-            //Using BGRA extension to pull in video frame data directly
-            glTexImage2D(GL_TEXTURE_2D,
-                         0,
-                         GL_RGBA,
-                         bufferWidth,
-                         bufferHeight,
-                         0,
-                         src_format,
-                         src_type,
-                         pixel);
-            
-//            CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, opaque->cv_texture_cache, pixel_buffer, NULL, &opaque->cv_texture[0]);
-
-//            if (kCVReturnSuccess != err) {
-//                printf("CreateTextureFromImage:%d",err);
-//            }
-            
-            CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
-            
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            
-            return GL_TRUE;
-        }
-            break;
+            return upload_vtp_Texture(renderer, overlay);
         case SDL_FCC_RGB565:
         case SDL_FCC_BGR565:
         case SDL_FCC_BGR24:
@@ -260,14 +337,18 @@ static IJK_GLES2_Renderer *IJK_GL_Renderer_create_xgbx(const char *fsh)
     renderer->opaque = calloc(1, sizeof(IJK_GL_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;
-    CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
+#if RBG_REDNER_TYPE == RBG_REDNER_FAST_UPLOAD
     CGLContextObj context = CGLGetCurrentContext();
+    printf("CGLContextObj2:%p",context);
+    CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
+    
     CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault, NULL, context, cglPixelFormat, NULL, &renderer->opaque->cv_texture_cache);
     if (err || renderer->opaque->cv_texture_cache == nil) {
         ALOGE("Error at CVOpenGLESTextureCacheCreate %d\n", err);
         goto fail;
     }
-
+#endif
+    
     renderer->opaque->color_attachments = CFRetain(kCVImageBufferYCbCrMatrix_ITU_R_709_2);
     
     return renderer;

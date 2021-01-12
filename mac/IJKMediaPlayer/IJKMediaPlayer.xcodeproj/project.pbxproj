@@ -162,7 +162,6 @@
 		DD050DC025A4015700F01E2F /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD050DBE25A4015700F01E2F /* libssl.a */; };
 		DD050DC125A4015700F01E2F /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD050DBF25A4015700F01E2F /* libcrypto.a */; };
 		DD050FD925A54D8A00F01E2F /* renderer_yuv420p_mac.c in Sources */ = {isa = PBXBuildFile; fileRef = DD050FD625A54D8A00F01E2F /* renderer_yuv420p_mac.c */; };
-		DD05101125A564D800F01E2F /* renderer_yuv420sp_mac.c in Sources */ = {isa = PBXBuildFile; fileRef = DD05101025A564D800F01E2F /* renderer_yuv420sp_mac.c */; };
 		DD1B343022CA0A9700022FCA /* yuv420p.fsh.c in Sources */ = {isa = PBXBuildFile; fileRef = DD1B342F22CA0A9700022FCA /* yuv420p.fsh.c */; };
 		DD1B343722CA0B4400022FCA /* mvp.vsh.c in Sources */ = {isa = PBXBuildFile; fileRef = DD1B343622CA0B4400022FCA /* mvp.vsh.c */; };
 		DD1B343C22CB2A6800022FCA /* renderer_yuv420sp_vtb_mac.m in Sources */ = {isa = PBXBuildFile; fileRef = DD1B343B22CB2A6800022FCA /* renderer_yuv420sp_vtb_mac.m */; };
@@ -414,7 +413,6 @@
 		DD050DBE25A4015700F01E2F /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../build/universal/lib/libssl.a; sourceTree = "<group>"; };
 		DD050DBF25A4015700F01E2F /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../build/universal/lib/libcrypto.a; sourceTree = "<group>"; };
 		DD050FD625A54D8A00F01E2F /* renderer_yuv420p_mac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = renderer_yuv420p_mac.c; sourceTree = "<group>"; };
-		DD05101025A564D800F01E2F /* renderer_yuv420sp_mac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = renderer_yuv420sp_mac.c; sourceTree = "<group>"; };
 		DD1B342F22CA0A9700022FCA /* yuv420p.fsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = yuv420p.fsh.c; sourceTree = "<group>"; };
 		DD1B343622CA0B4400022FCA /* mvp.vsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mvp.vsh.c; sourceTree = "<group>"; };
 		DD1B343B22CB2A6800022FCA /* renderer_yuv420sp_vtb_mac.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = renderer_yuv420sp_vtb_mac.m; sourceTree = "<group>"; };
@@ -438,6 +436,7 @@
 		DD9B13F722C24B82002D1D79 /* IJKVideoToolBox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJKVideoToolBox.m; sourceTree = "<group>"; };
 		DD9B13F822C24B82002D1D79 /* ijkplayer_ios.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ijkplayer_ios.m; sourceTree = "<group>"; };
 		DD9B13FA22C24B82002D1D79 /* ijkplayer_ios.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ijkplayer_ios.h; sourceTree = "<group>"; };
+		DDDC566725AD9748002EF8C0 /* renderer_pixfmt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = renderer_pixfmt.h; sourceTree = "<group>"; };
 		E607FFDE1B7B60F9005F11A6 /* IJKDeviceModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJKDeviceModel.h; path = IJKMediaPlayer/IJKDeviceModel.h; sourceTree = "<group>"; };
 		E607FFDF1B7B60F9005F11A6 /* IJKDeviceModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJKDeviceModel.m; path = IJKMediaPlayer/IJKDeviceModel.m; sourceTree = "<group>"; };
 		E62139BC180FA89A00553533 /* IJKFFOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKFFOptions.h; sourceTree = "<group>"; };
@@ -1021,12 +1020,12 @@
 				E6C459881C7030B6004831EC /* fsh */,
 				E6C4598B1C7030B6004831EC /* internal.h */,
 				E6C459BE1C708CAF004831EC /* renderer_rgb.c */,
+				DDDC566725AD9748002EF8C0 /* renderer_pixfmt.h */,
 				DD050FD625A54D8A00F01E2F /* renderer_yuv420p_mac.c */,
 				E6C4598D1C7030B6004831EC /* renderer_yuv420p.c */,
 				E6E1B9A71C741F72000C6C72 /* renderer_yuv420sp_vtb.m */,
 				DD1B343B22CB2A6800022FCA /* renderer_yuv420sp_vtb_mac.m */,
 				E6C459CA1C70967F004831EC /* renderer_yuv420sp.c */,
-				DD05101025A564D800F01E2F /* renderer_yuv420sp_mac.c */,
 				E6C4598E1C7030B6004831EC /* renderer_yuv444p10le.c */,
 				E6C4598C1C7030B6004831EC /* renderer.c */,
 				E6C4598F1C7030B6004831EC /* shader.c */,
@@ -1574,7 +1573,6 @@
 				DD5D67DE22C9EAE400A421BF /* rgb.fsh.c in Sources */,
 				DD9B132F22C224BC002D1D79 /* IJKFFMoviePlayerController.m in Sources */,
 				DD9B133022C224BC002D1D79 /* IJKNotificationManager.m in Sources */,
-				DD05101125A564D800F01E2F /* renderer_yuv420sp_mac.c in Sources */,
 				DD9B133122C224BC002D1D79 /* IJKMediaModule.m in Sources */,
 				DD9B140122C24B82002D1D79 /* IJKVideoToolBoxSync.m in Sources */,
 				DD9B133222C224BC002D1D79 /* ff_cmdutils.c in Sources */,
