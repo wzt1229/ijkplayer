@@ -89,9 +89,7 @@ static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 }
 #endif
 
-static void upload_texture_normal(SDL_VoutOverlay *overlay, IJK_GLES2_Renderer *renderer, const GLubyte *pixels[2]) {
-    const GLsizei widths[2]    = { overlay->pitches[0], overlay->pitches[1] / 2 };
-    const GLsizei heights[2]   = { overlay->h,          overlay->h / 2 };
+static void upload_texture_normal(IJK_GLES2_Renderer *renderer, const GLubyte *pixels[2], const GLsizei widths[2], const GLsizei heights[2]) {
     
     assert(NULL != *pixels);
     
@@ -226,10 +224,14 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
 #if NV12_REDNER_TYPE == NV12_REDNER_FAST_UPLOAD
     upload_texture_use_Cache(opaque, pixel_buffer, renderer);
 #elif NV12_REDNER_TYPE == NV12_REDNER_NORMAL
+    
+    const GLsizei widths[2]    = { overlay->pitches[0], overlay->pitches[1] };
+    const GLsizei heights[2]   = { overlay->h,          overlay->h/2.0 };
+    
     CVPixelBufferLockBaseAddress(pixel_buffer, 0);
     GLubyte * y = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, 0);
     GLubyte * uv = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, 1);
-    upload_texture_normal(overlay, renderer, (const GLubyte *[2]){y, uv});
+    upload_texture_normal(renderer, (const GLubyte *[2]){y, uv},widths,heights);
     CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
 #else
     upload_texture_use_IOSurface(pixel_buffer, renderer);
@@ -239,7 +241,10 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
 
 static GLboolean upload_soft_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
-    upload_texture_normal(overlay, renderer, (const GLubyte *[2]){ overlay->pixels[0], overlay->pixels[1]});
+    const GLsizei widths[2]    = { overlay->pitches[0], overlay->pitches[1]/2.0 };
+    const GLsizei heights[2]   = { overlay->h,          overlay->h/2.0 };
+    
+    upload_texture_normal(renderer, (const GLubyte *[2]){ overlay->pixels[0], overlay->pixels[1]},widths,heights);
     return GL_TRUE;
 }
 
