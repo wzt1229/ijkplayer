@@ -119,19 +119,23 @@ static struct vt_format vt_formats[] = {
         .imgfmt = IMGFMT_NV12,
         .planes = 2,
         .gl = {
-            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
-            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG } ,
+//            { GL_RED, GL_UNSIGNED_BYTE, GL_R8 },
+//            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG8 } ,
+//            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+//            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG } ,
+              { GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_LUMINANCE },
+              { GL_LUMINANCE_ALPHA,  GL_UNSIGNED_BYTE, GL_LUMINANCE_ALPHA } ,
         }
     },
-    {
-        .cvpixfmt = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange,
-        .imgfmt = IMGFMT_NV12,
-        .planes = 2,
-        .gl = {
-            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
-            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG } ,
-        }
-    },
+//    {
+//        .cvpixfmt = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange,
+//        .imgfmt = IMGFMT_NV12,
+//        .planes = 2,
+//        .gl = {
+//            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+//            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG } ,
+//        }
+//    },
 
     {
         .cvpixfmt = kCVPixelFormatType_422YpCbCr8,

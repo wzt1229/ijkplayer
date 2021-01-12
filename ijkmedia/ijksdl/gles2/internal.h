@@ -85,10 +85,12 @@ void IJK_GLES2_loadOrtho(IJK_GLES_Matrix *matrix, GLfloat left, GLfloat right, G
 
 const char *IJK_GLES2_getFragmentShader_rgb();
 const char *IJK_GLES2_getFragmentShader_argb();
+const char *IJK_GLES2_getFragmentShader_rect_rgb();
 const char *IJK_GLES2_getVertexShader_default();
 #if TARGET_OS_OSX
 const char *IJK_GL_getFragmentShader_yuv420p();
 const char *IJK_GL_getFragmentShader_yuv420sp();
+const char *IJK_GL_getFragmentShader_yuv420sp_rect();
 #else
 const char *IJK_GLES2_getFragmentShader_yuv420p();
 const char *IJK_GLES2_getFragmentShader_yuv444p10le();

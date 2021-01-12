@@ -43,7 +43,7 @@ static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
 {
     ALOGI("use render yuv420sp_vtb\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
+    glEnable(GL_TEXTURE_RECTANGLE_ARB);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
 
 #if NV12_REDNER_TYPE == NV12_REDNER_NORMAL || NV12_REDNER_TYPE == NV12_REDNER_IO_SURFACE
@@ -138,19 +138,31 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
     for (int i = 0; i < 2; i++) {
         GLsizei w = (GLsizei)IOSurfaceGetWidthOfPlane(surface, i);
         GLsizei h = (GLsizei)IOSurfaceGetHeightOfPlane(surface, i);
+        
+        glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(gl_target, renderer->plane_textures[i]);
         
-        struct vt_gl_plane_format plane_format = f->gl[0];
-        CGLError err = CGLTexImageIOSurface2D(
-            CGLGetCurrentContext(), gl_target,
+        struct vt_gl_plane_format plane_format = f->gl[i];
+        CGLError err = CGLTexImageIOSurface2D(CGLGetCurrentContext(),
+                                              gl_target,
                                               plane_format.gl_internal_format,
-            w,
-            h,
-                                              plane_format.gl_format, plane_format.gl_type, surface, i);
+                                              w,
+                                              h,
+                                              plane_format.gl_format,
+                                              plane_format.gl_type,
+                                              surface,
+                                              i);
 
-        if (err != kCGLNoError)
+        if (err != kCGLNoError) {
             printf("error creating IOSurface texture for plane %d: %s\n",
                    0, CGLErrorString(err));
+            return GL_FALSE;
+        } else {
+            glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
     }
     return GL_TRUE;
 }
@@ -291,7 +303,11 @@ static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay)
 {
     ALOGI("create render yuv420sp_vtb\n");
+#if NV12_REDNER_TYPE != NV12_REDNER_NORMAL
+    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp_rect());
+#else
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
+#endif
     if (!renderer)
         goto fail;
 

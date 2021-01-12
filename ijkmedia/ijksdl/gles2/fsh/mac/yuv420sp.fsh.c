@@ -35,7 +35,26 @@ static const char g_shader[] = IJK_GLES_STRING(
         yuv.x  = (texture2D(us2_SamplerX,  vv2_Texcoord).r  - (16.0 / 255.0));
         yuv.yz = (texture2D(us2_SamplerY,  vv2_Texcoord).rg - vec2(0.5, 0.5));
         rgb = um3_ColorConversion * yuv;
-        // test rgb = vec3(0,1,1);
+//        rgb = vec3(0,1,1);
+        gl_FragColor = vec4(rgb, 1);
+    }
+);
+
+static const char g_shader_rect[] = IJK_GLES_STRING(
+    varying vec2 vv2_Texcoord;
+    uniform mat3 um3_ColorConversion;
+    uniform sampler2DRect us2_SamplerX;
+    uniform sampler2DRect us2_SamplerY;
+
+    void main()
+    {
+        vec3 yuv;
+        vec3 rgb;
+
+        yuv.x  = (texture2DRect(us2_SamplerX,  vv2_Texcoord).r  - (16.0 / 255.0));
+        yuv.yz = (texture2DRect(us2_SamplerY,  vv2_Texcoord).rg - vec2(0.5, 0.5));
+        rgb = um3_ColorConversion * yuv;
+//        rgb = vec3(0,1,1);
         gl_FragColor = vec4(rgb, 1);
     }
 );
@@ -43,4 +62,9 @@ static const char g_shader[] = IJK_GLES_STRING(
 const char *IJK_GL_getFragmentShader_yuv420sp()
 {
     return g_shader;
+}
+
+const char *IJK_GL_getFragmentShader_yuv420sp_rect()
+{
+    return g_shader_rect;
 }

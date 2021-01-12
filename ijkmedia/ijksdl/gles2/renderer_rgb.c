@@ -33,6 +33,8 @@
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #include "renderer_pixfmt.h"
 
+//https://stackoverflow.com/questions/11361583/gl-texture-rectangle-arb/11363905
+
 #define RBG_REDNER_NORMAL 1
 #define RBG_REDNER_FAST_UPLOAD 2
 #define RBG_REDNER_IO_SURFACE  4
@@ -50,7 +52,8 @@ static GLboolean rgb_use(IJK_GLES2_Renderer *renderer)
 {
     ALOGI("use render rgb\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_TEXTURE_RECTANGLE_ARB);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
 
 #if RBG_REDNER_TYPE == RBG_REDNER_NORMAL || RBG_REDNER_TYPE == RBG_REDNER_IO_SURFACE
@@ -104,13 +107,13 @@ static GLsizei bgrx_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay
 }
 
 #if RBG_REDNER_TYPE == RBG_REDNER_IO_SURFACE
-static int upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
+static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
 {
-    IOSurfaceRef surface  = CVPixelBufferGetIOSurface(pixel_buffer);
+    IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
     
     if (!surface) {
         printf("CVPixelBuffer has no IOSurface\n");
-        return -1;
+        return GL_FALSE;
     }
     GLsizei w = (GLsizei)IOSurfaceGetWidth(surface);
     GLsizei h = (GLsizei)IOSurfaceGetHeight(surface);
@@ -119,7 +122,7 @@ static int upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_
     struct vt_format *f = vt_get_gl_format(cvpixfmt);
     if (!f) {
         printf("CVPixelBuffer has unsupported format type\n");
-        return -1;
+        return GL_FALSE;
     }
 
     const bool planar = CVPixelBufferIsPlanar(pixel_buffer);
@@ -128,18 +131,29 @@ static int upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_
 //#define GL_TEXTURE_RECTANGLE              0x84F5
     GLenum gl_target = GL_TEXTURE_RECTANGLE_ARB;
     glBindTexture(gl_target, renderer->plane_textures[0]);
-
-    CGLError err = CGLTexImageIOSurface2D(
-        CGLGetCurrentContext(), gl_target,
-        f->gl[0].gl_internal_format,
-        w,
-        h,
-        f->gl[0].gl_format, f->gl[0].gl_type, surface, 0);
-
-    if (err != kCGLNoError)
+    CVPixelBufferLockBaseAddress(pixel_buffer, 0);
+    const GLvoid *pixels = CVPixelBufferGetBaseAddress(pixel_buffer);
+    glTexImage2D(gl_target, 0, f->gl[0].gl_internal_format, w, h, 0, f->gl[0].gl_format, f->gl[0].gl_type, pixels);
+    CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
+//    CGLError err = CGLTexImageIOSurface2D(
+//        CGLGetCurrentContext(), gl_target,
+//        f->gl[0].gl_internal_format,
+//        w,
+//        h,
+//        f->gl[0].gl_format, f->gl[0].gl_type, surface, 0);
+    CGLError err = kCGLNoError;
+    if (err != kCGLNoError) {
         printf("error creating IOSurface texture for plane %d: %s\n",
                0, CGLErrorString(err));
-
+        return GL_FALSE;
+    } else {
+        glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        return GL_TRUE;
+    }
+        
 //        gl->BindTexture(gl_target, 0);
 //    glBindTexture(gl_target, 0);
             
@@ -162,7 +176,6 @@ static int upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_
 //    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, renderer->plane_textures[0]);
     
 //    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, prevTexture);
-    return 0;
 }
 #endif
 
@@ -203,8 +216,9 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    return GL_TRUE;
 #elif RBG_REDNER_TYPE == RBG_REDNER_IO_SURFACE
-    upload_texture_use_IOSurface(pixel_buffer, renderer);
+    return upload_texture_use_IOSurface(pixel_buffer, renderer);
 #else
     
     CVPixelBufferLockBaseAddress(pixel_buffer, 0);
@@ -240,8 +254,8 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#endif
     return GL_TRUE;
+#endif
 }
 
 static GLboolean bgrx_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
@@ -364,5 +378,9 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb()
 
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx()
 {
+#if RBG_REDNER_TYPE != RBG_REDNER_NORMAL
+    return IJK_GL_Renderer_create_xgbx(IJK_GLES2_getFragmentShader_rect_rgb());
+#else
     return IJK_GL_Renderer_create_xgbx(IJK_GLES2_getFragmentShader_rgb());
+#endif
 }
