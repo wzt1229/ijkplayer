@@ -21,29 +21,37 @@
 
 #include "internal.h"
 #import <OpenGL/OpenGL.h>
+#import <OpenGL/gl3.h>
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #include "renderer_pixfmt.h"
 
-#define NV12_RENDER_NORMAL 1
+#define NV12_RENDER_NORMAL      1
 #define NV12_RENDER_FAST_UPLOAD 2
 #define NV12_RENDER_IO_SURFACE  4
 
-#define NV12_RENDER_TYPE NV12_RENDER_NORMAL
+#define NV12_RENDER_TYPE NV12_RENDER_IO_SURFACE
+
+#if NV12_RENDER_TYPE != NV12_RENDER_NORMAL
+#define GL_TEXTURE_TARGET GL_TEXTURE_RECTANGLE
+#else
+#define GL_TEXTURE_TARGET GL_TEXTURE_2D
+#endif
+
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
     CVOpenGLTextureCacheRef cv_texture_cache;
     CVOpenGLTextureRef      nv12_texture[2];
-
     CFTypeRef               color_attachments;
+    GLint                   textureDimensionIndex;
 } IJK_GLES2_Renderer_Opaque;
 
 static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
 {
     ALOGI("use render yuv420sp_vtb\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glEnable(GL_TEXTURE_RECTANGLE_ARB);
+    glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
 
 #if NV12_RENDER_TYPE == NV12_RENDER_NORMAL || NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
@@ -93,11 +101,12 @@ static void upload_texture_normal(IJK_GLES2_Renderer *renderer, const GLubyte *p
     
     assert(NULL != *pixels);
     
+    GLenum gl_target = GL_TEXTURE_TARGET;
     for (int i = 0; i < 2; i++) {
         GLenum format = i == 0 ? GL_RED : GL_RG;
         glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, renderer->plane_textures[i]);
-        glTexImage2D(GL_TEXTURE_2D,
+        glBindTexture(gl_target, renderer->plane_textures[i]);
+        glTexImage2D(gl_target,
                      0,
                      format,
                      widths[i],
@@ -106,10 +115,10 @@ static void upload_texture_normal(IJK_GLES2_Renderer *renderer, const GLubyte *p
                      format,
                      GL_UNSIGNED_BYTE,
                      pixels[i]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 }
 
@@ -125,20 +134,20 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
     uint32_t cvpixfmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
     struct vt_format *f = vt_get_gl_format(cvpixfmt);
     if (!f) {
-        printf("CVPixelBuffer has unsupported format type\n");
+        ALOGE("CVPixelBuffer has unsupported format type\n");
         return GL_FALSE;
     }
 
     const bool planar = CVPixelBufferIsPlanar(pixel_buffer);
     const int planes  = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
     assert(planar && planes == f->planes || f->planes == 1);
-//#define GL_TEXTURE_RECTANGLE              0x84F5
-    GLenum gl_target = GL_TEXTURE_RECTANGLE_ARB;
+
+    GLenum gl_target = GL_TEXTURE_TARGET;
     
     for (int i = 0; i < 2; i++) {
         GLsizei w = (GLsizei)IOSurfaceGetWidthOfPlane(surface, i);
         GLsizei h = (GLsizei)IOSurfaceGetHeightOfPlane(surface, i);
-        
+        glUniform2f(renderer->opaque->textureDimensionIndex, w, h);
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(gl_target, renderer->plane_textures[i]);
         
@@ -154,7 +163,7 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
                                               i);
 
         if (err != kCGLNoError) {
-            printf("error creating IOSurface texture for plane %d: %s\n",
+            ALOGE("error creating IOSurface texture for plane %d: %s\n",
                    0, CGLErrorString(err));
             return GL_FALSE;
         } else {
@@ -178,6 +187,8 @@ static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVP
     
     yuv420sp_vtb_clean_textures(renderer);
     
+    GLenum gl_target = GL_TEXTURE_TARGET;
+    
     for (int i = 0; i < 2; i++) {
         glActiveTexture(GL_TEXTURE0 + i);
         CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, opaque->cv_texture_cache, pixel_buffer, NULL, &opaque->nv12_texture[i]);
@@ -188,10 +199,10 @@ static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVP
         }
         
         glBindTexture(CVOpenGLTextureGetTarget(opaque->nv12_texture[i]), CVOpenGLTextureGetName(opaque->nv12_texture[i]));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
     return GL_TRUE;
 }
@@ -333,6 +344,14 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
         ALOGE("Error at CVOpenGLESTextureCacheCreate %d\n", err);
         goto fail;
     }
+#endif
+    
+#if NV12_RENDER_TYPE != NV12_RENDER_NORMAL
+    GLint textureDimensionIndex = glGetUniformLocation(renderer->program, "textureDimensions");
+
+    assert(textureDimensionIndex >= 0);
+    
+    renderer->opaque->textureDimensionIndex = textureDimensionIndex;
 #endif
     renderer->opaque->color_attachments = CFRetain(kCVImageBufferYCbCrMatrix_ITU_R_709_2);
     

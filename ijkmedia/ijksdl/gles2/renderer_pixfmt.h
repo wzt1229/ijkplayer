@@ -119,12 +119,13 @@ static struct vt_format vt_formats[] = {
         .imgfmt = IMGFMT_NV12,
         .planes = 2,
         .gl = {
+//            use RED or RG also ok!
 //            { GL_RED, GL_UNSIGNED_BYTE, GL_R8 },
 //            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG8 } ,
 //            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
 //            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG } ,
-              { GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_LUMINANCE },
-              { GL_LUMINANCE_ALPHA,  GL_UNSIGNED_BYTE, GL_LUMINANCE_ALPHA } ,
+            { GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_LUMINANCE },
+            { GL_LUMINANCE_ALPHA,  GL_UNSIGNED_BYTE, GL_LUMINANCE_ALPHA } ,
         }
     },
 //    {

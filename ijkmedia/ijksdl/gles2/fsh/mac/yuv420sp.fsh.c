@@ -35,26 +35,27 @@ static const char g_shader[] = IJK_GLES_STRING(
         yuv.x  = (texture2D(us2_SamplerX,  vv2_Texcoord).r  - (16.0 / 255.0));
         yuv.yz = (texture2D(us2_SamplerY,  vv2_Texcoord).rg - vec2(0.5, 0.5));
         rgb = um3_ColorConversion * yuv;
-//        rgb = vec3(0,1,1);
         gl_FragColor = vec4(rgb, 1);
     }
 );
 
+//macOS use sampler2DRect,need texture dimensions
 static const char g_shader_rect[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform mat3 um3_ColorConversion;
     uniform sampler2DRect us2_SamplerX;
     uniform sampler2DRect us2_SamplerY;
-
+    uniform vec2 textureDimensions;
+                                                    
     void main()
     {
         vec3 yuv;
         vec3 rgb;
-
-        yuv.x  = (texture2DRect(us2_SamplerX,  vv2_Texcoord).r  - (16.0 / 255.0));
-        yuv.yz = (texture2DRect(us2_SamplerY,  vv2_Texcoord).rg - vec2(0.5, 0.5));
+    
+        vec2 recTexCoord = vv2_Texcoord * textureDimensions;
+        yuv.x = (texture2DRect(us2_SamplerX, recTexCoord).r  - (16.0 / 255.0));
+        yuv.yz = (texture2DRect(us2_SamplerY, recTexCoord).rg - vec2(0.5, 0.5));
         rgb = um3_ColorConversion * yuv;
-//        rgb = vec3(0,1,1);
         gl_FragColor = vec4(rgb, 1);
     }
 );
