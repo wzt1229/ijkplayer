@@ -35,11 +35,11 @@
 
 //https://stackoverflow.com/questions/11361583/gl-texture-rectangle-arb/11363905
 
-#define RGB_REDNER_NORMAL 1
-#define RGB_REDNER_FAST_UPLOAD 2
-#define RGB_REDNER_IO_SURFACE  4
+#define RGB_RENDER_NORMAL 1
+#define RGB_RENDER_FAST_UPLOAD 2
+#define RGB_RENDER_IO_SURFACE  4
 
-#define RGB_REDNER_TYPE RGB_REDNER_NORMAL
+#define RGB_RENDER_TYPE RGB_RENDER_NORMAL
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
@@ -56,7 +56,7 @@ static GLboolean rgb_use(IJK_GLES2_Renderer *renderer)
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
 
-#if RGB_REDNER_TYPE == RGB_REDNER_NORMAL || RGB_REDNER_TYPE == RGB_REDNER_IO_SURFACE
+#if RGB_RENDER_TYPE == RGB_RENDER_NORMAL || RGB_RENDER_TYPE == RGB_RENDER_IO_SURFACE
     if (0 == renderer->plane_textures[0])
         glGenTextures(1, renderer->plane_textures);
 #endif
@@ -68,7 +68,7 @@ static GLboolean rgb_use(IJK_GLES2_Renderer *renderer)
     return GL_TRUE;
 }
 
-#if RGB_REDNER_TYPE == RGB_REDNER_FAST_UPLOAD
+#if RGB_RENDER_TYPE == RGB_RENDER_FAST_UPLOAD
 static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
@@ -106,7 +106,7 @@ static GLsizei bgrx_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay
     return 0;
 }
 
-#if RGB_REDNER_TYPE == RGB_REDNER_IO_SURFACE
+#if RGB_RENDER_TYPE == RGB_RENDER_IO_SURFACE
 static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
 {
     IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
@@ -199,7 +199,7 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     }
     glActiveTexture(GL_TEXTURE0);
     
-#if RGB_REDNER_TYPE == RGB_REDNER_FAST_UPLOAD
+#if RGB_RENDER_TYPE == RGB_RENDER_FAST_UPLOAD
     IJK_GL_Renderer_Opaque *opaque = renderer->opaque;
     yuv420sp_vtb_clean_textures(renderer);
 //            CVPixelBufferLockBaseAddress(pixel_buffer,kCVPixelBufferLock_ReadOnly);
@@ -217,7 +217,7 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     return GL_TRUE;
-#elif RGB_REDNER_TYPE == RGB_REDNER_IO_SURFACE
+#elif RGB_RENDER_TYPE == RGB_RENDER_IO_SURFACE
     return upload_texture_use_IOSurface(pixel_buffer, renderer);
 #else
     
@@ -351,7 +351,7 @@ static IJK_GLES2_Renderer *IJK_GL_Renderer_create_xgbx(const char *fsh)
     renderer->opaque = calloc(1, sizeof(IJK_GL_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;
-#if RGB_REDNER_TYPE == RGB_REDNER_FAST_UPLOAD
+#if RGB_RENDER_TYPE == RGB_RENDER_FAST_UPLOAD
     CGLContextObj context = CGLGetCurrentContext();
     printf("CGLContextObj2:%p",context);
     CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
@@ -378,7 +378,7 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb()
 
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx()
 {
-#if RGB_REDNER_TYPE != RGB_REDNER_NORMAL
+#if RGB_RENDER_TYPE != RGB_RENDER_NORMAL
     return IJK_GL_Renderer_create_xgbx(IJK_GLES2_getFragmentShader_rect_rgb());
 #else
     return IJK_GL_Renderer_create_xgbx(IJK_GLES2_getFragmentShader_rgb());

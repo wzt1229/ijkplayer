@@ -25,11 +25,11 @@
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #include "renderer_pixfmt.h"
 
-#define NV12_REDNER_NORMAL 1
-#define NV12_REDNER_FAST_UPLOAD 2
-#define NV12_REDNER_IO_SURFACE  4
+#define NV12_RENDER_NORMAL 1
+#define NV12_RENDER_FAST_UPLOAD 2
+#define NV12_RENDER_IO_SURFACE  4
 
-#define NV12_REDNER_TYPE NV12_REDNER_NORMAL
+#define NV12_RENDER_TYPE NV12_RENDER_NORMAL
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
@@ -46,7 +46,7 @@ static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
 
-#if NV12_REDNER_TYPE == NV12_REDNER_NORMAL || NV12_REDNER_TYPE == NV12_REDNER_IO_SURFACE
+#if NV12_RENDER_TYPE == NV12_RENDER_NORMAL || NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
     if (0 == renderer->plane_textures[0])
         glGenTextures(2, renderer->plane_textures);
 #endif
@@ -68,7 +68,7 @@ static GLsizei yuv420sp_vtb_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_Vou
     return overlay->pitches[0] / 1;
 }
 
-#if NV12_REDNER_TYPE == NV12_REDNER_FAST_UPLOAD
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
 static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
@@ -113,7 +113,7 @@ static void upload_texture_normal(IJK_GLES2_Renderer *renderer, const GLubyte *p
     }
 }
 
-#if NV12_REDNER_TYPE == NV12_REDNER_IO_SURFACE
+#if NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
 static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
 {
     IOSurfaceRef surface  = CVPixelBufferGetIOSurface(pixel_buffer);
@@ -168,7 +168,7 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
 }
 #endif
 
-#if NV12_REDNER_TYPE == NV12_REDNER_FAST_UPLOAD
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
 static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVPixelBufferRef pixel_buffer, IJK_GLES2_Renderer *renderer)
 {
     if (!opaque->cv_texture_cache) {
@@ -233,9 +233,9 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
         }
     }
 
-#if NV12_REDNER_TYPE == NV12_REDNER_FAST_UPLOAD
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
     upload_texture_use_Cache(opaque, pixel_buffer, renderer);
-#elif NV12_REDNER_TYPE == NV12_REDNER_NORMAL
+#elif NV12_RENDER_TYPE == NV12_RENDER_NORMAL
     
     const GLsizei widths[2]    = { overlay->pitches[0], overlay->pitches[1] };
     const GLsizei heights[2]   = { overlay->h,          overlay->h/2.0 };
@@ -285,7 +285,7 @@ static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
         return;
     
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-#if NV12_REDNER_TYPE == NV12_REDNER_FAST_UPLOAD
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
     yuv420sp_vtb_clean_textures(renderer);
     if (opaque->cv_texture_cache) {
         CFRelease(opaque->cv_texture_cache);
@@ -303,7 +303,7 @@ static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay)
 {
     ALOGI("create render yuv420sp_vtb\n");
-#if NV12_REDNER_TYPE != NV12_REDNER_NORMAL
+#if NV12_RENDER_TYPE != NV12_RENDER_NORMAL
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp_rect());
 #else
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
@@ -324,7 +324,7 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
     renderer->opaque = calloc(1, sizeof(IJK_GLES2_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;
-#if NV12_REDNER_TYPE == NV12_REDNER_FAST_UPLOAD
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
     CGLContextObj cglContext = CGLGetCurrentContext();
     CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
     CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault, NULL, cglContext, cglPixelFormat, NULL, &renderer->opaque->cv_texture_cache);
