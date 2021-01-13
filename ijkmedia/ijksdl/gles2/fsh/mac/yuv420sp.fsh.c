@@ -53,7 +53,9 @@ static const char g_shader_rect[] = IJK_GLES_STRING(
         vec3 rgb;
     
         vec2 recTexCoord = vv2_Texcoord * textureDimensions;
-        yuv.x = (texture2DRect(us2_SamplerX, recTexCoord).r  - (16.0 / 255.0));
+        //yuv.x = (texture2DRect(us2_SamplerX, recTexCoord).r  - (16.0 / 255.0));
+        //videotoolbox decoded video range pixel already! kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+        yuv.x = texture2DRect(us2_SamplerX, recTexCoord).r;
         yuv.yz = (texture2DRect(us2_SamplerY, recTexCoord).rg - vec2(0.5, 0.5));
         rgb = um3_ColorConversion * yuv;
         gl_FragColor = vec4(rgb, 1);
