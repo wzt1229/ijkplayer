@@ -68,22 +68,47 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 - (void) setup
 {
+//    NSOpenGLPixelFormatAttribute attrs[] =
+//    {
+//        NSOpenGLPFADoubleBuffer,
+//        NSOpenGLPFASampleAlpha,
+//        NSOpenGLPFAColorSize, 32,
+//        NSOpenGLPFASamples, 8,
+//        NSOpenGLPFAAccelerated,
+//        NSOpenGLPFADepthSize, 16,
+//        // Must specify the 3.2 Core Profile to use OpenGL 3.2
+//#if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
+//        NSOpenGLPFAOpenGLProfile,
+//        NSOpenGLProfileVersion3_2Core,
+//#endif
+//        0
+//    };
+    //kEAGLDrawablePropertyColorFormat kEAGLColorFormatRGBA8
+    
+//    NSOpenGLPixelFormatAttribute attrs[] =
+//    {
+//        NSOpenGLPFAColorSize, 32,
+//        NSOpenGLPFADoubleBuffer,
+//        NSOpenGLPFADepthSize, 24,
+//        0
+//    };
+    
     NSOpenGLPixelFormatAttribute attrs[] =
     {
-        NSOpenGLPFADoubleBuffer,
-        NSOpenGLPFASampleAlpha,
-        NSOpenGLPFAColorSize, 32,
-        NSOpenGLPFASamples, 8,
         NSOpenGLPFAAccelerated,
-        NSOpenGLPFADepthSize, 16,
-        // Must specify the 3.2 Core Profile to use OpenGL 3.2
-#if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
-        NSOpenGLPFAOpenGLProfile,
-        NSOpenGLProfileVersion3_2Core,
-#endif
+        NSOpenGLPFANoRecovery,
+        NSOpenGLPFADoubleBuffer,
+        NSOpenGLPFADepthSize, 24,
         0
     };
-    //kEAGLDrawablePropertyColorFormat kEAGLColorFormatRGBA8
+    
+//    NSOpenGLPixelFormatAttribute attrs[] =
+//    {
+//        NSOpenGLPFAAccelerated,
+//        0
+//    };
+
+    
     NSOpenGLPixelFormat *pf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
     
     if (!pf)
@@ -104,8 +129,9 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
-    
-#if SUPPORT_RETINA_RESOLUTION
+    CGLContextObj ctx = context.CGLContextObj;
+    NSLog(@"CGLContextObj:%p",ctx);
+#if 1 || SUPPORT_RETINA_RESOLUTION
     // Opt-In to Retina resolution
     [self setWantsBestResolutionOpenGLSurface:YES];
 #endif // SUPPORT_RETINA_RESOLUTION

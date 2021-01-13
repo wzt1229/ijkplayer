@@ -31,13 +31,14 @@ static const char g_shader[] = IJK_GLES_STRING(
     }
 );
 
+//macOS use sampler2DRect,need texture dimensions
 static const char rect_g_shader[] = IJK_GLES_STRING(
-    varying vec2 vv2_Texcoord;
     uniform sampler2DRect us2_SamplerX;
-
-    void main()
-    {
-        gl_FragColor = vec4(texture2DRect(us2_SamplerX, vv2_Texcoord).rgb, 1);
+    varying vec2 vv2_Texcoord;
+    uniform vec2 textureDimensions;
+    void main(){
+        vec2 recTexCoord = vv2_Texcoord * textureDimensions;
+        gl_FragColor = texture2DRect(us2_SamplerX, recTexCoord);
     }
 );
 
