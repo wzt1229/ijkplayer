@@ -35,6 +35,9 @@
 
 //https://stackoverflow.com/questions/11361583/gl-texture-rectangle-arb/11363905
 //https://stackoverflow.com/questions/38361376/convert-iosurface-backed-texture-to-gl-texture-2d
+//https://allmybrain.com/2011/12/08/rendering-to-a-texture-with-ios-5-texture-cache-api/comment-page-1/
+//https://cpp.hotexamples.com/examples/-/-/CGLTexImageIOSurface2D/cpp-cglteximageiosurface2d-function-examples.html
+//https://stackoverflow.com/questions/24933453/best-path-from-avplayeritemvideooutput-to-opengl-texture
 
 #define RGB_RENDER_NORMAL      1
 #define RGB_RENDER_FAST_UPLOAD 2

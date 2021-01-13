@@ -19,6 +19,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+//https://github.com/mpv-player/mpv
+
+//vda: add support for nv12 image formats
+//
+//The hardware always decodes to nv12 so using this image format causes less cpu
+//usage than uyvy (which we are currently using, since Apple examples and other
+//free software use that). The reduction in cpu usage can add up to quite a bit,
+//especially for 4k or high fps video.
+//
+//This needs an accompaning commit in libavcodec.
+//提交：
+//5258c012febdfba0ef56ad8ce6f7cb003611c47b
+
 #ifndef IJKSDL__renderer_pixfmt__INTERNAL__H
 #define IJKSDL__renderer_pixfmt__INTERNAL__H
 
