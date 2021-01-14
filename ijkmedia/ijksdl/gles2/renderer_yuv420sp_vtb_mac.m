@@ -38,13 +38,19 @@
 #define GL_TEXTURE_TARGET GL_TEXTURE_2D
 #endif
 
+typedef struct _Frame_Size
+{
+    int w;
+    int h;
+}Frame_Size;
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
     CVOpenGLTextureCacheRef cv_texture_cache;
     CVOpenGLTextureRef      nv12_texture[2];
     CFTypeRef               color_attachments;
-    GLint                   textureDimensionIndex;
+    GLint                   textureDimension[2];
+    Frame_Size              frameSize[2];
 } IJK_GLES2_Renderer_Opaque;
 
 static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
@@ -59,6 +65,7 @@ static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
         glGenTextures(2, renderer->plane_textures);
 #endif
     
+    //设置纹理和采样器的对应关系
     for (int i = 0; i < 2; ++i) {
         glUniform1i(renderer->us2_sampler[i], i);
     }
@@ -144,13 +151,18 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
 
     GLenum gl_target = GL_TEXTURE_TARGET;
     
-    for (int i = 0; i < 2; i++) {
-        GLsizei w = (GLsizei)IOSurfaceGetWidthOfPlane(surface, i);
-        GLsizei h = (GLsizei)IOSurfaceGetHeightOfPlane(surface, i);
-        glUniform2f(renderer->opaque->textureDimensionIndex, w, h);
+    for (int i = 0; i < planes; i++) {
+        GLfloat w = (GLfloat)IOSurfaceGetWidthOfPlane(surface, i);
+        GLfloat h = (GLfloat)IOSurfaceGetHeightOfPlane(surface, i);
+        Frame_Size size = renderer->opaque->frameSize[i];
+        if (size.w != w || size.h != h) {
+            glUniform2f(renderer->opaque->textureDimension[i], w, h);
+            size.w = w;
+            size.h = h;
+            renderer->opaque->frameSize[i] = size;
+        }
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(gl_target, renderer->plane_textures[i]);
-        
         struct vt_gl_plane_format plane_format = f->gl[i];
         CGLError err = CGLTexImageIOSurface2D(CGLGetCurrentContext(),
                                               gl_target,
@@ -188,8 +200,8 @@ static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVP
     yuv420sp_vtb_clean_textures(renderer);
     
     GLenum gl_target = GL_TEXTURE_TARGET;
-    
-    for (int i = 0; i < 2; i++) {
+    const int planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+    for (int i = 0; i < planes; i++) {
         glActiveTexture(GL_TEXTURE0 + i);
         CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, opaque->cv_texture_cache, pixel_buffer, NULL, &opaque->nv12_texture[i]);
         
@@ -347,11 +359,14 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
 #endif
     
 #if NV12_RENDER_TYPE != NV12_RENDER_NORMAL
-    GLint textureDimensionIndex = glGetUniformLocation(renderer->program, "textureDimensions");
-
-    assert(textureDimensionIndex >= 0);
+    GLint textureDimensionX = glGetUniformLocation(renderer->program, "textureDimensionX");
+    assert(textureDimensionX >= 0);
+    renderer->opaque->textureDimension[0] = textureDimensionX;
     
-    renderer->opaque->textureDimensionIndex = textureDimensionIndex;
+    GLint textureDimensionY = glGetUniformLocation(renderer->program, "textureDimensionY");
+    assert(textureDimensionY >= 0);
+    renderer->opaque->textureDimension[1] = textureDimensionY;
+    
 #endif
     renderer->opaque->color_attachments = CFRetain(kCVImageBufferYCbCrMatrix_ITU_R_709_2);
     
