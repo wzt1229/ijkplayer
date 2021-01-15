@@ -35,6 +35,24 @@
 #ifndef IJKSDL__renderer_pixfmt__INTERNAL__H
 #define IJKSDL__renderer_pixfmt__INTERNAL__H
 
+#if TARGET_OS_OSX
+    #define OpenGLTextureCacheRef   CVOpenGLTextureCacheRef
+    #define OpenGLTextureRef        CVOpenGLTextureRef
+    #define OpenGLTextureCacheFlush CVOpenGLTextureCacheFlush
+    #define OpenGLTextureGetTarget  CVOpenGLTextureGetTarget
+    #define OpenGLTextureGetName    CVOpenGLTextureGetName
+    #define OpenGL_RED_EXT          GL_RED
+    #define OpenGL_RG_EXT           GL_RG
+#else
+    #define OpenGLTextureCacheRef   CVOpenGLESTextureCacheRef
+    #define OpenGLTextureRef        CVOpenGLESTextureRef
+    #define OpenGLTextureCacheFlush CVOpenGLESTextureCacheFlush
+    #define OpenGLTextureGetTarget  CVOpenGLESTextureGetTarget
+    #define OpenGLTextureGetName    CVOpenGLESTextureGetName
+    #define OpenGL_RED_EXT          GL_RED_EXT
+    #define OpenGL_RG_EXT           GL_RG_EXT
+#endif
+
 enum mp_imgfmt {
     IMGFMT_NONE = 0,
 
@@ -166,9 +184,15 @@ static struct vt_format vt_formats[] = {
         .imgfmt = IMGFMT_420P,
         .planes = 3,
         .gl = {
+#if TARGET_OS_OSX
             { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
             { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
             { GL_RED, GL_UNSIGNED_BYTE, GL_RED }
+#else
+            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT },
+            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT },
+            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT }
+#endif
         }
     },
     {
@@ -176,7 +200,11 @@ static struct vt_format vt_formats[] = {
         .imgfmt = IMGFMT_BGR0,
         .planes = 1,
         .gl = {
+#if TARGET_OS_OSX
             { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, GL_RGBA }
+#else
+            { GL_BGRA, GL_UNSIGNED_INT, GL_RGBA }
+#endif
         }
     },
 };

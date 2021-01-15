@@ -107,7 +107,7 @@ static GLboolean yuv420p_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOve
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420p()
 {
     ALOGI("create render yuv420p\n");
-    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GLES2_getFragmentShader_yuv420p());
+    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420p());
     if (!renderer)
         goto fail;
 

@@ -20,25 +20,65 @@
  */
 
 #include "internal.h"
+#if TARGET_OS_OSX
+#import <OpenGL/OpenGL.h>
+#import <OpenGL/gl3.h>
+#else
+#if __OBJC__
+#import <OpenGLES/ES3/gl.h>
 #import <OpenGLES/EAGL.h>
+#endif
+#endif
+
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_vout_overlay_videotoolbox.h"
+#include "renderer_pixfmt.h"
+
+#define NV12_RENDER_NORMAL      1
+#define NV12_RENDER_FAST_UPLOAD 2
+#define NV12_RENDER_IO_SURFACE  4
+
+#if TARGET_OS_OSX
+#warning use NV12_RENDER_FAST_UPLOAD -6683
+#define NV12_RENDER_TYPE NV12_RENDER_IO_SURFACE
+#else
+#define NV12_RENDER_TYPE NV12_RENDER_FAST_UPLOAD
+#endif
+
+#if (NV12_RENDER_TYPE != NV12_RENDER_NORMAL) && TARGET_OS_OSX
+#define GL_TEXTURE_TARGET GL_TEXTURE_RECTANGLE
+#else
+#define GL_TEXTURE_TARGET GL_TEXTURE_2D
+#endif
+
+typedef struct _Frame_Size
+{
+    int w;
+    int h;
+}Frame_Size;
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
-    CVOpenGLESTextureCacheRef cv_texture_cache;
-    CVOpenGLESTextureRef      cv_texture[2];
-
-    CFTypeRef                 color_attachments;
+    OpenGLTextureCacheRef cv_texture_cache[2];
+    OpenGLTextureRef      nv12_texture[2];
+    CFTypeRef             color_attachments;
+    GLint                 textureDimension[2];
+    Frame_Size            frameSize[2];
 } IJK_GLES2_Renderer_Opaque;
 
 static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
 {
     ALOGI("use render yuv420sp_vtb\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
+    glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
 
+#if NV12_RENDER_TYPE == NV12_RENDER_NORMAL || NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
+    if (0 == renderer->plane_textures[0])
+        glGenTextures(2, renderer->plane_textures);
+#endif
+    
+    //设置纹理和采样器的对应关系
     for (int i = 0; i < 2; ++i) {
         glUniform1i(renderer->us2_sampler[i], i);
     }
@@ -46,25 +86,6 @@ static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
     glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
     
     return GL_TRUE;
-}
-
-static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
-{
-    if (!renderer || !renderer->opaque)
-        return;
-
-    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-
-    for (int i = 0; i < 2; ++i) {
-        if (opaque->cv_texture[i]) {
-            CFRelease(opaque->cv_texture[i]);
-            opaque->cv_texture[i] = nil;
-        }
-    }
-
-    // Periodic texture cache flush every frame
-    if (opaque->cv_texture_cache)
-        CVOpenGLESTextureCacheFlush(opaque->cv_texture_cache, 0);
 }
 
 static GLsizei yuv420sp_vtb_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
@@ -75,34 +96,170 @@ static GLsizei yuv420sp_vtb_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_Vou
     return overlay->pitches[0] / 1;
 }
 
-static GLboolean yuv420sp_vtb_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
+static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 {
-    if (!renderer || !renderer->opaque || !overlay)
-        return GL_FALSE;
-
-    if (!overlay->is_private)
-        return GL_FALSE;
-
-    switch (overlay->format) {
-        case SDL_FCC__VTB:
-            break;
-        default:
-            ALOGE("[yuv420sp_vtb] unexpected format %x\n", overlay->format);
-            return GL_FALSE;
-    }
+    if (!renderer || !renderer->opaque)
+        return;
 
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-    if (!opaque->cv_texture_cache) {
+
+    for (int i = 0; i < 2; ++i) {
+        if (opaque->nv12_texture[i]) {
+            CFRelease(opaque->nv12_texture[i]);
+            opaque->nv12_texture[i] = nil;
+        }
+        // Periodic texture cache flush every frame
+        if (opaque->cv_texture_cache[i])
+            OpenGLTextureCacheFlush(opaque->cv_texture_cache[i], 0);
+    }
+}
+
+static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVPixelBufferRef pixel_buffer, IJK_GLES2_Renderer *renderer)
+{
+    if (!opaque->cv_texture_cache[0] || !opaque->cv_texture_cache[1]) {
         ALOGE("nil textureCache\n");
         return GL_FALSE;
     }
+    
+    yuv420sp_vtb_clean_textures(renderer);
+    
+    GLenum gl_target = GL_TEXTURE_TARGET;
+    const int planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+    for (int i = 0; i < planes; i++) {
+        glActiveTexture(GL_TEXTURE0 + i);
+#if TARGET_OS_OSX
+        CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, opaque->cv_texture_cache[i], pixel_buffer, NULL, &opaque->nv12_texture[i]);
+#else
+        GLsizei frame_width  = (GLsizei)CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
+        GLsizei frame_height = (GLsizei)CVPixelBufferGetHeightOfPlane(pixel_buffer, i);
+        int format = i == 0 ? GL_LUMINANCE : GL_LUMINANCE_ALPHA;
+        
+        CVReturn err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                     opaque->cv_texture_cache[i],
+                                                     pixel_buffer,
+                                                     NULL,
+                                                     GL_TEXTURE_2D,
+                                                                    format,
+                                                                    frame_width,
+                                                                    frame_height,
+                                                                    format,
+                                                     GL_UNSIGNED_BYTE,
+                                                     0,
+                                                     &opaque->nv12_texture[i]);
+#endif
+        if (err != kCVReturnSuccess) {
+            ALOGE("Error at CVOpenGLTextureCacheCreateTextureFromImage %d\n", err);
+            return GL_FALSE;
+        }
+        
+        glBindTexture(OpenGLTextureGetTarget(opaque->nv12_texture[i]), OpenGLTextureGetName(opaque->nv12_texture[i]));
+        glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    return GL_TRUE;
+}
+#endif
 
+static void upload_texture_normal(IJK_GLES2_Renderer *renderer, const GLubyte *pixels[2], const GLsizei widths[2], const GLsizei heights[2]) {
+    
+    assert(NULL != *pixels);
+    
+    GLenum gl_target = GL_TEXTURE_TARGET;
+    for (int i = 0; i < 2; i++) {
+        GLenum format = i == 0 ? OpenGL_RED_EXT : OpenGL_RG_EXT;
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(gl_target, renderer->plane_textures[i]);
+        glTexImage2D(gl_target,
+                     0,
+                     format,
+                     widths[i],
+                     heights[i],
+                     0,
+                     format,
+                     GL_UNSIGNED_BYTE,
+                     pixels[i]);
+        glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+}
+
+#if NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
+static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
+{
+    IOSurfaceRef surface  = CVPixelBufferGetIOSurface(pixel_buffer);
+    
+    if (!surface) {
+        printf("CVPixelBuffer has no IOSurface\n");
+        return GL_FALSE;
+    }
+    uint32_t cvpixfmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
+    struct vt_format *f = vt_get_gl_format(cvpixfmt);
+    if (!f) {
+        ALOGE("CVPixelBuffer has unsupported format type\n");
+        return GL_FALSE;
+    }
+
+    const bool planar = CVPixelBufferIsPlanar(pixel_buffer);
+    const int planes  = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+    assert(planar && planes == f->planes || f->planes == 1);
+
+    GLenum gl_target = GL_TEXTURE_TARGET;
+    
+    for (int i = 0; i < planes; i++) {
+        GLfloat w = (GLfloat)IOSurfaceGetWidthOfPlane(surface, i);
+        GLfloat h = (GLfloat)IOSurfaceGetHeightOfPlane(surface, i);
+        Frame_Size size = renderer->opaque->frameSize[i];
+        if (size.w != w || size.h != h) {
+            glUniform2f(renderer->opaque->textureDimension[i], w, h);
+            size.w = w;
+            size.h = h;
+            renderer->opaque->frameSize[i] = size;
+        }
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(gl_target, renderer->plane_textures[i]);
+        struct vt_gl_plane_format plane_format = f->gl[i];
+        CGLError err = CGLTexImageIOSurface2D(CGLGetCurrentContext(),
+                                              gl_target,
+                                              plane_format.gl_internal_format,
+                                              w,
+                                              h,
+                                              plane_format.gl_format,
+                                              plane_format.gl_type,
+                                              surface,
+                                              i);
+
+        if (err != kCGLNoError) {
+            ALOGE("error creating IOSurface texture for plane %d: %s\n",
+                   0, CGLErrorString(err));
+            return GL_FALSE;
+        } else {
+            glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+    }
+    return GL_TRUE;
+}
+#endif
+
+static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+{
     CVPixelBufferRef pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
     if (!pixel_buffer) {
         ALOGE("nil pixelBuffer in overlay\n");
         return GL_FALSE;
     }
-
+    
+    assert(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange == CVPixelBufferGetPixelFormatType(pixel_buffer));
+    
+    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
+    
     CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
     if (color_attachments != opaque->color_attachments) {
         if (color_attachments == nil) {
@@ -127,51 +284,36 @@ static GLboolean yuv420sp_vtb_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_Vo
         }
     }
 
-    yuv420sp_vtb_clean_textures(renderer);
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
+    upload_texture_use_Cache(opaque, pixel_buffer, renderer);
+#elif NV12_RENDER_TYPE == NV12_RENDER_NORMAL
+    
+    const GLsizei widths[2]    = { overlay->pitches[0], overlay->pitches[1] };
+    const GLsizei heights[2]   = { overlay->h,          overlay->h/2.0 };
+    
+    CVPixelBufferLockBaseAddress(pixel_buffer, 0);
+    GLubyte * y = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, 0);
+    GLubyte * uv = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, 1);
+    upload_texture_normal(renderer, (const GLubyte *[2]){y, uv},widths,heights);
+    CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
+#else
+    upload_texture_use_IOSurface(pixel_buffer, renderer);
+#endif
+    return GL_TRUE;
+}
 
-    GLsizei frame_width  = (GLsizei)CVPixelBufferGetWidth(pixel_buffer);
-    GLsizei frame_height = (GLsizei)CVPixelBufferGetHeight(pixel_buffer);
+static GLboolean yuv420sp_vtb_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+{
+    if (!renderer || !renderer->opaque || !overlay)
+        return GL_FALSE;
 
-    glActiveTexture(GL_TEXTURE0);
-    CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                 opaque->cv_texture_cache,
-                                                 pixel_buffer,
-                                                 NULL,
-                                                 GL_TEXTURE_2D,
-                                                 GL_RED_EXT,
-                                                 (GLsizei)frame_width,
-                                                 (GLsizei)frame_height,
-                                                 GL_RED_EXT,
-                                                 GL_UNSIGNED_BYTE,
-                                                 0,
-                                                 &opaque->cv_texture[0]);
-    glBindTexture(CVOpenGLESTextureGetTarget(opaque->cv_texture[0]), CVOpenGLESTextureGetName(opaque->cv_texture[0]));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-
-    glActiveTexture(GL_TEXTURE1);
-    CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                 opaque->cv_texture_cache,
-                                                 pixel_buffer,
-                                                 NULL,
-                                                 GL_TEXTURE_2D,
-                                                 GL_RG_EXT,
-                                                 (GLsizei)frame_width / 2,
-                                                 (GLsizei)frame_height / 2,
-                                                 GL_RG_EXT,
-                                                 GL_UNSIGNED_BYTE,
-                                                 1,
-                                                 &opaque->cv_texture[1]);
-    glBindTexture(CVOpenGLESTextureGetTarget(opaque->cv_texture[1]), CVOpenGLESTextureGetName(opaque->cv_texture[1]));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-
+    switch (overlay->format) {
+        case SDL_FCC__VTB:
+            return upload_420sp_vtp_Texture(renderer, overlay);
+        default:
+            ALOGE("[yuv420sp_vtb] unexpected format %x\n", overlay->format);
+            return GL_FALSE;
+    }
     return GL_TRUE;
 }
 
@@ -179,15 +321,17 @@ static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
         return;
-
-    yuv420sp_vtb_clean_textures(renderer);
-
+    
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-    if (opaque->cv_texture_cache) {
-        CFRelease(opaque->cv_texture_cache);
-        opaque->cv_texture_cache = nil;
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
+    yuv420sp_vtb_clean_textures(renderer);
+    for (int i = 0; i < 2; i++) {
+        if (opaque->cv_texture_cache[i]) {
+            CFRelease(opaque->cv_texture_cache[i]);
+            opaque->cv_texture_cache[i] = nil;
+        }
     }
-
+#endif
     if (opaque->color_attachments != nil) {
         CFRelease(opaque->color_attachments);
         opaque->color_attachments = nil;
@@ -196,28 +340,42 @@ static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
     renderer->opaque = nil;
 }
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay)
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
+static GLboolean create_gltexture(IJK_GLES2_Renderer *renderer)
 {
-    CVReturn err = 0;
-    EAGLContext *context = [EAGLContext currentContext];
-
-    if (!overlay) {
-        ALOGW("invalid overlay, fall back to yuv420sp renderer\n");
-        return IJK_GLES2_Renderer_create_yuv420sp();
+    for (int i = 0; i < 2; i++) {
+        OpenGLTextureCacheRef ref;
+#if TARGET_OS_OSX
+        CGLContextObj cglContext = CGLGetCurrentContext();
+        CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
+        CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault, NULL, cglContext, cglPixelFormat, NULL, &ref);
+#else
+        EAGLContext *context = [EAGLContext currentContext];
+        CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, context, NULL, &ref);
+#endif
+        if (err || ref == nil) {
+            ALOGE("Error at CVOpenGLESTextureCacheCreate %d\n", err);
+            return GL_FALSE;;
+        }
+        
+        renderer->opaque->cv_texture_cache[i] = ref;
     }
+    return GL_TRUE;
+}
+#endif
 
-    if (!overlay) {
-        ALOGW("non-private overlay, fall back to yuv420sp renderer\n");
-        return IJK_GLES2_Renderer_create_yuv420sp();
-    }
-
-    if (!context) {
-        ALOGW("nil EAGLContext, fall back to yuv420sp renderer\n");
-        return IJK_GLES2_Renderer_create_yuv420sp();
-    }
-
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay)
+{
     ALOGI("create render yuv420sp_vtb\n");
-    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GLES2_getFragmentShader_yuv420sp());
+#if (NV12_RENDER_TYPE != NV12_RENDER_NORMAL) && TARGET_OS_OSX
+    
+    assert(overlay->format == SDL_FCC__VTB);
+    
+    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp_rect());
+#else
+    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
+#endif
+    
     if (!renderer)
         goto fail;
 
@@ -234,13 +392,24 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *over
     renderer->opaque = calloc(1, sizeof(IJK_GLES2_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;
-
-    err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, context, NULL, &renderer->opaque->cv_texture_cache);
-    if (err || renderer->opaque->cv_texture_cache == nil) {
-        ALOGE("Error at CVOpenGLESTextureCacheCreate %d\n", err);
+    
+#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
+    if (!create_gltexture(renderer)) {
         goto fail;
     }
-
+#endif
+    
+#if (NV12_RENDER_TYPE != NV12_RENDER_NORMAL) && TARGET_OS_OSX
+    if (overlay->format == SDL_FCC__VTB) {
+        GLint textureDimensionX = glGetUniformLocation(renderer->program, "textureDimensionX");
+        assert(textureDimensionX >= 0);
+        renderer->opaque->textureDimension[0] = textureDimensionX;
+        
+        GLint textureDimensionY = glGetUniformLocation(renderer->program, "textureDimensionY");
+        assert(textureDimensionY >= 0);
+        renderer->opaque->textureDimension[1] = textureDimensionY;
+    }
+#endif
     renderer->opaque->color_attachments = CFRetain(kCVImageBufferYCbCrMatrix_ITU_R_709_2);
     
     return renderer;

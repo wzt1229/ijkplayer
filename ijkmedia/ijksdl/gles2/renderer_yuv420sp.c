@@ -23,6 +23,7 @@
 #ifdef __APPLE__
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_vout_overlay_videotoolbox.h"
+#include "renderer_pixfmt.h"
 #endif
 
 static GLboolean yuv420sp_use(IJK_GLES2_Renderer *renderer)
@@ -65,54 +66,38 @@ static GLboolean yuv420sp_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOv
     if (!renderer || !overlay)
         return GL_FALSE;
 
-    const GLsizei widths[2]    = { overlay->pitches[0], overlay->pitches[1] / 2 };
-    const GLsizei heights[2]   = { overlay->h,          overlay->h / 2 };
-    const GLubyte *pixels[2]   = { overlay->pixels[0],  overlay->pixels[1] };
+    const GLsizei widths[2] = { overlay->pitches[0],  overlay->pitches[1] / 2 };
+    const GLsizei heights[2] = { overlay->h, overlay->h / 2 };
+    const GLubyte *pixels[2] = { overlay->pixels[0],  overlay->pixels[1] };
 
     switch (overlay->format) {
-        case SDL_FCC__VTB:
+        case SDL_FCC_NV12:
             break;
         default:
             ALOGE("[yuv420sp] unexpected format %x\n", overlay->format);
             return GL_FALSE;
     }
-///macos
-#ifndef GL_RED_EXT
-#define GL_RED_EXT GL_RED
-#endif
-
-#ifndef GL_RG_EXT
-#define GL_RG_EXT GL_RG
-#endif
-
-    glBindTexture(GL_TEXTURE_2D, renderer->plane_textures[0]);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RED_EXT,
-                 widths[0],
-                 heights[0],
-                 0,
-                 GL_RED_EXT,
-                 GL_UNSIGNED_BYTE,
-                 pixels[0]);
-
-    glBindTexture(GL_TEXTURE_2D, renderer->plane_textures[1]);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RG_EXT,
-                 widths[1],
-                 heights[1],
-                 0,
-                 GL_RG_EXT,
-                 GL_UNSIGNED_BYTE,
-                 pixels[1]);
-
+    
+    for (int i = 0; i < 2; i ++) {
+        int format = i == 0 ? OpenGL_RED_EXT : OpenGL_RG_EXT;
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, renderer->plane_textures[i]);
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     format,
+                     widths[i],
+                     heights[i],
+                     0,
+                     format,
+                     GL_UNSIGNED_BYTE,
+                     pixels[i]);
+    }
     return GL_TRUE;
 }
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420sp()
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp()
 {
-    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GLES2_getFragmentShader_yuv420sp());
+    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
     if (!renderer)
         goto fail;
 

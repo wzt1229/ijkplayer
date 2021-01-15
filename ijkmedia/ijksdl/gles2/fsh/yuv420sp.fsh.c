@@ -21,6 +21,63 @@
 
 #include "ijksdl/gles2/internal.h"
 
+#if TARGET_OS_OSX
+
+static const char g_shader[] = IJK_GLES_STRING(
+    varying vec2 vv2_Texcoord;
+    uniform mat3 um3_ColorConversion;
+    uniform sampler2D us2_SamplerX;
+    uniform sampler2D us2_SamplerY;
+
+    void main()
+    {
+        vec3 yuv;
+        vec3 rgb;
+
+        yuv.x  = (texture2D(us2_SamplerX,  vv2_Texcoord).r  - (16.0 / 255.0));
+        yuv.yz = (texture2D(us2_SamplerY,  vv2_Texcoord).rg - vec2(0.5, 0.5));
+        rgb = um3_ColorConversion * yuv;
+        gl_FragColor = vec4(rgb, 1);
+    }
+);
+
+//macOS use sampler2DRect,need texture dimensions
+static const char g_shader_rect[] = IJK_GLES_STRING(
+    varying vec2 vv2_Texcoord;
+    uniform mat3 um3_ColorConversion;
+    uniform sampler2DRect us2_SamplerX;
+    uniform sampler2DRect us2_SamplerY;
+    uniform vec2 textureDimensionX;
+    uniform vec2 textureDimensionY;
+                                                    
+    void main()
+    {
+        vec3 yuv;
+        vec3 rgb;
+    
+        vec2 recTexCoordX = vv2_Texcoord * textureDimensionX;
+        vec2 recTexCoordY = vv2_Texcoord * textureDimensionY;
+        //yuv.x = (texture2DRect(us2_SamplerX, recTexCoord).r  - (16.0 / 255.0));
+        //videotoolbox decoded video range pixel already! kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+        yuv.x = texture2DRect(us2_SamplerX, recTexCoordX).r;
+        yuv.yz = (texture2DRect(us2_SamplerY, recTexCoordY).ra - vec2(0.5, 0.5));
+        rgb = um3_ColorConversion * yuv;
+        gl_FragColor = vec4(rgb, 1);
+    }
+);
+
+const char *IJK_GL_getFragmentShader_yuv420sp()
+{
+    return g_shader;
+}
+
+const char *IJK_GL_getFragmentShader_yuv420sp_rect()
+{
+    return g_shader_rect;
+}
+
+#else
+
 static const char g_shader[] = IJK_GLES_STRING(
     precision highp float;
     varying   highp vec2 vv2_Texcoord;
@@ -40,7 +97,9 @@ static const char g_shader[] = IJK_GLES_STRING(
     }
 );
 
-const char *IJK_GLES2_getFragmentShader_yuv420sp()
+const char *IJK_GL_getFragmentShader_yuv420sp()
 {
     return g_shader;
 }
+
+#endif

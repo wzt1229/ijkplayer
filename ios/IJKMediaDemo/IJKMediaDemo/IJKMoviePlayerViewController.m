@@ -85,8 +85,32 @@
     // [IJKFFMoviePlayerController checkIfPlayerVersionMatch:YES major:1 minor:0 micro:0];
 
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
+    
+    BOOL isVideoToolBox = NO;
+    if (isVideoToolBox) {
+//        [options setPlayerOptionValue:@"fcc-vtb-RGB24"         forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-vtb-ARGB"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-vtb-BGRA"          forKey:@"overlay-format"];
+        //default is NV12 for videotoolbox
+        [options setPlayerOptionValue:@"fcc-vtb-NV12"          forKey:@"overlay-format"];
+        [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];
+        [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
+    } else {
+//        [options setPlayerOptionValue:@"fcc-bgr565"      forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-rgb565"      forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-rgb24"       forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-bgr24"       forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-rgba"        forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-rgb0"        forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-argb"        forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-0rgb"        forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
+        [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
+    }
     //开启硬解
-    [options setPlayerOptionIntValue:1 forKey:@"videotoolbox"];
+    [options setPlayerOptionIntValue:isVideoToolBox forKey:@"videotoolbox"];
 
     if (self.manifest != nil){
         [options setFormatOptionValue:self.manifest forKey:@"manifest_string"];

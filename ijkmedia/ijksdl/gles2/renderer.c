@@ -167,7 +167,6 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 
     IJK_GLES2_Renderer *renderer = NULL;
     
-#if TARGET_OS_OSX
     switch (overlay->format)
     {
         case SDL_FCC__VTB:
@@ -185,10 +184,10 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
             }
             break;
         case SDL_FCC_I420:
-            renderer = IJK_GL_Renderer_create_yuv420p();
+            renderer = IJK_GLES2_Renderer_create_yuv420p();
             break;
         case SDL_FCC_NV12:
-            renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
+            renderer = IJK_GL_Renderer_create_yuv420sp();
             break;
         case SDL_FCC_RGB565:
         case SDL_FCC_BGR565:
@@ -204,28 +203,17 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
         case SDL_FCC_0RGB:
             renderer = IJK_GL_Renderer_create_xrgb();
             break;
+        case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p();
+            break;
+#if TARGET_OS_IPHONE
+        case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le();
+            break;
+#endif
         default:
             assert(0);
             break;
     }
-    
-#else
-    switch (overlay->format)
-    {
-        case SDL_FCC_RGB565:      renderer = IJK_GLES2_Renderer_create_rgb565(); break;
-        case SDL_FCC_RGB24:      renderer = IJK_GLES2_Renderer_create_rgb888(); break;
-        case SDL_FCC_RGB0:      renderer = IJK_GLES2_Renderer_create_rgbx8888(); break;
-        case SDL_FCC_NV12:      renderer = IJK_GLES2_Renderer_create_yuv420sp(); break;
-        case SDL_FCC__VTB:      renderer = IJK_GLES2_Renderer_create_yuv420sp_vtb(overlay); break;
 
-        case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
-        case SDL_FCC_I420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
-        case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le(); break;
-        default:
-            ALOGE("[GLES2] unknown format %4s(%d)\n", (char *)&overlay->format, overlay->format);
-            return NULL;
-    }
-#endif
     if (renderer) {
         renderer->format = overlay->format;
     }

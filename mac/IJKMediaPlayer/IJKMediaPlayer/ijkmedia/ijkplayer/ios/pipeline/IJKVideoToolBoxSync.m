@@ -448,8 +448,10 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
     //https://stackoverflow.com/questions/12976188/create-a-cvpixelbufferref-with-openglcompatibility
     //https://stackoverflow.com/questions/24933453/best-path-from-avplayeritemvideooutput-to-opengl-texture
     CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferOpenGLCompatibilityKey, YES);
+#if TARGET_OS_OSX
     CFDictionarySetValue(destinationPixelBufferAttributes, kCVPixelBufferIOSurfacePropertiesKey, (__bridge void *)[NSDictionary dictionary]);
     CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey, YES);
+#endif
 //    CFDictionarySetBoolean(destinationPixelBufferAttributes,
 //                           kCVPixelBufferMetalCompatibilityKey, NO);
 //    CFDictionarySetBoolean(destinationPixelBufferAttributes,

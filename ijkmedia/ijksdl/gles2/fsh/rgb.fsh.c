@@ -21,6 +21,8 @@
 
 #include "ijksdl/gles2/internal.h"
 
+#if TARGET_OS_OSX
+
 static const char g_shader[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform sampler2D us2_SamplerX;
@@ -52,14 +54,40 @@ static const char argb_g_shader[] = IJK_GLES_STRING(
     }
 );
 
-const char *IJK_GLES2_getFragmentShader_rgb()
-{
-    return g_shader;
-}
-
 const char *IJK_GLES2_getFragmentShader_rect_rgb()
 {
     return rect_g_shader;
+}
+
+#else
+
+static const char g_shader[] = IJK_GLES_STRING(
+    precision highp float;
+    varying highp vec2 vv2_Texcoord;
+    uniform lowp sampler2D us2_SamplerX;
+
+    void main()
+    {
+        gl_FragColor = vec4(texture2D(us2_SamplerX, vv2_Texcoord).rgb, 1);
+    }
+);
+
+static const char argb_g_shader[] = IJK_GLES_STRING(
+    precision highp float;
+    varying highp vec2 vv2_Texcoord;
+    uniform lowp sampler2D us2_SamplerX;
+
+    void main()
+    {
+        gl_FragColor = vec4(texture2D(us2_SamplerX, vv2_Texcoord).gba, 1);
+    }
+);
+
+#endif
+
+const char *IJK_GLES2_getFragmentShader_rgb()
+{
+    return g_shader;
 }
 
 const char *IJK_GLES2_getFragmentShader_argb()

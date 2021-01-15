@@ -95,38 +95,34 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
     opaque->pixel_buffer = pixel_buffer;
     overlay->format = SDL_FCC__VTB;
     overlay->ff_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
+
     if (CVPixelBufferIsPlanar(pixel_buffer)) {
         overlay->planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+        for (int i = 0; i < overlay->planes; i ++) {
+            overlay->pitches[i] = CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
+        }
     } else {
         overlay->planes = 1;
+        overlay->pitches[0] = CVPixelBufferGetWidth(pixel_buffer);
     }
-#if 1
-    if (CVPixelBufferLockBaseAddress(pixel_buffer, 0) != kCVReturnSuccess) {
-        overlay->pixels[0]  = NULL;
-        overlay->pixels[1]  = NULL;
-        overlay->pitches[0] = 0;
-        overlay->pitches[1] = 0;
-        overlay->w = 0;
-        overlay->h = 0;
-        CVBufferRelease(pixel_buffer);
-        opaque->pixel_buffer = NULL;
-        return -1;
-    }
-    // overlay->pixels[0]  = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, 0);
-    // overlay->pixels[1]  = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, 1);
-    overlay->pixels[0]  = NULL;
-    overlay->pixels[1]  = NULL;
-    overlay->pitches[0] = CVPixelBufferGetWidthOfPlane(pixel_buffer, 0);
-    overlay->pitches[1] = CVPixelBufferGetWidthOfPlane(pixel_buffer, 1);
-    CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
-#else
-    overlay->pixels[0]  = NULL;
-    overlay->pixels[1]  = NULL;
-    overlay->pitches[0] = 0;
-    overlay->pitches[1] = 0;
-#endif
-    overlay->is_private = 1;
 
+#if 0
+    if (CVPixelBufferLockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly) == kCVReturnSuccess) {
+        
+        if (CVPixelBufferIsPlanar(pixel_buffer)) {
+            overlay->planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+            for (int i = 0; i < overlay->planes; i ++) {
+                overlay->pixels[i] = CVPixelBufferGetBaseAddressOfPlane(pixel_buffer, i);
+            }
+        } else {
+            overlay->pixels[0] = CVPixelBufferGetBaseAddress(pixel_buffer);
+        }
+        
+        CVPixelBufferUnlockBaseAddress(pixel_buffer, kCVPixelBufferLock_ReadOnly);
+    }
+#endif
+    
+    overlay->is_private = 1;
     overlay->w = (int)frame->width;
     overlay->h = (int)frame->height;
     return 0;
