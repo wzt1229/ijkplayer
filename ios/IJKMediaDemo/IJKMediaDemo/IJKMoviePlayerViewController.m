@@ -86,7 +86,7 @@
 
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     
-    BOOL isVideoToolBox = NO;
+    BOOL isVideoToolBox = YES;
     if (isVideoToolBox) {
 //        [options setPlayerOptionValue:@"fcc-vtb-RGB24"         forKey:@"overlay-format"];
 //        [options setPlayerOptionValue:@"fcc-vtb-ARGB"          forKey:@"overlay-format"];

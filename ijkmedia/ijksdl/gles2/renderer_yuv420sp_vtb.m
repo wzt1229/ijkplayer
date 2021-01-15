@@ -59,7 +59,7 @@ typedef struct _Frame_Size
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
-    OpenGLTextureCacheRef cv_texture_cache[2];
+    OpenGLTextureCacheRef cv_texture_cache;
     OpenGLTextureRef      nv12_texture[2];
     CFTypeRef             color_attachments;
     GLint                 textureDimension[2];
@@ -109,15 +109,16 @@ static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
             CFRelease(opaque->nv12_texture[i]);
             opaque->nv12_texture[i] = nil;
         }
-        // Periodic texture cache flush every frame
-        if (opaque->cv_texture_cache[i])
-            OpenGLTextureCacheFlush(opaque->cv_texture_cache[i], 0);
     }
+    
+    // Periodic texture cache flush every frame
+    if (opaque->cv_texture_cache)
+        OpenGLTextureCacheFlush(opaque->cv_texture_cache, 0);
 }
 
 static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVPixelBufferRef pixel_buffer, IJK_GLES2_Renderer *renderer)
 {
-    if (!opaque->cv_texture_cache[0] || !opaque->cv_texture_cache[1]) {
+    if (!opaque->cv_texture_cache) {
         ALOGE("nil textureCache\n");
         return GL_FALSE;
     }
@@ -129,31 +130,35 @@ static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVP
     for (int i = 0; i < planes; i++) {
         glActiveTexture(GL_TEXTURE0 + i);
 #if TARGET_OS_OSX
-        CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, opaque->cv_texture_cache[i], pixel_buffer, NULL, &opaque->nv12_texture[i]);
+        CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, opaque->cv_texture_cache, pixel_buffer, NULL, &opaque->nv12_texture[i]);
 #else
+        
         GLsizei frame_width  = (GLsizei)CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
         GLsizei frame_height = (GLsizei)CVPixelBufferGetHeightOfPlane(pixel_buffer, i);
-        int format = i == 0 ? GL_LUMINANCE : GL_LUMINANCE_ALPHA;
+
+        int format = i == 0 ? OpenGL_RED_EXT : OpenGL_RG_EXT;
         
         CVReturn err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                     opaque->cv_texture_cache[i],
+                                                     opaque->cv_texture_cache,
                                                      pixel_buffer,
                                                      NULL,
-                                                     GL_TEXTURE_2D,
-                                                                    format,
-                                                                    frame_width,
-                                                                    frame_height,
-                                                                    format,
+                                                     gl_target,
+                                                     format,
+                                                     frame_width,
+                                                     frame_height,
+                                                     format,
                                                      GL_UNSIGNED_BYTE,
-                                                     0,
+                                                     i,
                                                      &opaque->nv12_texture[i]);
+        
 #endif
         if (err != kCVReturnSuccess) {
             ALOGE("Error at CVOpenGLTextureCacheCreateTextureFromImage %d\n", err);
             return GL_FALSE;
         }
-        
+
         glBindTexture(OpenGLTextureGetTarget(opaque->nv12_texture[i]), OpenGLTextureGetName(opaque->nv12_texture[i]));
+        
         glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -325,11 +330,9 @@ static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
 #if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
     yuv420sp_vtb_clean_textures(renderer);
-    for (int i = 0; i < 2; i++) {
-        if (opaque->cv_texture_cache[i]) {
-            CFRelease(opaque->cv_texture_cache[i]);
-            opaque->cv_texture_cache[i] = nil;
-        }
+    if (opaque->cv_texture_cache) {
+        CFRelease(opaque->cv_texture_cache);
+        opaque->cv_texture_cache = nil;
     }
 #endif
     if (opaque->color_attachments != nil) {
@@ -343,23 +346,21 @@ static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
 #if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
 static GLboolean create_gltexture(IJK_GLES2_Renderer *renderer)
 {
-    for (int i = 0; i < 2; i++) {
-        OpenGLTextureCacheRef ref;
+    OpenGLTextureCacheRef ref;
 #if TARGET_OS_OSX
-        CGLContextObj cglContext = CGLGetCurrentContext();
-        CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
-        CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault, NULL, cglContext, cglPixelFormat, NULL, &ref);
+    CGLContextObj cglContext = CGLGetCurrentContext();
+    CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
+    CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault, NULL, cglContext, cglPixelFormat, NULL, &ref);
 #else
-        EAGLContext *context = [EAGLContext currentContext];
-        CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, context, NULL, &ref);
+    EAGLContext *context = [EAGLContext currentContext];
+    CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, context, NULL, &ref);
 #endif
-        if (err || ref == nil) {
-            ALOGE("Error at CVOpenGLESTextureCacheCreate %d\n", err);
-            return GL_FALSE;;
-        }
-        
-        renderer->opaque->cv_texture_cache[i] = ref;
+    if (err || ref == nil) {
+        ALOGE("Error at CVOpenGLESTextureCacheCreate %d\n", err);
+        return GL_FALSE;;
     }
+    
+    renderer->opaque->cv_texture_cache = ref;
     return GL_TRUE;
 }
 #endif
