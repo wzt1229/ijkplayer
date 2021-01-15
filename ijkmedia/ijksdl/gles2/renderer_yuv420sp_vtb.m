@@ -96,6 +96,33 @@ static GLsizei yuv420sp_vtb_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_Vou
     return overlay->pitches[0] / 1;
 }
 
+#if NV12_RENDER_TYPE == NV12_RENDER_NORMAL
+static void upload_texture_normal(IJK_GLES2_Renderer *renderer, const GLubyte *pixels[2], const GLsizei widths[2], const GLsizei heights[2]) {
+    
+    assert(NULL != *pixels);
+    
+    GLenum gl_target = GL_TEXTURE_TARGET;
+    for (int i = 0; i < 2; i++) {
+        GLenum format = i == 0 ? OpenGL_RED_EXT : OpenGL_RG_EXT;
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(gl_target, renderer->plane_textures[i]);
+        glTexImage2D(gl_target,
+                     0,
+                     format,
+                     widths[i],
+                     heights[i],
+                     0,
+                     format,
+                     GL_UNSIGNED_BYTE,
+                     pixels[i]);
+        glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+}
+#endif
+
 #if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
 static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 {
@@ -167,31 +194,6 @@ static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVP
     return GL_TRUE;
 }
 #endif
-
-static void upload_texture_normal(IJK_GLES2_Renderer *renderer, const GLubyte *pixels[2], const GLsizei widths[2], const GLsizei heights[2]) {
-    
-    assert(NULL != *pixels);
-    
-    GLenum gl_target = GL_TEXTURE_TARGET;
-    for (int i = 0; i < 2; i++) {
-        GLenum format = i == 0 ? OpenGL_RED_EXT : OpenGL_RG_EXT;
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(gl_target, renderer->plane_textures[i]);
-        glTexImage2D(gl_target,
-                     0,
-                     format,
-                     widths[i],
-                     heights[i],
-                     0,
-                     format,
-                     GL_UNSIGNED_BYTE,
-                     pixels[i]);
-        glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-}
 
 #if NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
 static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
