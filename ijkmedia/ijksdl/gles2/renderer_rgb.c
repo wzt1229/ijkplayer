@@ -41,6 +41,9 @@
 //https://stackoverflow.com/questions/24933453/best-path-from-avplayeritemvideooutput-to-opengl-texture
 //https://github.com/flutter/engine/commit/aafa6611039699d000b0b852a54f37b1e502a2f0
 
+//GL_TEXTURE_2D vs GL_TEXTURE_RECTANGLE
+//https://stackoverflow.com/questions/13933503/core-video-pixel-buffers-as-gl-texture-2d
+
 #define RGB_RENDER_NORMAL      1
 #define RGB_RENDER_FAST_UPLOAD 2
 #define RGB_RENDER_IO_SURFACE  4

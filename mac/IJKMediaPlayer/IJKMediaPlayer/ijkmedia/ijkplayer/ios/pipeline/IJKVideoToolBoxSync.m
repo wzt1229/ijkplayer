@@ -434,8 +434,7 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
 
     ALOGI("after scale width %d height %d \n", width, height);
 
-    destinationPixelBufferAttributes = CFDictionaryCreateMutable(
-                                                                 NULL,
+    destinationPixelBufferAttributes = CFDictionaryCreateMutable(NULL,
                                                                  0,
                                                                  &kCFTypeDictionaryKeyCallBacks,
                                                                  &kCFTypeDictionaryValueCallBacks);
@@ -450,7 +449,8 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
     CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferOpenGLCompatibilityKey, YES);
 #if TARGET_OS_OSX
     CFDictionarySetValue(destinationPixelBufferAttributes, kCVPixelBufferIOSurfacePropertiesKey, (__bridge void *)[NSDictionary dictionary]);
-    CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey, YES);
+    CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferOpenGLTextureCacheCompatibilityKey, YES);
+//    CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey, YES);
 #endif
 //    CFDictionarySetBoolean(destinationPixelBufferAttributes,
 //                           kCVPixelBufferMetalCompatibilityKey, NO);
@@ -639,8 +639,6 @@ static inline void DuplicatePkt(Ijk_VideoToolBox_Opaque* context, const AVPacket
     av_packet_ref(avpkt, pkt);
     context->m_buffer_deep++;
 }
-
-
 
 static int decode_video(Ijk_VideoToolBox_Opaque* context, AVCodecContext *avctx, AVPacket *avpkt, int* got_picture_ptr)
 {

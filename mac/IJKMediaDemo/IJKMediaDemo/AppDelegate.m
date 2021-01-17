@@ -107,7 +107,8 @@
 - (void)playURL:(NSURL *)url
 {
     self.playingUrl = url;
-    
+    NSString *title = [[url absoluteString] lastPathComponent];
+    [self.window setTitle:title];
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     //视频帧处理不过来的时候丢弃一些帧达到同步的效果
 //    [options setPlayerOptionIntValue:2 forKey:@"framedrop"];
@@ -269,5 +270,16 @@
         }
     }
     return NSDragOperationNone;
+}
+
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag
+{
+    if ([self.window isMiniaturized]) {
+        [self.window deminiaturize:sender];
+    } else {
+        [self.window makeKeyAndOrderFront:sender];
+    }
+    [NSApp activateIgnoringOtherApps:YES];
+    return YES;
 }
 @end
