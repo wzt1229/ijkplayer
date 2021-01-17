@@ -388,8 +388,7 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
         return GL_FALSE;
 
     IJK_GLES_Matrix modelViewProj;
-    //原本的缩放，导致mac上渲染 bgr32时右边一半有问题！故而默认不做任何缩放；后续再行研究；
-    IJK_GLES2_loadOrtho(&modelViewProj, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f);
+    IJK_GLES2_loadOrtho(&modelViewProj, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, modelViewProj.m);                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
 
     IJK_GLES2_Renderer_TexCoords_reset(renderer);
