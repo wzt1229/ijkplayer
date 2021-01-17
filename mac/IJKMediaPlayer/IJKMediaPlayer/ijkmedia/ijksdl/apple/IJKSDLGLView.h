@@ -28,13 +28,6 @@
 #import <APPKit/AppKit.h>
 typedef NSOpenGLView UIView;
 typedef NSImage UIImage;
-
-typedef NS_ENUM(NSInteger, UIViewContentMode) {
-    UIViewContentModeScaleToFill,
-    UIViewContentModeScaleAspectFit,      // contents scaled to fit with fixed aspect. remainder is transparent
-    UIViewContentModeScaleAspectFill,     // contents scaled to fill with fixed aspect. some portion of content may be clipped.
-    UIViewContentModeResizeAspect
-};
 #else
 #import <UIKit/UIKit.h>
 #endif
@@ -48,7 +41,7 @@ typedef NS_ENUM(NSInteger, UIViewContentMode) {
 - (void) display: (SDL_VoutOverlay *) overlay;
 
 #if TARGET_OS_OSX
-- (void)setContentMode:(UIViewContentMode)contentMode;
+- (void)setContentMode:(IJKContentMode)contentMode;
 #else
 - (UIImage*) snapshot;
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));

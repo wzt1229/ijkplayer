@@ -28,6 +28,14 @@
 typedef NSOpenGLView UIView;
 typedef NSImage UIImage;
 #import <AppKit/AppKit.h>
+
+typedef NS_ENUM(NSInteger, IJKContentMode) {
+    IJKContentModeScaleToFill,
+    IJKContentModeScaleAspectFit,      // contents scaled to fit with fixed aspect. remainder is transparent
+    IJKContentModeScaleAspectFill,     // contents scaled to fill with fixed aspect. some portion of content may be clipped.
+    IJKContentModeResizeAspect
+};
+
 #else
 #import <UIKit/UIKit.h>
 #endif
@@ -47,9 +55,9 @@ struct IJKOverlay {
 @protocol IJKSDLGLViewProtocol <NSObject>
 #if !TARGET_OS_OSX
 - (UIImage*) snapshot;
-- (void) display_pixels: (IJKOverlay *) overlay;
+- (void)display_pixels: (IJKOverlay *) overlay;
 #endif
-
+- (void)setContentMode:(IJKContentMode)contentMode;
 @property(nonatomic, readonly) CGFloat  fps;
 @property(nonatomic)        CGFloat  scaleFactor;
 @property(nonatomic)        BOOL  isThirdGLView;

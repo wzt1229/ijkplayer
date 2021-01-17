@@ -168,16 +168,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     [self display:nil];
 }
 
-- (void)setContentMode:(UIViewContentMode)contentMode
+- (void)setContentMode:(IJKContentMode)contentMode
 {
     switch (contentMode) {
-        case UIViewContentModeScaleToFill:
+        case IJKContentModeScaleToFill:
             _rendererGravity = IJK_GLES2_GRAVITY_RESIZE;
             break;
-        case UIViewContentModeScaleAspectFit:
+        case IJKContentModeScaleAspectFit:
             _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
             break;
-        case UIViewContentModeScaleAspectFill:
+        case IJKContentModeScaleAspectFill:
             _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL;
             break;
         default:

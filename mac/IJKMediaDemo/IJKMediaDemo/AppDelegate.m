@@ -14,7 +14,7 @@
 @interface AppDelegate ()<MRDragViewDelegate>
 
 @property (weak) IBOutlet NSWindow *window;
-@property (strong) id<IJKMediaPlayback> player;
+@property (strong) IJKFFMoviePlayerController * player;
 @property (weak) IBOutlet NSTextField *playedTimeLb;
 @property (weak) IBOutlet MRDragView *playbackView;
 @property (nonatomic, strong) NSMutableArray *playList;
@@ -158,8 +158,12 @@
     self.player.shouldAutoplay = YES;
     
     [self.player prepareToPlay];
-    [self.playbackView addSubview:self.player.view];
-    self.player.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    
+    NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
+#warning TODO IJKContentModeScaleAspectFit
+//    [playerView setContentMode:IJKContentModeScaleAspectFit];
+    playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [self.playbackView addSubview:playerView];
     [self.playbackView setWantsLayer:YES];
     self.playbackView.layer.backgroundColor = [[NSColor redColor] CGColor];
     

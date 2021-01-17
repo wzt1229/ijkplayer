@@ -27,6 +27,7 @@
 #else
 #import <AppKit/AppKit.h>
 #endif
+#import "IJKSDLGLViewProtocol.h"
 
 typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeNone,       // No scaling
@@ -79,9 +80,9 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 - (void)shutdown;
 - (void)setPauseInBackground:(BOOL)pause;
 #if TARGET_OS_IOS
-@property(nonatomic, readonly)  UIView *view;
+@property(nonatomic, readonly)  UIView <IJKSDLGLViewProtocol>*view;
 #else
-@property(nonatomic, readonly)  NSView *view;
+@property(nonatomic, readonly)  NSView <IJKSDLGLViewProtocol>*view;
 #endif
 
 @property(nonatomic)            NSTimeInterval currentPlaybackTime;
