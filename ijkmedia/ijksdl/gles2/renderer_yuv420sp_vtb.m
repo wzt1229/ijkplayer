@@ -263,7 +263,7 @@ static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_Vout
         return GL_FALSE;
     }
     
-    assert(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange == CVPixelBufferGetPixelFormatType(pixel_buffer));
+    assert(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange == CVPixelBufferGetPixelFormatType(pixel_buffer) || kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == CVPixelBufferGetPixelFormatType(pixel_buffer));
     
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
     
