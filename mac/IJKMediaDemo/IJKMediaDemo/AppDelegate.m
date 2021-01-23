@@ -107,7 +107,7 @@
 - (void)playURL:(NSURL *)url
 {
     self.playingUrl = url;
-    NSString *title = [[url absoluteString] lastPathComponent];
+    NSString *title = [[url path] lastPathComponent];
     [self.window setTitle:title];
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     //视频帧处理不过来的时候丢弃一些帧达到同步的效果
