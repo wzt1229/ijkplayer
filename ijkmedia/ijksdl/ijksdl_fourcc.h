@@ -74,7 +74,8 @@
 #define SDL_FCC_VTB_RGB24   SDL_FOURCC('V', 'T', 'B', 1 << 0)     /**< Apple VideoToolbox kCVPixelFormatType_24RGB */
 #define SDL_FCC_VTB_ARGB    SDL_FOURCC('V', 'T', 'B', 1 << 1)     /**< Apple VideoToolbox kCVPixelFormatType_32ARGB */
 #define SDL_FCC_VTB_BGRA    SDL_FOURCC('V', 'T', 'B', 1 << 2)     /**< Apple VideoToolbox kCVPixelFormatType_32BGRA */
-#define SDL_FCC_VTB_NV12    SDL_FOURCC('V', 'T', 'B', 1 << 4)     /**< Apple VideoToolbox kCVPixelFormatType_420YpCbCr8BiPlanar */
+#define SDL_FCC_VTB_NV12    SDL_FOURCC('V', 'T', 'B', 1 << 3)     /**< Apple VideoToolbox kCVPixelFormatType_420YpCbCr8BiPlanar */
+#define SDL_FCC_VTB_UYVY    SDL_FOURCC('V', 'T', 'B', 1 << 4)     /**< Apple VideoToolbox kCVPixelFormatType_422YpCbCr8 */
 
 
 // opaque formats

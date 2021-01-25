@@ -178,7 +178,13 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
                 renderer = IJK_GL_Renderer_create_rgbx();
             } else if (overlay->ff_format == kCVPixelFormatType_32ARGB) {
                 renderer = IJK_GL_Renderer_create_xrgb();
-            } else {
+            }
+#if TARGET_OS_OSX
+            else if (overlay->ff_format == kCVPixelFormatType_422YpCbCr8) {
+                renderer = IJK_GL_Renderer_create_uyvy();
+            }
+#endif
+            else {
                 ALOGE("unknown pixformat!");
                 assert(0);
             }

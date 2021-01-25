@@ -44,18 +44,15 @@
 //GL_TEXTURE_2D vs GL_TEXTURE_RECTANGLE
 //https://stackoverflow.com/questions/13933503/core-video-pixel-buffers-as-gl-texture-2d
 
-#define RGB_RENDER_NORMAL      1
-#define RGB_RENDER_FAST_UPLOAD 2
-#define RGB_RENDER_IO_SURFACE  4
+#define UYVY_RENDER_NORMAL      1
+#define UYVY_RENDER_FAST_UPLOAD 2
+#define UYVY_RENDER_IO_SURFACE  4
 
-#define RGB_RENDER_TYPE RGB_RENDER_IO_SURFACE
+#warning UYVY_RENDER_NORMAL not right
+#define UYVY_RENDER_TYPE UYVY_RENDER_IO_SURFACE
 
-#if RGB_RENDER_TYPE != RGB_RENDER_NORMAL
-    #if TARGET_OS_OSX
-        #define GL_TEXTURE_TARGET GL_TEXTURE_RECTANGLE
-    #else
-        #define GL_TEXTURE_TARGET GL_TEXTURE_2D
-    #endif
+#if TARGET_OS_OSX
+    #define GL_TEXTURE_TARGET GL_TEXTURE_RECTANGLE_EXT
 #else
     #define GL_TEXTURE_TARGET GL_TEXTURE_2D
 #endif
@@ -64,18 +61,18 @@ typedef struct IJK_GLES2_Renderer_Opaque
 {
     OpenGLTextureCacheRef cv_texture_cache;
     OpenGLTextureRef      rgb_texture;
-    CFTypeRef               color_attachments;
-    GLint                   textureDimensionIndex;
+    CFTypeRef             color_attachments;
+    GLint                 textureDimensionIndex;
 } IJK_GL_Renderer_Opaque;
 
 static GLboolean rgb_use(IJK_GLES2_Renderer *renderer)
 {
     ALOGI("use render rgb\n");
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, GL_TRUE);
     glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
 
-#if RGB_RENDER_TYPE == RGB_RENDER_NORMAL || RGB_RENDER_TYPE == RGB_RENDER_IO_SURFACE
+#if UYVY_RENDER_TYPE == UYVY_RENDER_NORMAL || UYVY_RENDER_TYPE == UYVY_RENDER_IO_SURFACE
     if (0 == renderer->plane_textures[0])
         glGenTextures(1, renderer->plane_textures);
 #endif
@@ -87,7 +84,7 @@ static GLboolean rgb_use(IJK_GLES2_Renderer *renderer)
     return GL_TRUE;
 }
 
-#if RGB_RENDER_TYPE == RGB_RENDER_FAST_UPLOAD
+#if UYVY_RENDER_TYPE == UYVY_RENDER_FAST_UPLOAD
 static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
@@ -125,7 +122,7 @@ static GLsizei bgrx_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay
     return 0;
 }
 
-#if RGB_RENDER_TYPE == RGB_RENDER_IO_SURFACE
+#if UYVY_RENDER_TYPE == UYVY_RENDER_IO_SURFACE
 static GLboolean upload_rgb_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
 {
     IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
@@ -194,7 +191,7 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     }
     
     int pft = CVPixelBufferGetPixelFormatType(pixel_buffer);
-    assert(kCVPixelFormatType_32BGRA == pft || kCVPixelFormatType_32ARGB == pft || kCVPixelFormatType_24RGB == pft);
+    assert(kCVPixelFormatType_422YpCbCr8 == pft);
     
     CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
     
@@ -205,7 +202,7 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     }
     glActiveTexture(GL_TEXTURE0);
     
-#if RGB_RENDER_TYPE == RGB_RENDER_FAST_UPLOAD
+#if UYVY_RENDER_TYPE == UYVY_RENDER_FAST_UPLOAD
     IJK_GL_Renderer_Opaque *opaque = renderer->opaque;
     yuv420sp_vtb_clean_textures(renderer);
     int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);
@@ -227,44 +224,35 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     glTexParameterf(GL_TEXTURE_TARGET, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_TARGET, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     return GL_TRUE;
-#elif RGB_RENDER_TYPE == RGB_RENDER_IO_SURFACE
+#elif UYVY_RENDER_TYPE == UYVY_RENDER_IO_SURFACE
     return upload_rgb_texture_use_IOSurface(pixel_buffer, renderer);
 #else
-    int bufferHeight = (int) CVPixelBufferGetHeight(pixel_buffer);
-    int bufferWidth  = (int) CVPixelBufferGetWidth(pixel_buffer);
-
-    GLenum src_format = 0;
-    int src_type = GL_UNSIGNED_BYTE;
-    int internalformat = GL_RGBA;
-    int pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
-    if (pixel_format == kCVPixelFormatType_32BGRA) {
-        src_format = GL_BGRA;
-    } else if (pixel_format == kCVPixelFormatType_24RGB) {
-        src_format = GL_RGB;
-        internalformat = GL_RGB;
-    } else if (pixel_format == kCVPixelFormatType_32ARGB) {
-        //使用的是 argb 的 fsh
-        src_format = GL_RGBA;
-    }
+    GLsizei w = (GLsizei)CVPixelBufferGetHeight(pixel_buffer);
+    GLsizei h = (GLsizei)CVPixelBufferGetWidth(pixel_buffer);
+    
+    glUniform2f(renderer->opaque->textureDimensionIndex, w, h);
     
     CVPixelBufferLockBaseAddress(pixel_buffer, 0);
     const GLubyte *pixel = CVPixelBufferGetBaseAddress(pixel_buffer);
-    //Using BGRA extension to pull in video frame data directly
-    glTexImage2D(GL_TEXTURE_TARGET,
-                 0,
-                 internalformat,
-                 bufferWidth,
-                 bufferHeight,
-                 0,
-                 src_format,
-                 src_type,
-                 pixel);
-    CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
+    
+    glBindTexture(GL_TEXTURE_TARGET, renderer->plane_textures[0]);
+    GLsizei length = 2 * w * h;
+//    glTextureRangeAPPLE(GL_TEXTURE_TARGET, length, pixel);
+//    glTexParameteri(GL_TEXTURE_TARGET, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
+//    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
     
     glTexParameteri(GL_TEXTURE_TARGET, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_TARGET, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_TARGET, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_TARGET, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
+//    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+//    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    //Using BGRA extension to pull in video frame data directly
+    glTexImage2D(GL_TEXTURE_TARGET, 0, GL_RGBA8, w, h, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, pixel);
+    CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
+    
     return GL_TRUE;
 #endif
 }
@@ -354,9 +342,10 @@ static GLboolean bgrx_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     }
 }
 
-static IJK_GLES2_Renderer *IJK_GL_Renderer_create_xgbx(const char *fsh)
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_2vuy(void)
 {
-    ALOGI("create render rgbx\n");
+    const char *fsh = IJK_GLES2_getFragmentShader_rect_rgb();
+    ALOGI("create render 2vuy.\n");
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(fsh);
     if (!renderer)
         goto fail;
@@ -370,8 +359,9 @@ static IJK_GLES2_Renderer *IJK_GL_Renderer_create_xgbx(const char *fsh)
     renderer->opaque = calloc(1, sizeof(IJK_GL_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;
-#if RGB_RENDER_TYPE == RGB_RENDER_FAST_UPLOAD
+#if UYVY_RENDER_TYPE == UYVY_RENDER_FAST_UPLOAD
     CGLContextObj context = CGLGetCurrentContext();
+    printf("CGLContextObj2:%p",context);
     CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
     
     CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault, NULL, context, cglPixelFormat, NULL, &renderer->opaque->cv_texture_cache);
@@ -381,13 +371,16 @@ static IJK_GLES2_Renderer *IJK_GL_Renderer_create_xgbx(const char *fsh)
     }
 #endif
     
-#if RGB_RENDER_TYPE != RGB_RENDER_NORMAL
+#if UYVY_RENDER_TYPE != UYVY_RENDER_NORMAL
+    
+#endif
+    
     GLint textureDimensionIndex = glGetUniformLocation(renderer->program, "textureDimensions");
 
     assert(textureDimensionIndex >= 0);
     
     renderer->opaque->textureDimensionIndex = textureDimensionIndex;
-#endif
+    
     renderer->opaque->color_attachments = CFRetain(kCVImageBufferYCbCrMatrix_ITU_R_709_2);
     
     return renderer;
@@ -396,16 +389,3 @@ fail:
     return NULL;
 }
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb()
-{
-    return IJK_GL_Renderer_create_xgbx(IJK_GLES2_getFragmentShader_argb());
-}
-
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx()
-{
-#if TARGET_OS_OSX && (RGB_RENDER_TYPE != RGB_RENDER_NORMAL)
-    return IJK_GL_Renderer_create_xgbx(IJK_GLES2_getFragmentShader_rect_rgb());
-#else
-    return IJK_GL_Renderer_create_xgbx(IJK_GLES2_getFragmentShader_rgb());
-#endif
-}

@@ -1052,6 +1052,8 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
         pixelFormatType = kCVPixelFormatType_24RGB;
     } else if (overlay_format == SDL_FCC_VTB_ARGB) {
         pixelFormatType = kCVPixelFormatType_32ARGB;
+    } else if (overlay_format == SDL_FCC_VTB_UYVY) {
+        pixelFormatType = kCVPixelFormatType_422YpCbCr8;
     } else {
         bool fullRange = false;//codecpar->color_range != AVCOL_RANGE_MPEG;
         pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;

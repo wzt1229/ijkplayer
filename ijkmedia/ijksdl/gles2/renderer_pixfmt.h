@@ -141,7 +141,6 @@ struct vt_format {
     int imgfmt;
     int planes;
     struct vt_gl_plane_format gl[MP_MAX_PLANES];
-    char swizzle[5];
 };
 
 static struct vt_format vt_formats[] = {
@@ -169,15 +168,16 @@ static struct vt_format vt_formats[] = {
             { GL_LUMINANCE_ALPHA,  GL_UNSIGNED_BYTE, GL_LUMINANCE_ALPHA }
         }
     },
+#if TARGET_OS_OSX
     {
         .cvpixfmt = kCVPixelFormatType_422YpCbCr8,
         .imgfmt = IMGFMT_UYVY,
         .planes = 1,
         .gl = {
-            { GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB }
-        },
-        .swizzle = "gbra",
+            { GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB }
+        }
     },
+#endif
     {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8Planar,
         .imgfmt = IMGFMT_420P,

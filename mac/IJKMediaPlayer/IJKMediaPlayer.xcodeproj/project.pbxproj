@@ -170,6 +170,7 @@
 		DD5D67DD22C9EAD400A421BF /* color.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C459861C7030B6004831EC /* color.c */; };
 		DD5D67DE22C9EAE400A421BF /* rgb.fsh.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C459C21C708E60004831EC /* rgb.fsh.c */; };
 		DD5D67E122C9EAEE00A421BF /* yuv444p10le.fsh.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C4598A1C7030B6004831EC /* yuv444p10le.fsh.c */; };
+		DD96D20425BE6C8800F9C47C /* renderer_ uyvy.c in Sources */ = {isa = PBXBuildFile; fileRef = DD96D20125BE6C8800F9C47C /* renderer_ uyvy.c */; };
 		DD9B12ED22C224BC002D1D79 /* IJKKVOController.m in Sources */ = {isa = PBXBuildFile; fileRef = E65DC3B819D93D5F004F8A08 /* IJKKVOController.m */; };
 		DD9B12EE22C224BC002D1D79 /* ijksdl_vout.c in Sources */ = {isa = PBXBuildFile; fileRef = E690401117EAFC6100CFD954 /* ijksdl_vout.c */; };
 		DD9B12F022C224BC002D1D79 /* allformats.c in Sources */ = {isa = PBXBuildFile; fileRef = E69BE54A1B93FED300AFBA3F /* allformats.c */; };
@@ -417,6 +418,7 @@
 		DD1B342F22CA0A9700022FCA /* yuv420p.fsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = yuv420p.fsh.c; sourceTree = "<group>"; };
 		DD1B343622CA0B4400022FCA /* mvp.vsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mvp.vsh.c; sourceTree = "<group>"; };
 		DD5D67C922C37BB100A421BF /* glUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = glUtil.h; sourceTree = "<group>"; };
+		DD96D20125BE6C8800F9C47C /* renderer_ uyvy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "renderer_ uyvy.c"; sourceTree = "<group>"; };
 		DD9B136922C224BC002D1D79 /* IJKMediaMacFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = IJKMediaMacFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B137322C23247002D1D79 /* IJKSDLGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJKSDLGLView.m; sourceTree = "<group>"; };
 		DD9B13AF22C23D66002D1D79 /* IJKMediaMacFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKMediaMacFramework.h; sourceTree = "<group>"; };
@@ -1004,6 +1006,7 @@
 		E6C459851C7030B6004831EC /* gles2 */ = {
 			isa = PBXGroup;
 			children = (
+				DD96D20125BE6C8800F9C47C /* renderer_ uyvy.c */,
 				E6C459861C7030B6004831EC /* color.c */,
 				E6C459871C7030B6004831EC /* common.c */,
 				E6C459881C7030B6004831EC /* fsh */,
@@ -1514,6 +1517,7 @@
 				DD9B130022C224BC002D1D79 /* IJKAudioKit.m in Sources */,
 				DD9B130222C224BC002D1D79 /* ijksdl_vout_overlay_videotoolbox.m in Sources */,
 				DD5D67DC22C9EAC100A421BF /* common.c in Sources */,
+				DD96D20425BE6C8800F9C47C /* renderer_ uyvy.c in Sources */,
 				DD050DA125A3FF2100F01E2F /* ijklas.c in Sources */,
 				DD9B130322C224BC002D1D79 /* ff_ffpipenode.c in Sources */,
 				DD9B130422C224BC002D1D79 /* ijksdl_stdinc.c in Sources */,

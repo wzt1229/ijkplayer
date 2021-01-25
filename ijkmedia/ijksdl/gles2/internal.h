@@ -110,6 +110,7 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp();
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420p();
 
 #if TARGET_OS_OSX
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_uyvy(void);
 #else
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv444p10le();
 #endif

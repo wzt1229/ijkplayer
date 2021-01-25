@@ -107,7 +107,7 @@
 - (void)playURL:(NSURL *)url
 {
     self.playingUrl = url;
-    NSString *title = [[url path] lastPathComponent];
+    NSString *title = [[url resourceSpecifier] lastPathComponent];
     [self.window setTitle:title];
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     //视频帧处理不过来的时候丢弃一些帧达到同步的效果
@@ -124,8 +124,11 @@
 //        [options setPlayerOptionValue:@"fcc-vtb-RGB24"         forKey:@"overlay-format"];
 //        [options setPlayerOptionValue:@"fcc-vtb-ARGB"          forKey:@"overlay-format"];
 //        [options setPlayerOptionValue:@"fcc-vtb-BGRA"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-vtb-UYVY"          forKey:@"overlay-format"];
+        
         //default is NV12 for videotoolbox
-        [options setPlayerOptionValue:@"fcc-vtb-NV12"          forKey:@"overlay-format"];
+//        [options setPlayerOptionValue:@"fcc-vtb-NV12"          forKey:@"overlay-format"];
+        
         [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];
         [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
     } else {

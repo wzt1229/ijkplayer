@@ -124,7 +124,7 @@ static const AVOption ffp_context_options[] = {
     { "fcc-vtb-ARGB",                   "", 0, OPTION_CONST(SDL_FCC_VTB_ARGB), .unit = "overlay-format" },
     { "fcc-vtb-BGRA",                   "", 0, OPTION_CONST(SDL_FCC_VTB_BGRA), .unit = "overlay-format" },
     { "fcc-vtb-NV12",                   "", 0, OPTION_CONST(SDL_FCC_VTB_NV12), .unit = "overlay-format" },
-    
+    { "fcc-vtb-UYVY",                   "", 0, OPTION_CONST(SDL_FCC_VTB_UYVY), .unit = "overlay-format" },
     { "start-on-prepared",                  "automatically start playing on prepared",
         OPTION_OFFSET(start_on_prepared),   OPTION_INT(1, 0, 1) },
 
