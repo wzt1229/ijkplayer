@@ -342,7 +342,7 @@ static GLboolean bgrx_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     }
 }
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_2vuy(void)
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_uyvy(void)
 {
     const char *fsh = IJK_GLES2_getFragmentShader_rect_rgb();
     ALOGI("create render 2vuy.\n");
