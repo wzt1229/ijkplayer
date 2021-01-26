@@ -830,7 +830,7 @@ static void free_picture(Frame *vp)
 // FFP_MERGE: upload_texture
 // FFP_MERGE: video_image_display
 
-static size_t parse_ass_subtitle(const char *ass, char *output)
+static size_t parse_ass_subtitle(const char *ass, char *output, int buffSize)
 {
     char *tok = NULL;
     tok = strchr(ass, ':'); if (tok) tok += 1; // skip event
@@ -843,6 +843,7 @@ static size_t parse_ass_subtitle(const char *ass, char *output)
     tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_r
     tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_v
     tok = strchr(tok, ','); if (tok) tok += 1; // skip effect
+    
     if (tok) {
         char *text = tok;
         size_t idx = 0;
@@ -850,18 +851,25 @@ static size_t parse_ass_subtitle(const char *ass, char *output)
             char *found = strstr(text, "\\N");
             if (found) {
                 size_t n = found - text;
-                memcpy(output+idx, text, n);
-                output[idx + n] = '\n';
-                idx = n + 1;
+                size_t len = buffSize - idx - 1 > n ? n : buffSize - idx - 1;
+                memcpy(output+idx, text, len);
+                output[idx + len] = '\n';
+                idx += len + 1;
                 text = found + 2;
+                
+                if (buffSize - 1 - idx <= 0) {
+                    output[buffSize - 1] = '\0';
+                    break;
+                }
             }
             else {
                 size_t left_text_len = strlen(text);
-                memcpy(output+idx, text, left_text_len);
-                if (output[idx + left_text_len - 1] == '\n')
-                    output[idx + left_text_len - 1] = '\0';
+                size_t len = buffSize - idx - 1 > left_text_len ? left_text_len : buffSize - idx - 1;
+                memcpy(output+idx, text, len);
+                if (output[idx + len - 1] == '\n')
+                    output[idx + len - 1] = '\0';
                 else
-                    output[idx + left_text_len] = '\0';
+                    output[idx + len] = '\0';
                 break;
             }
         } while(1);
@@ -886,14 +894,16 @@ static void video_image_display2(FFPlayer *ffp)
                 if (vp->pts >= sp->pts + ((float) sp->sub.start_display_time / 1000)) {
                     if (!sp->uploaded) {
                         if (sp->sub.num_rects > 0) {
-                            char buffered_text[4096];
+                            char *buffered_text = vp->bmp->subtitle;
+                            int bufferLen = sizeof(vp->bmp->subtitle);
+                            
                             if (sp->sub.rects[0]->text) {
-                                strncpy(buffered_text, sp->sub.rects[0]->text, 4096);
+                                strncpy(buffered_text, sp->sub.rects[0]->text, bufferLen);
                             }
                             else if (sp->sub.rects[0]->ass) {
-                                parse_ass_subtitle(sp->sub.rects[0]->ass, buffered_text);
+                                parse_ass_subtitle(sp->sub.rects[0]->ass, buffered_text,bufferLen);
                             }
-                            ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, buffered_text, sizeof(buffered_text));
+                            //ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, buffered_text, sizeof(buffered_text));
                         }
                         sp->uploaded = 1;
                     }

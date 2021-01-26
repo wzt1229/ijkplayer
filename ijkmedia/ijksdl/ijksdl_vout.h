@@ -41,7 +41,7 @@ struct SDL_VoutOverlay {
     int planes; /**< Read-only */
     Uint16 *pitches; /**< in bytes, Read-only */
     Uint8 **pixels; /**< Read-write */
-
+    char subtitle[4096];
     int is_private;
 
     int sar_num;
