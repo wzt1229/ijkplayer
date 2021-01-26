@@ -65,9 +65,9 @@ typedef struct IJK_GLES2_Renderer_Opaque
     GLint                 textureDimensionIndex;
 } IJK_GL_Renderer_Opaque;
 
-static GLboolean rgb_use(IJK_GLES2_Renderer *renderer)
+static GLboolean uyvy_use(IJK_GLES2_Renderer *renderer)
 {
-    ALOGI("use render rgb\n");
+    ALOGI("use render uyvy\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, GL_TRUE);
     glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
@@ -103,7 +103,7 @@ static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
 }
 #endif
 
-static GLsizei bgrx_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+static GLsizei uyvy_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
     if (!overlay)
         return 0;
@@ -123,7 +123,7 @@ static GLsizei bgrx_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay
 }
 
 #if UYVY_RENDER_TYPE == UYVY_RENDER_IO_SURFACE
-static GLboolean upload_rgb_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
+static GLboolean upload_uyvy_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
 {
     IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
     
@@ -225,7 +225,7 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     glTexParameterf(GL_TEXTURE_TARGET, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     return GL_TRUE;
 #elif UYVY_RENDER_TYPE == UYVY_RENDER_IO_SURFACE
-    return upload_rgb_texture_use_IOSurface(pixel_buffer, renderer);
+    return upload_uyvy_texture_use_IOSurface(pixel_buffer, renderer);
 #else
     GLsizei w = (GLsizei)CVPixelBufferGetHeight(pixel_buffer);
     GLsizei h = (GLsizei)CVPixelBufferGetWidth(pixel_buffer);
@@ -257,7 +257,7 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
 #endif
 }
 
-static GLboolean bgrx_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+static GLboolean uyvy_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
     if (!renderer || !overlay)
         return GL_FALSE;
@@ -352,9 +352,9 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_uyvy(void)
     
     renderer->us2_sampler[0] = glGetUniformLocation(renderer->program, "us2_SamplerX"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(us2_SamplerX)");
     
-    renderer->func_use            = rgb_use;
-    renderer->func_getBufferWidth = bgrx_getBufferWidth;
-    renderer->func_uploadTexture  = bgrx_uploadTexture;
+    renderer->func_use            = uyvy_use;
+    renderer->func_getBufferWidth = uyvy_getBufferWidth;
+    renderer->func_uploadTexture  = uyvy_uploadTexture;
     
     renderer->opaque = calloc(1, sizeof(IJK_GL_Renderer_Opaque));
     if (!renderer->opaque)
