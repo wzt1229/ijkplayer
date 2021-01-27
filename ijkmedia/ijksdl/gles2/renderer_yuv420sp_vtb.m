@@ -33,6 +33,7 @@
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #include "renderer_pixfmt.h"
+#import "MRTextureString.h"
 
 #define NV12_RENDER_NORMAL      1
 #define NV12_RENDER_FAST_UPLOAD 2
@@ -63,7 +64,9 @@ typedef struct IJK_GLES2_Renderer_Opaque
     OpenGLTextureRef      nv12_texture[2];
     CFTypeRef             color_attachments;
     GLint                 textureDimension[2];
+    GLint                 isSubtitle;
     Frame_Size            frameSize[2];
+    MRTextureString       *textureString;
 } IJK_GLES2_Renderer_Opaque;
 
 static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
@@ -367,6 +370,33 @@ static GLboolean create_gltexture(IJK_GLES2_Renderer *renderer)
 }
 #endif
 
+static GLvoid yuv420sp_useSubtitle(IJK_GLES2_Renderer *renderer,GLboolean subtitle)
+{
+    glUniform1i(renderer->opaque->isSubtitle, (GLint)subtitle);
+}
+
+static GLboolean yuv420sp_uploadSubtitle(IJK_GLES2_Renderer *renderer,char * subtitle)
+{
+    NSMutableDictionary * stanStringAttrib = [NSMutableDictionary dictionary];
+    NSFont * font = [NSFont fontWithName:@"Helvetica" size:54.0];
+    [stanStringAttrib setObject:font forKey:NSFontAttributeName];
+    [stanStringAttrib setObject:[NSColor colorWithWhite:1 alpha:1] forKey:NSForegroundColorAttributeName];
+    
+    NSString *aStr = [[NSString alloc] initWithUTF8String:subtitle];
+    
+    if (renderer->opaque->textureString) {
+        [renderer->opaque->textureString setString:aStr withAttributes:stanStringAttrib];
+    } else {
+        MRTextureString *textureString = [[MRTextureString alloc] initWithString:aStr withAttributes:stanStringAttrib withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
+        renderer->opaque->textureString = textureString;
+    }
+    
+    CVPixelBufferRef cvPixelRef = [renderer->opaque->textureString cvPixelBuffer];
+#warning TODO draw
+    CVPixelBufferRelease(cvPixelRef);
+    return GL_TRUE;
+}
+
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay)
 {
     ALOGI("create render yuv420sp_vtb\n");
@@ -391,7 +421,9 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
     renderer->func_getBufferWidth = yuv420sp_vtb_getBufferWidth;
     renderer->func_uploadTexture  = yuv420sp_vtb_uploadTexture;
     renderer->func_destroy        = yuv420sp_vtb_destroy;
-
+    renderer->func_useSubtitle    = yuv420sp_useSubtitle;
+    renderer->func_uploadSubtitle = yuv420sp_uploadSubtitle;
+    
     renderer->opaque = calloc(1, sizeof(IJK_GLES2_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;
@@ -413,8 +445,12 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
         renderer->opaque->textureDimension[1] = textureDimensionY;
     }
 #endif
-    renderer->opaque->color_attachments = CFRetain(kCVImageBufferYCbCrMatrix_ITU_R_709_2);
     
+    GLint isSubtitle = glGetUniformLocation(renderer->program, "isSubtitle");
+    assert(isSubtitle >= 0);
+    renderer->opaque->isSubtitle = isSubtitle;
+    
+    renderer->opaque->color_attachments = CFRetain(kCVImageBufferYCbCrMatrix_ITU_R_709_2);
     return renderer;
 fail:
     IJK_GLES2_Renderer_free(renderer);

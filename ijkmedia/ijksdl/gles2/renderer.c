@@ -352,12 +352,25 @@ GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravit
 
 static void IJK_GLES2_Renderer_TexCoords_reset(IJK_GLES2_Renderer *renderer)
 {
+/*
+ OpenGL 纹理坐标系：
+ 取值范围：[0.0,1.0]
+   Y ^
+     |
+     |
+     o-------> X
+*/
+    //默认将纹理贴满画布
+    //左上
     renderer->texcoords[0] = 0.0f;
     renderer->texcoords[1] = 1.0f;
+    //右上
     renderer->texcoords[2] = 1.0f;
     renderer->texcoords[3] = 1.0f;
+    //左下(圆点)
     renderer->texcoords[4] = 0.0f;
     renderer->texcoords[5] = 0.0f;
+    //右下
     renderer->texcoords[6] = 1.0f;
     renderer->texcoords[7] = 0.0f;
 }
@@ -433,7 +446,10 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
 
             renderer->vertices_changed = 1;
         }
-
+        
+        if (renderer->func_useSubtitle) {
+            renderer->func_useSubtitle(renderer, GL_FALSE);
+        }
         renderer->last_buffer_width = renderer->func_getBufferWidth(renderer, overlay);
 
         if (!renderer->func_uploadTexture(renderer, overlay))
@@ -467,9 +483,16 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     }
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);      IJK_GLES2_checkError_TRACE("glDrawArrays");
-    
-#warning TODO draw subtitle.
-    printf("字幕:%s\n",overlay->subtitle);
+
+    if (strlen(overlay->subtitle) > 0) {
+        if (renderer->func_useSubtitle) {
+            renderer->func_useSubtitle(renderer, GL_TRUE);
+        }
+        
+        if (renderer->func_uploadSubtitle) {
+            renderer->func_uploadSubtitle(renderer,overlay->subtitle);    
+        }
+    }
     
     return GL_TRUE;
 }

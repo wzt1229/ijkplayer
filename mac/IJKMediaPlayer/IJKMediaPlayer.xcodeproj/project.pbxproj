@@ -171,6 +171,8 @@
 		DD5D67DE22C9EAE400A421BF /* rgb.fsh.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C459C21C708E60004831EC /* rgb.fsh.c */; };
 		DD5D67E122C9EAEE00A421BF /* yuv444p10le.fsh.c in Sources */ = {isa = PBXBuildFile; fileRef = E6C4598A1C7030B6004831EC /* yuv444p10le.fsh.c */; };
 		DD96D20425BE6C8800F9C47C /* renderer_ uyvy.c in Sources */ = {isa = PBXBuildFile; fileRef = DD96D20125BE6C8800F9C47C /* renderer_ uyvy.c */; };
+		DD96D58225C0F84C00F9C47C /* MRTextureString.m in Sources */ = {isa = PBXBuildFile; fileRef = DD96D58025C0F84B00F9C47C /* MRTextureString.m */; };
+		DD96D58325C0F84C00F9C47C /* MRTextureString.h in Headers */ = {isa = PBXBuildFile; fileRef = DD96D58125C0F84C00F9C47C /* MRTextureString.h */; };
 		DD9B12ED22C224BC002D1D79 /* IJKKVOController.m in Sources */ = {isa = PBXBuildFile; fileRef = E65DC3B819D93D5F004F8A08 /* IJKKVOController.m */; };
 		DD9B12EE22C224BC002D1D79 /* ijksdl_vout.c in Sources */ = {isa = PBXBuildFile; fileRef = E690401117EAFC6100CFD954 /* ijksdl_vout.c */; };
 		DD9B12F022C224BC002D1D79 /* allformats.c in Sources */ = {isa = PBXBuildFile; fileRef = E69BE54A1B93FED300AFBA3F /* allformats.c */; };
@@ -419,6 +421,8 @@
 		DD1B343622CA0B4400022FCA /* mvp.vsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mvp.vsh.c; sourceTree = "<group>"; };
 		DD5D67C922C37BB100A421BF /* glUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = glUtil.h; sourceTree = "<group>"; };
 		DD96D20125BE6C8800F9C47C /* renderer_ uyvy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "renderer_ uyvy.c"; sourceTree = "<group>"; };
+		DD96D58025C0F84B00F9C47C /* MRTextureString.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MRTextureString.m; path = IJKMediaPlayer/ijkmedia/ijksdl/apple/MRTextureString.m; sourceTree = SOURCE_ROOT; };
+		DD96D58125C0F84C00F9C47C /* MRTextureString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MRTextureString.h; path = IJKMediaPlayer/ijkmedia/ijksdl/apple/MRTextureString.h; sourceTree = SOURCE_ROOT; };
 		DD9B136922C224BC002D1D79 /* IJKMediaMacFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = IJKMediaMacFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B137322C23247002D1D79 /* IJKSDLGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJKSDLGLView.m; sourceTree = "<group>"; };
 		DD9B13AF22C23D66002D1D79 /* IJKMediaMacFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKMediaMacFramework.h; sourceTree = "<group>"; };
@@ -655,9 +659,11 @@
 		DD9B137222C23247002D1D79 /* mac */ = {
 			isa = PBXGroup;
 			children = (
-				DDDC592925B196A6002EF8C0 /* IJKSDLGLView.h */,
 				DD5D67C922C37BB100A421BF /* glUtil.h */,
+				DDDC592925B196A6002EF8C0 /* IJKSDLGLView.h */,
 				DD9B137322C23247002D1D79 /* IJKSDLGLView.m */,
+				DD96D58125C0F84C00F9C47C /* MRTextureString.h */,
+				DD96D58025C0F84B00F9C47C /* MRTextureString.m */,
 			);
 			name = mac;
 			path = IJKMediaPlayer/ijkmedia/ijksdl/mac;
@@ -1145,6 +1151,7 @@
 				DD9B134E22C224BC002D1D79 /* ijksdl_egl.h in Headers */,
 				DD9B134F22C224BC002D1D79 /* ff_ffplay_options.h in Headers */,
 				DD9B140722C24B82002D1D79 /* ijkplayer_ios.h in Headers */,
+				DD96D58325C0F84C00F9C47C /* MRTextureString.h in Headers */,
 				DD9B13FD22C24B82002D1D79 /* ffpipeline_ios.h in Headers */,
 				DD9B135122C224BC002D1D79 /* IJKKVOController.h in Headers */,
 				DD9B13FE22C24B82002D1D79 /* IJKVideoToolBox.h in Headers */,
@@ -1528,6 +1535,7 @@
 				DD9B130B22C224BC002D1D79 /* ijkurlhook.c in Sources */,
 				DD9B13FF22C24B82002D1D79 /* ffpipenode_ios_videotoolbox_vdec.m in Sources */,
 				DD9B130D22C224BC002D1D79 /* IJKMediaPlayback.m in Sources */,
+				DD96D58225C0F84C00F9C47C /* MRTextureString.m in Sources */,
 				DD1B343022CA0A9700022FCA /* yuv420p.fsh.c in Sources */,
 				DD9B130E22C224BC002D1D79 /* ijkdict.c in Sources */,
 				DDDC584725B04AB7002EF8C0 /* renderer_yuv420p.c in Sources */,

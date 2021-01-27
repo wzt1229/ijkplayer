@@ -55,6 +55,8 @@ typedef struct IJK_GLES2_Renderer
     GLboolean (*func_use)(IJK_GLES2_Renderer *renderer);
     GLsizei   (*func_getBufferWidth)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
     GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+    GLvoid    (*func_useSubtitle)(IJK_GLES2_Renderer *renderer,GLboolean subtitle);
+    GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer,char * subtitle);
     GLvoid    (*func_destroy)(IJK_GLES2_Renderer *renderer);
 
     GLsizei buffer_width;

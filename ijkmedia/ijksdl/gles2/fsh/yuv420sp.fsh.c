@@ -49,20 +49,26 @@ static const char g_shader_rect[] = IJK_GLES_STRING(
     uniform sampler2DRect us2_SamplerY;
     uniform vec2 textureDimensionX;
     uniform vec2 textureDimensionY;
+    uniform int isSubtitle;
                                                     
     void main()
     {
-        vec3 yuv;
-        vec3 rgb;
-    
-        vec2 recTexCoordX = vv2_Texcoord * textureDimensionX;
-        vec2 recTexCoordY = vv2_Texcoord * textureDimensionY;
-        //yuv.x = (texture2DRect(us2_SamplerX, recTexCoord).r  - (16.0 / 255.0));
-        //videotoolbox decoded video range pixel already! kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
-        yuv.x = texture2DRect(us2_SamplerX, recTexCoordX).r;
-        yuv.yz = (texture2DRect(us2_SamplerY, recTexCoordY).ra - vec2(0.5, 0.5));
-        rgb = um3_ColorConversion * yuv;
-        gl_FragColor = vec4(rgb, 1);
+        if (isSubtitle == 1) {
+            vec2 recTexCoordX = vv2_Texcoord * textureDimensionX;
+            gl_FragColor = texture2DRect(us2_SamplerX, recTexCoordX);
+        } else {
+            vec3 yuv;
+            vec3 rgb;
+            
+            vec2 recTexCoordX = vv2_Texcoord * textureDimensionX;
+            vec2 recTexCoordY = vv2_Texcoord * textureDimensionY;
+            //yuv.x = (texture2DRect(us2_SamplerX, recTexCoord).r  - (16.0 / 255.0));
+            //videotoolbox decoded video range pixel already! kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+            yuv.x = texture2DRect(us2_SamplerX, recTexCoordX).r;
+            yuv.yz = (texture2DRect(us2_SamplerY, recTexCoordY).ra - vec2(0.5, 0.5));
+            rgb = um3_ColorConversion * yuv;
+            gl_FragColor = vec4(rgb, 1);
+        }
     }
 );
 
