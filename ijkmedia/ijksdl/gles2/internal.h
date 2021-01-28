@@ -34,7 +34,10 @@
 #define IJK_GLES_STRING(x)      IJK_GLES_STRINGIZE2(x)
 
 typedef struct IJK_GLES2_Renderer_Opaque IJK_GLES2_Renderer_Opaque;
-
+typedef struct IJK_Subtile_Size {
+    int w;
+    int h;
+}IJK_Subtile_Size;
 typedef struct IJK_GLES2_Renderer
 {
     IJK_GLES2_Renderer_Opaque *opaque;
@@ -56,7 +59,7 @@ typedef struct IJK_GLES2_Renderer
     GLsizei   (*func_getBufferWidth)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
     GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
     GLvoid    (*func_useSubtitle)(IJK_GLES2_Renderer *renderer,GLboolean subtitle);
-    GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer,char * subtitle);
+    GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer,void* subtitle,IJK_Subtile_Size* size);
     GLvoid    (*func_destroy)(IJK_GLES2_Renderer *renderer);
 
     GLsizei buffer_width;

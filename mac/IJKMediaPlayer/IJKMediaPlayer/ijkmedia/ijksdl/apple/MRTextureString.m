@@ -88,7 +88,7 @@
     self.boxColor = box;
     self.borderColor = border;
     self.antialias = YES;
-    self.edgeInsets = NSEdgeInsetsMake(6.0f, 4.0f, 6.0f, 4.0f);
+    self.edgeInsets = NSEdgeInsetsMake(6.0f, 6.0f, 6.0f, 6.0f);
 	self.cRadius = 3.0f;
     self.requiresUpdate = YES;
 	return self;
@@ -164,7 +164,7 @@
 // these will force the texture to be regenerated at the next draw
 - (void)setEdgeInsets:(NSEdgeInsets)edgeInsets
 {
-    if (NSEdgeInsetsEqual(_edgeInsets, edgeInsets)) {
+    if (!NSEdgeInsetsEqual(_edgeInsets, edgeInsets)) {
         _edgeInsets = edgeInsets;
         self.size = CGSizeZero;
         self.requiresUpdate = YES;
@@ -261,7 +261,7 @@
     return image;
 }
 
-- (CVPixelBufferRef)cvPixelBuffer
+- (CVPixelBufferRef)createPixelBuffer
 {
     CGSize picSize = [self size];
 
@@ -291,12 +291,15 @@
     CGContextRef context = CGBitmapContextCreate(pxdata, width, height, 8, bpr, rgbColorSpace, kCGImageAlphaPremultipliedLast);
     NSParameterAssert(context);
     
-    NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:context flipped:YES];
+    NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:context flipped:NO];
     [graphicsContext setShouldAntialias:self.antialias];
+    [graphicsContext setImageInterpolation:NSImageInterpolationHigh];
+    
     [NSGraphicsContext saveGraphicsState];
     [NSGraphicsContext setCurrentContext:graphicsContext];
     [self drawMySelf:picSize];
     [NSGraphicsContext restoreGraphicsState];
+    
     CGColorSpaceRelease(rgbColorSpace);
     CGContextRelease(context);
     CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
@@ -339,7 +342,7 @@
     [self.attributedString drawAtPoint:CGPointMake(self.edgeInsets.left + originPoint.x, self.edgeInsets.top + originPoint.y)];
 }
 
-- (CVPixelBufferRef)cvPixelBuffer
+- (CVPixelBufferRef)createPixelBuffer
 {
     CGSize picSize = [self size];
 

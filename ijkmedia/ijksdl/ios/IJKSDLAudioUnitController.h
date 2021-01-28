@@ -1,8 +1,10 @@
 /*
- * ijksdl_vout_ios_gles2.h
+ * IJKSDLAudioUnitController.h
  *
  * Copyright (c) 2013 Bilibili
  * Copyright (c) 2013 Zhang Rui <bbcallen@gmail.com>
+ *
+ * based on https://github.com/kolyvan/kxmovie
  *
  * This file is part of ijkPlayer.
  *
@@ -21,10 +23,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "ijksdl/ijksdl_stdinc.h"
-#include "ijksdl/ijksdl_vout.h"
+#import <Foundation/Foundation.h>
 
-@class IJKSDLGLView;
+#include "ijksdl/ijksdl_aout.h"
 
-SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
-void SDL_VoutIos_SetGLView(SDL_Vout *vout, IJKSDLGLView *view);
+@interface IJKSDLAudioUnitController : NSObject
+
+- (id)initWithAudioSpec:(const SDL_AudioSpec *)aSpec;
+
+- (void)play;
+- (void)pause;
+- (void)flush;
+- (void)stop;
+- (void)close;
+
+@property (nonatomic, readonly) SDL_AudioSpec spec;
+
+@end

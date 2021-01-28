@@ -165,7 +165,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 {
     NSLog(@"invalidateRenderBuffer");
     _isRenderBufferInvalidated = YES;
-    [self display:nil];
+    [self display:nil subtitle:NULL];
 }
 
 - (void)setContentMode:(IJKContentMode)contentMode
@@ -232,7 +232,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
-- (void)displayInternal: (SDL_VoutOverlay *) overlay
+- (void)displayInternal:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
 {
     if (![self setupRenderer:overlay]) {
         if (!overlay && !_renderer) {
@@ -252,18 +252,21 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     if (!IJK_GLES2_Renderer_renderOverlay(_renderer, overlay))
         ALOGE("[EGL] IJK_GLES2_render failed\n");
+    
+    if (!IJK_GLES2_Renderer_renderSubtitle(_renderer, overlay,(void *)subtitle))
+        ALOGE("[EGL] IJK_GLES2_render failed\n");
 }
 
-- (void) display: (SDL_VoutOverlay *) overlay
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
 {
     [[self openGLContext] makeCurrentContext];
     CGLLockContext([[self openGLContext] CGLContextObj]);
-    [self displayInternal:overlay];
+    [self displayInternal:overlay subtitle:(CVPixelBufferRef)subtitle];
     CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
-- (void) initGL
+- (void)initGL
 {
     // The reshape function may have changed the thread to which our OpenGL
     // context is attached before prepareOpenGL and initGL are called.  So call

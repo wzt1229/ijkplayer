@@ -833,6 +833,7 @@ static void free_picture(Frame *vp)
 static size_t parse_ass_subtitle(const char *ass, char *output, int buffSize)
 {
     char *tok = NULL;
+    //Dialogue: 0,0:00:02.35,0:00:05.46,DNOP-CHS,NTP,0000,0000,0000,,{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了\r\n
     tok = strchr(ass, ':'); if (tok) tok += 1; // skip event
     tok = strchr(tok, ','); if (tok) tok += 1; // skip layer
     tok = strchr(tok, ','); if (tok) tok += 1; // skip start_time
@@ -843,8 +844,30 @@ static size_t parse_ass_subtitle(const char *ass, char *output, int buffSize)
     tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_r
     tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_v
     tok = strchr(tok, ','); if (tok) tok += 1; // skip effect
+#ifdef __APPLE__
+    // Apple 平台暂时不处理 ass 字幕的特效
+    //{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了\r\n
+    /*{\an3\fnDFKai-SB\c&HFEFDFD&\3c&H070101&\pos(260,422)}{\fad(300,150)}字幕来源
+      X2&CASO
+    */
+
+    do {
+        //以{\开头
+        if (tok[0] == '{' && tok[1] == '\\') {
+            char* end = strchr(tok, '}');
+            if (end) {
+                tok = end + 1;
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    } while (1);
+#endif
     
     if (tok) {
+        
         char *text = tok;
         size_t idx = 0;
         do {
@@ -866,16 +889,28 @@ static size_t parse_ass_subtitle(const char *ass, char *output, int buffSize)
                 size_t left_text_len = strlen(text);
                 size_t len = buffSize - idx - 1 > left_text_len ? left_text_len : buffSize - idx - 1;
                 memcpy(output+idx, text, len);
-                if (output[idx + len - 1] == '\n')
+                if (output[idx + len - 1] == '\n' && output[idx + len - 2] == '\r') {
+                    output[idx + len - 2] = '\0';
+                } else if (output[idx + len - 1] == '\n') {
                     output[idx + len - 1] = '\0';
-                else
+                } else {
                     output[idx + len] = '\0';
+                }
                 break;
             }
         } while(1);
         return strlen(output) + 1;
     }
     return 0;
+}
+
+static void update_subtitle_text(FFPlayer *ffp, char *str)
+{
+    //update subtitle,save into vout's opaque
+    if (ffp->vout->update_subtitle) {
+        ffp->vout->update_subtitle(ffp->vout,str);
+    }
+    ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, str, (int)strlen(str) + 1);
 }
 
 static void video_image_display2(FFPlayer *ffp)
@@ -890,20 +925,16 @@ static void video_image_display2(FFPlayer *ffp)
         if (is->subtitle_st) {
             if (frame_queue_nb_remaining(&is->subpq) > 0) {
                 sp = frame_queue_peek(&is->subpq);
-
                 if (vp->pts >= sp->pts + ((float) sp->sub.start_display_time / 1000)) {
                     if (!sp->uploaded) {
                         if (sp->sub.num_rects > 0) {
-                            char *buffered_text = vp->bmp->subtitle;
-                            int bufferLen = sizeof(vp->bmp->subtitle);
-                            
+                            char buffered_text[4096] = {0};
                             if (sp->sub.rects[0]->text) {
-                                strncpy(buffered_text, sp->sub.rects[0]->text, bufferLen);
+                                strncpy(buffered_text, sp->sub.rects[0]->text, 4096);
+                            } else if (sp->sub.rects[0]->ass) {
+                                parse_ass_subtitle(sp->sub.rects[0]->ass, buffered_text,sizeof(buffered_text));
                             }
-                            else if (sp->sub.rects[0]->ass) {
-                                parse_ass_subtitle(sp->sub.rects[0]->ass, buffered_text,bufferLen);
-                            }
-                            //ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, buffered_text, sizeof(buffered_text));
+                            update_subtitle_text(ffp, buffered_text);
                         }
                         sp->uploaded = 1;
                     }
@@ -1401,7 +1432,7 @@ retry:
                             || (sp2 && is->vidclk.pts > (sp2->pts + ((float) sp2->sub.start_display_time / 1000))))
                     {
                         if (sp->uploaded) {
-                            ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, "", 1);
+                            update_subtitle_text(ffp,"");
                         }
                         frame_queue_next(&is->subpq);
                     } else {

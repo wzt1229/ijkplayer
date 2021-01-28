@@ -26,5 +26,5 @@
 
 @class IJKSDLGLView;
 
-SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
+SDL_Vout *SDL_VoutIos_CreateForGLES2();
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, IJKSDLGLView *view);

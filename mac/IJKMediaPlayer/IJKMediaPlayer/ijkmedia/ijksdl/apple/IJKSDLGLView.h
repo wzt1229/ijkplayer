@@ -31,19 +31,19 @@ typedef NSImage UIImage;
 #else
 #import <UIKit/UIKit.h>
 #endif
-
+#import <CoreVideo/CVPixelBuffer.h>
 #import "IJKSDLGLViewProtocol.h"
 #include "ijksdl/ijksdl_vout.h"
 
 @interface IJKSDLGLView : UIView <IJKSDLGLViewProtocol>
 
-- (id) initWithFrame:(CGRect)frame;
-- (void) display: (SDL_VoutOverlay *) overlay;
+- (id)initWithFrame:(CGRect)frame;
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
 
 #if TARGET_OS_OSX
 - (void)setContentMode:(IJKContentMode)contentMode;
 #else
-- (UIImage*) snapshot;
+- (UIImage*)snapshot;
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));
 #endif
 

@@ -33,7 +33,6 @@
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #include "renderer_pixfmt.h"
-#import "MRTextureString.h"
 
 #define NV12_RENDER_NORMAL      1
 #define NV12_RENDER_FAST_UPLOAD 2
@@ -66,7 +65,8 @@ typedef struct IJK_GLES2_Renderer_Opaque
     GLint                 textureDimension[2];
     GLint                 isSubtitle;
     Frame_Size            frameSize[2];
-    MRTextureString       *textureString;
+    OpenGLTextureRef      subCVGLTexture;
+    Frame_Size            subTextureSize;
 } IJK_GLES2_Renderer_Opaque;
 
 static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
@@ -217,10 +217,10 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
     const bool planar = CVPixelBufferIsPlanar(pixel_buffer);
     const int planes  = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
     assert(planar && planes == f->planes || f->planes == 1);
-
+    
     GLenum gl_target = GL_TEXTURE_TARGET;
     
-    for (int i = 0; i < planes; i++) {
+    for (int i = 0; i < f->planes; i++) {
         GLfloat w = (GLfloat)IOSurfaceGetWidthOfPlane(surface, i);
         GLfloat h = (GLfloat)IOSurfaceGetHeightOfPlane(surface, i);
         Frame_Size size = renderer->opaque->frameSize[i];
@@ -370,32 +370,108 @@ static GLboolean create_gltexture(IJK_GLES2_Renderer *renderer)
 }
 #endif
 
+
+#if TARGET_OS_OSX
+
 static GLvoid yuv420sp_useSubtitle(IJK_GLES2_Renderer *renderer,GLboolean subtitle)
 {
     glUniform1i(renderer->opaque->isSubtitle, (GLint)subtitle);
 }
 
-static GLboolean yuv420sp_uploadSubtitle(IJK_GLES2_Renderer *renderer,char * subtitle)
+/**
+ On macOS, create an OpenGL texture and retrieve an OpenGL texture name using the following steps, and as annotated in the code listings below:
+ */
+OpenGLTextureRef createGLTexture(IJK_GLES2_Renderer_Opaque* opaque, CVPixelBufferRef pixelBuff)
 {
-    NSMutableDictionary * stanStringAttrib = [NSMutableDictionary dictionary];
-    NSFont * font = [NSFont fontWithName:@"Helvetica" size:54.0];
-    [stanStringAttrib setObject:font forKey:NSFontAttributeName];
-    [stanStringAttrib setObject:[NSColor colorWithWhite:1 alpha:1] forKey:NSForegroundColorAttributeName];
+    assert(opaque->cv_texture_cache);
     
-    NSString *aStr = [[NSString alloc] initWithUTF8String:subtitle];
+    if (opaque->cv_texture_cache) {
+        OpenGLTextureCacheFlush(opaque->cv_texture_cache, 0);
+    }
+
+    CVOpenGLTextureRef texture = NULL;
+    // 2. Create a CVPixelBuffer-backed OpenGL texture image from the texture cache.
+    CVReturn cvret = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                                opaque->cv_texture_cache,
+                                                       pixelBuff,
+                                                       nil,
+                                                       &texture);
     
-    if (renderer->opaque->textureString) {
-        [renderer->opaque->textureString setString:aStr withAttributes:stanStringAttrib];
-    } else {
-        MRTextureString *textureString = [[MRTextureString alloc] initWithString:aStr withAttributes:stanStringAttrib withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
-        renderer->opaque->textureString = textureString;
+    assert(cvret == kCVReturnSuccess);
+    return texture;
+}
+
+#else // if!(TARGET_IOS || TARGET_TVOS)
+
+/**
+ On iOS, create an OpenGL ES texture from the CoreVideo pixel buffer using the following steps, and as annotated in the code listings below:
+ */
+OpenGLTextureRef createGLTexture(IJK_GLES2_Renderer_Opaque* opaque, CVPixelBufferRef pixelBuff)
+{
+    assert(opaque->cv_texture_cache);
+    
+    if (opaque->cv_texture_cache) {
+        OpenGLTextureCacheFlush(opaque->cv_texture_cache, 0);
     }
     
-    CVPixelBufferRef cvPixelRef = [renderer->opaque->textureString cvPixelBuffer];
-#warning TODO draw
-    CVPixelBufferRelease(cvPixelRef);
+    GLsizei width  = (GLsizei)CVPixelBufferGetWidth(pixelBuff);
+    GLsizei height = (GLsizei)CVPixelBufferGetHeight(pixelBuff);
+    
+#if TARGET_OS_SIMULATOR
+    GLint target = GL_BGRA;
+#elif TARGET_OS_IOS
+    GLint target = GL_RGBA;
+#endif
+    OpenGLTextureRef texture = NULL;
+    // 2. Create a CVPixelBuffer-backed OpenGL ES texture image from the texture cache.
+    CVReturn cvret = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                                  opaque->cv_texture_cache,
+                                                         pixelBuff,
+                                                         NULL,
+                                                         GL_TEXTURE_2D,
+                                                         target,
+                                                         width,
+                                                         height,
+                                                         GL_BGRA,
+                                                         GL_UNSIGNED_BYTE,
+                                                         0,
+                                                         &texture);
+    
+    assert(cvret == kCVReturnSuccess);
+    
+    return texture;
+}
+
+#endif // !(TARGET_IOS || TARGET_TVOS)
+
+#if TARGET_OS_OSX
+static GLboolean yuv420sp_uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle, IJK_Subtile_Size* size)
+{
+    CVPixelBufferRef cvPixelRef = (CVPixelBufferRef)subtitle;
+    if (cvPixelRef) {
+        CVPixelBufferRetain(cvPixelRef);
+        
+        int width = (int)CVPixelBufferGetWidth(cvPixelRef);
+        int height = (int)CVPixelBufferGetHeight(cvPixelRef);
+        
+        IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
+        
+        opaque->subTextureSize.w = width;
+        opaque->subTextureSize.h = height;
+        
+        if (opaque->subCVGLTexture) {
+            CFRelease(opaque->subCVGLTexture);
+            opaque->subCVGLTexture = 0;
+        }
+        
+        upload_texture_use_IOSurface(cvPixelRef, renderer);
+        size->w = width / 2.0;
+        size->h = height / 2.0;
+        CVPixelBufferRelease(cvPixelRef);
+    }
     return GL_TRUE;
 }
+#endif
 
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay)
 {
@@ -421,9 +497,10 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
     renderer->func_getBufferWidth = yuv420sp_vtb_getBufferWidth;
     renderer->func_uploadTexture  = yuv420sp_vtb_uploadTexture;
     renderer->func_destroy        = yuv420sp_vtb_destroy;
+#if TARGET_OS_OSX
     renderer->func_useSubtitle    = yuv420sp_useSubtitle;
     renderer->func_uploadSubtitle = yuv420sp_uploadSubtitle;
-    
+#endif
     renderer->opaque = calloc(1, sizeof(IJK_GLES2_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;
@@ -445,10 +522,12 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
         renderer->opaque->textureDimension[1] = textureDimensionY;
     }
 #endif
-    
+
+#if TARGET_OS_OSX
     GLint isSubtitle = glGetUniformLocation(renderer->program, "isSubtitle");
     assert(isSubtitle >= 0);
     renderer->opaque->isSubtitle = isSubtitle;
+#endif
     
     renderer->opaque->color_attachments = CFRetain(kCVImageBufferYCbCrMatrix_ITU_R_709_2);
     return renderer;

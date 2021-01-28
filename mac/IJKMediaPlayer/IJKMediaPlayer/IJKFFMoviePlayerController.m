@@ -1099,6 +1099,17 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             _isAudioSync = 0;
             break;
         }
+#if DEBUG
+        case FFP_MSG_TIMED_TEXT: {
+            char *subtitle = avmsg->obj;
+            if (strlen(subtitle) > 0) {
+                NSLog(@"show subtitle:%s\n",subtitle);
+                //avmsg->free_l(avmsg->obj);
+            } else {
+                NSLog(@"hide subtitle\n");
+            }
+        }
+#endif
         default:
             // NSLog(@"unknown FFP_MSG_xxx(%d)\n", avmsg->what);
             break;

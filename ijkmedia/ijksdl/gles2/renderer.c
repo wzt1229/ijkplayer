@@ -254,12 +254,28 @@ GLboolean IJK_GLES2_Renderer_setupGLES()
 
 static void IJK_GLES2_Renderer_Vertices_reset(IJK_GLES2_Renderer *renderer)
 {
+/*
+ OpenGL 世界坐标系：
+ 取值范围：[-1.0,1.0]
+       Y^
+        |
+        |
+ -------o-------> X
+        |
+        |
+*/
+    //默认占满整个世界
+    
+    //左下
     renderer->vertices[0] = -1.0f;
     renderer->vertices[1] = -1.0f;
+    //右下
     renderer->vertices[2] =  1.0f;
     renderer->vertices[3] = -1.0f;
+    //左上
     renderer->vertices[4] = -1.0f;
     renderer->vertices[5] =  1.0f;
+    //右上
     renderer->vertices[6] =  1.0f;
     renderer->vertices[7] =  1.0f;
 }
@@ -350,8 +366,10 @@ GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravit
     return GL_TRUE;
 }
 
-static void IJK_GLES2_Renderer_TexCoords_reset(IJK_GLES2_Renderer *renderer)
+static void IJK_GLES2_Renderer_TexCoords_cropRight(IJK_GLES2_Renderer *renderer, GLfloat cropRight)
 {
+    ALOGE("IJK_GLES2_Renderer_TexCoords_cropRight:%g\n",cropRight);
+    
 /*
  OpenGL 纹理坐标系：
  取值范围：[0.0,1.0]
@@ -365,33 +383,27 @@ static void IJK_GLES2_Renderer_TexCoords_reset(IJK_GLES2_Renderer *renderer)
     renderer->texcoords[0] = 0.0f;
     renderer->texcoords[1] = 1.0f;
     //右上
-    renderer->texcoords[2] = 1.0f;
+    renderer->texcoords[2] = 1.0f - cropRight;
     renderer->texcoords[3] = 1.0f;
     //左下(圆点)
     renderer->texcoords[4] = 0.0f;
     renderer->texcoords[5] = 0.0f;
     //右下
-    renderer->texcoords[6] = 1.0f;
-    renderer->texcoords[7] = 0.0f;
-}
-
-static void IJK_GLES2_Renderer_TexCoords_cropRight(IJK_GLES2_Renderer *renderer, GLfloat cropRight)
-{
-    ALOGE("IJK_GLES2_Renderer_TexCoords_cropRight\n");
-    renderer->texcoords[0] = 0.0f;
-    renderer->texcoords[1] = 1.0f;
-    renderer->texcoords[2] = 1.0f - cropRight;
-    renderer->texcoords[3] = 1.0f;
-    renderer->texcoords[4] = 0.0f;
-    renderer->texcoords[5] = 0.0f;
     renderer->texcoords[6] = 1.0f - cropRight;
     renderer->texcoords[7] = 0.0f;
 }
 
+static void IJK_GLES2_Renderer_TexCoords_reset(IJK_GLES2_Renderer *renderer)
+{
+    IJK_GLES2_Renderer_TexCoords_cropRight(renderer, 0.0f);
+}
+
 static void IJK_GLES2_Renderer_TexCoords_reloadVertex(IJK_GLES2_Renderer *renderer)
 {
-    glVertexAttribPointer(renderer->av2_texcoord, 2, GL_FLOAT, GL_FALSE, 0, renderer->texcoords);   IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
-    glEnableVertexAttribArray(renderer->av2_texcoord);                                              IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
+    glVertexAttribPointer(renderer->av2_texcoord, 2, GL_FLOAT, GL_FALSE, 0, renderer->texcoords);
+    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
+    glEnableVertexAttribArray(renderer->av2_texcoord);
+    IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
 }
 
 /*
@@ -481,18 +493,62 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
         IJK_GLES2_Renderer_TexCoords_cropRight(renderer, padding_normalized);
         IJK_GLES2_Renderer_TexCoords_reloadVertex(renderer);
     }
+    
+    IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);      IJK_GLES2_checkError_TRACE("glDrawArrays");
 
-    if (strlen(overlay->subtitle) > 0) {
+    return GL_TRUE;
+}
+
+GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay, void *subtitle)
+{
+    if (subtitle) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         if (renderer->func_useSubtitle) {
             renderer->func_useSubtitle(renderer, GL_TRUE);
         }
-        
+
         if (renderer->func_uploadSubtitle) {
-            renderer->func_uploadSubtitle(renderer,overlay->subtitle);    
+            IJK_Subtile_Size labelSize = {0};
+            renderer->func_uploadSubtitle(renderer,subtitle,&labelSize);
+            
+            GLfloat vertices[8] = {0.0f};
+            
+            float labelWidth = labelSize.w;
+            float labelHeight = labelSize.h;
+            float picWidth = overlay->w;
+            float picHeight = overlay->h;
+            
+            float ratiox = labelWidth / picWidth;
+            float ratioy = labelHeight / picHeight;
+            float leftX  = 0 - ratiox;
+            float rightX = 0 + ratiox;
+            //2 * 0.2 - 1
+            float bottomY = 2 * 0.05 - 1;
+            //bottomY + 2 * ratioy
+            float topY = bottomY + 2 * ratioy;
+            
+            //左下
+            vertices[0] = leftX;
+            vertices[1] = bottomY;
+            //右下
+            vertices[2] = rightX;
+            vertices[3] = bottomY;
+            //左上
+            vertices[4] = leftX;
+            vertices[5] = topY;
+            //右上
+            vertices[6] = rightX;
+            vertices[7] = topY;
+            
+            glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, vertices);    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
+            glEnableVertexAttribArray(renderer->av4_position);                                      IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
         }
+        
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);      IJK_GLES2_checkError_TRACE("glDrawArrays");
     }
-    
     return GL_TRUE;
 }

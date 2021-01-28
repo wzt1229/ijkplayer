@@ -1,5 +1,5 @@
 /*
- * ijksdl_vout_ios_gles2.h
+ * ijksdl_aout_ios_audiounit.h
  *
  * Copyright (c) 2013 Bilibili
  * Copyright (c) 2013 Zhang Rui <bbcallen@gmail.com>
@@ -21,10 +21,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "ijksdl/ijksdl_stdinc.h"
-#include "ijksdl/ijksdl_vout.h"
+#include "ijksdl/ijksdl_aout.h"
 
-@class IJKSDLGLView;
-
-SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
-void SDL_VoutIos_SetGLView(SDL_Vout *vout, IJKSDLGLView *view);
+SDL_Aout *SDL_AoutIos_CreateForAudioUnit();

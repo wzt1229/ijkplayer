@@ -1,5 +1,5 @@
 /*
- * ijksdl_vout_ios_gles2.h
+ * ijksdl_thread_ios.m
  *
  * Copyright (c) 2013 Bilibili
  * Copyright (c) 2013 Zhang Rui <bbcallen@gmail.com>
@@ -21,10 +21,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "ijksdl/ijksdl_stdinc.h"
-#include "ijksdl/ijksdl_vout.h"
+#import "ijksdl_thread_ios.h"
+#include "ijksdl/ijksdl_thread.h"
 
-@class IJKSDLGLView;
+static void *SDL_RunThread(void *data)
+{
+    @autoreleasepool {
+        SDL_Thread *thread = data;
+        pthread_setname_np(thread->name);
+        thread->retval = thread->func(thread->data);
+        return NULL;
+    }
+}
 
-SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
-void SDL_VoutIos_SetGLView(SDL_Vout *vout, IJKSDLGLView *view);
+SDL_Thread *SDL_CreateThreadEx(SDL_Thread *thread, int (*fn)(void *), void *data, const char *name)
+{
+    thread->func = fn;
+    thread->data = data;
+    strlcpy(thread->name, name, sizeof(thread->name) - 1);
+    int retval = pthread_create(&thread->id, NULL, SDL_RunThread, thread);
+    if (retval)
+        return NULL;
+
+    return thread;
+}

@@ -147,21 +147,18 @@ static void vout_update_subtitle(SDL_Vout *vout,char *text)
     if (!text || strlen(text) == 0) {
         return;
     }
-    //字幕默认配置
-    NSMutableDictionary * stanStringAttrib = [NSMutableDictionary dictionary];
-    NSFont * font = [NSFont boldSystemFontOfSize:45];
-#if TARGET_OS_OSX
-    font = [font screenFont];
-#endif
-    [stanStringAttrib setObject:font forKey:NSFontAttributeName];
-    [stanStringAttrib setObject:[NSColor colorWithWhite:1 alpha:1] forKey:NSForegroundColorAttributeName];
-    
-    NSString *aStr = [[NSString alloc] initWithUTF8String:text];
-    
-    MRTextureString *textureString = [[MRTextureString alloc] initWithString:aStr withAttributes:stanStringAttrib withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
-    [aStr release];
-    vout->opaque->subtitle = [textureString createPixelBuffer];
-    [textureString release];
+//    //字幕默认配置
+//    NSMutableDictionary * stanStringAttrib = [NSMutableDictionary dictionary];
+//    NSFont * font = [[NSFont boldSystemFontOfSize:45] screenFont];
+//    [stanStringAttrib setObject:font forKey:NSFontAttributeName];
+//    [stanStringAttrib setObject:[NSColor colorWithWhite:1 alpha:1] forKey:NSForegroundColorAttributeName];
+//    
+//    NSString *aStr = [[NSString alloc] initWithUTF8String:text];
+//    
+//    MRTextureString *textureString = [[MRTextureString alloc] initWithString:aStr withAttributes:stanStringAttrib withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
+//    [aStr release];
+//    vout->opaque->subtitle = [textureString createPixelBuffer];
+//    [textureString release];
 }
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2()

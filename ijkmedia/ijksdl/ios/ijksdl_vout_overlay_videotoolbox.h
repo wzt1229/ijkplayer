@@ -1,8 +1,8 @@
-/*
- * ijksdl_vout_ios_gles2.h
+/*****************************************************************************
+ * ijksdl_vout_overlay_videotoolbox.h
+ *****************************************************************************
  *
- * Copyright (c) 2013 Bilibili
- * Copyright (c) 2013 Zhang Rui <bbcallen@gmail.com>
+ * copyright (c) 2014 ZhouQuan <zhouqicy@gmail.com>
  *
  * This file is part of ijkPlayer.
  *
@@ -21,10 +21,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "ijksdl/ijksdl_stdinc.h"
-#include "ijksdl/ijksdl_vout.h"
+#ifndef __IJKMediaPlayer__ijksdl_vout_overlay_videotoolbox__
+#define __IJKMediaPlayer__ijksdl_vout_overlay_videotoolbox__
 
-@class IJKSDLGLView;
+#import <CoreVideo/CoreVideo.h>
+#include "ijksdl_stdinc.h"
+#include "ijksdl_vout.h"
+#include "ijksdl_inc_ffmpeg.h"
 
-SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
-void SDL_VoutIos_SetGLView(SDL_Vout *vout, IJKSDLGLView *view);
+SDL_VoutOverlay *SDL_VoutVideoToolBox_CreateOverlay(int width, int height, SDL_Vout *vout);
+CVPixelBufferRef SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(SDL_VoutOverlay *overlay);
+
+#endif

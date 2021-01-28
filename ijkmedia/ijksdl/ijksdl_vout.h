@@ -41,9 +41,7 @@ struct SDL_VoutOverlay {
     int planes; /**< Read-only */
     Uint16 *pitches; /**< in bytes, Read-only */
     Uint8 **pixels; /**< Read-write */
-    char subtitle[4096];
     int is_private;
-
     int sar_num;
     int sar_den;
 
@@ -62,13 +60,13 @@ typedef struct SDL_Vout_Opaque SDL_Vout_Opaque;
 typedef struct SDL_Vout SDL_Vout;
 struct SDL_Vout {
     SDL_mutex *mutex;
-
     SDL_Class       *opaque_class;
     SDL_Vout_Opaque *opaque;
     SDL_VoutOverlay *(*create_overlay)(int width, int height, int frame_format, SDL_Vout *vout);
     void (*free_l)(SDL_Vout *vout);
     int (*display_overlay)(SDL_Vout *vout, SDL_VoutOverlay *overlay);
-
+    void (*update_subtitle)(SDL_Vout *vout, char *text);
+    
     Uint32 overlay_format;
 };
 

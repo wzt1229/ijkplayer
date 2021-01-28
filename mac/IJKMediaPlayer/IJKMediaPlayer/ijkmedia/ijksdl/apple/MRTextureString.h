@@ -18,6 +18,7 @@
 #import <UIKit/UIKit.h>
 #define NSColor UIColor
 #define NSSize CGSize
+#define NSFont UIFont
 #define NSEdgeInsets UIEdgeInsets
 #define NSEdgeInsetsMake UIEdgeInsetsMake
 #define NSEdgeInsetsEqual UIEdgeInsetsEqualToEdgeInsets
@@ -51,7 +52,7 @@
 
 - (void)setString:(NSAttributedString *)attributedString; // set string after initial creation
 - (void)setString:(NSString *)aString withAttributes:(NSDictionary *)attribs; // set string after initial creation
-- (CVPixelBufferRef)cvPixelBuffer;
+- (CVPixelBufferRef)createPixelBuffer;
 
 @end
 
