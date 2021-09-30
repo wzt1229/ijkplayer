@@ -487,7 +487,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = ../build/universal/lib;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mr.IJKMediaDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -506,7 +505,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = ../build/universal/lib;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mr.IJKMediaDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

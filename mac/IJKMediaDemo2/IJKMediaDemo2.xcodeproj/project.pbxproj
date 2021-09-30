@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B4E2DBEF7FBFC550F9CEB806 /* Pods_IJKMediaDemo2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 081C7D772F7DD0F00D69DA3B /* Pods_IJKMediaDemo2.framework */; };
 		DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9625A43A1300F01E2F /* MRUtil.m */; };
 		DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9C25A43A1300F01E2F /* MRDragView.m */; };
 		DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */; };
@@ -34,6 +35,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		081C7D772F7DD0F00D69DA3B /* Pods_IJKMediaDemo2.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IJKMediaDemo2.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD050F9525A43A1300F01E2F /* MRUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRUtil.h; sourceTree = "<group>"; };
 		DD050F9625A43A1300F01E2F /* MRUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRUtil.m; sourceTree = "<group>"; };
 		DD050F9B25A43A1300F01E2F /* MRDragView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRDragView.h; sourceTree = "<group>"; };
@@ -64,6 +66,8 @@
 		DD9B13D522C24095002D1D79 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		DD9B13D722C240A5002D1D79 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		DD9B13E722C24971002D1D79 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		E519491FE1DF70D318BA8EF2 /* Pods-IJKMediaDemo2.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaDemo2.debug.xcconfig"; path = "Target Support Files/Pods-IJKMediaDemo2/Pods-IJKMediaDemo2.debug.xcconfig"; sourceTree = "<group>"; };
+		FB6C54188F5A0E23CE098F66 /* Pods-IJKMediaDemo2.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaDemo2.release.xcconfig"; path = "Target Support Files/Pods-IJKMediaDemo2/Pods-IJKMediaDemo2.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,12 +92,22 @@
 				DD9B13BE22C24026002D1D79 /* AVFoundation.framework in Frameworks */,
 				DD9B13BC22C2401F002D1D79 /* libbz2.tbd in Frameworks */,
 				DD9B13BA22C24017002D1D79 /* libc++.tbd in Frameworks */,
+				B4E2DBEF7FBFC550F9CEB806 /* Pods_IJKMediaDemo2.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AF78BF9FBEF86C8B12B72EA2 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				E519491FE1DF70D318BA8EF2 /* Pods-IJKMediaDemo2.debug.xcconfig */,
+				FB6C54188F5A0E23CE098F66 /* Pods-IJKMediaDemo2.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		DD050F9425A43A1300F01E2F /* MRUtil */ = {
 			isa = PBXGroup;
 			children = (
@@ -118,6 +132,7 @@
 				DD9B138A22C23A79002D1D79 /* IJKMediaDemo2 */,
 				DD9B138922C23A79002D1D79 /* Products */,
 				DD9B13B822C24017002D1D79 /* Frameworks */,
+				AF78BF9FBEF86C8B12B72EA2 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -166,6 +181,7 @@
 				DD9B13BD22C24026002D1D79 /* AVFoundation.framework */,
 				DD9B13BB22C2401F002D1D79 /* libbz2.tbd */,
 				DD9B13B922C24017002D1D79 /* libc++.tbd */,
+				081C7D772F7DD0F00D69DA3B /* Pods_IJKMediaDemo2.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -177,9 +193,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = DD9B139922C23A7A002D1D79 /* Build configuration list for PBXNativeTarget "IJKMediaDemo2" */;
 			buildPhases = (
+				405E23CE111460B43F054336 /* [CP] Check Pods Manifest.lock */,
 				DD9B138422C23A79002D1D79 /* Sources */,
 				DD9B138522C23A79002D1D79 /* Frameworks */,
 				DD9B138622C23A79002D1D79 /* Resources */,
+				752F6FC1414ACB000252E762 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -239,6 +257,48 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		405E23CE111460B43F054336 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-IJKMediaDemo2-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		752F6FC1414ACB000252E762 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaDemo2/Pods-IJKMediaDemo2-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaDemo2/Pods-IJKMediaDemo2-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IJKMediaDemo2/Pods-IJKMediaDemo2-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		DD9B138422C23A79002D1D79 /* Sources */ = {
@@ -379,6 +439,7 @@
 		};
 		DD9B139A22C23A7A002D1D79 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E519491FE1DF70D318BA8EF2 /* Pods-IJKMediaDemo2.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = IJKMediaDemo2/IJKMediaDemo.entitlements;
@@ -390,7 +451,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = ../build/universal/lib;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mr.IJKMediaDemo2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -398,6 +458,7 @@
 		};
 		DD9B139B22C23A7A002D1D79 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FB6C54188F5A0E23CE098F66 /* Pods-IJKMediaDemo2.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = IJKMediaDemo2/IJKMediaDemo.entitlements;
@@ -409,7 +470,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = ../build/universal/lib;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mr.IJKMediaDemo2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

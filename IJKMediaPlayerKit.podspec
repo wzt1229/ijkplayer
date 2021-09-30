@@ -1,5 +1,5 @@
 #
-# Be sure to run `pod lib lint MRVTPKit.podspec' to ensure this is a
+# Be sure to run `pod lib lint IJKMediaPlayerKit.podspec' to ensure this is a
 # valid spec before submitting.
 #
 # Any lines starting with a # are optional, but their use is encouraged
@@ -7,9 +7,9 @@
 #
 
 Pod::Spec.new do |s|
-  s.name             = 'MRVTPKit'
-  s.version          = '0.4.2'
-  s.summary          = 'extract pictures from video.'
+  s.name             = 'IJKMediaPlayerKit'
+  s.version          = '0.8.8'
+  s.summary          = 'IJKMediaPlayerKit for macOS.'
 
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -21,35 +21,110 @@ Pod::Spec.new do |s|
 TODO: Add long description of the pod here.
                        DESC
 
-  s.homepage         = 'https://github.com/debugly/MRVideoToPicture'
-  s.license          = { :type => 'MIT', :text => 'LICENSE' }
+  s.homepage         = 'https://github.com/debugly/ijkplayer'
+  s.license          = { :type => 'LGPLv2.1', :text => 'LICENSE' }
   s.author           = { 'MattReach' => 'qianlongxu@gmail.com' }
-  s.source           = { :git => 'https://github.com/debugly/MRVideoToPicture.git', :tag => s.version.to_s }
+  s.source           = { :git => 'https://github.com/debugly/ijkplayer', :tag => s.version.to_s }
 
   s.osx.deployment_target = '10.11'
+  s.public_header_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/IJKMediaPlayerKit.h'
+  s.source_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/IJKMediaPlayerKit.h'
   
   s.pod_target_xcconfig = {
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',
     'HEADER_SEARCH_PATHS' => [
       '$(inherited)',
-      '${PODS_TARGET_SRCROOT}/MRVTPKit/ffmpeg4.3.1/include']
+      '${PODS_TARGET_SRCROOT}/mac/build/universal/include',
+      '${PODS_TARGET_SRCROOT}/mac/IJKMediaPlayer/IJKMediaPlayer',
+      '${PODS_TARGET_SRCROOT}/mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia',
+      '${PODS_TARGET_SRCROOT}/ijkmedia',
+      '${PODS_TARGET_SRCROOT}/ijkmedia/ijkplayer',
+      '${PODS_TARGET_SRCROOT}/ijkmedia/ijksdl'
+    ],
+    # 'LIBRARY_SEARCH_PATHS' => [
+    #   '$(inherited)',
+    #   '${PODS_TARGET_SRCROOT}/mac/build/universal/lib'
+    # ],
+  }
+
+  s.script_phases = [
+    { 
+      :name => 'ijkversion.h',
+      :shell_path => '/bin/sh',
+      :script => 'sh "${PODS_TARGET_SRCROOT}/ijkmedia/ijkplayer/version.sh" "${PODS_TARGET_SRCROOT}/ijkmedia/ijkplayer" "ijkversion.h"',
+      :execution_position => :before_compile
     }
+  ]
 
-  s.subspec 'common' do |ss|
-    ss.source_files = 'MRVTPKit/common/**/*.{h,m}'
-    ss.public_header_files = 'MRVTPKit/common/headers/public/*.h','MRVTPKit/common/*.h'
-    ss.private_header_files = 'MRVTPKit/common/headers/private/*.h'
+  s.subspec 'mac' do |ss|
+    ss.source_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/*.{m,h}',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijkplayer/ios/*.{m,h}',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijkplayer/ios/pipeline/*.{c,m,h}',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/apple/*.{m,h}',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/*.{m,h}',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/mac/*.{m,h}'
+
+    # ss.project_header_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/*.h'
+
+    ss.public_header_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/IJKMediaPlayerKit.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKMediaPlayback.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKFFOptions.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKFFMonitor.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKFFMoviePlayerController.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKMediaModule.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKMediaPlayer.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKNotificationManager.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKKVOController.h',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/IJKSDLGLViewProtocol.h'
+
+    ss.exclude_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewController.{h,m}',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewCell.{h,m}'
   end
 
-  s.subspec 'core' do |ss|
-    ss.source_files = 'MRVTPKit/core/*.{h,m}'
+  s.subspec 'ijkmedia' do |ss|
+    ss.source_files = 'ijkmedia/ijkplayer/*.{c,h}',
+     'ijkmedia/ijkplayer/ijkavformat/*.{c,h}',
+     'ijkmedia/ijkplayer/ijkavutil/*.{c,h}',
+     'ijkmedia/ijkplayer/pipeline/*.{c,h}',
+     'ijkmedia/ijksdl/*.{c,h}',
+     'ijkmedia/ijksdl/dummy/*.{c,h}',
+     'ijkmedia/ijksdl/ffmpeg/*.{c,h}',
+     'ijkmedia/ijksdl/ffmpeg/abi_all/*.{c,h}',
+     'ijkmedia/ijksdl/gles2/*.{c,m,h}',
+     'ijkmedia/ijksdl/gles2/fsh/*.{c,h}',
+     'ijkmedia/ijksdl/gles2/fsh/mac.c',
+     'ijkmedia/ijksdl/gles2/vsh/*.{c,h}',
+     'ijkmedia/ijksdl/gles2/vsh/mac.c'
+    #  'ijkmedia/ijksdl/ios/*.{m,h}'
+     ss.project_header_files = 'ijkmedia/ijkplayer/*.h',
+     'ijkmedia/ijkplayer/ijkavformat/*.h',
+     'ijkmedia/ijkplayer/ijkavutil/*.h',
+     'ijkmedia/ijkplayer/pipeline/*.h',
+     'ijkmedia/ijksdl/*.h',
+     'ijkmedia/ijksdl/dummy/*.h',
+     'ijkmedia/ijksdl/ffmpeg/*.h',
+     'ijkmedia/ijksdl/gles2/*.h'
+    #  'ijkmedia/ijksdl/ios/*.h'
+    ss.exclude_files = 'ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c',
+      'ijkmedia/ijksdl/gles2/fsh/yuv444p10le.fsh.c',
+      'ijkmedia/ijksdl/ijksdl_extra_log.c',
+      'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c'
   end
 
-  s.subspec 'sample' do |ss|
-    ss.source_files = 'MRVTPKit/sample/*.{h,m}'
+  s.subspec 'no-arc' do |ss|
+    ss.source_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/ijksdl_aout_ios_audiounit.m',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/ijksdl_vout_ios_gles2.m'
+    ss.compiler_flags = '-fno-objc-arc'
+  end
+
+  s.subspec 'w' do |ss|
+    ss.source_files = 'ijkmedia/ijkplayer/ijkavutil/ijkdict.c',
+      'ijkmedia/ijkplayer/ijkavutil/ijkfifo.c',
+      'ijkmedia/ijkplayer/ijkavutil/ijkstl.cpp'
+    ss.compiler_flags = '-w'
   end
   
-  s.vendored_libraries = 'MRVTPKit/ffmpeg4.3.1/lib/*.a'
+  s.vendored_libraries = 'mac/build/universal/lib/*.a'
 
   # s.subspec 'libavutil' do |ss|
   #   ss.vendored_libraries = 'MRVTPKit/ffmpeg4.3.1/lib/libavutil.a'
@@ -83,6 +158,6 @@ TODO: Add long description of the pod here.
   #   ss.header_mappings_dir = 'MRVTPKit/ffmpeg4.3.1/include/libswscale'
   # end
 
-  s.library = 'z', 'bz2', 'iconv', 'lzma'
-  s.frameworks = 'CoreFoundation', 'CoreVideo', 'VideoToolbox', 'CoreMedia', 'AudioToolbox'#, 'Security'
+  s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
+  # s.frameworks = 'AudioToolbox', 'Cocoa', 'CoreFoundation', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
 end

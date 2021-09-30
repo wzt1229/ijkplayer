@@ -5,6 +5,7 @@ android/ffmpeg-*
 android/openssl-*
 ios/ffmpeg-*
 ios/openssl-*
+mac/ffmpeg-*
 extra
 .DS_Store
 ijkmedia/ijkyuv/
@@ -44,3 +45,7 @@ xcshareddata
 mac/openssl-x86_64
 configdata.pm
 OpenSSL_1_1_1.tar.gz
+
+# Cocopods
+/mac/IJKMediaDemo2/Pods/
+
