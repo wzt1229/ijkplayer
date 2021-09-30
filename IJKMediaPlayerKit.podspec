@@ -78,7 +78,8 @@ TODO: Add long description of the pod here.
       'mac/IJKMediaPlayer/IJKMediaPlayer/IJKSDLGLViewProtocol.h'
 
     ss.exclude_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewController.{h,m}',
-      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewCell.{h,m}'
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewCell.{h,m}',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/IJKSDLGLView.m'
   end
 
   s.subspec 'ijkmedia' do |ss|
@@ -92,9 +93,9 @@ TODO: Add long description of the pod here.
      'ijkmedia/ijksdl/ffmpeg/abi_all/*.{c,h}',
      'ijkmedia/ijksdl/gles2/*.{c,m,h}',
      'ijkmedia/ijksdl/gles2/fsh/*.{c,h}',
-     'ijkmedia/ijksdl/gles2/fsh/mac.c',
+     'ijkmedia/ijksdl/gles2/fsh/mac/*.c',
      'ijkmedia/ijksdl/gles2/vsh/*.{c,h}',
-     'ijkmedia/ijksdl/gles2/vsh/mac.c'
+     'ijkmedia/ijksdl/gles2/vsh/mac/*.c'
     #  'ijkmedia/ijksdl/ios/*.{m,h}'
      ss.project_header_files = 'ijkmedia/ijkplayer/*.h',
      'ijkmedia/ijkplayer/ijkavformat/*.h',
@@ -108,6 +109,8 @@ TODO: Add long description of the pod here.
     ss.exclude_files = 'ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c',
       'ijkmedia/ijksdl/gles2/fsh/yuv444p10le.fsh.c',
       'ijkmedia/ijksdl/ijksdl_extra_log.c',
+      'ijkmedia/ijksdl/gles2/fsh/yuv420p.fsh.c',
+      'ijkmedia/ijksdl/gles2/vsh/mvp.vsh.c',
       'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c'
   end
 
