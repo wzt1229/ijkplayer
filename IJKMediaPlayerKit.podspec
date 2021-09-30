@@ -79,13 +79,13 @@ TODO: Add long description of the pod here.
 
     ss.exclude_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewController.{h,m}',
       'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewCell.{h,m}',
-      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/IJKSDLGLView.m'
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLGLView.m'
   end
 
   s.subspec 'ijkmedia' do |ss|
     ss.source_files = 'ijkmedia/ijkplayer/*.{c,h}',
      'ijkmedia/ijkplayer/ijkavformat/*.{c,h}',
-     'ijkmedia/ijkplayer/ijkavutil/*.{c,h}',
+     'ijkmedia/ijkplayer/ijkavutil/*.{c,cpp,h}',
      'ijkmedia/ijkplayer/pipeline/*.{c,h}',
      'ijkmedia/ijksdl/*.{c,h}',
      'ijkmedia/ijksdl/dummy/*.{c,h}',
@@ -111,6 +111,7 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijksdl/ijksdl_extra_log.c',
       'ijkmedia/ijksdl/gles2/fsh/yuv420p.fsh.c',
       'ijkmedia/ijksdl/gles2/vsh/mvp.vsh.c',
+      'ijkmedia/ijkplayer/ijkversion.h',
       'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c'
   end
 
