@@ -79,7 +79,9 @@ TODO: Add long description of the pod here.
 
     ss.exclude_files = 'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewController.{h,m}',
       'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLHudViewCell.{h,m}',
-      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLGLView.m'
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/IJKSDLGLView.m',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/ijksdl_aout_ios_audiounit.m',
+      'mac/IJKMediaPlayer/IJKMediaPlayer/ijkmedia/ijksdl/ios/ijksdl_vout_ios_gles2.m'
   end
 
   s.subspec 'ijkmedia' do |ss|
@@ -112,7 +114,10 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijksdl/gles2/fsh/yuv420p.fsh.c',
       'ijkmedia/ijksdl/gles2/vsh/mvp.vsh.c',
       'ijkmedia/ijkplayer/ijkversion.h',
-      'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c'
+      'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
+      'ijkmedia/ijkplayer/ijkavutil/ijkdict.c',
+      'ijkmedia/ijkplayer/ijkavutil/ijkfifo.c',
+      'ijkmedia/ijkplayer/ijkavutil/ijkstl.cpp'
   end
 
   s.subspec 'no-arc' do |ss|
@@ -129,39 +134,6 @@ TODO: Add long description of the pod here.
   end
   
   s.vendored_libraries = 'mac/build/universal/lib/*.a'
-
-  # s.subspec 'libavutil' do |ss|
-  #   ss.vendored_libraries = 'MRVTPKit/ffmpeg4.3.1/lib/libavutil.a'
-  #   ss.source_files = 'MRVTPKit/ffmpeg4.3.1/include/libavutil/*.h'
-  #   ss.private_header_files = 'MRVTPKit/ffmpeg4.3.1/include/libavutil/*.h'
-  #   ss.preserve_paths = 'MRVTPKit/ffmpeg4.3.1/include/libavutil'
-  #   ss.header_mappings_dir = 'MRVTPKit/ffmpeg4.3.1/include/libavutil'
-  # end
-
-  # s.subspec 'libavformat' do |ss|
-  #   ss.vendored_libraries = 'MRVTPKit/ffmpeg4.3.1/lib/libavformat.a'
-  #   ss.source_files = 'MRVTPKit/ffmpeg4.3.1/include/libavformat/*.h'
-  #   ss.private_header_files = 'MRVTPKit/ffmpeg4.3.1/include/libavformat/*.h'
-  #   ss.preserve_paths = 'MRVTPKit/ffmpeg4.3.1/include/libavformat'
-  #   ss.header_mappings_dir = 'MRVTPKit/ffmpeg4.3.1/include/libavformat'
-  # end
-
-  # s.subspec 'libavcodec' do |ss|
-  #   ss.vendored_libraries = 'MRVTPKit/ffmpeg4.3.1/lib/libavcodec.a'
-  #   ss.source_files = 'MRVTPKit/ffmpeg4.3.1/include/libavcodec/*.h'
-  #   ss.private_header_files = 'MRVTPKit/ffmpeg4.3.1/include/libavcodec/*.h'
-  #   ss.preserve_paths = 'MRVTPKit/ffmpeg4.3.1/include/libavcodec'
-  #   ss.header_mappings_dir = 'MRVTPKit/ffmpeg4.3.1/include/libavcodec'
-  # end
-
-  # s.subspec 'libswscale' do |ss|
-  #   ss.vendored_libraries = 'MRVTPKit/ffmpeg4.3.1/lib/libswscale.a'
-  #   ss.source_files = 'MRVTPKit/ffmpeg4.3.1/include/libswscale/*.h'
-  #   ss.private_header_files = 'MRVTPKit/ffmpeg4.3.1/include/libswscale/*.h'
-  #   ss.preserve_paths = 'MRVTPKit/ffmpeg4.3.1/include/libswscale'
-  #   ss.header_mappings_dir = 'MRVTPKit/ffmpeg4.3.1/include/libswscale'
-  # end
-
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
   # s.frameworks = 'AudioToolbox', 'Cocoa', 'CoreFoundation', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
 end
