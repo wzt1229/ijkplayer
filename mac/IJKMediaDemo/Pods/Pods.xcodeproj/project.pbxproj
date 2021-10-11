@@ -1,0 +1,444 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		190DD7A817B89FC17A4BEB8A48F1B03B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1430F003D39D9906881A6AC724B7931 /* Cocoa.framework */; };
+		6004F2CE352D7F32705BC83C36A10037 /* Pods-IJKMediaDemo-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 67AF6DF2F0EEC3560D1411B870258015 /* Pods-IJKMediaDemo-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		AB5D5955FD0383EA46809AB516ADAB04 /* Pods-IJKMediaDemo-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 17F27E6844BD461A6FF686D2DDA68BB8 /* Pods-IJKMediaDemo-dummy.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B5524B84B0F3667BE74095F988F51CFF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D17FCEEFF1EB15C96F1E04932EAAD12C /* IJKMediaPlayerKit.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = C07B6E46372287EC58FD10ACA59E4A1B;
+			remoteInfo = IJKMediaPlayerKit;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0499244FD50C3ACEAE654D4E33FA2AD9 /* Pods-IJKMediaDemo-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-IJKMediaDemo-Info.plist"; sourceTree = "<group>"; };
+		12871EDA998A07B4B7F2E5D95A4B144C /* Pods-IJKMediaDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-IJKMediaDemo.debug.xcconfig"; sourceTree = "<group>"; };
+		17F27E6844BD461A6FF686D2DDA68BB8 /* Pods-IJKMediaDemo-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-IJKMediaDemo-dummy.m"; sourceTree = "<group>"; };
+		2300BA3E2B55C82B40EDF394A7F5C522 /* Pods-IJKMediaDemo-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-IJKMediaDemo-acknowledgements.plist"; sourceTree = "<group>"; };
+		5F35ABAA0418103ED2118F52B305F0DF /* Pods-IJKMediaDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-IJKMediaDemo.release.xcconfig"; sourceTree = "<group>"; };
+		67AF6DF2F0EEC3560D1411B870258015 /* Pods-IJKMediaDemo-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-IJKMediaDemo-umbrella.h"; sourceTree = "<group>"; };
+		92F03F088F3BDD8BB2B84DF2B66C7926 /* Pods-IJKMediaDemo-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-IJKMediaDemo-frameworks.sh"; sourceTree = "<group>"; };
+		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		C1430F003D39D9906881A6AC724B7931 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		D17FCEEFF1EB15C96F1E04932EAAD12C /* IJKMediaPlayerKit */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = IJKMediaPlayerKit; path = IJKMediaPlayerKit.xcodeproj; sourceTree = "<group>"; };
+		E65EC7ED9279E99F710DC3194ECDE114 /* Pods-IJKMediaDemo.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-IJKMediaDemo.modulemap"; sourceTree = "<group>"; };
+		F253F58DFBC5A1EE8D7442911099D875 /* Pods-IJKMediaDemo */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Pods-IJKMediaDemo"; path = Pods_IJKMediaDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB369F6C5AA4864201032DC7F1B50F48 /* Pods-IJKMediaDemo-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-IJKMediaDemo-acknowledgements.markdown"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3B8B53D4808F38EE5B114E1A58A70B00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				190DD7A817B89FC17A4BEB8A48F1B03B /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2026A80256189C997C6A241746781DFA /* Targets Support Files */ = {
+			isa = PBXGroup;
+			children = (
+				95AF8B975C851463906542B630120F8B /* Pods-IJKMediaDemo */,
+			);
+			name = "Targets Support Files";
+			sourceTree = "<group>";
+		};
+		95AF8B975C851463906542B630120F8B /* Pods-IJKMediaDemo */ = {
+			isa = PBXGroup;
+			children = (
+				E65EC7ED9279E99F710DC3194ECDE114 /* Pods-IJKMediaDemo.modulemap */,
+				FB369F6C5AA4864201032DC7F1B50F48 /* Pods-IJKMediaDemo-acknowledgements.markdown */,
+				2300BA3E2B55C82B40EDF394A7F5C522 /* Pods-IJKMediaDemo-acknowledgements.plist */,
+				17F27E6844BD461A6FF686D2DDA68BB8 /* Pods-IJKMediaDemo-dummy.m */,
+				92F03F088F3BDD8BB2B84DF2B66C7926 /* Pods-IJKMediaDemo-frameworks.sh */,
+				0499244FD50C3ACEAE654D4E33FA2AD9 /* Pods-IJKMediaDemo-Info.plist */,
+				67AF6DF2F0EEC3560D1411B870258015 /* Pods-IJKMediaDemo-umbrella.h */,
+				12871EDA998A07B4B7F2E5D95A4B144C /* Pods-IJKMediaDemo.debug.xcconfig */,
+				5F35ABAA0418103ED2118F52B305F0DF /* Pods-IJKMediaDemo.release.xcconfig */,
+			);
+			name = "Pods-IJKMediaDemo";
+			path = "Target Support Files/Pods-IJKMediaDemo";
+			sourceTree = "<group>";
+		};
+		B597B73A80B9A3CF96B55A41E7A761A7 /* Development Pods */ = {
+			isa = PBXGroup;
+			children = (
+				D17FCEEFF1EB15C96F1E04932EAAD12C /* IJKMediaPlayerKit */,
+			);
+			name = "Development Pods";
+			sourceTree = "<group>";
+		};
+		CF1408CF629C7361332E53B88F7BD30C = {
+			isa = PBXGroup;
+			children = (
+				9D940727FF8FB9C785EB98E56350EF41 /* Podfile */,
+				B597B73A80B9A3CF96B55A41E7A761A7 /* Development Pods */,
+				E0A1E60606E0BF6E2E10F1F01350DFE8 /* Frameworks */,
+				EEE3C47948265B4EDFAC22C0B2D86277 /* Products */,
+				2026A80256189C997C6A241746781DFA /* Targets Support Files */,
+			);
+			sourceTree = "<group>";
+		};
+		E0A1E60606E0BF6E2E10F1F01350DFE8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E2A8756CA1FF5258A0344D53C5C60EC1 /* OS X */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E2A8756CA1FF5258A0344D53C5C60EC1 /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				C1430F003D39D9906881A6AC724B7931 /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		EEE3C47948265B4EDFAC22C0B2D86277 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F253F58DFBC5A1EE8D7442911099D875 /* Pods-IJKMediaDemo */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		D77AAA387048C7FDC01FE17A5B0942D2 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6004F2CE352D7F32705BC83C36A10037 /* Pods-IJKMediaDemo-umbrella.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		2176CDCB35FE677ED090D75F4012C09C /* Pods-IJKMediaDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CCD6DEFAF6D710AA6BDE361C3DE2AF39 /* Build configuration list for PBXNativeTarget "Pods-IJKMediaDemo" */;
+			buildPhases = (
+				D77AAA387048C7FDC01FE17A5B0942D2 /* Headers */,
+				D4781EACA823431014CC19182931B623 /* Sources */,
+				3B8B53D4808F38EE5B114E1A58A70B00 /* Frameworks */,
+				7E108C0AD96D358BD238CADFD5388D39 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				82149622C8F380E51EA1C6A5FDC8437D /* PBXTargetDependency */,
+			);
+			name = "Pods-IJKMediaDemo";
+			productName = Pods_IJKMediaDemo;
+			productReference = F253F58DFBC5A1EE8D7442911099D875 /* Pods-IJKMediaDemo */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BFDFE7DC352907FC980B868725387E98 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1240;
+				LastUpgradeCheck = 1240;
+			};
+			buildConfigurationList = 4821239608C13582E20E6DA73FD5F1F9 /* Build configuration list for PBXProject "Pods" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CF1408CF629C7361332E53B88F7BD30C;
+			productRefGroup = EEE3C47948265B4EDFAC22C0B2D86277 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProjectRef = D17FCEEFF1EB15C96F1E04932EAAD12C /* IJKMediaPlayerKit */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				2176CDCB35FE677ED090D75F4012C09C /* Pods-IJKMediaDemo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7E108C0AD96D358BD238CADFD5388D39 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D4781EACA823431014CC19182931B623 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AB5D5955FD0383EA46809AB516ADAB04 /* Pods-IJKMediaDemo-dummy.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		82149622C8F380E51EA1C6A5FDC8437D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = IJKMediaPlayerKit;
+			targetProxy = B5524B84B0F3667BE74095F988F51CFF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0014DC95F2E18E52F77CDA77F139BD84 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 12871EDA998A07B4B7F2E5D95A4B144C /* Pods-IJKMediaDemo.debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = "Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MODULEMAP_FILE = "Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo.modulemap";
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PODS_ROOT = "$(SRCROOT)";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		29C906FE5FB7ACDC680C6CC289EFF96E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"POD_CONFIGURATION_DEBUG=1",
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				SYMROOT = "${SRCROOT}/../build";
+			};
+			name = Debug;
+		};
+		59909D53159D0E69D82D4AF65B5E5706 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"POD_CONFIGURATION_RELEASE=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				SYMROOT = "${SRCROOT}/../build";
+			};
+			name = Release;
+		};
+		5A18EC46A9B7AD47E00AE393A1D30CC0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5F35ABAA0418103ED2118F52B305F0DF /* Pods-IJKMediaDemo.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = "Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MODULEMAP_FILE = "Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo.modulemap";
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PODS_ROOT = "$(SRCROOT)";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4821239608C13582E20E6DA73FD5F1F9 /* Build configuration list for PBXProject "Pods" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				29C906FE5FB7ACDC680C6CC289EFF96E /* Debug */,
+				59909D53159D0E69D82D4AF65B5E5706 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CCD6DEFAF6D710AA6BDE361C3DE2AF39 /* Build configuration list for PBXNativeTarget "Pods-IJKMediaDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0014DC95F2E18E52F77CDA77F139BD84 /* Debug */,
+				5A18EC46A9B7AD47E00AE393A1D30CC0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BFDFE7DC352907FC980B868725387E98 /* Project object */;
+}

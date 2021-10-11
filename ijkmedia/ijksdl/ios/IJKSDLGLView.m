@@ -319,10 +319,10 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     if ([[NSThread currentThread] isMainThread]) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             if (_isRenderBufferInvalidated)
-                [self display:nil];
+                [self display:nil subtitle:NULL];
         });
     } else {
-        [self display:nil];
+        [self display:nil subtitle:NULL];
     }
 
     [self unlockGLActive];
@@ -332,7 +332,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     return;
 }
 
-- (void)display: (SDL_VoutOverlay *) overlay
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
 {
     if (_didSetupGL == NO)
         return;
@@ -352,7 +352,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     if (_context && !_didStopGL) {
         EAGLContext *prevContext = [EAGLContext currentContext];
         [EAGLContext setCurrentContext:_context];
-        [self displayInternal:overlay];
+        [self displayInternal:overlay subtitle:subtitle];
         [EAGLContext setCurrentContext:prevContext];
     }
 
@@ -360,7 +360,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 }
 
 // NOTE: overlay could be NULl
-- (void)displayInternal: (SDL_VoutOverlay *) overlay
+- (void)displayInternal:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
 {
     if (![self setupRenderer:overlay]) {
         if (!overlay && !_renderer) {

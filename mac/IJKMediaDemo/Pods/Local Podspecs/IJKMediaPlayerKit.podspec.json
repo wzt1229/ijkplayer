@@ -1,0 +1,114 @@
+{
+  "name": "IJKMediaPlayerKit",
+  "version": "0.8.8",
+  "summary": "IJKMediaPlayerKit for macOS.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/debugly/ijkplayer",
+  "license": {
+    "type": "LGPLv2.1",
+    "text": "LICENSE"
+  },
+  "authors": {
+    "MattReach": "qianlongxu@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/debugly/ijkplayer",
+    "tag": "0.8.8"
+  },
+  "platforms": {
+    "osx": "10.11"
+  },
+  "pod_target_xcconfig": {
+    "ALWAYS_SEARCH_USER_PATHS": "YES",
+    "HEADER_SEARCH_PATHS": [
+      "$(inherited)",
+      "${PODS_TARGET_SRCROOT}/mac/build/universal/include",
+      "${PODS_TARGET_SRCROOT}/ijkmedia"
+    ]
+  },
+  "script_phases": [
+    {
+      "name": "ijkversion.h",
+      "shell_path": "/bin/sh",
+      "script": "sh \"${PODS_TARGET_SRCROOT}/ijkmedia/ijkplayer/version.sh\" \"${PODS_TARGET_SRCROOT}/ijkmedia/ijkplayer\" \"ijkversion.h\"",
+      "execution_position": "before_compile"
+    }
+  ],
+  "vendored_libraries": "mac/build/universal/lib/*.a",
+  "libraries": [
+    "z",
+    "iconv",
+    "xml2",
+    "bz2",
+    "c++"
+  ],
+  "frameworks": [
+    "AVFoundation",
+    "AudioToolbox",
+    "AudioUnit",
+    "Cocoa",
+    "OpenGL",
+    "CoreMedia",
+    "CoreVideo",
+    "VideoToolbox",
+    "GLKit"
+  ],
+  "subspecs": [
+    {
+      "name": "mac",
+      "source_files": "IJKMediaPlayerKit/*.{h,m}",
+      "public_header_files": [
+        "IJKMediaPlayerKit/IJKMediaPlayerKit.h",
+        "IJKMediaPlayerKit/IJKMediaPlayback.h",
+        "IJKMediaPlayerKit/IJKFFOptions.h",
+        "IJKMediaPlayerKit/IJKFFMonitor.h",
+        "IJKMediaPlayerKit/IJKFFMoviePlayerController.h",
+        "IJKMediaPlayerKit/IJKMediaModule.h",
+        "IJKMediaPlayerKit/IJKMediaPlayer.h",
+        "IJKMediaPlayerKit/IJKNotificationManager.h",
+        "IJKMediaPlayerKit/IJKKVOController.h",
+        "IJKMediaPlayerKit/IJKSDLGLViewProtocol.h"
+      ]
+    },
+    {
+      "name": "ijkmedia",
+      "source_files": [
+        "ijkmedia/ijkplayer/**/*.{h,c,m,cpp}",
+        "ijkmedia/ijksdl/**/*.{h,c,m,cpp}"
+      ],
+      "project_header_files": "ijkmedia/**/*.{h}",
+      "exclude_files": [
+        "ijkmedia/ijkplayer/android/**/*.*",
+        "ijkmedia/ijksdl/ios/**/*.*",
+        "ijkmedia/ijksdl/android/**/*.*",
+        "ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c",
+        "ijkmedia/ijksdl/gles2/fsh/yuv444p10le.fsh.c",
+        "ijkmedia/ijksdl/ijksdl_extra_log.c",
+        "ijkmedia/ijksdl/gles2/fsh/yuv420p.fsh.c",
+        "ijkmedia/ijksdl/gles2/vsh/mvp.vsh.c",
+        "ijkmedia/ijkplayer/ijkversion.h",
+        "ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c",
+        "ijkmedia/ijkplayer/ijkavutil/ijkdict.c",
+        "ijkmedia/ijkplayer/ijkavutil/ijkfifo.c",
+        "ijkmedia/ijkplayer/ijkavutil/ijkstl.cpp"
+      ]
+    },
+    {
+      "name": "no-arc",
+      "source_files": [
+        "ijkmedia/ijksdl/apple/ijksdl_aout_ios_audiounit.m",
+        "ijkmedia/ijksdl/apple/ijksdl_vout_ios_gles2.m"
+      ],
+      "compiler_flags": "-fno-objc-arc"
+    },
+    {
+      "name": "w",
+      "source_files": [
+        "ijkmedia/ijkplayer/ijkavutil/ijkdict.c",
+        "ijkmedia/ijkplayer/ijkavutil/ijkfifo.c",
+        "ijkmedia/ijkplayer/ijkavutil/ijkstl.cpp"
+      ],
+      "compiler_flags": "-w"
+    }
+  ]
+}

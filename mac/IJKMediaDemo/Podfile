@@ -1,0 +1,14 @@
+#1.7.0
+install! 'cocoapods', :generate_multiple_pod_projects => true
+
+target 'IJKMediaDemo' do
+    # Comment the next line if you don't want to use dynamic frameworks
+    use_frameworks!
+  
+    # Pods for IJKMediaDemo
+  
+    platform :osx, '10.11'
+  
+    pod 'IJKMediaPlayerKit', :path => '../../'
+  
+  end

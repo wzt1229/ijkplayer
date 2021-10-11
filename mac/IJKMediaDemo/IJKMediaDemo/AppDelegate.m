@@ -9,7 +9,7 @@
 #import "AppDelegate.h"
 #import "MRDragView.h"
 #import "MRUtil.h"
-#import <IJKMediaMacFramework/IJKMediaMacFramework.h>
+#import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
 
 @interface AppDelegate ()<MRDragViewDelegate>
 
