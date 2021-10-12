@@ -25,7 +25,7 @@
 
 #import <TargetConditionals.h>
 #if TARGET_OS_OSX
-#import <APPKit/AppKit.h>
+//#import <APPKit/AppKit.h>
 typedef NSOpenGLView UIView;
 typedef NSImage UIImage;
 #else

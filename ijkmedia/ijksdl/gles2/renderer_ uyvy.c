@@ -23,7 +23,7 @@
 #import <CoreVideo/CoreVideo.h>
 #import <TargetConditionals.h>
 #if TARGET_OS_OSX
-#import <OpenGL/GL.h>
+#import <OpenGL/gl.h>
 #import <OpenGL/gl3.h>
 #else
 #if __OBJC__
