@@ -20,6 +20,7 @@
 @property (nonatomic, strong) NSMutableArray *playList;
 @property (copy) NSURL *playingUrl;
 @property (weak) NSTimer *tickTimer;
+@property (weak) IBOutlet NSTextField *urlInput;
 
 @end
 
@@ -59,6 +60,19 @@
     self.player.playbackRate = speed;
 }
 
+- (IBAction)onPlay:(NSButton *)sender {
+    if (self.urlInput.stringValue.length > 0) {
+        NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
+        if (idx == NSNotFound) {
+            idx = -1;
+        }
+        idx ++;
+        NSURL *url = [NSURL URLWithString:self.urlInput.stringValue];
+        self.playList[idx] = url;
+        [self playURL:url];
+    }
+}
+
 - (IBAction)playNext:(NSButton *)sender {
     if ([self.playList count] == 0) {
         return;
@@ -88,12 +102,12 @@
     
 //    [self.playList addObject:[NSURL URLWithString:@"http://localhost/ffmpeg-test/Roof.of.the.World.E04.4K.WEB-DL.H265.mp4"]];
 //    [self.playList addObject:[NSURL URLWithString:@"http://localhost/ffmpeg-test/Captain.Marvel.2019.2160p.WEB-DL.DD%2B5.1.HDR.HEVC-MOMA.mkv"]];
-    [self.playList addObject:[NSURL URLWithString:@"http://localhost/ffmpeg-test/11.mp4"]];
-    [self.playList addObject:[NSURL URLWithString:@"ijkhttphook:http://localhost/ffmpeg-test/xp5.mp4"]];
-    [self.playList addObject:[NSURL URLWithString:@"http://localhost/ffmpeg-test/xp5.mp4"]];
+//    [self.playList addObject:[NSURL URLWithString:@"http://localhost/ffmpeg-test/11.mp4"]];
+//    [self.playList addObject:[NSURL URLWithString:@"ijkhttphook:http://localhost/ffmpeg-test/xp5.mp4"]];
+//    [self.playList addObject:[NSURL URLWithString:@"http://localhost/ffmpeg-test/xp5.mp4"]];
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
-//    NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
-//    url = [NSURL fileURLWithPath:localM3u8];
+    NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
+    [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
 }
 
 - (NSMutableArray *)playList
@@ -107,6 +121,7 @@
 - (void)playURL:(NSURL *)url
 {
     self.playingUrl = url;
+    self.urlInput.stringValue = [url absoluteString];
     NSString *title = [[url resourceSpecifier] lastPathComponent];
     [self.window setTitle:title];
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
