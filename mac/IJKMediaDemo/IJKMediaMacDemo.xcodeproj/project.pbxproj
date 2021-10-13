@@ -3,11 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		02C735C9FC0BC2E161E64A7C /* Pods_IJKMediaDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3EDEEBBC149B437205C50A5 /* Pods_IJKMediaDemo.framework */; };
+		9428139B7E1664053AFBC69C /* Pods_IJKMediaMacDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD516DA6CFB923B9AE5B36B6 /* Pods_IJKMediaMacDemo.framework */; };
 		DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9625A43A1300F01E2F /* MRUtil.m */; };
 		DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9C25A43A1300F01E2F /* MRDragView.m */; };
 		DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */; };
@@ -37,12 +37,15 @@
 /* Begin PBXFileReference section */
 		0BD9CDC459B2927855687CF3 /* Pods-IJKMediaDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaDemo.debug.xcconfig"; path = "Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		0FCFB14C0AEA843BC157B305 /* Pods-IJKMediaDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaDemo.release.xcconfig"; path = "Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo.release.xcconfig"; sourceTree = "<group>"; };
+		1686426DE72BC46B71422194 /* Pods-IJKMediaMacDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaMacDemo.debug.xcconfig"; path = "Target Support Files/Pods-IJKMediaMacDemo/Pods-IJKMediaMacDemo.debug.xcconfig"; sourceTree = "<group>"; };
+		A58B9A08B8B503110627F745 /* Pods-IJKMediaMacDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaMacDemo.release.xcconfig"; path = "Target Support Files/Pods-IJKMediaMacDemo/Pods-IJKMediaMacDemo.release.xcconfig"; sourceTree = "<group>"; };
+		BD516DA6CFB923B9AE5B36B6 /* Pods_IJKMediaMacDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IJKMediaMacDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD050F9525A43A1300F01E2F /* MRUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRUtil.h; sourceTree = "<group>"; };
 		DD050F9625A43A1300F01E2F /* MRUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRUtil.m; sourceTree = "<group>"; };
 		DD050F9B25A43A1300F01E2F /* MRDragView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRDragView.h; sourceTree = "<group>"; };
 		DD050F9C25A43A1300F01E2F /* MRDragView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRDragView.m; sourceTree = "<group>"; };
 		DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "996747-5277368-31.m3u8"; sourceTree = "<group>"; };
-		DD9B138822C23A79002D1D79 /* IJKMediaDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJKMediaDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD9B138822C23A79002D1D79 /* IJKMediaMacDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJKMediaMacDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B138B22C23A79002D1D79 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		DD9B138C22C23A79002D1D79 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		DD9B138E22C23A7A002D1D79 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -67,7 +70,6 @@
 		DD9B13D522C24095002D1D79 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		DD9B13D722C240A5002D1D79 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		DD9B13E722C24971002D1D79 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
-		F3EDEEBBC149B437205C50A5 /* Pods_IJKMediaDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IJKMediaDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,7 +94,7 @@
 				DD9B13BE22C24026002D1D79 /* AVFoundation.framework in Frameworks */,
 				DD9B13BC22C2401F002D1D79 /* libbz2.tbd in Frameworks */,
 				DD9B13BA22C24017002D1D79 /* libc++.tbd in Frameworks */,
-				02C735C9FC0BC2E161E64A7C /* Pods_IJKMediaDemo.framework in Frameworks */,
+				9428139B7E1664053AFBC69C /* Pods_IJKMediaMacDemo.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,7 +132,7 @@
 		DD9B138922C23A79002D1D79 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				DD9B138822C23A79002D1D79 /* IJKMediaDemo.app */,
+				DD9B138822C23A79002D1D79 /* IJKMediaMacDemo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -172,7 +174,7 @@
 				DD9B13BD22C24026002D1D79 /* AVFoundation.framework */,
 				DD9B13BB22C2401F002D1D79 /* libbz2.tbd */,
 				DD9B13B922C24017002D1D79 /* libc++.tbd */,
-				F3EDEEBBC149B437205C50A5 /* Pods_IJKMediaDemo.framework */,
+				BD516DA6CFB923B9AE5B36B6 /* Pods_IJKMediaMacDemo.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -182,17 +184,18 @@
 			children = (
 				0BD9CDC459B2927855687CF3 /* Pods-IJKMediaDemo.debug.xcconfig */,
 				0FCFB14C0AEA843BC157B305 /* Pods-IJKMediaDemo.release.xcconfig */,
+				1686426DE72BC46B71422194 /* Pods-IJKMediaMacDemo.debug.xcconfig */,
+				A58B9A08B8B503110627F745 /* Pods-IJKMediaMacDemo.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		DD9B138722C23A79002D1D79 /* IJKMediaDemo */ = {
+		DD9B138722C23A79002D1D79 /* IJKMediaMacDemo */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DD9B139922C23A7A002D1D79 /* Build configuration list for PBXNativeTarget "IJKMediaDemo" */;
+			buildConfigurationList = DD9B139922C23A7A002D1D79 /* Build configuration list for PBXNativeTarget "IJKMediaMacDemo" */;
 			buildPhases = (
 				0A7F2D8848FABCB280685F2B /* [CP] Check Pods Manifest.lock */,
 				DD9B138422C23A79002D1D79 /* Sources */,
@@ -204,9 +207,9 @@
 			);
 			dependencies = (
 			);
-			name = IJKMediaDemo;
+			name = IJKMediaMacDemo;
 			productName = IJKMediaDemo;
-			productReference = DD9B138822C23A79002D1D79 /* IJKMediaDemo.app */;
+			productReference = DD9B138822C23A79002D1D79 /* IJKMediaMacDemo.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -228,7 +231,7 @@
 					};
 				};
 			};
-			buildConfigurationList = DD9B138322C23A79002D1D79 /* Build configuration list for PBXProject "IJKMediaDemo" */;
+			buildConfigurationList = DD9B138322C23A79002D1D79 /* Build configuration list for PBXProject "IJKMediaMacDemo" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -241,7 +244,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				DD9B138722C23A79002D1D79 /* IJKMediaDemo */,
+				DD9B138722C23A79002D1D79 /* IJKMediaMacDemo */,
 			);
 		};
 /* End PBXProject section */
@@ -275,7 +278,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-IJKMediaDemo-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-IJKMediaMacDemo-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -288,15 +291,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaMacDemo/Pods-IJKMediaMacDemo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaMacDemo/Pods-IJKMediaMacDemo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IJKMediaMacDemo/Pods-IJKMediaMacDemo-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -440,7 +443,7 @@
 		};
 		DD9B139A22C23A7A002D1D79 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0BD9CDC459B2927855687CF3 /* Pods-IJKMediaDemo.debug.xcconfig */;
+			baseConfigurationReference = 1686426DE72BC46B71422194 /* Pods-IJKMediaMacDemo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = IJKMediaDemo/IJKMediaDemo.entitlements;
@@ -459,7 +462,7 @@
 		};
 		DD9B139B22C23A7A002D1D79 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0FCFB14C0AEA843BC157B305 /* Pods-IJKMediaDemo.release.xcconfig */;
+			baseConfigurationReference = A58B9A08B8B503110627F745 /* Pods-IJKMediaMacDemo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = IJKMediaDemo/IJKMediaDemo.entitlements;
@@ -479,7 +482,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DD9B138322C23A79002D1D79 /* Build configuration list for PBXProject "IJKMediaDemo" */ = {
+		DD9B138322C23A79002D1D79 /* Build configuration list for PBXProject "IJKMediaMacDemo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DD9B139722C23A7A002D1D79 /* Debug */,
@@ -488,7 +491,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DD9B139922C23A7A002D1D79 /* Build configuration list for PBXNativeTarget "IJKMediaDemo" */ = {
+		DD9B139922C23A7A002D1D79 /* Build configuration list for PBXNativeTarget "IJKMediaMacDemo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DD9B139A22C23A7A002D1D79 /* Debug */,

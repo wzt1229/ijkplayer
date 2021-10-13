@@ -1,11 +1,11 @@
 PODS:
   - IJKMediaPlayerKit (0.8.8):
     - IJKMediaPlayerKit/ijkmedia (= 0.8.8)
-    - IJKMediaPlayerKit/mac (= 0.8.8)
+    - IJKMediaPlayerKit/IJKMediaPlayerKit (= 0.8.8)
     - IJKMediaPlayerKit/no-arc (= 0.8.8)
     - IJKMediaPlayerKit/w (= 0.8.8)
   - IJKMediaPlayerKit/ijkmedia (0.8.8)
-  - IJKMediaPlayerKit/mac (0.8.8)
+  - IJKMediaPlayerKit/IJKMediaPlayerKit (0.8.8)
   - IJKMediaPlayerKit/no-arc (0.8.8)
   - IJKMediaPlayerKit/w (0.8.8)
 
@@ -17,8 +17,8 @@ EXTERNAL SOURCES:
     :path: "../../"
 
 SPEC CHECKSUMS:
-  IJKMediaPlayerKit: cfe442910920b43a55286705d9012229f5a7af7c
+  IJKMediaPlayerKit: d4f9113578509a6ee83e01297cd35a02e48cc4a3
 
-PODFILE CHECKSUM: 76dd0f7baea926b358bec8413d2e469106519480
+PODFILE CHECKSUM: 218ccbb0c209430587e6a03f0b41ccc2262b2f39
 
 COCOAPODS: 1.11.2

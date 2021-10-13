@@ -26,7 +26,6 @@
 
 @implementation IJKFFOptions {
     NSMutableDictionary *_optionCategories;
-
     NSMutableDictionary *_playerOptions;
     NSMutableDictionary *_formatOptions;
     NSMutableDictionary *_codecOptions;
@@ -42,12 +41,18 @@
     [options setPlayerOptionIntValue:0      forKey:@"framedrop"];
     [options setPlayerOptionIntValue:3      forKey:@"video-pictq-size"];
     [options setPlayerOptionIntValue:0      forKey:@"videotoolbox"];
-    [options setPlayerOptionIntValue:1920    forKey:@"videotoolbox-max-frame-width"];
-
+#if TARGET_OS_IOS
+    [options setPlayerOptionIntValue:960    forKey:@"videotoolbox-max-frame-width"];
+#else
+    [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
+#endif
+    
     [options setFormatOptionIntValue:0                  forKey:@"auto_convert"];
     [options setFormatOptionIntValue:1                  forKey:@"reconnect"];
     [options setFormatOptionIntValue:30 * 1000 * 1000   forKey:@"timeout"];
-    [options setFormatOptionValue:@"ijkplayer"          forKey:@"user_agent"];
+    [options setFormatOptionValue:@"ijkplayer"          forKey:@"user-agent"];
+
+    options.showHudView   = NO;
 
     return options;
 }

@@ -1,6 +1,0 @@
-framework module Pods_IJKMediaDemo {
-  umbrella header "Pods-IJKMediaDemo-umbrella.h"
-
-  export *
-  module * { export * }
-}

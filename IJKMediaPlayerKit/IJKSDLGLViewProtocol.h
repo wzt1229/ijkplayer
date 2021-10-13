@@ -28,6 +28,9 @@
 typedef NSOpenGLView UIView;
 typedef NSImage UIImage;
 #import <AppKit/AppKit.h>
+#else
+#import <UIKit/UIKit.h>
+#endif
 
 typedef NS_ENUM(NSInteger, IJKContentMode) {
     IJKContentModeScaleToFill,
@@ -36,9 +39,6 @@ typedef NS_ENUM(NSInteger, IJKContentMode) {
     IJKContentModeResizeAspect
 };
 
-#else
-#import <UIKit/UIKit.h>
-#endif
 typedef struct IJKOverlay IJKOverlay;
 struct IJKOverlay {
     int w;

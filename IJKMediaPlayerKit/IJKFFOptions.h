@@ -70,4 +70,6 @@ struct IjkMediaPlayer;
 -(void)setSwsOptionIntValue:       (int64_t)value forKey:(NSString *)key;
 -(void)setPlayerOptionIntValue:    (int64_t)value forKey:(NSString *)key;
 
+@property(nonatomic) BOOL showHudView;
+
 @end

@@ -7,9 +7,9 @@
 #
 
 Pod::Spec.new do |s|
-  s.name             = 'IJKMediaPlayerKit'
+  s.name             = 'IJKMediaPlayeriOSKit'
   s.version          = '0.8.8'
-  s.summary          = 'IJKMediaPlayerKit for macOS.'
+  s.summary          = 'IJKMediaPlayeriOSKit for iOS.'
   
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -26,16 +26,10 @@ TODO: Add long description of the pod here.
   s.author           = { 'MattReach' => 'qianlongxu@gmail.com' }
   s.source           = { :git => 'https://github.com/debugly/ijkplayer', :tag => s.version.to_s }
 
-  s.osx.deployment_target = '10.11'
   s.ios.deployment_target = '9.0'
 
-  s.osx.pod_target_xcconfig = {
-    'ALWAYS_SEARCH_USER_PATHS' => 'YES',
-    'HEADER_SEARCH_PATHS' => [
-      '$(inherited)',
-      '${PODS_TARGET_SRCROOT}/mac/build/universal/include',
-      '${PODS_TARGET_SRCROOT}/ijkmedia'
-    ]
+  s.ios.user_target_xcconfig = {
+    'SUPPORTS_MACCATALYST' => 'NO'
   }
 
   s.ios.pod_target_xcconfig = {
@@ -59,7 +53,7 @@ TODO: Add long description of the pod here.
 
   s.subspec 'IJKMediaPlayerKit' do |ss|
     ss.source_files = 'IJKMediaPlayerKit/*.{h,m}'
-    ss.public_header_files =
+    ss.public_header_files = 
       'IJKMediaPlayerKit/IJKMediaPlayback.h',
       'IJKMediaPlayerKit/IJKFFOptions.h',
       'IJKMediaPlayerKit/IJKFFMonitor.h',
@@ -69,9 +63,6 @@ TODO: Add long description of the pod here.
       'IJKMediaPlayerKit/IJKNotificationManager.h',
       'IJKMediaPlayerKit/IJKKVOController.h',
       'IJKMediaPlayerKit/IJKSDLGLViewProtocol.h'
-    ss.osx.public_header_files = 'IJKMediaPlayerKit/IJKMediaPlayerKit.h'
-    ss.osx.exclude_files = 'IJKMediaPlayerKit/IJKMediaPlayeriOSKit.h'
-
     ss.ios.public_header_files = 'IJKMediaPlayerKit/IJKMediaPlayeriOSKit.h'
     ss.ios.exclude_files = 'IJKMediaPlayerKit/IJKMediaPlayerKit.h'
   end
@@ -97,14 +88,16 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijksdl/apple/ijksdl_aout_ios_audiounit.*',
       'ijkmedia/ijksdl/apple/ijksdl_vout_ios_gles2.*',
 
-    ss.osx.exclude_files = 
-      'ijkmedia/ijksdl/ios/*.*',
-      'ijkmedia/ijksdl/gles2/fsh/ios/*.*',
-      'ijkmedia/ijksdl/gles2/vsh/ios/*.*',
-      'ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c'
+    # 支持 macos 后，会将以下文件从 iOS 工程里排除！！
+    # ss.osx.exclude_files = 
+      # 'ijkmedia/ijksdl/ios/*.*',
+      # 'ijkmedia/ijksdl/gles2/fsh/ios/*.*',
+      # 'ijkmedia/ijksdl/gles2/vsh/ios/*.*',
+      # 'ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c'
     
     ss.ios.exclude_files = 
       'ijkmedia/ijksdl/mac/*.*',
+      'ijkmedia/ijksdl/gles2/renderer_ uyvy.c',
       'ijkmedia/ijksdl/gles2/fsh/mac/*.*',
       'ijkmedia/ijksdl/gles2/vsh/mac/*.*'
 
@@ -126,9 +119,7 @@ TODO: Add long description of the pod here.
     ss.compiler_flags = '-w'
   end
   
+  s.vendored_libraries = 'ios/build/universal/lib/*.a'
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
-  s.ios.vendored_libraries = 'ios/build/universal/lib/*.a'
-  s.osx.vendored_libraries = 'mac/build/universal/lib/*.a'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
-  s.osx.frameworks = 'AudioUnit', 'Cocoa', 'OpenGL', 'GLKit'
 end

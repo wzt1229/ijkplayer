@@ -49,3 +49,5 @@ OpenSSL_1_1_1.tar.gz
 # Cocopods
 /mac/IJKMediaDemo2/Pods/
 
+ios/IJKMediaDemo/Pods
+mac/IJKMediaDemo/Pods

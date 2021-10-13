@@ -1,30 +1,37 @@
 //
-//  IJKMediaFrameworkWithSSL.h
-//  IJKMediaFrameworkWithSSL
+//  IJKMediaPlayeriOSKit.h
+//  IJKMediaPlayeriOSKit
 //
-//  Created by zhangxinzheng on 27/02/2017.
-//  Copyright © 2017 bilibili. All rights reserved.
+//  Created by Justin Qian on 2021/9/30.
 //
 
+#ifndef IJKMediaPlayeriOSKit_h
+#define IJKMediaPlayeriOSKit_h
+
+
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
+#else
+#import <AppKit/AppKit.h>
+#endif
 
-//! Project version number for IJKMediaFrameworkWithSSL.
-FOUNDATION_EXPORT double IJKMediaFrameworkWithSSLVersionNumber;
+//! Project version number for IJKMediaMacFramework.
+FOUNDATION_EXPORT double IJKMediaMacFrameworkVersionNumber;
 
-//! Project version string for IJKMediaFrameworkWithSSL.
-FOUNDATION_EXPORT const unsigned char IJKMediaFrameworkWithSSLVersionString[];
+//! Project version string for IJKMediaMacFramework.
+FOUNDATION_EXPORT const unsigned char IJKMediaMacFrameworkVersionString[];
 
-// In this header, you should import all the public headers of your framework using statements like #import <IJKMediaFrameworkWithSSL/PublicHeader.h>
+// In this header, you should import all the public headers of your framework using statements like #import <IJKMediaMacFramework/PublicHeader.h>
 
-#import <IJKMediaFrameworkWithSSL/IJKMediaPlayback.h>
-#import <IJKMediaFrameworkWithSSL/IJKMPMoviePlayerController.h>
-#import <IJKMediaFrameworkWithSSL/IJKFFOptions.h>
-#import <IJKMediaFrameworkWithSSL/IJKFFMoviePlayerController.h>
-#import <IJKMediaFrameworkWithSSL/IJKAVMoviePlayerController.h>
-#import <IJKMediaFrameworkWithSSL/IJKMediaModule.h>
-#import <IJKMediaFrameworkWithSSL/IJKMediaPlayer.h>
-#import <IJKMediaFrameworkWithSSL/IJKNotificationManager.h>
-#import <IJKMediaFrameworkWithSSL/IJKKVOController.h>
+#import <IJKMediaPlayeriOSKit/IJKMediaPlayback.h>
+#import <IJKMediaPlayeriOSKit/IJKFFMonitor.h>
+#import <IJKMediaPlayeriOSKit/IJKFFOptions.h>
+#import <IJKMediaPlayeriOSKit/IJKFFMoviePlayerController.h>
+#import <IJKMediaPlayeriOSKit/IJKMediaModule.h>
+#import <IJKMediaPlayeriOSKit/IJKMediaPlayer.h>
+#import <IJKMediaPlayeriOSKit/IJKNotificationManager.h>
+#import <IJKMediaPlayeriOSKit/IJKKVOController.h>
+#import <IJKMediaPlayeriOSKit/IJKSDLGLViewProtocol.h>
 
 // backward compatible for old names
 #define IJKMediaPlaybackIsPreparedToPlayDidChangeNotification IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification
@@ -44,3 +51,5 @@ FOUNDATION_EXPORT const unsigned char IJKMediaFrameworkWithSSLVersionString[];
 #define IJKMPMoviePlayerAccurateSeekCompleteNotification IJKMPMoviePlayerAccurateSeekCompleteNotification
 #define IJKMoviePlayerSeekAudioStartNotification IJKMPMoviePlayerSeekAudioStartNotification
 #define IJKMoviePlayerSeekVideoStartNotification IJKMPMoviePlayerSeekVideoStartNotification
+
+#endif /* IJKMediaPlayeriOSKit_h */

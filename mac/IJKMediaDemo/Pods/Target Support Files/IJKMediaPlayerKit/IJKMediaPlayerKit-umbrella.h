@@ -10,7 +10,6 @@
 #endif
 #endif
 
-#import "IJKMediaPlayerKit.h"
 #import "IJKMediaPlayback.h"
 #import "IJKFFOptions.h"
 #import "IJKFFMonitor.h"
@@ -20,6 +19,7 @@
 #import "IJKNotificationManager.h"
 #import "IJKKVOController.h"
 #import "IJKSDLGLViewProtocol.h"
+#import "IJKMediaPlayerKit.h"
 
 FOUNDATION_EXPORT double IJKMediaPlayerKitVersionNumber;
 FOUNDATION_EXPORT const unsigned char IJKMediaPlayerKitVersionString[];
