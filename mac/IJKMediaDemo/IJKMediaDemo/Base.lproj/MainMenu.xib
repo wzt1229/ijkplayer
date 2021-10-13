@@ -690,7 +690,7 @@
             <rect key="contentRect" x="335" y="390" width="633" height="449"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="875"/>
             <view key="contentView" id="EiT-Mj-1SZ">
-                <rect key="frame" x="0.0" y="0.0" width="633" height="449"/>
+                <rect key="frame" x="0.0" y="0.0" width="637" height="449"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="D9X-bf-3oG" customClass="MRDragView">
@@ -766,6 +766,9 @@
                                         </items>
                                     </menu>
                                 </popUpButtonCell>
+                                <connections>
+                                    <action selector="onChangeScaleMode:" target="Voe-Tx-rLC" id="S49-AZ-Icy"/>
+                                </connections>
                             </popUpButton>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ptV-4H-Lwq">
                                 <rect key="frame" x="162" y="3" width="154" height="32"/>

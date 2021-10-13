@@ -91,6 +91,19 @@
     [self playURL:url];
 }
 
+- (IBAction)onChangeScaleMode:(NSPopUpButton *)sender {
+    NSMenuItem *item = [sender selectedItem];
+#warning TODO ScaleMode
+    if (item.tag == 1) {
+        //fill
+    } else if (item.tag == 2) {
+        //aspect fill
+    } else if (item.tag == 3) {
+        //aspect fit
+    }
+}
+
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     // Insert code here to initialize your application
     BOOL match = [IJKFFMoviePlayerController checkIfFFmpegVersionMatch:YES];
