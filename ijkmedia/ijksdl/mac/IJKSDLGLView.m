@@ -292,7 +292,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
 }
 
-- (void) prepareOpenGL
+- (void)prepareOpenGL
 {
     [super prepareOpenGL];
 
@@ -301,7 +301,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     [self initGL];
 }
 
-- (void) windowWillClose:(NSNotification*)notification
+- (void)windowWillClose:(NSNotification*)notification
 {
     // Stop the display link when the window is closing because default
     // OpenGL render buffers will be destroyed.  If display link continues to
@@ -315,8 +315,24 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     [self resetViewPort];
 }
 
-- (void)display_pixels:(IJKOverlay *)overlay {
+- (void)display_pixels:(IJKOverlay *)overlay
+{
     
+}
+
+- (NSView *)hitTest:(NSPoint)point
+{
+    return nil;
+}
+
+- (BOOL)acceptsFirstResponder
+{
+    return NO;
+}
+
+- (BOOL)mouseDownCanMoveWindow
+{
+    return YES;
 }
 
 @end
