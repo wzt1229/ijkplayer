@@ -283,11 +283,11 @@ static void IJK_GLES2_Renderer_Vertices_reset(IJK_GLES2_Renderer *renderer)
 static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
 {
     switch (renderer->gravity) {
-        case IJK_GLES2_GRAVITY_RESIZE_ASPECT:
+        case IJK_GLES2_RESIZE_ASPECT_FIT:
             break;
-        case IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL:
+        case IJK_GLES2_RESIZE_ASPECT_FILL:
             break;
-        case IJK_GLES2_GRAVITY_RESIZE:
+        case IJK_GLES2_RESIZE_SCALE_FILL:
             IJK_GLES2_Renderer_Vertices_reset(renderer);
             return;
         default:
@@ -320,8 +320,8 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
     float nH        = 1.0f;
 
     switch (renderer->gravity) {
-        case IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL:  dd = FFMAX(dW, dH); break;
-        case IJK_GLES2_GRAVITY_RESIZE_ASPECT:       dd = FFMIN(dW, dH); break;
+        case IJK_GLES2_RESIZE_ASPECT_FILL:  dd = FFMAX(dW, dH); break;
+        case IJK_GLES2_RESIZE_ASPECT_FIT:       dd = FFMIN(dW, dH); break;
     }
 
     nW = (width  * dd / (float)renderer->layer_width);
@@ -344,12 +344,10 @@ static void IJK_GLES2_Renderer_Vertices_reloadVertex(IJK_GLES2_Renderer *rendere
 }
 
 #define IJK_GLES2_GRAVITY_MIN                   (0)
-#define IJK_GLES2_GRAVITY_RESIZE                (0) // Stretch to fill layer bounds.
-#define IJK_GLES2_GRAVITY_RESIZE_ASPECT         (1) // Preserve aspect ratio; fit within layer bounds.
-#define IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL    (2) // Preserve aspect ratio; fill layer bounds.
+
 #define IJK_GLES2_GRAVITY_MAX                   (2)
 
-GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravity, GLsizei layer_width, GLsizei layer_height)
+GLboolean IJK_GLES2_Renderer_Resize(IJK_GLES2_Renderer *renderer, int gravity, GLsizei layer_width, GLsizei layer_height)
 {
     if (renderer->gravity != gravity && gravity >= IJK_GLES2_GRAVITY_MIN && gravity <= IJK_GLES2_GRAVITY_MAX)
         renderer->vertices_changed = 1;
@@ -482,10 +480,10 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
 
         IJK_GLES2_Renderer_Vertices_apply(renderer);
         IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
-
+        
         renderer->buffer_width  = buffer_width;
         renderer->visible_width = visible_width;
-
+        
         GLsizei padding_pixels     = buffer_width - visible_width;
         GLfloat padding_normalized = ((GLfloat)padding_pixels) / buffer_width;
 

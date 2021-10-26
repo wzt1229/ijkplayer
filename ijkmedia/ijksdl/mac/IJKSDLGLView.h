@@ -42,6 +42,7 @@ typedef NSImage UIImage;
 
 #if TARGET_OS_OSX
 - (void)setContentMode:(IJKContentMode)contentMode;
+- (void)setViewSize:(CGSize)viewSize;
 #else
 - (UIImage*)snapshot;
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));

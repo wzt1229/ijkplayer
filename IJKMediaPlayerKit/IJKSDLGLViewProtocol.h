@@ -33,10 +33,10 @@ typedef NSImage UIImage;
 #endif
 
 typedef NS_ENUM(NSInteger, IJKContentMode) {
-    IJKContentModeScaleToFill,
+    IJKContentModeScaleNone,
     IJKContentModeScaleAspectFit,      // contents scaled to fit with fixed aspect. remainder is transparent
     IJKContentModeScaleAspectFill,     // contents scaled to fill with fixed aspect. some portion of content may be clipped.
-    IJKContentModeResizeAspect
+    IJKContentModeScaleToFill,
 };
 
 typedef struct IJKOverlay IJKOverlay;

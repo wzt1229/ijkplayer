@@ -76,9 +76,9 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
 GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay, void *subtitle);
 
-#define IJK_GLES2_GRAVITY_RESIZE                (0) // Stretch to fill view bounds.
-#define IJK_GLES2_GRAVITY_RESIZE_ASPECT         (1) // Preserve aspect ratio; fit within view bounds.
-#define IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL    (2) // Preserve aspect ratio; fill view bounds.
-GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravity, GLsizei view_width, GLsizei view_height);
+#define IJK_GLES2_RESIZE_SCALE_FILL                (0) // Stretch to fill view bounds.
+#define IJK_GLES2_RESIZE_ASPECT_FIT         (1) // Preserve aspect ratio; fit within view bounds.
+#define IJK_GLES2_RESIZE_ASPECT_FILL    (2) // Preserve aspect ratio; fill view bounds.
+GLboolean IJK_GLES2_Renderer_Resize(IJK_GLES2_Renderer *renderer, int gravity, GLsizei view_width, GLsizei view_height);
 
 #endif

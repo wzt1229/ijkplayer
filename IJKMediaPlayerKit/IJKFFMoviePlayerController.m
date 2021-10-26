@@ -34,6 +34,7 @@
 #import "IJKMediaModule.h"
 #import "IJKAudioKit.h"
 #import "IJKNotificationManager.h"
+#import "ijksdl_gles2.h"
 #import "NSString+IJKMedia.h"
 #import "ijkioapplication.h"
 #include "string.h"
@@ -228,6 +229,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         _glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         _glView.isThirdGLView = NO;
         _view = _glView;
+
 #if TARGET_OS_IOS
         _hudViewController = [[IJKSDLHudViewController alloc] init];
         [_hudViewController setRect:_glView.frame];
@@ -766,7 +768,10 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
             newScalingMode = _scalingMode;
     }
 #else
-#warning TODO IJKMPMovieScalingMode
+    if (_glView) {
+        [_glView setContentMode:(IJKContentMode)aScalingMode];
+        [_glView setViewSize:self.view.bounds.size];
+    }
 #endif
 
     _scalingMode = newScalingMode;
@@ -1752,12 +1757,31 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
                                object:nil];
 #else
     //macos
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundeclared-selector"
+    [_notificationManager addObserver:self
+                             selector:@selector(windowDidResize:)
+                                 name:NSWindowDidResizeNotification
+                               object:nil];
+#pragma clang diagnostic pop
+
 #endif
 }
 
 - (void)unregisterApplicationObservers
 {
     [_notificationManager removeAllObservers:self];
+}
+
+
+- (void)windowDidResize:(NSNotification *)notification
+{
+    NSLog(@"changed size width=%f, height=%f", self.view.bounds.size.width,
+          self.view.bounds.size.height);
+    
+    if (_glView) {
+        [_glView setViewSize:self.view.bounds.size];
+    }
 }
 
 - (void)audioSessionInterrupt:(NSNotification *)notification

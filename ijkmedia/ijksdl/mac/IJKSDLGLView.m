@@ -46,7 +46,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 @implementation IJKSDLGLView{
     IJK_GLES2_Renderer *_renderer;
-    int                 _rendererGravity;
+    int                 _rendererScaleMode;
     GLint               _backingWidth;
     GLint               _backingHeight;
     BOOL                _isRenderBufferInvalidated;
@@ -155,7 +155,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         if (!IJK_GLES2_Renderer_use(_renderer))
             return NO;
         
-        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
+        IJK_GLES2_Renderer_Resize(_renderer, _rendererScaleMode, _backingWidth, _backingHeight);
     }
     
     return YES;
@@ -172,19 +172,31 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 {
     switch (contentMode) {
         case IJKContentModeScaleToFill:
-            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE;
+            _rendererScaleMode = IJK_GLES2_RESIZE_SCALE_FILL;
             break;
         case IJKContentModeScaleAspectFit:
-            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
+            _rendererScaleMode = IJK_GLES2_RESIZE_ASPECT_FIT;
             break;
         case IJKContentModeScaleAspectFill:
-            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL;
+            _rendererScaleMode = IJK_GLES2_RESIZE_ASPECT_FILL;
             break;
         default:
-            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
+            _rendererScaleMode = IJK_GLES2_RESIZE_ASPECT_FIT;
             break;
     }
-    [self invalidateRenderBuffer];
+    //[self invalidateRenderBuffer];
+    if (IJK_GLES2_Renderer_isValid(_renderer)) {
+        IJK_GLES2_Renderer_Resize(_renderer, _rendererScaleMode, _backingWidth, _backingHeight);
+    }
+}
+
+- (void) setViewSize:(CGSize)viewSize
+{
+    if (IJK_GLES2_Renderer_isValid(_renderer)) {
+        IJK_GLES2_Renderer_Resize(_renderer, _rendererScaleMode, viewSize.width, viewSize.height);
+    }
+    _backingWidth = viewSize.width;
+    _backingHeight = viewSize.height;
 }
 
 - (void)resetViewPort
@@ -247,7 +259,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         NSLog(@"IJKSDLGLView: renderbufferStorage fromDrawable\n");
         _isRenderBufferInvalidated = NO;
         [self resetViewPort];
-        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
+        IJK_GLES2_Renderer_Resize(_renderer, _rendererScaleMode, _backingWidth, _backingHeight);
     }
     
     if (!IJK_GLES2_Renderer_renderOverlay(_renderer, overlay))

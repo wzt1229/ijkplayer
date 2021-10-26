@@ -93,13 +93,15 @@
 
 - (IBAction)onChangeScaleMode:(NSPopUpButton *)sender {
     NSMenuItem *item = [sender selectedItem];
-#warning TODO ScaleMode
     if (item.tag == 1) {
-        //fill
+        //scale to fill
+        [self.player setScalingMode:IJKMPMovieScalingModeFill];
     } else if (item.tag == 2) {
         //aspect fill
+        [self.player setScalingMode:IJKMPMovieScalingModeAspectFill];
     } else if (item.tag == 3) {
         //aspect fit
+        [self.player setScalingMode:IJKMPMovieScalingModeAspectFit];
     }
 }
 
@@ -185,14 +187,12 @@
     CGRect rect = self.window.frame;
     rect.origin = CGPointZero;
     self.player.view.frame = rect;
-    self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
+    self.player.scalingMode = IJKMPMovieScalingModeFill;
     self.player.shouldAutoplay = YES;
     
     [self.player prepareToPlay];
     
     NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
-#warning TODO IJKContentModeScaleAspectFit
-//    [playerView setContentMode:IJKContentModeScaleAspectFit];
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.playbackView addSubview:playerView];
     [self.playbackView setWantsLayer:YES];
