@@ -37,12 +37,12 @@ typedef NSImage UIImage;
 
 @interface IJKSDLGLView : UIView <IJKSDLGLViewProtocol>
 
+@property(nonatomic) IJKMPMovieScalingMode scalingMode;
+
 - (id)initWithFrame:(CGRect)frame;
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
 
-#if TARGET_OS_OSX
-- (void)setContentMode:(IJKContentMode)contentMode;
-#else
+#if !TARGET_OS_OSX
 - (UIImage*)snapshot;
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));
 #endif

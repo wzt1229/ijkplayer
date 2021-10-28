@@ -26,24 +26,24 @@
 #import <TargetConditionals.h>
 #if TARGET_OS_OSX
 #import <AppKit/AppKit.h>
-typedef NSOpenGLView UIView;
+typedef NSOpenGLView GLView;
 typedef NSImage UIImage;
 #else
 #import <UIKit/UIKit.h>
+typedef UIView GLView;
 #endif
 #import <CoreVideo/CVPixelBuffer.h>
 #import "IJKSDLGLViewProtocol.h"
 #include "ijksdl/ijksdl_vout.h"
 
-@interface IJKSDLGLView : UIView <IJKSDLGLViewProtocol>
+@interface IJKSDLGLView : GLView <IJKSDLGLViewProtocol>
+
+@property(nonatomic) IJKMPMovieScalingMode scalingMode;
 
 - (id)initWithFrame:(CGRect)frame;
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
 
-#if TARGET_OS_OSX
-- (void)setContentMode:(IJKContentMode)contentMode;
-- (void)setViewSize:(CGSize)viewSize;
-#else
+#if !TARGET_OS_OSX
 - (UIImage*)snapshot;
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));
 #endif

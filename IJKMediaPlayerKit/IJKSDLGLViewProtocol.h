@@ -25,18 +25,15 @@
 #define IJKSDLGLViewProtocol_h
 #import <TargetConditionals.h>
 #if TARGET_OS_OSX
-typedef NSOpenGLView UIView;
-typedef NSImage UIImage;
 #import <AppKit/AppKit.h>
 #else
 #import <UIKit/UIKit.h>
 #endif
 
-typedef NS_ENUM(NSInteger, IJKContentMode) {
-    IJKContentModeScaleNone,
-    IJKContentModeScaleAspectFit,      // contents scaled to fit with fixed aspect. remainder is transparent
-    IJKContentModeScaleAspectFill,     // contents scaled to fill with fixed aspect. some portion of content may be clipped.
-    IJKContentModeScaleToFill,
+typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
+    IJKMPMovieScalingModeAspectFit,  // Uniform scale until one dimension fits
+    IJKMPMovieScalingModeAspectFill, // Uniform scale until the movie fills the visible bounds. One dimension may have clipped contents
+    IJKMPMovieScalingModeFill        // Non-uniform scale. Both render dimensions will exactly match the visible bounds
 };
 
 typedef struct IJKOverlay IJKOverlay;
@@ -54,10 +51,10 @@ struct IJKOverlay {
 
 @protocol IJKSDLGLViewProtocol <NSObject>
 #if !TARGET_OS_OSX
-- (UIImage*) snapshot;
-- (void)display_pixels: (IJKOverlay *) overlay;
+- (UIImage*)snapshot;
+- (void)display_pixels:(IJKOverlay *)overlay;
 #endif
-- (void)setContentMode:(IJKContentMode)contentMode;
+@property(nonatomic) IJKMPMovieScalingMode scalingMode;
 @property(nonatomic, readonly) CGFloat  fps;
 @property(nonatomic)        CGFloat  scaleFactor;
 @property(nonatomic)        BOOL  isThirdGLView;

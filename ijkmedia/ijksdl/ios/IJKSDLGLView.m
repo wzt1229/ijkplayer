@@ -264,24 +264,20 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     [self invalidateRenderBuffer];
 }
 
-- (void)setContentMode:(UIViewContentMode)contentMode
+- (void)setScalingMode:(IJKMPMovieScalingMode)scalingMode
 {
-    [super setContentMode:contentMode];
-
-    switch (contentMode) {
-        case UIViewContentModeScaleToFill:
+    switch (scalingMode) {
+        case IJKMPMovieScalingModeFill:
             _rendererGravity = IJK_GLES2_GRAVITY_RESIZE;
             break;
-        case UIViewContentModeScaleAspectFit:
+        case IJKMPMovieScalingModeAspectFit:
             _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
             break;
-        case UIViewContentModeScaleAspectFill:
+        case IJKMPMovieScalingModeAspectFill:
             _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL;
             break;
-        default:
-            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
-            break;
     }
+    _scalingMode = scalingMode;
     [self invalidateRenderBuffer];
 }
 

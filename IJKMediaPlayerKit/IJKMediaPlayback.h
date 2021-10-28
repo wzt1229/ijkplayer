@@ -25,16 +25,10 @@
 #if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
 #else
+typedef NSView UIView;
 #import <AppKit/AppKit.h>
 #endif
 #import "IJKSDLGLViewProtocol.h"
-
-typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
-    IJKMPMovieScalingModeNone,       // No scaling
-    IJKMPMovieScalingModeAspectFit,  // Uniform scale until one dimension fits
-    IJKMPMovieScalingModeAspectFill, // Uniform scale until the movie fills the visible bounds. One dimension may have clipped contents
-    IJKMPMovieScalingModeFill        // Non-uniform scale. Both render dimensions will exactly match the visible bounds
-};
 
 typedef NS_ENUM(NSInteger, IJKMPMoviePlaybackState) {
     IJKMPMoviePlaybackStateStopped,
@@ -79,12 +73,8 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 - (BOOL)isPlaying;
 - (void)shutdown;
 - (void)setPauseInBackground:(BOOL)pause;
-#if TARGET_OS_IOS
-@property(nonatomic, readonly)  UIView <IJKSDLGLViewProtocol>*view;
-#else
-@property(nonatomic, readonly)  NSView <IJKSDLGLViewProtocol>*view;
-#endif
 
+@property(nonatomic, readonly)  UIView <IJKSDLGLViewProtocol>*view;
 @property(nonatomic)            NSTimeInterval currentPlaybackTime;
 @property(nonatomic, readonly)  NSTimeInterval duration;
 @property(nonatomic, readonly)  NSTimeInterval playableDuration;

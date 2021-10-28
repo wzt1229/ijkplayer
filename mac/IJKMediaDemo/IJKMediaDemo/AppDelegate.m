@@ -187,7 +187,7 @@
     CGRect rect = self.window.frame;
     rect.origin = CGPointZero;
     self.player.view.frame = rect;
-    self.player.scalingMode = IJKMPMovieScalingModeFill;
+    self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
     
     [self.player prepareToPlay];

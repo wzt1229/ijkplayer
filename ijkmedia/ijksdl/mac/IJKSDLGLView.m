@@ -46,7 +46,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 @implementation IJKSDLGLView{
     IJK_GLES2_Renderer *_renderer;
-    int                 _rendererScaleMode;
+    int                 _rendererGravity;
     GLint               _backingWidth;
     GLint               _backingHeight;
     BOOL                _isRenderBufferInvalidated;
@@ -155,7 +155,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         if (!IJK_GLES2_Renderer_use(_renderer))
             return NO;
         
-        IJK_GLES2_Renderer_Resize(_renderer, _rendererScaleMode, _backingWidth, _backingHeight);
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
     }
     
     return YES;
@@ -168,35 +168,44 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     [self display:nil subtitle:NULL];
 }
 
-- (void)setContentMode:(IJKContentMode)contentMode
+- (void)layout
 {
-    switch (contentMode) {
-        case IJKContentModeScaleToFill:
-            _rendererScaleMode = IJK_GLES2_RESIZE_SCALE_FILL;
-            break;
-        case IJKContentModeScaleAspectFit:
-            _rendererScaleMode = IJK_GLES2_RESIZE_ASPECT_FIT;
-            break;
-        case IJKContentModeScaleAspectFill:
-            _rendererScaleMode = IJK_GLES2_RESIZE_ASPECT_FILL;
-            break;
-        default:
-            _rendererScaleMode = IJK_GLES2_RESIZE_ASPECT_FIT;
-            break;
-    }
-    //[self invalidateRenderBuffer];
+    [super layout];
     if (IJK_GLES2_Renderer_isValid(_renderer)) {
-        IJK_GLES2_Renderer_Resize(_renderer, _rendererScaleMode, _backingWidth, _backingHeight);
+        
+        NSRect viewRectPoints = [self bounds];
+        
+    #if SUPPORT_RETINA_RESOLUTION
+        NSRect viewRectPixels = [self convertRectToBacking:viewRectPoints];
+    #else //if !SUPPORT_RETINA_RESOLUTION
+        // Points:Pixels is always 1:1 when not supporting retina resolutions
+        NSRect viewRectPixels = viewRectPoints;
+    #endif // !SUPPORT_RETINA_RESOLUTION
+        
+        _backingWidth = viewRectPixels.size.width;
+        _backingHeight = viewRectPixels.size.height;
+        
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
     }
+
+//    [self invalidateRenderBuffer];
 }
 
-- (void) setViewSize:(CGSize)viewSize
+- (void)setScalingMode:(IJKMPMovieScalingMode)scalingMode
 {
-    if (IJK_GLES2_Renderer_isValid(_renderer)) {
-        IJK_GLES2_Renderer_Resize(_renderer, _rendererScaleMode, viewSize.width, viewSize.height);
+    switch (scalingMode) {
+        case IJKMPMovieScalingModeFill:
+            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE;
+            break;
+        case IJKMPMovieScalingModeAspectFit:
+            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
+            break;
+        case IJKMPMovieScalingModeAspectFill:
+            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL;
+            break;
     }
-    _backingWidth = viewSize.width;
-    _backingHeight = viewSize.height;
+    _scalingMode = scalingMode;
+    [self invalidateRenderBuffer];
 }
 
 - (void)resetViewPort
@@ -259,7 +268,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         NSLog(@"IJKSDLGLView: renderbufferStorage fromDrawable\n");
         _isRenderBufferInvalidated = NO;
         [self resetViewPort];
-        IJK_GLES2_Renderer_Resize(_renderer, _rendererScaleMode, _backingWidth, _backingHeight);
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
     }
     
     if (!IJK_GLES2_Renderer_renderOverlay(_renderer, overlay))
