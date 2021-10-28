@@ -205,7 +205,10 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
             break;
     }
     _scalingMode = scalingMode;
-    [self invalidateRenderBuffer];
+    if(IJK_GLES2_Renderer_isValid(_renderer)) {
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
+    }
+    //[self invalidateRenderBuffer];
 }
 
 - (void)resetViewPort
