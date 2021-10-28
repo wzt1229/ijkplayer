@@ -113,7 +113,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     if (!pf)
     {
-        NSLog(@"No OpenGL pixel format");
+        ALOGE("No OpenGL pixel format");
     }
     
     NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil];
@@ -129,8 +129,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
-    CGLContextObj ctx = context.CGLContextObj;
-    NSLog(@"CGLContextObj:%p",ctx);
 #if 1 || SUPPORT_RETINA_RESOLUTION
     // Opt-In to Retina resolution
     [self setWantsBestResolutionOpenGLSurface:YES];
@@ -163,7 +161,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 - (void)invalidateRenderBuffer
 {
-    NSLog(@"invalidateRenderBuffer");
     _isRenderBufferInvalidated = YES;
     [self display:nil subtitle:NULL];
 }
@@ -205,7 +202,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
             break;
     }
     _scalingMode = scalingMode;
-    if(IJK_GLES2_Renderer_isValid(_renderer)) {
+    if (IJK_GLES2_Renderer_isValid(_renderer)) {
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
     }
     //[self invalidateRenderBuffer];
@@ -260,15 +257,14 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 {
     if (![self setupRenderer:overlay]) {
         if (!overlay && !_renderer) {
-            NSLog(@"IJKSDLGLView: setupDisplay not ready\n");
+            ALOGW("IJKSDLGLView: setupDisplay not ready\n");
         } else {
-            NSLog(@"IJKSDLGLView: setupDisplay failed\n");
+            ALOGE("IJKSDLGLView: setupDisplay failed\n");
         }
         return;
     }
     
     if (_isRenderBufferInvalidated) {
-        NSLog(@"IJKSDLGLView: renderbufferStorage fromDrawable\n");
         _isRenderBufferInvalidated = NO;
         [self resetViewPort];
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
