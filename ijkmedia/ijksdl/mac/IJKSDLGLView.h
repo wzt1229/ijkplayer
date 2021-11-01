@@ -44,7 +44,6 @@ typedef UIView GLView;
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
 // subtitle preference
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
-- (void)invidateSubtitleSettings;
 
 #if !TARGET_OS_OSX
 - (UIImage*)snapshot;

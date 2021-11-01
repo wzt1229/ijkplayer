@@ -114,6 +114,7 @@
     p.subtitleColor = c;
     p.subtitleFont = [NSFont boldSystemFontOfSize:60];
     self.player.view.subtitlePreference = p;
+    [self.player invalidateSubtitleEffect];
 }
 
 - (IBAction)onChangeSubtitleSize:(NSButton *)sender
@@ -135,6 +136,8 @@
     
     p.subtitleFont = [NSFont boldSystemFontOfSize:fontSize];
     self.player.view.subtitlePreference = p;
+    
+    [self.player invalidateSubtitleEffect];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {

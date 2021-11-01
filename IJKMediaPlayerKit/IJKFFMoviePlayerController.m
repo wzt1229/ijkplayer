@@ -625,6 +625,13 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     [self didShutdown];
 }
 
+- (void)invalidateSubtitleEffect
+{
+    if (_mediaPlayer) {
+        ijkmp_invalidate_subtitle_effect(_mediaPlayer);
+    }
+}
+
 - (void)didShutdown
 {
 }

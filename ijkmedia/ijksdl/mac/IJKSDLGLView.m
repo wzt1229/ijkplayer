@@ -286,11 +286,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
-- (void)invidateSubtitleSettings
-{
-    //TODO
-}
-
 - (void)initGL
 {
     // The reshape function may have changed the thread to which our OpenGL

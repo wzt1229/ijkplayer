@@ -913,6 +913,19 @@ static void update_subtitle_text(FFPlayer *ffp,const char *str)
     ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)str, (int)strlen(str) + 1);
 }
 
+void subtitle_invalidate_uploaded(FFPlayer *ffp)
+{
+    VideoState *is = ffp->is;
+    if (is->subtitle_st) {
+        if (frame_queue_nb_remaining(&is->subpq) > 0) {
+            Frame *sp = frame_queue_peek(&is->subpq);
+            if (sp->uploaded) {
+                sp->uploaded = 0;
+            }
+        }
+    }
+}
+
 static void video_image_display2(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;

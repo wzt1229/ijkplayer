@@ -151,12 +151,12 @@ struct SDL_Vout;
 #define IJKMP_OPT_CATEGORY_SWR    FFP_OPT_CATEGORY_SWR
 
 
-void            ijkmp_global_init();
-void            ijkmp_global_uninit();
+void            ijkmp_global_init(void);
+void            ijkmp_global_uninit(void);
 void            ijkmp_global_set_log_report(int use_report);
 void            ijkmp_global_set_log_level(int log_level);   // log_level = AV_LOG_xxx
 void            ijkmp_global_set_inject_callback(ijk_inject_callback cb);
-const char     *ijkmp_version();
+const char     *ijkmp_version(void);
 void            ijkmp_io_stat_register(void (*cb)(const char *url, int type, int bytes));
 void            ijkmp_io_stat_complete_register(void (*cb)(const char *url,
                                                            int64_t read_bytes, int64_t total_size,
@@ -217,5 +217,6 @@ void           *ijkmp_set_weak_thiz(IjkMediaPlayer *mp, void *weak_thiz);
 /* need to call msg_free_res for freeing the resouce obtained in msg */
 int             ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block);
 void            ijkmp_set_frame_at_time(IjkMediaPlayer *mp, const char *path, int64_t start_time, int64_t end_time, int num, int definition);
+void ijkmp_invalidate_subtitle_effect(IjkMediaPlayer *mp);
 
 #endif

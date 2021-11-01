@@ -145,6 +145,8 @@ typedef enum IJKLogLevel {
 
 @property (nonatomic, retain) id<IJKMediaNativeInvokeDelegate> nativeInvokeDelegate;
 
+- (void)invalidateSubtitleEffect;
+
 - (void)didShutdown;
 
 #pragma mark KVO properties
