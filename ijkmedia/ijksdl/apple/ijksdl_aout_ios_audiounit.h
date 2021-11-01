@@ -23,4 +23,4 @@
 
 #include "ijksdl/ijksdl_aout.h"
 
-SDL_Aout *SDL_AoutIos_CreateForAudioUnit();
+SDL_Aout *SDL_AoutIos_CreateForAudioUnit(void);

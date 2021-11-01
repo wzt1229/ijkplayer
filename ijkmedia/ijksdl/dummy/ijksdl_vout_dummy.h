@@ -28,6 +28,6 @@
 #include "../ijksdl_stdinc.h"
 #include "../ijksdl_vout.h"
 
-SDL_Vout *SDL_VoutDummy_Create();
+SDL_Vout *SDL_VoutDummy_Create(void);
 
 #endif

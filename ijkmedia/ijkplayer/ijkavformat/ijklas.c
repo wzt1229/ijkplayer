@@ -346,7 +346,7 @@ void las_set_stream_reopened(LasPlayerStatistic* stat, bool stream_reopened) {
 #pragma mark PlayerStat
 int32_t LasPlayerStatistic_get_downloading_bitrate(LasPlayerStatistic* stat) {
     if (stat->las_stat.bitrate_downloading > 0) {
-        return stat->las_stat.bitrate_downloading;
+        return (int32_t)stat->las_stat.bitrate_downloading;
     }
     return 0;
 }
@@ -620,7 +620,7 @@ int32_t get_buffer_current(MultiRateAdaption* thiz) {
 }
 
 int32_t get_bw_fragment(MultiRateAdaption* thiz) {
-    return thiz->last_speed;
+    return (int32_t)thiz->last_speed;
 }
 
 void LasStatistic_reset(LasStatistic* stat) {
@@ -1175,7 +1175,7 @@ int64_t GopReader_download_gop(GopReader* reader, MultiRateAdaption* adaption, P
 
     //las 2.0 Tag based reading
     uint8_t av_tag_header[AV_TAG_HEADER_LEN];
-    int gop_duration = playlist->adaptation_set.duration;
+    //int gop_duration = playlist->adaptation_set.duration;
     int64_t bytes_last = get_bytes_read(playlist);
     int64_t time_last = get_current_time_ms();
 
@@ -1763,7 +1763,7 @@ int parse_root(char* file_name, PlayList* c) {
 }
 
 int parse_adapt_config(char* config_string, AdaptiveConfig* config, PlayList* playlist) {
-    LasPlayerStatistic* player_stat = playlist->las_player_statistic;
+    //LasPlayerStatistic* player_stat = playlist->las_player_statistic;
     cJSON* root = cJSON_Parse(config_string);
     if (!root)
         return LAS_ERROR_ADAPT_CONFIG_JSON;
@@ -1852,7 +1852,7 @@ static int las_read_header(AVFormatContext* s) {
     LasContext* c = s->priv_data;
     PlayList* playlist = &c->playlist;
     AdaptiveConfig config;
-    AVDictionaryEntry* entry;
+    //AVDictionaryEntry* entry;
     int ret = 0;
 
     c->ctx = s;

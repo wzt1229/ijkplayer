@@ -70,7 +70,7 @@
 struct AVFormatContext;
 typedef struct IjkMediaMeta IjkMediaMeta;
 
-IjkMediaMeta *ijkmeta_create();
+IjkMediaMeta *ijkmeta_create(void);
 void ijkmeta_reset(IjkMediaMeta *meta);
 void ijkmeta_destroy(IjkMediaMeta *meta);
 void ijkmeta_destroy_p(IjkMediaMeta **meta);

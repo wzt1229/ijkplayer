@@ -67,7 +67,6 @@ struct IJKSDLSubtitlePreference {
 @property(nonatomic)        BOOL  isThirdGLView;
 // subtitle preference
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
-- (void)invidateSubtitlePreference;
 
 @end
 

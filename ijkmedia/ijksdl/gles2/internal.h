@@ -88,31 +88,31 @@ typedef struct IJK_GLES_Matrix
 } IJK_GLES_Matrix;
 void IJK_GLES2_loadOrtho(IJK_GLES_Matrix *matrix, GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far);
 
-const char *IJK_GLES2_getFragmentShader_rgb();
-const char *IJK_GLES2_getFragmentShader_argb();
-const char *IJK_GLES2_getVertexShader_default();
+const char *IJK_GLES2_getFragmentShader_rgb(void);
+const char *IJK_GLES2_getFragmentShader_argb(void);
+const char *IJK_GLES2_getVertexShader_default(void);
 
-const char *IJK_GL_getFragmentShader_yuv420sp();
-const char *IJK_GL_getFragmentShader_yuv420p();
+const char *IJK_GL_getFragmentShader_yuv420sp(void);
+const char *IJK_GL_getFragmentShader_yuv420p(void);
 
 #if TARGET_OS_OSX
-const char *IJK_GL_getFragmentShader_yuv420sp_rect();
-const char *IJK_GLES2_getFragmentShader_rect_rgb();
+const char *IJK_GL_getFragmentShader_yuv420sp_rect(void);
+const char *IJK_GLES2_getFragmentShader_rect_rgb(void);
 #else
 const char *IJK_GLES2_getFragmentShader_yuv444p10le();
 #endif
-const GLfloat *IJK_GLES2_getColorMatrix_bt709();
-const GLfloat *IJK_GLES2_getColorMatrix_bt601();
+const GLfloat *IJK_GLES2_getColorMatrix_bt709(void);
+const GLfloat *IJK_GLES2_getColorMatrix_bt601(void);
 
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_source);
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx();
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb();
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx(void);
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
 
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay);
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp();
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp(void);
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420p();
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420p(void);
 
 #if TARGET_OS_OSX
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_uyvy(void);

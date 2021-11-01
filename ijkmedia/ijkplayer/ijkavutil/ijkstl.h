@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 
-void* ijk_map_create();
+void* ijk_map_create(void);
 void ijk_map_put(void *data, int64_t key, void *value);
 void* ijk_map_get(void *data, int64_t key);
 int ijk_map_remove(void *data, int64_t key);
