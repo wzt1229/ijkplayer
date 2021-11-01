@@ -23,9 +23,10 @@
 
 #ifndef IJKSDLGLViewProtocol_h
 #define IJKSDLGLViewProtocol_h
-#import <TargetConditionals.h>
 #if TARGET_OS_OSX
 #import <AppKit/AppKit.h>
+typedef NSFont UIFont;
+typedef NSColor UIColor;
 #else
 #import <UIKit/UIKit.h>
 #endif
@@ -49,6 +50,12 @@ struct IJKOverlay {
     CVPixelBufferRef pixel_buffer;
 };
 
+typedef struct IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
+struct IJKSDLSubtitlePreference {
+    UIFont  *subtitleFont;
+    UIColor *subtitleColor;
+};
+
 @protocol IJKSDLGLViewProtocol <NSObject>
 #if !TARGET_OS_OSX
 - (UIImage*)snapshot;
@@ -58,6 +65,9 @@ struct IJKOverlay {
 @property(nonatomic, readonly) CGFloat  fps;
 @property(nonatomic)        CGFloat  scaleFactor;
 @property(nonatomic)        BOOL  isThirdGLView;
+// subtitle preference
+@property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
+- (void)invidateSubtitlePreference;
 
 @end
 

@@ -904,13 +904,13 @@ static size_t parse_ass_subtitle(const char *ass, char *output, int buffSize)
     return 0;
 }
 
-static void update_subtitle_text(FFPlayer *ffp, char *str)
+static void update_subtitle_text(FFPlayer *ffp,const char *str)
 {
     //update subtitle,save into vout's opaque
     if (ffp->vout->update_subtitle) {
-        ffp->vout->update_subtitle(ffp->vout,str);
+        ffp->vout->update_subtitle(ffp->vout, str);
     }
-    ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, str, (int)strlen(str) + 1);
+    ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)str, (int)strlen(str) + 1);
 }
 
 static void video_image_display2(FFPlayer *ffp)
@@ -1432,7 +1432,7 @@ retry:
                             || (sp2 && is->vidclk.pts > (sp2->pts + ((float) sp2->sub.start_display_time / 1000))))
                     {
                         if (sp->uploaded) {
-                            update_subtitle_text(ffp,"");
+                            update_subtitle_text(ffp, "");
                         }
                         frame_queue_next(&is->subpq);
                     } else {

@@ -105,6 +105,37 @@
     }
 }
 
+- (IBAction)onChangeSubtitleColor:(NSPopUpButton *)sender
+{
+    NSMenuItem *item = [sender selectedItem];
+    NSInteger bgrValue = item.tag;
+    NSColor *c = [NSColor colorWithRed:((float)(bgrValue & 0xFF))/255.0 green:((float)((bgrValue & 0xFF00) >> 8))/255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16))/255.0 alpha:1.0];
+    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    p.subtitleColor = c;
+    p.subtitleFont = [NSFont boldSystemFontOfSize:60];
+    self.player.view.subtitlePreference = p;
+}
+
+- (IBAction)onChangeSubtitleSize:(NSButton *)sender
+{
+    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    NSFont *font = p.subtitleFont;
+    
+    CGFloat fontSize = 45;
+    if (font) {
+        fontSize = font.pointSize;
+    }
+    if (sender.tag == 1) {
+        //增大
+        fontSize += 5;
+    } else {
+        //减小
+        fontSize -= 5;
+    }
+    
+    p.subtitleFont = [NSFont boldSystemFontOfSize:fontSize];
+    self.player.view.subtitlePreference = p;
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     // Insert code here to initialize your application

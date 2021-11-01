@@ -9,7 +9,7 @@
 //          1.1 - Minor enhancements and bug fixes.
 //          1.0 - Original release.
 //
-
+//Download Sample Code https://developer.apple.com/library/archive/samplecode/CocoaGL/Introduction/Intro.html
 //https://developer.apple.com/library/archive/qa/qa1829/_index.html
 //https://stackoverflow.com/questions/46879895/byte-per-row-is-wrong-when-creating-a-cvpixelbuffer-with-width-multiple-of-90
 //https://github.com/johnboiles/obs-mac-virtualcam/blob/4bd585204ae220068bd55eddf7239b9c8fd8b1dc/src/dal-plugin/Stream.mm
@@ -72,7 +72,6 @@
 
 @property(nonatomic, strong) NSAttributedString * attributedString;
 @property(nonatomic, assign) BOOL requiresUpdate;
-@property(nonatomic, assign) float    cRadius; // Corner radius, if 0 just a rectangle. Defaults to 4.0f
 @end
 
 @implementation MRTextureString

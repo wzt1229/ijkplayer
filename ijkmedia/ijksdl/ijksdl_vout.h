@@ -65,7 +65,7 @@ struct SDL_Vout {
     SDL_VoutOverlay *(*create_overlay)(int width, int height, int frame_format, SDL_Vout *vout);
     void (*free_l)(SDL_Vout *vout);
     int (*display_overlay)(SDL_Vout *vout, SDL_VoutOverlay *overlay);
-    void (*update_subtitle)(SDL_Vout *vout, char *text);
+    void (*update_subtitle)(SDL_Vout *vout, const char *text);
     
     Uint32 overlay_format;
 };

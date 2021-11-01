@@ -137,25 +137,39 @@ static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 }
 
-static void vout_update_subtitle(SDL_Vout *vout,char *text)
+static void vout_update_subtitle(SDL_Vout *vout,const char *text)
 {
-    if (vout->opaque->subtitle) {
+    SDL_Vout_Opaque *opaque = vout->opaque;
+    if (!opaque) {
+        return;
+    }
+    
+    if (opaque->subtitle) {
         CVPixelBufferRelease(vout->opaque->subtitle);
-        vout->opaque->subtitle = NULL;
+        opaque->subtitle = NULL;
     }
     
     if (!text || strlen(text) == 0) {
         return;
     }
+    
     //字幕默认配置
     NSMutableDictionary * stanStringAttrib = [NSMutableDictionary dictionary];
-    NSFont * font = [NSFont boldSystemFontOfSize:45];
-#if TARGET_OS_OSX
-    font = [font screenFont];
-#endif
-    [stanStringAttrib setObject:font forKey:NSFontAttributeName];
-    [stanStringAttrib setObject:[NSColor colorWithWhite:1 alpha:1] forKey:NSForegroundColorAttributeName];
     
+    UIFont *subtitleFont = opaque->gl_view.subtitlePreference.subtitleFont;
+    if (!subtitleFont) {
+        UIFont * font = [UIFont boldSystemFontOfSize:45];
+        subtitleFont = [font screenFont];
+    }
+    
+    [stanStringAttrib setObject:subtitleFont forKey:NSFontAttributeName];
+    UIColor *subtitleColor = opaque->gl_view.subtitlePreference.subtitleColor;
+    
+    if (!subtitleColor) {
+        subtitleColor = [NSColor colorWithWhite:1 alpha:1];
+    }
+    
+    [stanStringAttrib setObject:subtitleColor forKey:NSForegroundColorAttributeName];
     NSString *aStr = [[NSString alloc] initWithUTF8String:text];
     
     MRTextureString *textureString = [[MRTextureString alloc] initWithString:aStr withAttributes:stanStringAttrib withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
