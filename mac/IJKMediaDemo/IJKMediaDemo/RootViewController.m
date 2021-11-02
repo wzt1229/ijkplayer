@@ -73,7 +73,8 @@
     return _playList;
 }
 
-- (void)perparePlayerIfNeed {
+- (void)perpareIJKPlayer:(NSURL *)url
+{
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     //视频帧处理不过来的时候丢弃一些帧达到同步的效果
     //    [options setPlayerOptionIntValue:2 forKey:@"framedrop"];
@@ -112,31 +113,31 @@
         [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
     }
     
-    if (self.player) {
-        [self.player stop];
-    } else {
-        self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:self.playingUrl withOptions:options];
-        CGRect rect = self.view.window.frame;
-        rect.origin = CGPointZero;
-        self.player.view.frame = rect;
-        self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
-        self.player.shouldAutoplay = YES;
-        
-        NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
-        playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-        [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
-    }
+    [self.player.view removeFromSuperview];
+    [self.player stop];
+    
+    self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
+    CGRect rect = self.view.frame;
+    rect.origin = CGPointZero;
+    self.player.view.frame = rect;
+    
+    NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
+    playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
+    
+    self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
+    self.player.shouldAutoplay = YES;
 }
 
 - (void)playURL:(NSURL *)url
 {
-    self.playingUrl = url;
     self.urlInput.stringValue = [url absoluteString];
     NSString *title = [[url resourceSpecifier] lastPathComponent];
     [self.view.window setTitle:title];
     
-    [self perparePlayerIfNeed];
-
+    [self perpareIJKPlayer:url];
+    self.playingUrl = url;
+    
     if (!self.tickTimer) {
         self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
     }
