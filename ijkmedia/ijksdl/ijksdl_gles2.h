@@ -81,4 +81,5 @@ GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_Vo
 #define IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL    (2) // Preserve aspect ratio; fill view bounds.
 GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravity, GLsizei view_width, GLsizei view_height);
 
+void      IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int degrees);
 #endif

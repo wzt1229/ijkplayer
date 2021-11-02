@@ -80,6 +80,10 @@ typedef struct IJK_GLES2_Renderer
     int     frame_sar_den;
 
     GLsizei last_buffer_width;
+    
+    //for rotate
+    int rotate_type;//x=1;y=2;z=3
+    int rotate_degrees;
 } IJK_GLES2_Renderer;
 
 typedef struct IJK_GLES_Matrix

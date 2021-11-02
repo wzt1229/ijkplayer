@@ -50,10 +50,23 @@ struct IJKOverlay {
     CVPixelBufferRef pixel_buffer;
 };
 
-typedef struct IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
-struct IJKSDLSubtitlePreference {
+typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
+struct _IJKSDLSubtitlePreference {
     UIFont  *subtitleFont;
     UIColor *subtitleColor;
+};
+
+typedef enum _IJKSDLRotateType {
+    IJKSDLRotateX = 1,
+    IJKSDLRotateY,
+    IJKSDLRotateZ
+} IJKSDLRotateType;
+
+
+typedef struct _IJKSDLRotatePreference IJKSDLRotatePreference;
+struct _IJKSDLRotatePreference {
+    IJKSDLRotateType type;
+    float degrees;
 };
 
 @protocol IJKSDLGLViewProtocol <NSObject>
@@ -67,6 +80,8 @@ struct IJKSDLSubtitlePreference {
 @property(nonatomic)        BOOL  isThirdGLView;
 // subtitle preference
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
+// rotate preference
+@property(nonatomic) IJKSDLRotatePreference rotatePreference;
 
 @end
 

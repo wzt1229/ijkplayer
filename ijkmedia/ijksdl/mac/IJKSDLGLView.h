@@ -44,7 +44,8 @@ typedef UIView GLView;
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
 // subtitle preference
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
-
+// rotate preference
+@property(nonatomic) IJKSDLRotatePreference rotatePreference;
 #if !TARGET_OS_OSX
 - (UIImage*)snapshot;
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));

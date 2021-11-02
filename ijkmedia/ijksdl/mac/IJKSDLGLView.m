@@ -154,6 +154,8 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
             return NO;
         
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
+        
+        IJK_GLES2_Renderer_updateRotate(_renderer, self.rotatePreference.type, self.rotatePreference.degrees);
     }
     
     return YES;
@@ -263,6 +265,8 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         }
         return;
     }
+    
+    IJK_GLES2_Renderer_updateRotate(_renderer, self.rotatePreference.type, self.rotatePreference.degrees);
     
     if (_isRenderBufferInvalidated) {
         _isRenderBufferInvalidated = NO;

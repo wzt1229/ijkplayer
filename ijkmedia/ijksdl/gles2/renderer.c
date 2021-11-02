@@ -24,6 +24,7 @@
 #include <TargetConditionals.h>
 #import <CoreVideo/CoreVideo.h>
 #endif
+#include "math_util.c"
 
 static void IJK_GLES2_printProgramInfo(GLuint program)
 {
@@ -366,6 +367,12 @@ GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravit
     return GL_TRUE;
 }
 
+void IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int degrees)
+{
+    renderer->rotate_type = type;
+    renderer->rotate_degrees = degrees;
+}
+
 static void IJK_GLES2_Renderer_TexCoords_cropRight(IJK_GLES2_Renderer *renderer, GLfloat cropRight)
 {
     ALOGE("IJK_GLES2_Renderer_TexCoords_cropRight:%g\n",cropRight);
@@ -495,7 +502,37 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     }
     
     IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
-
+    
+    //for debug rotation
+    //static int degrees = 0;
+    //degrees++;
+    
+    ijk_float3_vector rotate_v3 = { 0.0 };
+    //rotate x
+    if (renderer->rotate_type == 1) {
+        rotate_v3.x = 1.0;
+    }
+    //rotate y
+    else if (renderer->rotate_type == 2) {
+        rotate_v3.y = 1.0;
+    }
+    //rotate z
+    else if (renderer->rotate_type == 3) {
+        rotate_v3.z = 1.0;
+    }
+    
+    float radians = radians_from_degrees(renderer->rotate_degrees);
+    ijk_float4x4_matrix rotation_matrix = matrix4x4_rotation(radians, rotate_v3);
+    
+    IJK_GLES_Matrix modelViewProj;
+    IJK_GLES2_loadOrtho(&modelViewProj, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+    ijk_float4x4_matrix proj_matrix = ijk_make_matrix_fromArr(modelViewProj.m);
+    
+    ijk_float4x4_matrix r_matrix;
+    ijk_matrix_multiply(&proj_matrix,&rotation_matrix,&r_matrix);
+    
+    glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&r_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
+    
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);      IJK_GLES2_checkError_TRACE("glDrawArrays");
 
     return GL_TRUE;
@@ -503,7 +540,7 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
 
 GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay, void *subtitle)
 {
-    if (subtitle) {
+    if (subtitle && renderer->func_uploadSubtitle) {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -511,43 +548,40 @@ GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_Vo
             renderer->func_useSubtitle(renderer, GL_TRUE);
         }
 
-        if (renderer->func_uploadSubtitle) {
-            IJK_Subtile_Size labelSize = {0};
-            renderer->func_uploadSubtitle(renderer,subtitle,&labelSize);
-            
-            GLfloat vertices[8] = {0.0f};
-            
-            float labelWidth = labelSize.w;
-            float labelHeight = labelSize.h;
-            float picWidth = overlay->w;
-            float picHeight = overlay->h;
-            
-            float ratiox = labelWidth / picWidth;
-            float ratioy = labelHeight / picHeight;
-            float leftX  = 0 - ratiox;
-            float rightX = 0 + ratiox;
-            //2 * 0.2 - 1
-            float bottomY = 2 * 0.05 - 1;
-            //bottomY + 2 * ratioy
-            float topY = bottomY + 2 * ratioy;
-            
-            //左下
-            vertices[0] = leftX;
-            vertices[1] = bottomY;
-            //右下
-            vertices[2] = rightX;
-            vertices[3] = bottomY;
-            //左上
-            vertices[4] = leftX;
-            vertices[5] = topY;
-            //右上
-            vertices[6] = rightX;
-            vertices[7] = topY;
-            
-            glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, vertices);    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
-            glEnableVertexAttribArray(renderer->av4_position);                                      IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
-        }
+        IJK_Subtile_Size labelSize = {0};
+        renderer->func_uploadSubtitle(renderer,subtitle,&labelSize);
         
+        GLfloat vertices[8] = {0.0f};
+        
+        float labelWidth = labelSize.w;
+        float labelHeight = labelSize.h;
+        float picWidth = overlay->w;
+        float picHeight = overlay->h;
+        
+        float ratiox = labelWidth / picWidth;
+        float ratioy = labelHeight / picHeight;
+        float leftX  = 0 - ratiox;
+        float rightX = 0 + ratiox;
+        //2 * 0.2 - 1
+        float bottomY = 2 * 0.05 - 1;
+        //bottomY + 2 * ratioy
+        float topY = bottomY + 2 * ratioy;
+        
+        //左下
+        vertices[0] = leftX;
+        vertices[1] = bottomY;
+        //右下
+        vertices[2] = rightX;
+        vertices[3] = bottomY;
+        //左上
+        vertices[4] = leftX;
+        vertices[5] = topY;
+        //右上
+        vertices[6] = rightX;
+        vertices[7] = topY;
+        
+        glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, vertices);    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
+        glEnableVertexAttribArray(renderer->av4_position);                                      IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);      IJK_GLES2_checkError_TRACE("glDrawArrays");
     }
     return GL_TRUE;

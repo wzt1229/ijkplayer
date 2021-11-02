@@ -51,7 +51,22 @@
     } else if ([event keyCode] == kVK_ANSI_B && event.modifierFlags & NSEventModifierFlagCommand) {
         self.contentView.hidden = !self.contentView.isHidden;
     } else if ([event keyCode] == kVK_ANSI_R && event.modifierFlags & NSEventModifierFlagCommand) {
+        IJKSDLRotatePreference preference = self.player.view.rotatePreference;
+        if (preference.type == 0) {
+            preference.type = IJKSDLRotateZ;
+        }
+        preference.degrees += 90;
+        if (preference.degrees >= 360) {
+            preference.degrees = 0;
+            preference.type --;
+        }
+        if (preference.type < 0) {
+            preference.type = IJKSDLRotateZ;
+            preference.degrees = 0;
+        }
+        self.player.view.rotatePreference = preference;
         
+        NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
     } else if ([event keyCode] == kVK_RightArrow) {
         [self fastForward:nil];
     } else if ([event keyCode] == kVK_LeftArrow) {
