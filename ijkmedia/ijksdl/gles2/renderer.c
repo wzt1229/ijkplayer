@@ -24,7 +24,7 @@
 #include <TargetConditionals.h>
 #import <CoreVideo/CoreVideo.h>
 #endif
-#include "math_util.c"
+#include "math_util.h"
 
 static void IJK_GLES2_printProgramInfo(GLuint program)
 {
@@ -425,9 +425,8 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
     if (!renderer->func_use(renderer))
         return GL_FALSE;
 
-    IJK_GLES_Matrix modelViewProj;
-    IJK_GLES2_loadOrtho(&modelViewProj, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
-    glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, modelViewProj.m);                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
+    ijk_matrix proj_matrix = IJK_GLES2_defaultOrtho();
+    glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&proj_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
 
     IJK_GLES2_Renderer_TexCoords_reset(renderer);
     IJK_GLES2_Renderer_TexCoords_reloadVertex(renderer);
@@ -522,13 +521,10 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     }
     
     float radians = radians_from_degrees(renderer->rotate_degrees);
-    ijk_float4x4_matrix rotation_matrix = matrix4x4_rotation(radians, rotate_v3);
+    ijk_matrix rotation_matrix = ijk_make_rotate_matrix(radians, rotate_v3);
     
-    IJK_GLES_Matrix modelViewProj;
-    IJK_GLES2_loadOrtho(&modelViewProj, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
-    ijk_float4x4_matrix proj_matrix = ijk_make_matrix_fromArr(modelViewProj.m);
-    
-    ijk_float4x4_matrix r_matrix;
+    ijk_matrix proj_matrix = IJK_GLES2_defaultOrtho();
+    ijk_matrix r_matrix;
     ijk_matrix_multiply(&proj_matrix,&rotation_matrix,&r_matrix);
     
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&r_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");

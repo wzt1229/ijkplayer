@@ -28,6 +28,7 @@
 #include "ijksdl/ijksdl_log.h"
 #include "ijksdl/ijksdl_gles2.h"
 #include "ijksdl/ijksdl_vout.h"
+#include "math_util.h"
 
 #define IJK_GLES_STRINGIZE(x)   #x
 #define IJK_GLES_STRINGIZE2(x)  IJK_GLES_STRINGIZE(x)
@@ -86,11 +87,9 @@ typedef struct IJK_GLES2_Renderer
     int rotate_degrees;
 } IJK_GLES2_Renderer;
 
-typedef struct IJK_GLES_Matrix
-{
-    GLfloat m[16];
-} IJK_GLES_Matrix;
-void IJK_GLES2_loadOrtho(IJK_GLES_Matrix *matrix, GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far);
+ijk_matrix IJK_GLES2_makeOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far);
+
+ijk_matrix IJK_GLES2_defaultOrtho(void);
 
 const char *IJK_GLES2_getFragmentShader_rgb(void);
 const char *IJK_GLES2_getFragmentShader_argb(void);

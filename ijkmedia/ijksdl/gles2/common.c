@@ -32,7 +32,7 @@ void IJK_GLES2_printString(const char *name, GLenum s) {
     ALOGI("[GLES2] %s = %s\n", name, v);
 }
 
-void IJK_GLES2_loadOrtho(IJK_GLES_Matrix *matrix, GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far)
+ijk_matrix IJK_GLES2_makeOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far)
 {
     GLfloat r_l = right - left;
     GLfloat t_b = top - bottom;
@@ -40,24 +40,14 @@ void IJK_GLES2_loadOrtho(IJK_GLES_Matrix *matrix, GLfloat left, GLfloat right, G
     GLfloat tx = - (right + left) / (right - left);
     GLfloat ty = - (top + bottom) / (top - bottom);
     GLfloat tz = - (far + near) / (far - near);
+    
+    return make_matrix_use_rows(2.0f / r_l,       0.0f,        0.0f, 0.0f,
+                                0.0f      , 2.0f / t_b,        0.0f, 0.0f,
+                                0.0f      ,       0.0f, -2.0f / f_n, 0.0f,
+                                tx        ,         ty,          tz, 1.0f);
+}
 
-    matrix->m[0] = 2.0f / r_l;
-    matrix->m[1] = 0.0f;
-    matrix->m[2] = 0.0f;
-    matrix->m[3] = 0.0f;
-
-    matrix->m[4] = 0.0f;
-    matrix->m[5] = 2.0f / t_b;
-    matrix->m[6] = 0.0f;
-    matrix->m[7] = 0.0f;
-
-    matrix->m[8] = 0.0f;
-    matrix->m[9] = 0.0f;
-    matrix->m[10] = -2.0f / f_n;
-    matrix->m[11] = 0.0f;
-
-    matrix->m[12] = tx;
-    matrix->m[13] = ty;
-    matrix->m[14] = tz;
-    matrix->m[15] = 1.0f;
+ijk_matrix IJK_GLES2_defaultOrtho(void)
+{
+    return IJK_GLES2_makeOrtho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
 }
