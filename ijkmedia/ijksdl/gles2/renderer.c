@@ -502,10 +502,6 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     
     IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
     
-    //for debug rotation
-    //static int degrees = 0;
-    //degrees++;
-    
     ijk_float3_vector rotate_v3 = { 0.0 };
     //rotate x
     if (renderer->rotate_type == 1) {

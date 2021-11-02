@@ -51,17 +51,29 @@
     } else if ([event keyCode] == kVK_ANSI_B && event.modifierFlags & NSEventModifierFlagCommand) {
         self.contentView.hidden = !self.contentView.isHidden;
     } else if ([event keyCode] == kVK_ANSI_R && event.modifierFlags & NSEventModifierFlagCommand) {
+        
         IJKSDLRotatePreference preference = self.player.view.rotatePreference;
-        if (preference.type == 0) {
+        
+        if (preference.type == IJKSDLRotateNone) {
             preference.type = IJKSDLRotateZ;
         }
-        preference.degrees += 90;
-        if (preference.degrees >= 360) {
-            preference.degrees = 0;
+        
+        if (event.modifierFlags & NSEventModifierFlagOption) {
+            
             preference.type --;
+            
+            if (preference.type <= IJKSDLRotateNone) {
+                preference.type = IJKSDLRotateZ;
+            }
         }
-        if (preference.type < 0) {
-            preference.type = IJKSDLRotateZ;
+        
+        if (event.modifierFlags & NSEventModifierFlagShift) {
+            preference.degrees --;
+        } else {
+            preference.degrees ++;
+        }
+        
+        if (preference.degrees >= 360) {
             preference.degrees = 0;
         }
         self.player.view.rotatePreference = preference;
@@ -72,9 +84,21 @@
     } else if ([event keyCode] == kVK_LeftArrow) {
         [self fastRewind:nil];
     } else if ([event keyCode] == kVK_DownArrow) {
-        
+        float volume = self.player.playbackVolume;
+        volume -= 0.1;
+        if (volume < 0) {
+            volume = .0f;
+        }
+        self.player.playbackVolume = volume;
+        NSLog(@"volume:%0.1f",volume);
     } else if ([event keyCode] == kVK_UpArrow) {
-        
+        float volume = self.player.playbackVolume;
+        volume += 0.1;
+        if (volume > 1) {
+            volume = 1.0f;
+        }
+        self.player.playbackVolume = volume;
+        NSLog(@"volume:%0.1f",volume);
     } else if ([event keyCode] == kVK_Space) {
         [self pauseOrPlay:nil];
     }
@@ -196,7 +220,7 @@
         BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:[url path] isDirectory:&isDirectory];
         if (isExist) {
             if (isDirectory) {
-                ///扫描文件夹
+                //扫描文件夹
                 NSString *dir = [url path];
                 NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil videoType]];
                 if ([dicArr count] > 0) {
@@ -278,20 +302,6 @@
         NSURL *url = [NSURL URLWithString:self.urlInput.stringValue];
         self.playList[idx] = url;
         [self playURL:url];
-    }
-}
-
-- (IBAction)onChangeScaleMode:(NSPopUpButton *)sender {
-    NSMenuItem *item = [sender selectedItem];
-    if (item.tag == 1) {
-        //scale to fill
-        [self.player setScalingMode:IJKMPMovieScalingModeFill];
-    } else if (item.tag == 2) {
-        //aspect fill
-        [self.player setScalingMode:IJKMPMovieScalingModeAspectFill];
-    } else if (item.tag == 3) {
-        //aspect fit
-        [self.player setScalingMode:IJKMPMovieScalingModeAspectFit];
     }
 }
 
@@ -380,6 +390,52 @@
     self.player.view.subtitlePreference = p;
     
     [self.player invalidateSubtitleEffect];
+}
+
+- (IBAction)onChangeScaleMode:(NSPopUpButton *)sender
+{
+    NSMenuItem *item = [sender selectedItem];
+    if (item.tag == 1) {
+        //scale to fill
+        [self.player setScalingMode:IJKMPMovieScalingModeFill];
+    } else if (item.tag == 2) {
+        //aspect fill
+        [self.player setScalingMode:IJKMPMovieScalingModeAspectFill];
+    } else if (item.tag == 3) {
+        //aspect fit
+        [self.player setScalingMode:IJKMPMovieScalingModeAspectFit];
+    }
+}
+
+- (IBAction)onRotate:(NSPopUpButton *)sender
+{
+    NSMenuItem *item = [sender selectedItem];
+    
+    IJKSDLRotatePreference preference = self.player.view.rotatePreference;
+    
+    if (item.tag == 0) {
+        preference.type = IJKSDLRotateNone;
+        preference.degrees = 0;
+    } else if (item.tag == 1) {
+        preference.type = IJKSDLRotateZ;
+        preference.degrees = 90;
+    } else if (item.tag == 2) {
+        preference.type = IJKSDLRotateZ;
+        preference.degrees = 180;
+    } else if (item.tag == 3) {
+        preference.type = IJKSDLRotateZ;
+        preference.degrees = 270;
+    } else if (item.tag == 4) {
+        preference.type = IJKSDLRotateY;
+        preference.degrees = 180;
+    } else if (item.tag == 5) {
+        preference.type = IJKSDLRotateX;
+        preference.degrees = 180;
+    }
+    
+    self.player.view.rotatePreference = preference;
+    
+    NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
 }
 
 @end

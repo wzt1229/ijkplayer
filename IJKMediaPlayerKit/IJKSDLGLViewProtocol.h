@@ -57,7 +57,8 @@ struct _IJKSDLSubtitlePreference {
 };
 
 typedef enum _IJKSDLRotateType {
-    IJKSDLRotateX = 1,
+    IJKSDLRotateNone,
+    IJKSDLRotateX,
     IJKSDLRotateY,
     IJKSDLRotateZ
 } IJKSDLRotateType;

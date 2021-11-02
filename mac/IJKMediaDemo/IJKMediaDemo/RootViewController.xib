@@ -93,6 +93,9 @@
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
                                     </buttonCell>
+                                    <connections>
+                                        <action selector="pauseOrPlay:" target="-2" id="0L9-1Q-def"/>
+                                    </connections>
                                 </button>
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bQf-yX-of7">
                                     <rect key="frame" x="165" y="3" width="64" height="32"/>
@@ -354,33 +357,36 @@
                                         <action selector="onChangeScaleMode:" target="-2" id="BgE-ym-5Lh"/>
                                     </connections>
                                 </popUpButton>
-                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fPx-r6-MZr">
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fPx-r6-MZr" userLabel="旋转角度">
                                     <rect key="frame" x="219" y="6" width="106" height="25"/>
-                                    <popUpButtonCell key="cell" type="push" title="旋转90度" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="5wb-cg-dng" id="I8p-Fa-5si">
+                                    <popUpButtonCell key="cell" type="push" title="不旋转" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="5wb-cg-dng" id="I8p-Fa-5si">
                                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="menu"/>
                                         <menu key="menu" id="CiL-8W-u1G">
                                             <items>
-                                                <menuItem title="旋转90度" tag="1" id="5wb-cg-dng">
+                                                <menuItem title="不旋转" state="on" id="5wb-cg-dng">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                                <menuItem title="旋转90度" tag="1" id="wve-3d-NeI">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
                                                 <menuItem title="旋转180度" tag="2" id="jZ0-nl-cFF">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
-                                                <menuItem title="旋转270度" state="on" tag="3" id="gmQ-tx-f78">
+                                                <menuItem title="旋转270度" tag="3" id="gmQ-tx-f78">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
-                                                <menuItem title="水平翻转" state="on" tag="4" id="XSm-Ss-niA">
+                                                <menuItem title="水平翻转" tag="4" id="XSm-Ss-niA">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
-                                                <menuItem title="垂直翻转" state="on" tag="4" id="xIk-LR-JS2">
+                                                <menuItem title="垂直翻转" tag="5" id="xIk-LR-JS2">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
                                             </items>
                                         </menu>
                                     </popUpButtonCell>
                                     <connections>
-                                        <action selector="onChangeScaleMode:" target="-2" id="hyn-NE-dfn"/>
+                                        <action selector="onRotate:" target="-2" id="Wwd-0E-JCB"/>
                                     </connections>
                                 </popUpButton>
                             </beginningViews>
