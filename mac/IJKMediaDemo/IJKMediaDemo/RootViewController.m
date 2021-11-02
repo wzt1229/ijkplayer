@@ -10,10 +10,11 @@
 #import "MRDragView.h"
 #import "MRUtil.h"
 #import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
-
+#import <Carbon/Carbon.h>
 
 @interface RootViewController ()<MRDragViewDelegate>
 
+@property (weak) IBOutlet NSView *contentView;
 @property (strong) IJKFFMoviePlayerController * player;
 @property (weak) IBOutlet NSTextField *playedTimeLb;
 @property (nonatomic, strong) NSMutableArray *playList;
@@ -29,9 +30,39 @@
     [super viewDidLoad];
     // Do view setup here.
     
+    //for debug
+    //[self.view setWantsLayer:YES];
+    //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
+    
+    [self.contentView setWantsLayer:YES];
+    self.contentView.layer.backgroundColor = [[NSColor colorWithWhite:0.2 alpha:0.5] CGColor];
+    self.contentView.layer.cornerRadius = 4;
+    self.contentView.layer.masksToBounds = YES;
+    
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
     NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
     [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
+}
+
+- (void)keyDown:(NSEvent *)event
+{
+    if ([event keyCode] == kVK_RightArrow && event.modifierFlags & NSEventModifierFlagCommand) {
+        [self playNext:nil];
+    } else if ([event keyCode] == kVK_ANSI_B && event.modifierFlags & NSEventModifierFlagCommand) {
+        self.contentView.hidden = !self.contentView.isHidden;
+    } else if ([event keyCode] == kVK_ANSI_R && event.modifierFlags & NSEventModifierFlagCommand) {
+        
+    } else if ([event keyCode] == kVK_RightArrow) {
+        [self fastForward:nil];
+    } else if ([event keyCode] == kVK_LeftArrow) {
+        [self fastRewind:nil];
+    } else if ([event keyCode] == kVK_DownArrow) {
+        
+    } else if ([event keyCode] == kVK_UpArrow) {
+        
+    } else if ([event keyCode] == kVK_Space) {
+        [self pauseOrPlay:nil];
+    }
 }
 
 - (NSMutableArray *)playList
@@ -42,6 +73,61 @@
     return _playList;
 }
 
+- (void)perparePlayerIfNeed {
+    IJKFFOptions *options = [IJKFFOptions optionsByDefault];
+    //视频帧处理不过来的时候丢弃一些帧达到同步的效果
+    //    [options setPlayerOptionIntValue:2 forKey:@"framedrop"];
+    [options setPlayerOptionIntValue:16      forKey:@"video-pictq-size"];
+    //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
+    //    [options setPlayerOptionIntValue:50*1024*1024      forKey:@"max-buffer-size"];
+    [options setPlayerOptionIntValue:30     forKey:@"max-fps"];
+    [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
+    [options setPlayerOptionIntValue:0      forKey:@"videotoolbox-async"];
+    
+    BOOL isVideoToolBox = YES;
+    if (isVideoToolBox) {
+        //        [options setPlayerOptionValue:@"fcc-vtb-RGB24"         forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-vtb-ARGB"          forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-vtb-BGRA"          forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-vtb-UYVY"          forKey:@"overlay-format"];
+        
+        //default is NV12 for videotoolbox
+        //        [options setPlayerOptionValue:@"fcc-vtb-NV12"          forKey:@"overlay-format"];
+        
+        [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];
+        [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
+    } else {
+#warning bgr565 not support
+        //        [options setPlayerOptionValue:@"fcc-bgr565"      forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-rgb565"      forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-rgb24"       forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-bgr24"       forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-rgba"        forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-rgb0"        forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-argb"        forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-0rgb"        forKey:@"overlay-format"];
+        //        [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
+        [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
+    }
+    
+    if (self.player) {
+        [self.player stop];
+    } else {
+        self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:self.playingUrl withOptions:options];
+        CGRect rect = self.view.window.frame;
+        rect.origin = CGPointZero;
+        self.player.view.frame = rect;
+        self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
+        self.player.shouldAutoplay = YES;
+        
+        NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
+        playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
+    }
+}
+
 - (void)playURL:(NSURL *)url
 {
     self.playingUrl = url;
@@ -49,78 +135,25 @@
     NSString *title = [[url resourceSpecifier] lastPathComponent];
     [self.view.window setTitle:title];
     
-    IJKFFOptions *options = [IJKFFOptions optionsByDefault];
-    //视频帧处理不过来的时候丢弃一些帧达到同步的效果
-//    [options setPlayerOptionIntValue:2 forKey:@"framedrop"];
-    [options setPlayerOptionIntValue:16      forKey:@"video-pictq-size"];
-//    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
-//    [options setPlayerOptionIntValue:50*1024*1024      forKey:@"max-buffer-size"];
-    [options setPlayerOptionIntValue:30     forKey:@"max-fps"];
-    [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
-    [options setPlayerOptionIntValue:0      forKey:@"videotoolbox-async"];
-    
-    BOOL isVideoToolBox = YES;
-    if (isVideoToolBox) {
-//        [options setPlayerOptionValue:@"fcc-vtb-RGB24"         forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-vtb-ARGB"          forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-vtb-BGRA"          forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-vtb-UYVY"          forKey:@"overlay-format"];
-        
-        //default is NV12 for videotoolbox
-//        [options setPlayerOptionValue:@"fcc-vtb-NV12"          forKey:@"overlay-format"];
-        
-        [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];
-        [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
-    } else {
-#warning bgr565 not support
-//        [options setPlayerOptionValue:@"fcc-bgr565"      forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-rgb565"      forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-rgb24"       forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-bgr24"       forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-rgba"        forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-rgb0"        forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-argb"        forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-0rgb"        forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
-        [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
-    }
-    
-    if (self.player) {
-        [self.player.view removeFromSuperview];
-        [self.player stop];
-    }
-    
-    self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:self.playingUrl withOptions:options];
-//    self.player.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
-    CGRect rect = self.view.window.frame;
-    rect.origin = CGPointZero;
-    self.player.view.frame = rect;
-    self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
-    self.player.shouldAutoplay = YES;
-    
-    [self.player prepareToPlay];
-    
-    NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
-    playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
-    [self.view setWantsLayer:YES];
-    self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
-    
+    [self perparePlayerIfNeed];
+
     if (!self.tickTimer) {
         self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
     }
+    
+    [self.player prepareToPlay];
 }
 
 - (void)onTick:(NSTimer *)sender
 {
     if (self.player) {
-        NSTimeInterval interval = self.player.currentPlaybackTime;
-        self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",
-                                         (int)interval/60,(int)interval%60];
+        
+        long interval = (long)self.player.currentPlaybackTime;
+        long duration = self.player.monitor.duration / 1000;
+        self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d/%02d:%02d",
+                                         (int)(interval/60),(int)(interval%60),(int)(duration/60),(int)(duration%60)];
     } else {
-        self.playedTimeLb.stringValue = @"--:--";
+        self.playedTimeLb.stringValue = @"--:--/--:--";
         [sender invalidate];
     }
 }

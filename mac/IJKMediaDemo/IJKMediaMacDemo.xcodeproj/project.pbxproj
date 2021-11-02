@@ -13,6 +13,7 @@
 		DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */; };
 		DD4EAF23272FC22D00FBCD3A /* RootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4EAF21272FC22D00FBCD3A /* RootViewController.m */; };
 		DD4EAF24272FC22D00FBCD3A /* RootViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = DD4EAF22272FC22D00FBCD3A /* RootViewController.xib */; };
+		DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4EB00027310F1C00FBCD3A /* WindowController.m */; };
 		DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DD9B138C22C23A79002D1D79 /* AppDelegate.m */; };
 		DD9B138F22C23A7A002D1D79 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD9B138E22C23A7A002D1D79 /* Assets.xcassets */; };
 		DD9B139222C23A7A002D1D79 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = DD9B139022C23A7A002D1D79 /* MainMenu.xib */; };
@@ -50,6 +51,8 @@
 		DD4EAF20272FC22D00FBCD3A /* RootViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RootViewController.h; sourceTree = "<group>"; };
 		DD4EAF21272FC22D00FBCD3A /* RootViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RootViewController.m; sourceTree = "<group>"; };
 		DD4EAF22272FC22D00FBCD3A /* RootViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RootViewController.xib; sourceTree = "<group>"; };
+		DD4EAFFF27310F1C00FBCD3A /* WindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WindowController.h; sourceTree = "<group>"; };
+		DD4EB00027310F1C00FBCD3A /* WindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WindowController.m; sourceTree = "<group>"; };
 		DD9B138822C23A79002D1D79 /* IJKMediaMacDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJKMediaMacDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD9B138B22C23A79002D1D79 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		DD9B138C22C23A79002D1D79 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -147,6 +150,8 @@
 			children = (
 				DD9B138B22C23A79002D1D79 /* AppDelegate.h */,
 				DD9B138C22C23A79002D1D79 /* AppDelegate.m */,
+				DD4EAFFF27310F1C00FBCD3A /* WindowController.h */,
+				DD4EB00027310F1C00FBCD3A /* WindowController.m */,
 				DD4EAF20272FC22D00FBCD3A /* RootViewController.h */,
 				DD4EAF21272FC22D00FBCD3A /* RootViewController.m */,
 				DD4EAF22272FC22D00FBCD3A /* RootViewController.xib */,
@@ -319,6 +324,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DD9B139522C23A7A002D1D79 /* main.m in Sources */,
+				DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */,
 				DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */,
 				DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */,
 				DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */,

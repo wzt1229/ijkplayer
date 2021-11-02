@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import "WindowController.h"
 #import "RootViewController.h"
 #import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
 
@@ -28,7 +29,7 @@
     window.contentViewController = [[RootViewController alloc] init];
     window.movableByWindowBackground = YES;
     
-    self.windowCtrl = [[NSWindowController alloc] init];
+    self.windowCtrl = [[WindowController alloc] init];
     self.windowCtrl.window = window;
     [window center];
     [self.windowCtrl showWindow:nil];
