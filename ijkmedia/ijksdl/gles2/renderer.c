@@ -559,19 +559,22 @@ GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_Vo
         
         GLfloat vertices[8] = {0.0f};
         
-        float labelWidth = labelSize.w;
-        float labelHeight = labelSize.h;
-        float picWidth = overlay->w;
-        float picHeight = overlay->h;
+        //字幕图片在纹理坐标系上的尺寸
+        float ratioW = 1.0 * labelSize.w / renderer->layer_width / 2.0;
+        float ratioH = 1.0 * labelSize.h / renderer->layer_height / 2.0;
         
-        float ratiox = labelWidth / picWidth;
-        float ratioy = labelHeight / picHeight;
-        float leftX  = 0 - ratiox;
-        float rightX = 0 + ratiox;
-        //2 * 0.2 - 1
-        float bottomY = 2 * 0.05 - 1;
+        //跟随视频缩放；画面放大，字幕也放大；画面缩小，字幕也缩小
+        float scale = FFMIN(1.0 * renderer->layer_width / overlay->w,1.0 * renderer->layer_height / overlay->h);
+        
+        ratioW *= scale;
+        ratioH *= scale;
+        
+        float leftX  = 0 - ratioW;
+        float rightX = 0 + ratioW;
+        //距离底部0.1，实际是 (0.1 * layer_height)px
+        float bottomY = 0.1 - 1;
         //bottomY + 2 * ratioy
-        float topY = bottomY + 2 * ratioy;
+        float topY = bottomY + 2 * ratioH;
         
         //左下
         vertices[0] = leftX;
