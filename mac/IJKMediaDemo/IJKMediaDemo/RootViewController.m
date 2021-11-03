@@ -419,13 +419,13 @@
         preference.degrees = 0;
     } else if (item.tag == 1) {
         preference.type = IJKSDLRotateZ;
-        preference.degrees = 90;
+        preference.degrees = -90;
     } else if (item.tag == 2) {
         preference.type = IJKSDLRotateZ;
-        preference.degrees = 180;
+        preference.degrees = -180;
     } else if (item.tag == 3) {
         preference.type = IJKSDLRotateZ;
-        preference.degrees = 270;
+        preference.degrees = -270;
     } else if (item.tag == 4) {
         preference.type = IJKSDLRotateY;
         preference.degrees = 180;
