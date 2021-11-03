@@ -1715,6 +1715,11 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
             av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
             exit(1);
         }
+        
+        if (ffp->autorotate) {
+            //fill video ratate degrees
+            vp->bmp->auto_z_rotate_degrees = - ffp_get_video_rotate_degrees(ffp);
+        }
         /* update the bitmap content */
         SDL_VoutUnlockYUVOverlay(vp->bmp);
 

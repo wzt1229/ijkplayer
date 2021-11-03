@@ -156,6 +156,8 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
         
         IJK_GLES2_Renderer_updateRotate(_renderer, self.rotatePreference.type, self.rotatePreference.degrees);
+        
+        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, overlay->auto_z_rotate_degrees);
     }
     
     return YES;

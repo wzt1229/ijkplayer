@@ -21,6 +21,7 @@
 @property (copy) NSURL *playingUrl;
 @property (weak) NSTimer *tickTimer;
 @property (weak) IBOutlet NSTextField *urlInput;
+@property (weak) IBOutlet NSButton *playCtrlBtn;
 
 @end
 
@@ -306,11 +307,11 @@
 }
 
 - (IBAction)pauseOrPlay:(NSButton *)sender {
-    if ([sender.title isEqualToString:@"Pause"]) {
-        [sender setTitle:@"Play"];
+    if ([self.playCtrlBtn.title isEqualToString:@"Pause"]) {
+        [self.playCtrlBtn setTitle:@"Play"];
         [self.player pause];
     } else {
-        [sender setTitle:@"Pause"];
+        [self.playCtrlBtn setTitle:@"Pause"];
         [self.player play];
     }
 }

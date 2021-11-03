@@ -44,7 +44,8 @@ struct SDL_VoutOverlay {
     int is_private;
     int sar_num;
     int sar_den;
-
+    //for auto rotate video
+    int auto_z_rotate_degrees;
     SDL_Class               *opaque_class;
     SDL_VoutOverlay_Opaque  *opaque;
 

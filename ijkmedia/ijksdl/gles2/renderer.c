@@ -373,6 +373,11 @@ void IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int d
     renderer->rotate_degrees = degrees;
 }
 
+void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degrees)
+{
+    renderer->auto_z_rotate_degrees = degrees;
+}
+
 static void IJK_GLES2_Renderer_TexCoords_cropRight(IJK_GLES2_Renderer *renderer, GLfloat cropRight)
 {
     ALOGE("IJK_GLES2_Renderer_TexCoords_cropRight:%g\n",cropRight);
@@ -516,8 +521,17 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
         rotate_v3.z = 1.0;
     }
     
+    ijk_matrix rotation_matrix;
+    
     float radians = radians_from_degrees(renderer->rotate_degrees);
-    ijk_matrix rotation_matrix = ijk_make_rotate_matrix(radians, rotate_v3);
+    ijk_matrix rotation_matrix_1 = ijk_make_rotate_matrix(radians, rotate_v3);
+    
+    if (renderer->auto_z_rotate_degrees != 0) {
+        ijk_matrix rotation_matrix_0 = ijk_make_rotate_matrix_xyz(radians_from_degrees(renderer->auto_z_rotate_degrees), 0.0, 0.0, 1.0);
+        ijk_matrix_multiply(&rotation_matrix_0,&rotation_matrix_1,&rotation_matrix);
+    } else {
+        rotation_matrix = rotation_matrix_1;
+    }
     
     ijk_matrix proj_matrix = IJK_GLES2_defaultOrtho();
     ijk_matrix r_matrix;

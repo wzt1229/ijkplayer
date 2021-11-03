@@ -82,6 +82,8 @@ typedef struct IJK_GLES2_Renderer
 
     GLsizei last_buffer_width;
     
+    //for auto rotate video
+    int auto_z_rotate_degrees;
     //for rotate
     int rotate_type;//x=1;y=2;z=3
     int rotate_degrees;
