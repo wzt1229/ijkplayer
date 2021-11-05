@@ -3729,12 +3729,12 @@ static int read_thread(void *arg)
 #ifdef FFP_MERGE
               (is->audioq.size + is->videoq.size + is->subtitleq.size > MAX_QUEUE_SIZE
 #else
-              (is->audioq.size + is->videoq.size + is->subtitleq.size  + is->subtitle_ex->subtitleq.size > ffp->dcc.max_buffer_size
+               (is->audioq.size + is->videoq.size + is->subtitleq.size  + (is->subtitle_ex? is->subtitle_ex->subtitleq.size :0) > ffp->dcc.max_buffer_size
 #endif
             || (   stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq, MIN_FRAMES)
                 && stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq, MIN_FRAMES)
                 && stream_has_enough_packets(is->subtitle_st, is->subtitle_stream, &is->subtitleq, MIN_FRAMES)
-                && stream_has_enough_packets(is->subtitle_ex->subtitle_st, is->subtitle_ex->sub_st_idx, &is->subtitle_ex->subtitleq, MIN_FRAMES)))) {
+                && (is->subtitle_ex? stream_has_enough_packets(is->subtitle_ex->subtitle_st, is->subtitle_ex->sub_st_idx, &is->subtitle_ex->subtitleq, MIN_FRAMES): 1)))) {
             if (!is->eof) {
                 ffp_toggle_buffering(ffp, 0);
             }
