@@ -15,9 +15,6 @@
 # limitations under the License.
 #
 
-# This script is based on projects below
-# https://github.com/x2on/OpenSSL-for-iPhone
-
 #--------------------
 echo "===================="
 echo "[*] check host"
@@ -60,12 +57,12 @@ FF_BUILD_ROOT=`pwd`
 FF_TAGET_OS="darwin"
 
 
-# openssl build params
+# libass build params
 export COMMON_FF_CFG_FLAGS=
 
-OPENSSL_CFG_FLAGS=
-OPENSSL_EXTRA_CFLAGS=
-OPENSSL_CFG_CPU=
+LIBASS_CFG_FLAGS=
+LIBASS_EXTRA_CFLAGS=
+LIBASS_CFG_CPU=
 
 echo "build_root: $FF_BUILD_ROOT"
 
@@ -80,10 +77,10 @@ FF_XCRUN_OSVERSION=
 FF_GASPP_EXPORT=
 FF_XCODE_BITCODE=
 
-if [ "$FF_ARCH" = "x86_64" ]; then
-    FF_BUILD_NAME="openssl-x86_64"
+if [[ "$FF_ARCH" == "x86_64" ]]; then
+    FF_BUILD_NAME="libass-x86_64"
     FF_XCRUN_OSVERSION="-mmacosx-version-min=10.10"
-    OPENSSL_CFG_FLAGS="darwin64-x86_64-cc enable-ec_nistp_64_gcc_128 $OPENSSL_CFG_FLAGS"
+    LIBASS_CFG_FLAGS="--disable-dependency-tracking --disable-fontconfig $LIBASS_CFG_FLAGS"
 else
     echo "unknown architecture $FF_ARCH";
     exit 1
@@ -124,26 +121,26 @@ echo "CC: $CC"
 
 #--------------------
 echo "\n--------------------"
-echo "[*] configurate openssl"
+echo "[*] configurate libass"
 echo "--------------------"
 
-OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS $FF_XCODE_BITCODE"
-OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS --prefix=$FF_BUILD_PREFIX --openssldir=$FF_BUILD_PREFIX"
+LIBASS_CFG_FLAGS="$LIBASS_CFG_FLAGS $FF_XCODE_BITCODE"
+LIBASS_CFG_FLAGS="$LIBASS_CFG_FLAGS --prefix=$FF_BUILD_PREFIX"
 
 cd $FF_BUILD_SOURCE
 if [ -f "./Makefile" ]; then
     echo 'reuse configure'
 else
-    echo "config: $OPENSSL_CFG_FLAGS"
-    ./Configure \
-        $OPENSSL_CFG_FLAGS
+    autoreconf -i
+    echo "config: $LIBASS_CFG_FLAGS"
+    ./configure \
+        $LIBASS_CFG_FLAGS
     make clean
 fi
 
 #--------------------
 echo "\n--------------------"
-echo "[*] compile openssl"
+echo "[*] compile libass"
 echo "--------------------"
-set +e
-make
-make install_sw
+
+make install

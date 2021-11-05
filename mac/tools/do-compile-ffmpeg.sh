@@ -211,9 +211,6 @@ if [ ! -d $FF_BUILD_SOURCE ]; then
     exit 1
 fi
 
-# xcode configuration
-export DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
-
 cd $FF_BUILD_SOURCE
 if [ -f "./config.h" ]; then
     echo 'reuse configure'
