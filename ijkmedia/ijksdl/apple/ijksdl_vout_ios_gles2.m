@@ -158,7 +158,7 @@ static void vout_update_subtitle(SDL_Vout *vout,const char *text)
     
     UIFont *subtitleFont = opaque->gl_view.subtitlePreference.subtitleFont;
     if (!subtitleFont) {
-        UIFont * font = [UIFont boldSystemFontOfSize:45];
+        UIFont * font = [UIFont boldSystemFontOfSize:65];
         subtitleFont = [font screenFont];
     }
     

@@ -365,7 +365,6 @@
     NSColor *c = [NSColor colorWithRed:((float)(bgrValue & 0xFF))/255.0 green:((float)((bgrValue & 0xFF00) >> 8))/255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16))/255.0 alpha:1.0];
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.subtitleColor = c;
-    p.subtitleFont = [NSFont boldSystemFontOfSize:60];
     self.player.view.subtitlePreference = p;
     [self.player invalidateSubtitleEffect];
 }
