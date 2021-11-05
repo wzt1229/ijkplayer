@@ -118,5 +118,6 @@ void      ffp_set_property_int64(FFPlayer *ffp, int id, int64_t value);
 // must be freed with free();
 struct IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp);
 
-void subtitle_invalidate_uploaded(FFPlayer *ffp);
+void      subtitle_invalidate_uploaded(FFPlayer *ffp);
+int       ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name);
 #endif

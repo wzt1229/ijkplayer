@@ -217,6 +217,7 @@ void           *ijkmp_set_weak_thiz(IjkMediaPlayer *mp, void *weak_thiz);
 /* need to call msg_free_res for freeing the resouce obtained in msg */
 int             ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block);
 void            ijkmp_set_frame_at_time(IjkMediaPlayer *mp, const char *path, int64_t start_time, int64_t end_time, int num, int definition);
-void ijkmp_invalidate_subtitle_effect(IjkMediaPlayer *mp);
+void            ijkmp_invalidate_subtitle_effect(IjkMediaPlayer *mp);
 
+int             ijkmp_set_external_subtitle(IjkMediaPlayer* mp, char* file_name);
 #endif

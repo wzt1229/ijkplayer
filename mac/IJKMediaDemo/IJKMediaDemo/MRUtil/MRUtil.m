@@ -24,7 +24,8 @@
         @"mkv",
         @"flv",
         @"ts",
-        @"webm"
+        @"webm",
+        @"ass"
         ];
 }
 

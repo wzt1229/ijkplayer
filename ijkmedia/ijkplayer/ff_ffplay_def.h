@@ -273,6 +273,21 @@ typedef struct Decoder {
     int    first_frame_decoded;
 } Decoder;
 
+typedef struct SubtitleExState{
+    AVInputFormat *iformat;
+    AVFormatContext *ic;
+
+    FrameQueue subpq;
+    Decoder subdec;
+
+    int sub_st_idx;
+    AVStream *subtitle_st;
+    PacketQueue subtitleq;
+    int eof;
+    
+    char* file_name;
+} SubtitleExState;
+
 typedef struct VideoState {
     SDL_Thread *read_tid;
     SDL_Thread _read_tid;
@@ -286,6 +301,8 @@ typedef struct VideoState {
     int seek_flags;
     int64_t seek_pos;
     int64_t seek_rel;
+    
+    int load_sub_ex;
 #ifdef FFP_MERGE
     int read_pause_return;
 #endif
@@ -419,6 +436,8 @@ typedef struct VideoState {
     SDL_cond  *audio_accurate_seek_cond;
     volatile int initialized_decoder;
     int seek_buffering;
+    
+    SubtitleExState* subtitle_ex;
 } VideoState;
 
 /* options specified by the user */

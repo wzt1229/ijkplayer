@@ -5,7 +5,7 @@ CONFIGURATION_BUILD_DIR = ${PODS_CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit
 GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
 HEADER_SEARCH_PATHS = $(inherited) ${PODS_TARGET_SRCROOT}/mac/build/universal/include ${PODS_TARGET_SRCROOT}/ijkmedia
 LIBRARY_SEARCH_PATHS = $(inherited) "${PODS_ROOT}/../../build/universal/lib"
-OTHER_LDFLAGS = $(inherited) -l"avcodec" -l"avfilter" -l"avformat" -l"avutil" -l"bz2" -l"c++" -l"crypto" -l"iconv" -l"ssl" -l"swresample" -l"swscale" -l"xml2" -l"z" -framework "AVFoundation" -framework "AudioToolbox" -framework "AudioUnit" -framework "Cocoa" -framework "CoreMedia" -framework "CoreVideo" -framework "GLKit" -framework "OpenGL" -framework "VideoToolbox"
+OTHER_LDFLAGS = $(inherited) -l"ass" -l"avcodec" -l"avfilter" -l"avformat" -l"avutil" -l"bz2" -l"c++" -l"crypto" -l"iconv" -l"ssl" -l"swresample" -l"swscale" -l"xml2" -l"z" -framework "AVFoundation" -framework "AudioToolbox" -framework "AudioUnit" -framework "Cocoa" -framework "CoreMedia" -framework "CoreVideo" -framework "GLKit" -framework "OpenGL" -framework "VideoToolbox"
 PODS_BUILD_DIR = ${BUILD_DIR}
 PODS_CONFIGURATION_BUILD_DIR = ${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
 PODS_ROOT = ${SRCROOT}
