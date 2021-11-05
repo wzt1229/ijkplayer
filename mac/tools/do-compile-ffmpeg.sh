@@ -204,7 +204,7 @@ if [ -f "${FFMPEG_DEP_LIBASS_LIB}/libass.a" ]; then
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libass --enable-demuxer=ass --enable-filter=subtitles"
 
     FFMPEG_CFLAGS="$FFMPEG_CFLAGS -I${FFMPEG_DEP_LIBASS_INC}"
-    FFMPEG_DEP_LIBS="$FFMPEG_CFLAGS -L${FFMPEG_DEP_LIBASS_LIB} -lass"
+    FFMPEG_DEP_LIBS="$FFMPEG_DEP_LIBS $FFMPEG_CFLAGS -L${FFMPEG_DEP_LIBASS_LIB} -lass"
 fi
 
 echo "----------------------"
