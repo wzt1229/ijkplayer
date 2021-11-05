@@ -1093,13 +1093,15 @@ static void stream_close(FFPlayer *ffp)
     packet_queue_destroy(&is->videoq);
     packet_queue_destroy(&is->audioq);
     packet_queue_destroy(&is->subtitleq);
-    packet_queue_destroy(&is->subtitle_ex->subtitleq);
+    if (is->subtitle_ex)
+        packet_queue_destroy(&is->subtitle_ex->subtitleq);
 
     /* free all pictures */
     frame_queue_destory(&is->pictq);
     frame_queue_destory(&is->sampq);
     frame_queue_destory(&is->subpq);
-    frame_queue_destory(&is->subtitle_ex->subpq);
+    if (is->subtitle_ex)
+        frame_queue_destory(&is->subtitle_ex->subpq);
     SDL_DestroyCond(is->audio_accurate_seek_cond);
     SDL_DestroyCond(is->video_accurate_seek_cond);
     SDL_DestroyCond(is->continue_read_thread);
@@ -1474,7 +1476,7 @@ retry:
                     }
                 }
             }
-            else if (is->subtitle_ex->subtitle_st){
+            else if (is->subtitle_ex && is->subtitle_ex->subtitle_st){
                 while (frame_queue_nb_remaining(&is->subtitle_ex->subpq) > 0) {
                     sp = frame_queue_peek(&is->subtitle_ex->subpq);
 
