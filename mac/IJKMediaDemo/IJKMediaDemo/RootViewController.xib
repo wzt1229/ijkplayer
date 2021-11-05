@@ -10,7 +10,6 @@
             <connections>
                 <outlet property="contentView" destination="2yP-HX-Sd0" id="jLk-45-MXh"/>
                 <outlet property="playCtrlBtn" destination="rTl-xm-zXC" id="aa6-A4-na8"/>
-                <outlet property="playbackView" destination="bFq-6V-0jf" id="jOA-ty-b1L"/>
                 <outlet property="playedTimeLb" destination="RcO-yC-Eif" id="tMd-2P-I3c"/>
                 <outlet property="urlInput" destination="HCe-qm-k3g" id="lr1-VA-dxv"/>
                 <outlet property="view" destination="lpW-6Y-TED" id="sKs-YW-giZ"/>
