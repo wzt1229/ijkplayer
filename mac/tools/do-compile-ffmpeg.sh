@@ -122,11 +122,14 @@ FF_XCRUN_OSVERSION=
 FF_GASPP_EXPORT=
 FF_DEP_OPENSSL_INC=
 FF_DEP_OPENSSL_LIB=
+FF_DEP_LIBASS_INC=
+FF_DEP_LIBASS_LIB=
 FF_XCODE_BITCODE=
 
 if [ "$FF_ARCH" = "x86_64" ]; then
     FF_BUILD_NAME="ffmpeg-x86_64"
     FF_BUILD_NAME_OPENSSL=openssl-x86_64
+    FF_BUILD_NAME_LIBASS=libass-x86_64
     FF_XCRUN_OSVERSION="-mmacosx-version-min=10.10"
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS $FFMPEG_CFG_FLAGS_ARM"
 else
@@ -184,6 +187,24 @@ if [ -f "${FFMPEG_DEP_OPENSSL_LIB}/libssl.a" ]; then
 
     FFMPEG_CFLAGS="$FFMPEG_CFLAGS -I${FFMPEG_DEP_OPENSSL_INC}"
     FFMPEG_DEP_LIBS="$FFMPEG_CFLAGS -L${FFMPEG_DEP_OPENSSL_LIB} -lssl -lcrypto"
+fi
+
+echo "----------------------"
+
+#--------------------
+echo "\n--------------------"
+echo "[*] check libass"
+
+FFMPEG_DEP_LIBASS_INC=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBASS/output/include
+FFMPEG_DEP_LIBASS_LIB=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBASS/output/lib
+#--------------------
+# with libass
+if [ -f "${FFMPEG_DEP_LIBASS_LIB}/libass.a" ]; then
+    echo "find libass!"
+    FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libass --enable-demuxer=ass --enable-filter=subtitles"
+
+    FFMPEG_CFLAGS="$FFMPEG_CFLAGS -I${FFMPEG_DEP_LIBASS_INC}"
+    FFMPEG_DEP_LIBS="$FFMPEG_CFLAGS -L${FFMPEG_DEP_LIBASS_LIB} -lass"
 fi
 
 echo "----------------------"
