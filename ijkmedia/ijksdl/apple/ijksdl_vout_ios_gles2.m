@@ -163,11 +163,8 @@ static void vout_update_subtitle(SDL_Vout *vout,const char *text)
     }
     
     [stanStringAttrib setObject:subtitleFont forKey:NSFontAttributeName];
-    UIColor *subtitleColor = opaque->gl_view.subtitlePreference.subtitleColor;
-    
-    if (!subtitleColor) {
-        subtitleColor = [NSColor colorWithWhite:1 alpha:1];
-    }
+    int32_t bgrValue = opaque->gl_view.subtitlePreference.color;
+    NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF))/255.0 green:((float)((bgrValue & 0xFF00) >> 8))/255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16))/255.0 alpha:1.0];
     
     [stanStringAttrib setObject:subtitleColor forKey:NSForegroundColorAttributeName];
     NSString *aStr = [[NSString alloc] initWithUTF8String:text];
