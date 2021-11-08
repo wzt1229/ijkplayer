@@ -297,43 +297,56 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
             return;
     }
 
-    if (renderer->layer_width <= 0 ||
-        renderer->layer_height <= 0 ||
-        renderer->frame_width <= 0 ||
-        renderer->frame_height <= 0)
+    float frame_width  = (float)renderer->frame_width;
+    float frame_height = (float)renderer->frame_height;
+  
+    float layer_width  = (float)renderer->layer_width;
+    float layer_height = (float)renderer->layer_height;
+    
+    if (layer_width <= 0 ||
+        layer_height<= 0 ||
+        frame_width <= 0 ||
+        frame_height<= 0)
     {
         ALOGE("[GLES2] invalid width/height for gravity aspect\n");
         IJK_GLES2_Renderer_Vertices_reset(renderer);
         return;
     }
-
-    float width     = renderer->frame_width;
-    float height    = renderer->frame_height;
-
+    
+    //沿着 Z 轴旋转 90 度倍数时需要将显示宽高交换后计算
+    if (renderer->rotate_type == 3 && (abs(renderer->rotate_degrees) / 90 % 2 == 1)) {
+        //注意，这里交换 frame_width、frame_height不行哦
+        float tmp = layer_width;
+        layer_width = layer_height;
+        layer_height = tmp;
+    }
+    
     if (renderer->frame_sar_num > 0 && renderer->frame_sar_den > 0) {
-        width = width * renderer->frame_sar_num / renderer->frame_sar_den;
+        frame_width = frame_width * renderer->frame_sar_num / renderer->frame_sar_den;
     }
 
-    const float dW  = (float)renderer->layer_width	/ width;
-    const float dH  = (float)renderer->layer_height / height;
-    float dd        = 1.0f;
-    float nW        = 1.0f;
-    float nH        = 1.0f;
-
+    const float ratioW  = layer_width  / frame_width;
+    const float ratioH  = layer_height / frame_height;
+    float ratio         = 1.0f;
+    
     switch (renderer->gravity) {
-        case IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL:  dd = FFMAX(dW, dH); break;
-        case IJK_GLES2_GRAVITY_RESIZE_ASPECT:       dd = FFMIN(dW, dH); break;
+        case IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL:  ratio = FFMAX(ratioW, ratioH); break;
+        case IJK_GLES2_GRAVITY_RESIZE_ASPECT:       ratio = FFMIN(ratioW, ratioH); break;
     }
-
-    nW = (width  * dd / (float)renderer->layer_width);
-    nH = (height * dd / (float)renderer->layer_height);
-
+    
+    float nW = (frame_width  * ratio / layer_width);
+    float nH = (frame_height * ratio / layer_height);
+    
+    //左下
     renderer->vertices[0] = - nW;
     renderer->vertices[1] = - nH;
+    //右下
     renderer->vertices[2] =   nW;
     renderer->vertices[3] = - nH;
+    //左上
     renderer->vertices[4] = - nW;
     renderer->vertices[5] =   nH;
+    //右上
     renderer->vertices[6] =   nW;
     renderer->vertices[7] =   nH;
 }
@@ -371,6 +384,8 @@ void IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int d
 {
     renderer->rotate_type = type;
     renderer->rotate_degrees = degrees;
+    //旋转角度发生变化后，要修改 vertices
+    renderer->vertices_changed = 1;
 }
 
 void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degrees)
