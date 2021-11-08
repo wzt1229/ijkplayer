@@ -52,7 +52,7 @@ struct IJKOverlay {
 
 typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
 struct _IJKSDLSubtitlePreference {
-    UIFont  *subtitleFont;
+    __strong UIFont  *font;
     int32_t color;
 };
 

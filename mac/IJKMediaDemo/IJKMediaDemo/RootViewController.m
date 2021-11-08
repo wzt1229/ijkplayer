@@ -371,7 +371,7 @@
 - (IBAction)onChangeSubtitleSize:(NSButton *)sender
 {
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    NSFont *font = p.subtitleFont;
+    NSFont *font = p.font;
     
     CGFloat fontSize = 45;
     if (font) {
@@ -385,7 +385,7 @@
         fontSize -= 5;
     }
     
-    p.subtitleFont = [NSFont boldSystemFontOfSize:fontSize];
+    p.font = [NSFont boldSystemFontOfSize:fontSize];
     self.player.view.subtitlePreference = p;
     
     [self.player invalidateSubtitleEffect];
