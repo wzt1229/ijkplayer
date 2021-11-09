@@ -39,7 +39,7 @@
                                     <rect key="frame" x="8" y="12" width="68" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" title="视频地址：" id="ORi-dY-4lo">
                                         <font key="font" metaFont="system"/>
-                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
@@ -85,7 +85,7 @@
                                     <rect key="frame" x="8" y="12" width="68" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" title="播放控制：" id="enc-3g-7HJ">
                                         <font key="font" metaFont="system"/>
-                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
@@ -170,7 +170,7 @@
                                     <rect key="frame" x="8" y="12" width="68" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" title="倍速设置：" id="a4V-kS-6SM">
                                         <font key="font" metaFont="system"/>
-                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
@@ -253,7 +253,7 @@
                                     <rect key="frame" x="8" y="12" width="68" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" title="字幕设置：" id="OFI-80-c2I">
                                         <font key="font" metaFont="system"/>
-                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
@@ -362,7 +362,7 @@
                                     <rect key="frame" x="8" y="12" width="68" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" title="画面设置：" id="Wh0-cX-po0">
                                         <font key="font" metaFont="system"/>
-                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
@@ -444,7 +444,7 @@
                                     <rect key="frame" x="8" y="12" width="68" height="16"/>
                                     <textFieldCell key="cell" lineBreakMode="clipping" title="音轨设置：" id="SaR-Kz-GPk">
                                         <font key="font" metaFont="system"/>
-                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
