@@ -1143,7 +1143,9 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                             } else if (0 == strcmp(type, IJKM_VAL_TYPE__AUDIO)) {
                                 fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_SAMPLE_RATE, nil);
                                 fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CHANNEL_LAYOUT, nil);
-
+                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
+                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
+                                
                                 if (audio_stream == i) {
                                     _monitor.audioMeta = streamMeta;
                                 }
@@ -1839,5 +1841,17 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
     }
 }
 
-@end
+- (void)closeCurrentStream:(NSString *)streamType
+{
+    NSDictionary *dic = self.monitor.mediaMeta;
+    for (NSDictionary *stream in dic[kk_IJKM_KEY_STREAMS]) {
+        NSString *type = stream[k_IJKM_KEY_TYPE];
+        if ([type isEqualToString:streamType]) {
+            int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
+            ijkmp_set_stream_selected(_mediaPlayer,streamIdx,0);
+            break;
+        }
+    }
+}
 
+@end

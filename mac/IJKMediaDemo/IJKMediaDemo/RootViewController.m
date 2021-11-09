@@ -23,6 +23,7 @@
 @property (weak) IBOutlet NSTextField *urlInput;
 @property (weak) IBOutlet NSButton *playCtrlBtn;
 @property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
+@property (weak) IBOutlet NSPopUpButton *audioPopUpBtn;
 
 @end
 
@@ -179,18 +180,18 @@
         
         NSDictionary *dic = self.player.monitor.mediaMeta;
         
-        NSMutableArray *subtitleStreamArr = [NSMutableArray array];
-        
         [self.subtitlePopUpBtn removeAllItems];
-        
         NSString *currentTitle = @"选择字幕";
         [self.subtitlePopUpBtn addItemWithTitle:currentTitle];
+        
+        [self.audioPopUpBtn removeAllItems];
+        NSString *currentAudio = @"选择音轨";
+        [self.audioPopUpBtn addItemWithTitle:currentAudio];
         
         for (NSDictionary *stream in dic[kk_IJKM_KEY_STREAMS]) {
             NSString *type = stream[k_IJKM_KEY_TYPE];
             int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
             if ([type isEqualToString:k_IJKM_VAL_TYPE__SUBTITLE]) {
-                [subtitleStreamArr addObject:stream];
                 NSString *title = stream[k_IJKM_KEY_TITLE];
                 if (title.length == 0) {
                     title = stream[k_IJKM_KEY_LANGUAGE];
@@ -203,9 +204,23 @@
                     currentTitle = title;
                 }
                 [self.subtitlePopUpBtn addItemWithTitle:title];
+            } else if ([type isEqualToString:k_IJKM_VAL_TYPE__AUDIO]) {
+                NSString *title = stream[k_IJKM_KEY_TITLE];
+                if (title.length == 0) {
+                    title = stream[k_IJKM_KEY_LANGUAGE];
+                }
+                if (title.length == 0) {
+                    title = @"未知";
+                }
+                title = [NSString stringWithFormat:@"%@-%d",title,streamIdx];
+                if ([dic[k_IJKM_VAL_TYPE__AUDIO] intValue] == streamIdx) {
+                    currentAudio = title;
+                }
+                [self.audioPopUpBtn addItemWithTitle:title];
             }
         }
         [self.subtitlePopUpBtn selectItemWithTitle:currentTitle];
+        [self.audioPopUpBtn selectItemWithTitle:currentAudio];
     }
 }
 
@@ -437,9 +452,14 @@
 - (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
 {
     NSString *title = sender.selectedItem.title;
-    int idx = [[[title componentsSeparatedByString:@"-"] lastObject] intValue];
-    NSLog(@"SelectSubtitle:%d",idx);
-    [self.player exchangeSelectedStream:idx];
+    NSArray *items = [title componentsSeparatedByString:@"-"];
+    if ([items count] == 2) {
+        int idx = [[items lastObject] intValue];
+        NSLog(@"SelectSubtitle:%d",idx);
+        [self.player exchangeSelectedStream:idx];
+    } else {
+        [self.player closeCurrentStream:k_IJKM_VAL_TYPE__SUBTITLE];
+    }
 }
 
 - (IBAction)onChangeScaleMode:(NSPopUpButton *)sender
@@ -486,6 +506,19 @@
     self.player.view.rotatePreference = preference;
     
     NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
+}
+
+- (IBAction)onSelectAudioTrack:(NSPopUpButton*)sender
+{
+    NSString *title = sender.selectedItem.title;
+    NSArray *items = [title componentsSeparatedByString:@"-"];
+    if ([items count] == 2) {
+        int idx = [[items lastObject] intValue];
+        NSLog(@"SelectAudioTrack:%d",idx);
+        [self.player exchangeSelectedStream:idx];
+    } else {
+        [self.player closeCurrentStream:k_IJKM_VAL_TYPE__AUDIO];
+    }
 }
 
 @end

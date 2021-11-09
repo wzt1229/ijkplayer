@@ -8,6 +8,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="RootViewController">
             <connections>
+                <outlet property="audioPopUpBtn" destination="KFC-zT-lZ2" id="b6Y-8T-piG"/>
                 <outlet property="contentView" destination="2yP-HX-Sd0" id="jLk-45-MXh"/>
                 <outlet property="playCtrlBtn" destination="rTl-xm-zXC" id="aa6-A4-na8"/>
                 <outlet property="playedTimeLb" destination="RcO-yC-Eif" id="tMd-2P-I3c"/>
@@ -19,20 +20,20 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <view id="lpW-6Y-TED">
-            <rect key="frame" x="0.0" y="0.0" width="557" height="325"/>
+            <rect key="frame" x="0.0" y="0.0" width="570" height="374"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="bFq-6V-0jf" customClass="MRDragView">
-                    <rect key="frame" x="0.0" y="0.0" width="557" height="325"/>
+                    <rect key="frame" x="0.0" y="0.0" width="570" height="374"/>
                     <connections>
                         <outlet property="delegate" destination="-2" id="X0U-fG-6kn"/>
                     </connections>
                 </customView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="2yP-HX-Sd0">
-                    <rect key="frame" x="0.0" y="63" width="557" height="200"/>
+                    <rect key="frame" x="7" y="67" width="557" height="240"/>
                     <subviews>
                         <stackView distribution="fill" orientation="horizontal" alignment="centerY" spacing="10" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DWt-c6-7z6" userLabel="Address">
-                            <rect key="frame" x="0.0" y="160" width="557" height="40"/>
+                            <rect key="frame" x="0.0" y="200" width="557" height="40"/>
                             <subviews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ah4-Dr-8UD">
                                     <rect key="frame" x="8" y="12" width="68" height="16"/>
@@ -77,7 +78,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" spacing="20" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GJE-pz-4U5" userLabel="Basic Ctrl">
-                            <rect key="frame" x="0.0" y="120" width="557" height="40"/>
+                            <rect key="frame" x="0.0" y="160" width="557" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3fS-nf-f3V" userLabel="播放控制：">
@@ -162,7 +163,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lAC-1p-lC2" userLabel="Speed Ctrl">
-                            <rect key="frame" x="0.0" y="80" width="557" height="40"/>
+                            <rect key="frame" x="0.0" y="120" width="557" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Edi-Lb-ca1">
@@ -245,7 +246,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dr3-RU-wfk" userLabel="Subtitle Ctrl">
-                            <rect key="frame" x="0.0" y="40" width="557" height="40"/>
+                            <rect key="frame" x="0.0" y="80" width="557" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="exg-Zu-Ce2">
@@ -354,7 +355,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tvh-Jh-v0C" userLabel="Pic Ctrl">
-                            <rect key="frame" x="0.0" y="0.0" width="557" height="40"/>
+                            <rect key="frame" x="0.0" y="40" width="557" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xJN-HC-Odz">
@@ -435,21 +436,66 @@
                                 <real value="3.4028234663852886e+38"/>
                             </customSpacing>
                         </stackView>
+                        <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="h0I-Bb-PhV" userLabel="Audio Ctrl">
+                            <rect key="frame" x="0.0" y="0.0" width="557" height="40"/>
+                            <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
+                            <beginningViews>
+                                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F4l-nd-opz">
+                                    <rect key="frame" x="8" y="12" width="68" height="16"/>
+                                    <textFieldCell key="cell" lineBreakMode="clipping" title="音轨设置：" id="SaR-Kz-GPk">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KFC-zT-lZ2">
+                                    <rect key="frame" x="79" y="6" width="93" height="25"/>
+                                    <popUpButtonCell key="cell" type="push" title="选择音轨" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="YUv-p1-P1D" id="dTG-Py-7ve">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="menu"/>
+                                        <menu key="menu" id="Rfo-TS-Iib">
+                                            <items>
+                                                <menuItem title="选择音轨" state="on" tag="3" id="YUv-p1-P1D">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                            </items>
+                                        </menu>
+                                    </popUpButtonCell>
+                                    <connections>
+                                        <action selector="onSelectAudioTrack:" target="-2" id="hXC-Ih-4Ah"/>
+                                    </connections>
+                                </popUpButton>
+                            </beginningViews>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="40" id="MfF-gY-0m7"/>
+                            </constraints>
+                            <visibilityPriorities>
+                                <integer value="1000"/>
+                                <integer value="1000"/>
+                            </visibilityPriorities>
+                            <customSpacing>
+                                <real value="3.4028234663852886e+38"/>
+                                <real value="3.4028234663852886e+38"/>
+                            </customSpacing>
+                        </stackView>
                     </subviews>
                     <constraints>
                         <constraint firstItem="DWt-c6-7z6" firstAttribute="leading" secondItem="dr3-RU-wfk" secondAttribute="leading" id="0BK-mT-9G5"/>
-                        <constraint firstItem="Tvh-Jh-v0C" firstAttribute="bottom" secondItem="2yP-HX-Sd0" secondAttribute="bottom" id="0xZ-2l-hA0"/>
                         <constraint firstAttribute="trailing" secondItem="DWt-c6-7z6" secondAttribute="trailing" id="1Im-hy-pTZ"/>
+                        <constraint firstItem="Tvh-Jh-v0C" firstAttribute="trailing" secondItem="h0I-Bb-PhV" secondAttribute="trailing" id="D9b-0o-cu4"/>
                         <constraint firstItem="lAC-1p-lC2" firstAttribute="trailing" secondItem="dr3-RU-wfk" secondAttribute="trailing" id="Jjp-1D-NSm"/>
                         <constraint firstItem="GJE-pz-4U5" firstAttribute="bottom" secondItem="lAC-1p-lC2" secondAttribute="top" id="NFp-i1-crT"/>
+                        <constraint firstAttribute="bottom" secondItem="h0I-Bb-PhV" secondAttribute="bottom" id="P6w-ll-QZk"/>
                         <constraint firstItem="Tvh-Jh-v0C" firstAttribute="leading" secondItem="dr3-RU-wfk" secondAttribute="leading" id="Pxx-ly-che"/>
                         <constraint firstItem="GJE-pz-4U5" firstAttribute="trailing" secondItem="dr3-RU-wfk" secondAttribute="trailing" id="Rxi-JT-W72"/>
                         <constraint firstItem="GJE-pz-4U5" firstAttribute="leading" secondItem="dr3-RU-wfk" secondAttribute="leading" id="V0t-XJ-CcX"/>
+                        <constraint firstItem="Tvh-Jh-v0C" firstAttribute="leading" secondItem="h0I-Bb-PhV" secondAttribute="leading" id="VpY-XL-wBN"/>
                         <constraint firstItem="Tvh-Jh-v0C" firstAttribute="trailing" secondItem="dr3-RU-wfk" secondAttribute="trailing" id="ZAi-TI-0uU"/>
                         <constraint firstItem="lAC-1p-lC2" firstAttribute="leading" secondItem="dr3-RU-wfk" secondAttribute="leading" id="gUJ-26-teS"/>
                         <constraint firstItem="lAC-1p-lC2" firstAttribute="bottom" secondItem="dr3-RU-wfk" secondAttribute="top" id="h85-nW-Gjk"/>
                         <constraint firstItem="dr3-RU-wfk" firstAttribute="bottom" secondItem="Tvh-Jh-v0C" secondAttribute="top" id="id1-O7-E3D"/>
                         <constraint firstItem="DWt-c6-7z6" firstAttribute="leading" secondItem="2yP-HX-Sd0" secondAttribute="leading" id="oBC-Np-twk"/>
+                        <constraint firstItem="h0I-Bb-PhV" firstAttribute="top" secondItem="Tvh-Jh-v0C" secondAttribute="bottom" id="sGc-z5-Laj"/>
                         <constraint firstItem="DWt-c6-7z6" firstAttribute="top" secondItem="2yP-HX-Sd0" secondAttribute="top" id="wVu-Gk-R5K"/>
                         <constraint firstItem="DWt-c6-7z6" firstAttribute="bottom" secondItem="GJE-pz-4U5" secondAttribute="top" id="xqk-mx-n4O"/>
                         <constraint firstItem="DWt-c6-7z6" firstAttribute="trailing" secondItem="dr3-RU-wfk" secondAttribute="trailing" id="zSA-Po-6Kr"/>
@@ -464,7 +510,7 @@
                 <constraint firstItem="bFq-6V-0jf" firstAttribute="top" secondItem="lpW-6Y-TED" secondAttribute="top" id="VXG-V8-Itt"/>
                 <constraint firstItem="bFq-6V-0jf" firstAttribute="leading" secondItem="lpW-6Y-TED" secondAttribute="leading" id="fmz-1U-OP6"/>
             </constraints>
-            <point key="canvasLocation" x="-470" y="-473"/>
+            <point key="canvasLocation" x="-464" y="-449"/>
         </view>
     </objects>
 </document>

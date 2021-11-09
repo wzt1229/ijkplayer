@@ -953,6 +953,9 @@ static void video_image_display2(FFPlayer *ffp)
                     }
                 }
             }
+        } else {
+            //clean old subtile,such as close subtile track
+            update_subtitle_text(ffp, "");
         }
         if (is->subtitle_ex && is->subtitle_ex->subtitle_st) {
             if (frame_queue_nb_remaining(&is->subtitle_ex->subpq) > 0) {

@@ -158,7 +158,8 @@ typedef enum IJKLogLevel {
 @property (nonatomic, readonly) IJKFFMonitor *monitor;
 
 - (void)exchangeSelectedStream:(int)streamIdx;
-
+// k_IJKM_VAL_TYPE__VIDEO, k_IJKM_VAL_TYPE__AUDIO, k_IJKM_VAL_TYPE__SUBTITLE
+- (void)closeCurrentStream:(NSString *)streamType;
 @end
 
 #define IJK_FF_IO_TYPE_READ (1)

@@ -168,7 +168,7 @@ static void vout_update_subtitle(SDL_Vout *vout,const char *text)
     
     MRTextureString *textureString = [[MRTextureString alloc] initWithString:aStr withAttributes:stanStringAttrib withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
     [aStr release];
-    vout->opaque->subtitle = [textureString createPixelBuffer];
+    opaque->subtitle = [textureString createPixelBuffer];
     [textureString release];
 }
 
