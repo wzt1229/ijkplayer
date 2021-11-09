@@ -36,11 +36,13 @@
 #define k_IJKM_KEY_TYPE           @"type"
 #define k_IJKM_VAL_TYPE__VIDEO    @"video"
 #define k_IJKM_VAL_TYPE__AUDIO    @"audio"
+#define k_IJKM_VAL_TYPE__SUBTITLE @"timedtext"
 #define k_IJKM_VAL_TYPE__UNKNOWN  @"unknown"
 
 #define k_IJKM_KEY_CODEC_NAME      @"codec_name"
 #define k_IJKM_KEY_CODEC_PROFILE   @"codec_profile"
 #define k_IJKM_KEY_CODEC_LONG_NAME @"codec_long_name"
+#define k_IJKM_KEY_STREAM_IDX      @"stream_idx"
 
 // stream: video
 #define k_IJKM_KEY_WIDTH          @"width"
@@ -54,6 +56,9 @@
 // stream: audio
 #define k_IJKM_KEY_SAMPLE_RATE    @"sample_rate"
 #define k_IJKM_KEY_CHANNEL_LAYOUT @"channel_layout"
+// stream: subtitle
+#define k_IJKM_KEY_TITLE          @"title"
+#define k_IJKM_KEY_LANGUAGE       @"language"
 
 #define kk_IJKM_KEY_STREAMS       @"streams"
 
@@ -151,6 +156,8 @@ typedef enum IJKLogLevel {
 
 #pragma mark KVO properties
 @property (nonatomic, readonly) IJKFFMonitor *monitor;
+
+- (void)exchangeSelectedStream:(int)streamIdx;
 
 @end
 

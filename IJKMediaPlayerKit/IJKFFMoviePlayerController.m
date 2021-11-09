@@ -1098,10 +1098,11 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
 
                 fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_VIDEO_STREAM, nil);
                 fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_AUDIO_STREAM, nil);
-
+                fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_TIMEDTEXT_STREAM, nil);
+                
                 int64_t video_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_VIDEO_STREAM, -1);
                 int64_t audio_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_AUDIO_STREAM, -1);
-
+                int64_t subtitle_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
                 NSMutableArray *streams = [[NSMutableArray alloc] init];
 
                 size_t count = ijkmeta_get_children_count_l(rawMeta);
@@ -1117,7 +1118,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                             fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CODEC_PROFILE, nil);
                             fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CODEC_LONG_NAME, nil);
                             fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_BITRATE, nil);
-
+                            fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_STREAM_IDX, nil);
                             if (0 == strcmp(type, IJKM_VAL_TYPE__VIDEO)) {
                                 fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_WIDTH, nil);
                                 fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_HEIGHT, nil);
@@ -1145,6 +1146,12 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
 
                                 if (audio_stream == i) {
                                     _monitor.audioMeta = streamMeta;
+                                }
+                            } else if (0 == strcmp(type, IJKM_VAL_TYPE__TIMEDTEXT)) {
+                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
+                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
+                                if (subtitle_stream == i) {
+                                    _monitor.subtitleMeta = streamMeta;
                                 }
                             }
                         }
@@ -1822,6 +1829,13 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
         dispatch_async(dispatch_get_main_queue(), ^{
             [self setHudValue:value forKey:key];
         });
+    }
+}
+
+- (void)exchangeSelectedStream:(int)streamIdx
+{
+    if (_mediaPlayer) {
+        ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
     }
 }
 

@@ -22,6 +22,7 @@
 @property (weak) NSTimer *tickTimer;
 @property (weak) IBOutlet NSTextField *urlInput;
 @property (weak) IBOutlet NSButton *playCtrlBtn;
+@property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
 
 @end
 
@@ -39,7 +40,7 @@
     self.contentView.layer.backgroundColor = [[NSColor colorWithWhite:0.2 alpha:0.5] CGColor];
     self.contentView.layer.cornerRadius = 4;
     self.contentView.layer.masksToBounds = YES;
-    
+
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
     NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
     [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
@@ -165,8 +166,47 @@
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
     
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:self.player];
+    
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
+}
+
+- (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
+{
+    if (self.player.isPreparedToPlay) {
+        
+        NSDictionary *dic = self.player.monitor.mediaMeta;
+        
+        NSMutableArray *subtitleStreamArr = [NSMutableArray array];
+        
+        [self.subtitlePopUpBtn removeAllItems];
+        
+        NSString *currentTitle = @"选择字幕";
+        [self.subtitlePopUpBtn addItemWithTitle:currentTitle];
+        
+        for (NSDictionary *stream in dic[kk_IJKM_KEY_STREAMS]) {
+            NSString *type = stream[k_IJKM_KEY_TYPE];
+            int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
+            if ([type isEqualToString:k_IJKM_VAL_TYPE__SUBTITLE]) {
+                [subtitleStreamArr addObject:stream];
+                NSString *title = stream[k_IJKM_KEY_TITLE];
+                if (title.length == 0) {
+                    title = stream[k_IJKM_KEY_LANGUAGE];
+                }
+                if (title.length == 0) {
+                    title = @"未知";
+                }
+                title = [NSString stringWithFormat:@"%@-%d",title,streamIdx];
+                if ([dic[k_IJKM_VAL_TYPE__SUBTITLE] intValue] == streamIdx) {
+                    currentTitle = title;
+                }
+                [self.subtitlePopUpBtn addItemWithTitle:title];
+            }
+        }
+        [self.subtitlePopUpBtn selectItemWithTitle:currentTitle];
+    }
 }
 
 - (void)playURL:(NSURL *)url
@@ -198,7 +238,6 @@
         [sender invalidate];
     }
 }
-
 
 - (NSURL *)existTaskForUrl:(NSURL *)url
 {
@@ -393,6 +432,14 @@
     p.bottomMargin = sender.intValue / 100.0;
     self.player.view.subtitlePreference = p;
     [self.player invalidateSubtitleEffect];
+}
+
+- (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
+{
+    NSString *title = sender.selectedItem.title;
+    int idx = [[[title componentsSeparatedByString:@"-"] lastObject] intValue];
+    NSLog(@"SelectSubtitle:%d",idx);
+    [self.player exchangeSelectedStream:idx];
 }
 
 - (IBAction)onChangeScaleMode:(NSPopUpButton *)sender

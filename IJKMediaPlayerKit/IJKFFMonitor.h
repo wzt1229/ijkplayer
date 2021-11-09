@@ -28,6 +28,7 @@
 @property(nonatomic) NSDictionary *mediaMeta;
 @property(nonatomic) NSDictionary *videoMeta;
 @property(nonatomic) NSDictionary *audioMeta;
+@property(nonatomic) NSDictionary *subtitleMeta;
 
 @property(nonatomic, readonly) int64_t   duration;   // milliseconds
 @property(nonatomic, readonly) int64_t   bitrate;    // bit / sec

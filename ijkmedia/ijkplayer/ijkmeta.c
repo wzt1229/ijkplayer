@@ -199,7 +199,7 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         AVStream *st = ic->streams[i];
         if (!st || !st->codecpar)
             continue;
-
+        
         stream_meta = ijkmeta_create();
         if (!stream_meta)
             continue;
@@ -270,10 +270,21 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
             }
         }
 
+//        debug all metadata
+//        char *buffer = NULL;
+//        if (av_dict_get_string(st->metadata, &buffer, '=', ',') >= 0) {
+//            printf("stream all metadata:%s\n",buffer);
+//            av_freep(&buffer);
+//        }
+        
         AVDictionaryEntry *lang = av_dict_get(st->metadata, "language", NULL, 0);
         if (lang && lang->value)
             ijkmeta_set_string_l(stream_meta, IJKM_KEY_LANGUAGE, lang->value);
-
+        AVDictionaryEntry *title = av_dict_get(st->metadata, "title", NULL, 0);
+        if (title && title->value)
+            ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title->value);
+        ijkmeta_set_int64_l(stream_meta, IJKM_KEY_STREAM_IDX, i);
+        
         ijkmeta_append_child_l(meta, stream_meta);
         stream_meta = NULL;
     }

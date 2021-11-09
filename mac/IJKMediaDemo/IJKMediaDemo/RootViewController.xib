@@ -11,6 +11,7 @@
                 <outlet property="contentView" destination="2yP-HX-Sd0" id="jLk-45-MXh"/>
                 <outlet property="playCtrlBtn" destination="rTl-xm-zXC" id="aa6-A4-na8"/>
                 <outlet property="playedTimeLb" destination="RcO-yC-Eif" id="tMd-2P-I3c"/>
+                <outlet property="subtitlePopUpBtn" destination="gaO-o5-WgK" id="2gt-r6-WDf"/>
                 <outlet property="urlInput" destination="HCe-qm-k3g" id="lr1-VA-dxv"/>
                 <outlet property="view" destination="lpW-6Y-TED" id="sKs-YW-giZ"/>
             </connections>
@@ -305,8 +306,23 @@
                                         <action selector="onChangeSubtitleColor:" target="-2" id="uoy-aO-Rio"/>
                                     </connections>
                                 </popUpButton>
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gaO-o5-WgK">
+                                    <rect key="frame" x="330" y="6" width="93" height="25"/>
+                                    <popUpButtonCell key="cell" type="push" title="选择字幕" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="WK3-wr-40T" id="R6l-zP-bPG">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="menu"/>
+                                        <menu key="menu" id="2XD-pj-ajY">
+                                            <items>
+                                                <menuItem title="选择字幕" state="on" id="WK3-wr-40T"/>
+                                            </items>
+                                        </menu>
+                                    </popUpButtonCell>
+                                    <connections>
+                                        <action selector="onSelectSubtitle:" target="-2" id="ss3-jF-UiU"/>
+                                    </connections>
+                                </popUpButton>
                                 <slider verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="psF-l6-5cw">
-                                    <rect key="frame" x="331" y="4" width="218" height="28"/>
+                                    <rect key="frame" x="425" y="4" width="124" height="28"/>
                                     <constraints>
                                         <constraint firstAttribute="height" constant="30" id="T1Q-1m-dUI"/>
                                         <constraint firstAttribute="width" constant="100" id="Z0Z-a4-cYj"/>
@@ -326,8 +342,10 @@
                                 <integer value="1000"/>
                                 <integer value="1000"/>
                                 <integer value="1000"/>
+                                <integer value="1000"/>
                             </visibilityPriorities>
                             <customSpacing>
+                                <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
