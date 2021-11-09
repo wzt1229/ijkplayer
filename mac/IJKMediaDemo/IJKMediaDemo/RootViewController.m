@@ -371,12 +371,8 @@
 - (IBAction)onChangeSubtitleSize:(NSButton *)sender
 {
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    NSFont *font = p.font;
+    CGFloat fontSize = p.fontSize;
     
-    CGFloat fontSize = 45;
-    if (font) {
-        fontSize = font.pointSize;
-    }
     if (sender.tag == 1) {
         //增大
         fontSize += 5;
@@ -385,9 +381,17 @@
         fontSize -= 5;
     }
     
-    p.font = [NSFont boldSystemFontOfSize:fontSize];
+    p.fontSize = fontSize;
     self.player.view.subtitlePreference = p;
     
+    [self.player invalidateSubtitleEffect];
+}
+
+- (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender
+{
+    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    p.bottomMargin = sender.intValue / 100.0;
+    self.player.view.subtitlePreference = p;
     [self.player invalidateSubtitleEffect];
 }
 

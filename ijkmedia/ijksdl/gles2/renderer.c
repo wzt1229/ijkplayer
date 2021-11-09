@@ -388,6 +388,12 @@ void IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int d
     renderer->vertices_changed = 1;
 }
 
+void IJK_GLES2_Renderer_updateSubtitleBottomMargin(IJK_GLES2_Renderer *renderer,float value)
+{
+    renderer->subtitle_bottom_margin = value;
+}
+
+
 void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degrees)
 {
     renderer->auto_z_rotate_degrees = degrees;
@@ -395,8 +401,9 @@ void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degre
 
 static void IJK_GLES2_Renderer_TexCoords_cropRight(IJK_GLES2_Renderer *renderer, GLfloat cropRight)
 {
-    ALOGE("IJK_GLES2_Renderer_TexCoords_cropRight:%g\n",cropRight);
-    
+    if (cropRight != 0) {
+        ALOGE("IJK_GLES2_Renderer_TexCoords_cropRight:%g\n",cropRight);
+    }
 /*
  OpenGL 纹理坐标系：
  取值范围：[0.0,1.0]
@@ -586,9 +593,11 @@ GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_Vo
         
         float leftX  = 0 - ratioW;
         float rightX = 0 + ratioW;
-        //距离底部0.1，实际是 (0.1 * layer_height)px
-        float bottomY = 0.1 - 1;
-        //bottomY + 2 * ratioy
+        //距离底部0.1，实际是 (0.1 * layer_height)px; [-1,1]
+        float margin = (renderer->subtitle_bottom_margin - 1) * 2 + 1;
+        margin = FFMAX(margin, -1.0);
+        margin = FFMIN(margin, 1.0 - 2 * ratioH);
+        float bottomY = margin;
         float topY = bottomY + 2 * ratioH;
         
         //左下

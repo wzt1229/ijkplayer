@@ -62,11 +62,13 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     self = [super initWithFrame:frame];
     if (self) {
         [self setup];
+        self.subtitlePreference = (IJKSDLSubtitlePreference){65,0xFFFFFF,0.1};
+        self.rotatePreference = (IJKSDLRotatePreference){IJKSDLRotateNone,0.0};
     }
     return self;
 }
 
-- (void) setup
+- (void)setup
 {
 //    NSOpenGLPixelFormatAttribute attrs[] =
 //    {
@@ -135,7 +137,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 #endif // SUPPORT_RETINA_RESOLUTION
 }
 
-- (BOOL)setupRenderer: (SDL_VoutOverlay *) overlay
+- (BOOL)setupRenderer:(SDL_VoutOverlay *)overlay
 {
     if (overlay == nil)
         return _renderer != nil;
@@ -269,7 +271,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     }
     
     IJK_GLES2_Renderer_updateRotate(_renderer, self.rotatePreference.type, self.rotatePreference.degrees);
-    
+    IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, self.subtitlePreference.bottomMargin);
     if (_isRenderBufferInvalidated) {
         _isRenderBufferInvalidated = NO;
         [self resetViewPort];

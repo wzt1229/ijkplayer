@@ -156,11 +156,8 @@ static void vout_update_subtitle(SDL_Vout *vout,const char *text)
     //字幕默认配置
     NSMutableDictionary * stanStringAttrib = [NSMutableDictionary dictionary];
     
-    UIFont *subtitleFont = opaque->gl_view.subtitlePreference.font;
-    if (!subtitleFont) {
-        UIFont * font = [UIFont boldSystemFontOfSize:65];
-        subtitleFont = [font screenFont];
-    }
+    int fontSize = opaque->gl_view.subtitlePreference.fontSize;
+    UIFont *subtitleFont = [NSFont boldSystemFontOfSize:fontSize];
     
     [stanStringAttrib setObject:subtitleFont forKey:NSFontAttributeName];
     int32_t bgrValue = opaque->gl_view.subtitlePreference.color;

@@ -52,8 +52,9 @@ struct IJKOverlay {
 
 typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
 struct _IJKSDLSubtitlePreference {
-    __strong UIFont  *font;
+    int fontSize;
     int32_t color;
+    float bottomMargin;//[0.0,1.0]
 };
 
 typedef enum _IJKSDLRotateType {

@@ -305,6 +305,17 @@
                                         <action selector="onChangeSubtitleColor:" target="-2" id="uoy-aO-Rio"/>
                                     </connections>
                                 </popUpButton>
+                                <slider verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="psF-l6-5cw">
+                                    <rect key="frame" x="331" y="4" width="218" height="28"/>
+                                    <constraints>
+                                        <constraint firstAttribute="height" constant="30" id="T1Q-1m-dUI"/>
+                                        <constraint firstAttribute="width" constant="100" id="Z0Z-a4-cYj"/>
+                                    </constraints>
+                                    <sliderCell key="cell" state="on" alignment="left" maxValue="100" doubleValue="10" tickMarkPosition="above" sliderType="linear" id="Drn-0G-naH"/>
+                                    <connections>
+                                        <action selector="onChangeSubtitleBottomMargin:" target="-2" id="NNq-Ez-i07"/>
+                                    </connections>
+                                </slider>
                             </beginningViews>
                             <constraints>
                                 <constraint firstAttribute="height" constant="40" id="xBl-Oa-qol"/>
@@ -314,8 +325,10 @@
                                 <integer value="1000"/>
                                 <integer value="1000"/>
                                 <integer value="1000"/>
+                                <integer value="1000"/>
                             </visibilityPriorities>
                             <customSpacing>
+                                <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>

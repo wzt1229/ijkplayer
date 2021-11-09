@@ -87,6 +87,7 @@ typedef struct IJK_GLES2_Renderer
     //for rotate
     int rotate_type;//x=1;y=2;z=3
     int rotate_degrees;
+    float subtitle_bottom_margin;
 } IJK_GLES2_Renderer;
 
 ijk_matrix IJK_GLES2_makeOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far);
