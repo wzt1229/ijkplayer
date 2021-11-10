@@ -24,6 +24,12 @@
 @property (weak) IBOutlet NSButton *playCtrlBtn;
 @property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
 @property (weak) IBOutlet NSPopUpButton *audioPopUpBtn;
+//for cocoa bind
+@property (assign) float subtitleFontSize;
+//for cocoa bind
+@property (assign) float subtitleDelay;
+//for cocoa bind
+@property (assign) float subtitleMargin;
 
 @end
 
@@ -42,6 +48,9 @@
     self.contentView.layer.cornerRadius = 4;
     self.contentView.layer.masksToBounds = YES;
 
+    self.subtitleFontSize = 65;
+    self.subtitleMargin = 0.1;
+    
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
     NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
     [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
@@ -346,8 +355,10 @@
     }
 }
 
+#pragma mark 播放控制
 
-- (IBAction)onPlay:(NSButton *)sender {
+- (IBAction)onPlay:(NSButton *)sender
+{
     if (self.urlInput.stringValue.length > 0) {
         NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
         if (idx == NSNotFound) {
@@ -360,7 +371,8 @@
     }
 }
 
-- (IBAction)pauseOrPlay:(NSButton *)sender {
+- (IBAction)pauseOrPlay:(NSButton *)sender
+{
     if ([self.playCtrlBtn.title isEqualToString:@"Pause"]) {
         [self.playCtrlBtn setTitle:@"Play"];
         [self.player pause];
@@ -370,7 +382,8 @@
     }
 }
 
-- (IBAction)playNext:(NSButton *)sender {
+- (IBAction)playNext:(NSButton *)sender
+{
     if ([self.playList count] == 0) {
         return;
     }
@@ -388,7 +401,8 @@
     [self playURL:url];
 }
 
-- (IBAction)fastRewind:(NSButton *)sender {
+- (IBAction)fastRewind:(NSButton *)sender
+{
     float cp = self.player.currentPlaybackTime;
     cp -= 50;
     if (cp < 0) {
@@ -397,7 +411,8 @@
     self.player.currentPlaybackTime = cp;
 }
 
-- (IBAction)fastForward:(NSButton *)sender {
+- (IBAction)fastForward:(NSButton *)sender
+{
     float cp = self.player.currentPlaybackTime;
     cp += 50;
     if (cp < 0) {
@@ -406,11 +421,16 @@
     self.player.currentPlaybackTime = cp;
 }
 
-- (IBAction)updateSpeed:(NSButton *)sender {
+#pragma mark 倍速设置
+
+- (IBAction)updateSpeed:(NSButton *)sender
+{
     NSInteger tag = sender.tag;
     float speed = tag / 100.0;
     self.player.playbackRate = speed;
 }
+
+#pragma mark 字幕设置
 
 - (IBAction)onChangeSubtitleColor:(NSPopUpButton *)sender
 {
@@ -426,14 +446,6 @@
 {
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.fontSize = sender.intValue;
-    self.player.view.subtitlePreference = p;
-    [self.player invalidateSubtitleEffect];
-}
-
-- (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender
-{
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.bottomMargin = sender.intValue / 100.0;
     self.player.view.subtitlePreference = p;
     [self.player invalidateSubtitleEffect];
 }
@@ -456,6 +468,16 @@
     float delay = sender.floatValue;
     [self.player updateSubtitleExtraDelay:delay];
 }
+
+- (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender
+{
+    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    p.bottomMargin = sender.intValue / 100.0;
+    self.player.view.subtitlePreference = p;
+    [self.player invalidateSubtitleEffect];
+}
+
+#pragma mark 画面设置
 
 - (IBAction)onChangeScaleMode:(NSPopUpButton *)sender
 {
@@ -502,6 +524,8 @@
     
     NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
 }
+
+#pragma mark 音轨设置
 
 - (IBAction)onSelectAudioTrack:(NSPopUpButton*)sender
 {
