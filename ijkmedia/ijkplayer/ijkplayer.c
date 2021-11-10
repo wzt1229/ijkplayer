@@ -574,7 +574,7 @@ static int ikjmp_chkst_seek_l(int mp_state)
     return 0;
 }
 
-int ijkmp_seek_to_l(IjkMediaPlayer *mp, long msec)
+static int ijkmp_seek_to_l(IjkMediaPlayer *mp, long msec)
 {
     assert(mp);
 
@@ -803,6 +803,12 @@ void ijkmp_invalidate_subtitle_effect(IjkMediaPlayer *mp)
     pthread_mutex_lock(&mp->mutex);
     subtitle_invalidate_uploaded(mp->ffplayer);
     pthread_mutex_unlock(&mp->mutex);
+}
+
+void ijkmp_set_subtitle_extra_delay(IjkMediaPlayer* mp, const float delay)
+{
+    assert(mp);
+    ffp_set_subtitle_extra_delay(mp->ffplayer, delay);
 }
 
 int  ijkmp_set_external_subtitle(IjkMediaPlayer* mp, char* file_name)

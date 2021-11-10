@@ -938,7 +938,7 @@ static void video_image_display2(FFPlayer *ffp)
         if (is->subtitle_st) {
             if (frame_queue_nb_remaining(&is->subpq) > 0) {
                 sp = frame_queue_peek(&is->subpq);
-                if (vp->pts >= sp->pts + ((float) sp->sub.start_display_time / 1000)) {
+                if (vp->pts >= is->subtitle_extra_delay + sp->pts + ((float) sp->sub.start_display_time / 1000)) {
                     if (!sp->uploaded) {
                         if (sp->sub.num_rects > 0) {
                             char buffered_text[4096] = {0};
@@ -950,6 +950,10 @@ static void video_image_display2(FFPlayer *ffp)
                             update_subtitle_text(ffp, buffered_text);
                         }
                         sp->uploaded = 1;
+                    }
+                } else {
+                    if (sp->uploaded) {
+                        update_subtitle_text(ffp, "");
                     }
                 }
             }
@@ -1467,8 +1471,8 @@ retry:
                         sp2 = NULL;
 
                     if (sp->serial != is->subtitleq.serial
-                            || (is->vidclk.pts > (sp->pts + ((float) sp->sub.end_display_time / 1000)))
-                            || (sp2 && is->vidclk.pts > (sp2->pts + ((float) sp2->sub.start_display_time / 1000))))
+                            || (is->vidclk.pts > (is->subtitle_extra_delay + sp->pts + ((float) sp->sub.end_display_time / 1000)))
+                            || (sp2 && is->vidclk.pts > (is->subtitle_extra_delay + sp2->pts + ((float) sp2->sub.start_display_time / 1000))))
                     {
                         if (sp->uploaded) {
                             update_subtitle_text(ffp, "");
@@ -5338,6 +5342,14 @@ IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp)
         return NULL;
 
     return ffp->meta;
+}
+
+void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)
+{
+    SDL_LockMutex(ffp->is->play_mutex);
+    VideoState *is = ffp->is;
+    is->subtitle_extra_delay = delay;
+    SDL_UnlockMutex(ffp->is->play_mutex);
 }
 
 int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)

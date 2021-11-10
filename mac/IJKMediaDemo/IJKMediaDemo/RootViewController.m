@@ -422,22 +422,11 @@
     [self.player invalidateSubtitleEffect];
 }
 
-- (IBAction)onChangeSubtitleSize:(NSButton *)sender
+- (IBAction)onChangeSubtitleSize:(NSStepper *)sender
 {
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    CGFloat fontSize = p.fontSize;
-    
-    if (sender.tag == 1) {
-        //增大
-        fontSize += 5;
-    } else {
-        //减小
-        fontSize -= 5;
-    }
-    
-    p.fontSize = fontSize;
+    p.fontSize = sender.intValue;
     self.player.view.subtitlePreference = p;
-    
     [self.player invalidateSubtitleEffect];
 }
 
@@ -460,6 +449,12 @@
     } else {
         [self.player closeCurrentStream:k_IJKM_VAL_TYPE__SUBTITLE];
     }
+}
+
+- (IBAction)onChangeSubtitleDelay:(NSStepper *)sender
+{
+    float delay = sender.floatValue;
+    [self.player updateSubtitleExtraDelay:delay];
 }
 
 - (IBAction)onChangeScaleMode:(NSPopUpButton *)sender

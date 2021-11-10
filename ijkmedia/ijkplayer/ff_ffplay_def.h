@@ -436,7 +436,7 @@ typedef struct VideoState {
     SDL_cond  *audio_accurate_seek_cond;
     volatile int initialized_decoder;
     int seek_buffering;
-    
+    float subtitle_extra_delay;//(s)
     SubtitleExState* subtitle_ex;
 } VideoState;
 
