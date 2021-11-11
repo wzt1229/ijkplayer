@@ -25,6 +25,7 @@
 #define IJKSDLGLViewProtocol_h
 #if TARGET_OS_OSX
 #import <AppKit/AppKit.h>
+#import <CoreGraphics/CGImage.h>
 typedef NSFont UIFont;
 typedef NSColor UIColor;
 #else
@@ -72,18 +73,22 @@ struct _IJKSDLRotatePreference {
 };
 
 @protocol IJKSDLGLViewProtocol <NSObject>
-#if !TARGET_OS_OSX
-- (UIImage*)snapshot;
-- (void)display_pixels:(IJKOverlay *)overlay;
-#endif
+
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
 @property(nonatomic, readonly) CGFloat  fps;
-@property(nonatomic)        CGFloat  scaleFactor;
-@property(nonatomic)        BOOL  isThirdGLView;
+@property(nonatomic) CGFloat  scaleFactor;
+@property(nonatomic) BOOL  isThirdGLView;
 // subtitle preference
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
 // rotate preference
 @property(nonatomic) IJKSDLRotatePreference rotatePreference;
+
+#if !TARGET_OS_OSX
+- (void)display_pixels:(IJKOverlay *)overlay;
+- (UIImage *)snapshot;
+#else
+- (CGImageRef)snapshot;
+#endif
 
 @end
 

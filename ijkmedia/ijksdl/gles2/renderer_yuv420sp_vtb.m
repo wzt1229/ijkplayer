@@ -327,6 +327,18 @@ static GLboolean yuv420sp_vtb_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_Vo
     return GL_TRUE;
 }
 
+void * yuv420sp_vtb_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+{
+    if (!renderer || !renderer->opaque || !overlay)
+        return NULL;
+    CVPixelBufferRef pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
+    if (!pixel_buffer) {
+        ALOGE("nil pixelBuffer in overlay\n");
+        return NULL;
+    }
+    return pixel_buffer;
+}
+
 static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
@@ -496,6 +508,7 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
     renderer->func_use            = yuv420sp_vtb_use;
     renderer->func_getBufferWidth = yuv420sp_vtb_getBufferWidth;
     renderer->func_uploadTexture  = yuv420sp_vtb_uploadTexture;
+    renderer->func_getImage       = yuv420sp_vtb_getImage;
     renderer->func_destroy        = yuv420sp_vtb_destroy;
 #if TARGET_OS_OSX
     renderer->func_useSubtitle    = yuv420sp_useSubtitle;

@@ -30,6 +30,7 @@
 #import <OpenGL/gl.h>
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_vout_overlay_videotoolbox.h"
+#import <AVFoundation/AVFoundation.h>
 
 typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     IJKSDLGLViewApplicationUnknownState = 0,
@@ -41,6 +42,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 @property(atomic,strong) NSRecursiveLock *glActiveLock;
 @property(atomic) BOOL glActivePaused;
+@property(atomic) CVPixelBufferRef currentPic;
 
 @end
 
@@ -277,6 +279,14 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         [self resetViewPort];
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
     }
+    CVPixelBufferRef img = (CVPixelBufferRef)IJK_GLES2_Renderer_getImage(_renderer, overlay);
+    if (img) {
+        if (self.currentPic) {
+            CVPixelBufferRelease(self.currentPic);
+            self.currentPic = NULL;
+        }
+        self.currentPic = CVPixelBufferRetain(img);
+    }
     
     if (!IJK_GLES2_Renderer_renderOverlay(_renderer, overlay))
         ALOGE("[EGL] IJK_GLES2_render failed\n");
@@ -334,6 +344,23 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 - (void)display_pixels:(IJKOverlay *)overlay
 {
     
+}
+
+- (CGImageRef)snapshot
+{
+    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(self.currentPic);
+    CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
+    
+    static CIContext *context = nil;
+    if (!context) {
+        context = [CIContext contextWithOptions:NULL];
+    }
+    CGRect rect = CGRectMake(0,0,
+                             CVPixelBufferGetWidth(pixelBuffer),
+                             CVPixelBufferGetHeight(pixelBuffer));
+    CGImageRef imageRef = [context createCGImage:ciImage fromRect:rect];
+    CVPixelBufferRelease(pixelBuffer);
+    return (CGImageRef)CFAutorelease(imageRef);
 }
 
 - (NSView *)hitTest:(NSPoint)point

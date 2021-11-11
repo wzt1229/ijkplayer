@@ -11,6 +11,7 @@
 #import "MRUtil.h"
 #import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
 #import <Carbon/Carbon.h>
+#import "NSFileManager+Sandbox.h"
 
 @interface RootViewController ()<MRDragViewDelegate>
 
@@ -113,6 +114,8 @@
         NSLog(@"volume:%0.1f",volume);
     } else if ([event keyCode] == kVK_Space) {
         [self pauseOrPlay:nil];
+    } else if ([event keyCode] == kVK_ANSI_S && event.modifierFlags & NSEventModifierFlagCommand) {
+        [self onCaptureShot:nil];
     }
 }
 
@@ -523,6 +526,18 @@
     self.player.view.rotatePreference = preference;
     
     NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
+}
+
+- (IBAction)onCaptureShot:(id)sender
+{
+    CGImageRef img = [self.player.view snapshot];
+    if (img) {
+        NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:@[@"ijkPro",[self.playingUrl lastPathComponent]]];
+        NSString *fileName = [NSString stringWithFormat:@"%ld.jpg",(long)CFAbsoluteTimeGetCurrent()];
+        NSString *filePath = [path stringByAppendingPathComponent:fileName];
+        NSLog(@"截屏:%@",filePath);
+        [MRUtil saveImageToFile:img path:filePath];
+    }
 }
 
 #pragma mark 音轨设置

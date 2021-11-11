@@ -46,8 +46,9 @@ typedef UIView GLView;
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
 // rotate preference
 @property(nonatomic) IJKSDLRotatePreference rotatePreference;
+
+- (CGImageRef)snapshot;
 #if !TARGET_OS_OSX
-- (UIImage*)snapshot;
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));
 #endif
 

@@ -35,6 +35,7 @@
 		DD9B13D622C24095002D1D79 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13D522C24095002D1D79 /* libxml2.tbd */; };
 		DD9B13D822C240A5002D1D79 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13D722C240A5002D1D79 /* libiconv.tbd */; };
 		DD9B13E822C24971002D1D79 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13E722C24971002D1D79 /* libz.tbd */; };
+		DDE9FC70273BD3CF00481560 /* NSFileManager+Sandbox.m in Sources */ = {isa = PBXBuildFile; fileRef = DDE9FC6F273BD3CF00481560 /* NSFileManager+Sandbox.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -78,6 +79,8 @@
 		DD9B13D522C24095002D1D79 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		DD9B13D722C240A5002D1D79 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		DD9B13E722C24971002D1D79 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		DDE9FC6E273BD3CF00481560 /* NSFileManager+Sandbox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSFileManager+Sandbox.h"; sourceTree = "<group>"; };
+		DDE9FC6F273BD3CF00481560 /* NSFileManager+Sandbox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+Sandbox.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +115,8 @@
 		DD050F9425A43A1300F01E2F /* MRUtil */ = {
 			isa = PBXGroup;
 			children = (
+				DDE9FC6E273BD3CF00481560 /* NSFileManager+Sandbox.h */,
+				DDE9FC6F273BD3CF00481560 /* NSFileManager+Sandbox.m */,
 				DD050F9525A43A1300F01E2F /* MRUtil.h */,
 				DD050F9625A43A1300F01E2F /* MRUtil.m */,
 			);
@@ -326,6 +331,7 @@
 				DD9B139522C23A7A002D1D79 /* main.m in Sources */,
 				DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */,
 				DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */,
+				DDE9FC70273BD3CF00481560 /* NSFileManager+Sandbox.m in Sources */,
 				DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */,
 				DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */,
 				DD4EAF23272FC22D00FBCD3A /* RootViewController.m in Sources */,

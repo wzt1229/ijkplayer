@@ -460,6 +460,16 @@
                                         <action selector="onRotate:" target="-2" id="Wwd-0E-JCB"/>
                                     </connections>
                                 </popUpButton>
+                                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0Kk-xX-VGu">
+                                    <rect key="frame" x="322" y="3" width="62" height="32"/>
+                                    <buttonCell key="cell" type="push" title="截屏" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="4RE-kw-fsY">
+                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="onCaptureShot:" target="-2" id="fIB-iL-xBx"/>
+                                    </connections>
+                                </button>
                             </beginningViews>
                             <constraints>
                                 <constraint firstAttribute="height" constant="40" id="v2p-Lp-1ZP"/>
@@ -468,8 +478,10 @@
                                 <integer value="1000"/>
                                 <integer value="1000"/>
                                 <integer value="1000"/>
+                                <integer value="1000"/>
                             </visibilityPriorities>
                             <customSpacing>
+                                <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>

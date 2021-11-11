@@ -6,6 +6,10 @@
 //
 
 #import "MRUtil.h"
+#import <ImageIO/ImageIO.h>
+#if TARGET_OS_IOS
+#import <MobileCoreServices/MobileCoreServices.h>
+#endif
 
 @implementation MRUtil
 
@@ -75,6 +79,47 @@
         return [bookmarkArr copy];
     }
     return nil;
+}
+
++ (BOOL)saveImageToFile:(CGImageRef)img path:(NSString *)imgPath
+{
+    CFStringRef imageUTType = NULL;
+    NSString *fileType = [[imgPath pathExtension] lowercaseString];
+    if ([fileType isEqualToString:@"jpg"] || [fileType isEqualToString:@"jpeg"]) {
+        imageUTType = kUTTypeJPEG;
+    } else if ([fileType isEqualToString:@"png"]) {
+        imageUTType = kUTTypePNG;
+    } else if ([fileType isEqualToString:@"tiff"]) {
+        imageUTType = kUTTypeTIFF;
+    } else if ([fileType isEqualToString:@"bmp"]) {
+        imageUTType = kUTTypeBMP;
+    } else if ([fileType isEqualToString:@"gif"]) {
+        imageUTType = kUTTypeGIF;
+    } else if ([fileType isEqualToString:@"pdf"]) {
+        imageUTType = kUTTypePDF;
+    }
+    
+    if (imageUTType == NULL) {
+        imageUTType = kUTTypePNG;
+    }
+
+    CFStringRef key = kCGImageDestinationLossyCompressionQuality;
+    CFStringRef value = CFSTR("0.5");
+    const void * keys[] = {key};
+    const void * values[] = {value};
+    CFDictionaryRef opts = CFDictionaryCreate(CFAllocatorGetDefault(), keys, values, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    NSURL *fileUrl = [NSURL fileURLWithPath:imgPath];
+    CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef) fileUrl, imageUTType, 1, opts);
+    CFRelease(opts);
+    
+    if (destination) {
+        CGImageDestinationAddImage(destination, img, NULL);
+        CGImageDestinationFinalize(destination);
+        CFRelease(destination);
+        return YES;
+    } else {
+        return NO;
+    }
 }
 
 @end

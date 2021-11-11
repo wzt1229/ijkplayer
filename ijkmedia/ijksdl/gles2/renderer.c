@@ -464,6 +464,15 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
     return GL_TRUE;
 }
 
+void* IJK_GLES2_Renderer_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+{
+    if (renderer->func_getImage) {
+        return renderer->func_getImage(renderer,overlay);
+    } else {
+        assert(renderer->func_getImage);
+        return NULL;
+    }
+}
 /*
  * Per-Frame routine
  */

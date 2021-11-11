@@ -74,6 +74,7 @@ GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format);
 GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+void* IJK_GLES2_Renderer_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
 GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay, void *subtitle);
 
 #define IJK_GLES2_GRAVITY_RESIZE                (0) // Stretch to fill view bounds.
