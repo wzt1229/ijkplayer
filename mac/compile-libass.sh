@@ -35,8 +35,9 @@ FF_LIBS="libass"
 
 install_depends () {
     local name="$1"
-    brew list "$name" > /dev/null
-    if [[ $? -eq 0 ]]; then
+    echo "checking ${name}"
+    local r=$(brew list | grep "$name")
+    if [[ $r != '' ]]; then
         echo "[✅] ${name} is right."
     else
         echo "will use brew install ${name}."
