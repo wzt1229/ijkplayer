@@ -304,6 +304,7 @@
         }
     }
     
+    NSURL* subtitleUrl = nil;
     if ([bookmarkArr count] > 0) {
         
         [self.playList removeAllObjects];
@@ -314,10 +315,18 @@
                 continue;
             }
             
-            [self.playList addObject:url];
+            NSString *pathExtension = [[url pathExtension] lowercaseString];
+            if (![[MRUtil subtitleType] containsObject:pathExtension]) {
+                [self.playList addObject:url];
+            } else {
+                subtitleUrl = url;
+            }
         }
         
         [self playFirstIfNeed];
+        if (subtitleUrl) {
+            [self.player loadSubtitleFile:[subtitleUrl path]];
+        }
     }
 }
 

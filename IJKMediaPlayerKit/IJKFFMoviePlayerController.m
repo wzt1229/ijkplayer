@@ -414,6 +414,16 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
     _monitor.prepareStartTick = (int64_t)SDL_GetTickHR();
     ijkmp_prepare_async(_mediaPlayer);
+    
+//    ijkmp_set_external_subtitle(_mediaPlayer, "/Users/sohu/Downloads/FreeGuySub.ass");
+}
+
+- (void)loadSubtitleFile:(NSString *)url
+{
+    if (!_mediaPlayer)
+        return;
+    
+    ijkmp_set_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
 - (void)setHudUrl:(NSString *)urlString

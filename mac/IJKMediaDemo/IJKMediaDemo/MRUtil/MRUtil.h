@@ -13,6 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MRUtil : NSObject
 
 + (NSArray <NSString *>*)videoType;
++ (NSArray <NSString *>*)subtitleType;
+
 + (NSDictionary *)makeBookmarkWithURL:(NSURL *)url;
 + (NSArray <NSDictionary *>*)scanFolderWithPath:(NSString *)dir filter:(NSArray<NSString *>*)types;
 + (BOOL)saveImageToFile:(CGImageRef)img path:(NSString *)imgPath;

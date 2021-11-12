@@ -811,7 +811,7 @@ void ijkmp_set_subtitle_extra_delay(IjkMediaPlayer* mp, const float delay)
     ffp_set_subtitle_extra_delay(mp->ffplayer, delay);
 }
 
-int  ijkmp_set_external_subtitle(IjkMediaPlayer* mp, char* file_name)
+int  ijkmp_set_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
 {
     assert(file_name);
     MPTRACE("ijkmp_set_external_subtitle(%s)\n", file_name);

@@ -67,6 +67,7 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 @protocol IJKMediaPlayback <NSObject>
 
 - (void)prepareToPlay;
+- (void)loadSubtitleFile:(NSString*)url;
 - (void)play;
 - (void)pause;
 - (void)stop;

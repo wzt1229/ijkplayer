@@ -33,6 +33,13 @@
         ];
 }
 
++ (NSArray <NSString *>*)subtitleType
+{
+    return @[
+        @"ass"
+        ];
+}
+
 + (NSDictionary *)makeBookmarkWithURL:(NSURL *)url
 {
     NSData *bookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
