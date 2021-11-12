@@ -24,6 +24,7 @@
 #include "ijkmeta.h"
 #include "ff_ffinc.h"
 #include "ijksdl/ijksdl_misc.h"
+#include "ff_ffplay.h"
 
 #define IJK_META_INIT_CAPACITY 13
 
@@ -291,6 +292,61 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
 
     if (!stream_meta)
         ijkmeta_destroy_p(&stream_meta);
+}
+
+void ijkmeta_set_ex_subtitle_context_l(struct FFPlayer *ffp)
+{
+    if (!ffp->is->subtitle_ex)
+        return;
+    
+    AVFormatContext* ic = ffp->is->subtitle_ex->ic;
+    IjkMediaMeta* meta = ffp->meta;
+    if (!meta || !ic)
+        return;
+
+    int stream_idx = (ffp->is->ex_sub_index - 1) % MAX_EX_SUBTITLE_NUM + ffp->is->ic->nb_streams;
+    ijkmeta_set_int64_l(meta, IJKM_KEY_TIMEDTEXT_STREAM, stream_idx);
+    
+    IjkMediaMeta *stream_meta = NULL;
+    for (int i = 0; i < ic->nb_streams; i++) {
+        AVStream *st = ic->streams[i];
+        if (!st || !st->codecpar)
+            continue;
+
+        stream_meta = ijkmeta_create();
+        if (!stream_meta)
+            continue;
+
+        AVCodecParameters *codecpar = st->codecpar;
+        const char *codec_name = avcodec_get_name(codecpar->codec_id);
+        if (codec_name)
+            ijkmeta_set_string_l(stream_meta, IJKM_KEY_CODEC_NAME, codec_name);
+
+        if (codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+            ijkmeta_set_string_l(stream_meta, IJKM_KEY_TYPE, IJKM_VAL_TYPE__TIMEDTEXT);
+                
+            ijkmeta_set_string_l(stream_meta, IJKM_KEY_EX_SUBTITLE_URL, ic->url);
+        }
+
+        AVDictionaryEntry *lang = av_dict_get(st->metadata, "language", NULL, 0);
+        if (lang && lang->value)
+            ijkmeta_set_string_l(stream_meta, IJKM_KEY_LANGUAGE, lang->value);
+
+        AVDictionaryEntry *t = av_dict_get(st->metadata, "title", NULL, 0);
+        if (t && t->value) {
+            ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, t->value);
+        } else {
+            char title[64];
+            snprintf(title, 64, "Track%d", ffp->is->ex_sub_index);
+            ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title);
+        }
+       
+        int stream_idx = (ffp->is->ex_sub_index - 1) % MAX_EX_SUBTITLE_NUM + ffp->is->ic->nb_streams;
+        ijkmeta_set_int64_l(stream_meta, IJKM_KEY_STREAM_IDX, stream_idx);
+
+        ijkmeta_append_child_l(meta, stream_meta);
+        stream_meta = NULL;
+    }
 }
 
 const char *ijkmeta_get_string_l(IjkMediaMeta *meta, const char *name)

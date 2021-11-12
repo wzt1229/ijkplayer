@@ -1152,6 +1152,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                             } else if (0 == strcmp(type, IJKM_VAL_TYPE__TIMEDTEXT)) {
                                 fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
                                 fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
+                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_EX_SUBTITLE_URL, nil);
                                 if (subtitle_stream == i) {
                                     _monitor.subtitleMeta = streamMeta;
                                 }

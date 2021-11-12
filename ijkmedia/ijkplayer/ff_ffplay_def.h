@@ -145,6 +145,8 @@ static unsigned sws_flags = SWS_BICUBIC;
 #define LD_IMAGE 0  // 160*90
 #define MAX_DEVIATION 1200000   // 1200ms
 
+#define MAX_EX_SUBTITLE_NUM 32
+
 typedef struct GetImgInfo {
     char *img_path;
     int64_t start_time;
@@ -438,6 +440,8 @@ typedef struct VideoState {
     int seek_buffering;
     float subtitle_extra_delay;//(s)
     SubtitleExState* subtitle_ex;
+    char* ex_sub_url[MAX_EX_SUBTITLE_NUM];
+    int   ex_sub_index;
 } VideoState;
 
 /* options specified by the user */

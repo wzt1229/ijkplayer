@@ -66,10 +66,12 @@
 #define IJKM_KEY_SAMPLE_RATE    "sample_rate"
 #define IJKM_KEY_CHANNEL_LAYOUT "channel_layout"
 
+#define IJKM_KEY_EX_SUBTITLE_URL "ex_subtile_url"
 // reserved for user
 #define IJKM_KEY_STREAMS        "streams"
 
 struct AVFormatContext;
+struct FFPlayer;
 typedef struct IjkMediaMeta IjkMediaMeta;
 
 IjkMediaMeta *ijkmeta_create(void);
@@ -84,6 +86,8 @@ void ijkmeta_append_child_l(IjkMediaMeta *meta, IjkMediaMeta *child);
 void ijkmeta_set_int64_l(IjkMediaMeta *meta, const char *name, int64_t value);
 void ijkmeta_set_string_l(IjkMediaMeta *meta, const char *name, const char *value);
 void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, struct AVFormatContext *ic);
+
+void ijkmeta_set_ex_subtitle_context_l(struct FFPlayer *ffp);
 
 // must be freed with free();
 const char   *ijkmeta_get_string_l(IjkMediaMeta *meta, const char *name);
