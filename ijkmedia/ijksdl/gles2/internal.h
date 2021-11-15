@@ -49,13 +49,14 @@ typedef struct IJK_GLES2_Renderer
     GLuint fragment_shader;
     GLuint plane_textures[IJK_GLES2_MAX_PLANE];
 
-    GLuint av4_position;
-    GLuint av2_texcoord;
-    GLuint um4_mvp;
+    GLint av4_position;
+    GLint av2_texcoord;
+    GLint um4_mvp;
 
-    GLuint us2_sampler[IJK_GLES2_MAX_PLANE];
-    GLuint um3_color_conversion;
-
+    GLint us2_sampler[IJK_GLES2_MAX_PLANE];
+    GLint um3_color_conversion;
+    GLint um3_pre_color_conversion;
+    
     GLboolean (*func_use)(IJK_GLES2_Renderer *renderer);
     GLsizei   (*func_getBufferWidth)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
     GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
@@ -89,6 +90,7 @@ typedef struct IJK_GLES2_Renderer
     int rotate_type;//x=1;y=2;z=3
     int rotate_degrees;
     float subtitle_bottom_margin;
+    GLfloat PreColorConversion[3];
 } IJK_GLES2_Renderer;
 
 ijk_matrix IJK_GLES2_makeOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far);

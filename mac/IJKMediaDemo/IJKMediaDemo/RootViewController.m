@@ -32,6 +32,13 @@
 //for cocoa bind
 @property (assign) float subtitleMargin;
 
+//for cocoa bind
+@property (assign) float brightness;
+//for cocoa bind
+@property (assign) float saturation;
+//for cocoa bind
+@property (assign) float contrast;
+
 @end
 
 @implementation RootViewController
@@ -49,10 +56,13 @@
     self.contentView.layer.cornerRadius = 4;
     self.contentView.layer.masksToBounds = YES;
 
-    self.subtitleFontSize = 65;
-    self.subtitleMargin = 0.1;
+    self.subtitleFontSize = 100;
+    self.subtitleMargin = 0.7;
+    [self onReset:nil];
     
+    [self.playList addObject:[NSURL URLWithString:@"https://kvideo01.youju.sohu.com/120392a9-f111-41a8-bf5a-d1c44d3cd9c92_0_0.mp4"]];
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
+    
     NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
     [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
 }
@@ -244,6 +254,11 @@
     
     [self perpareIJKPlayer:url];
     self.playingUrl = url;
+    [self onReset:nil];
+    
+    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    p.bottomMargin = self.subtitleMargin;
+    self.player.view.subtitlePreference = p;
     
     if (!self.tickTimer) {
         self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
@@ -547,6 +562,40 @@
         NSLog(@"截屏:%@",filePath);
         [MRUtil saveImageToFile:img path:filePath];
     }
+}
+
+- (IBAction)onChnageBSC:(NSSlider *)sender
+{
+    if (sender.tag == 1) {
+        self.brightness = sender.floatValue;
+    } else if (sender.tag == 2) {
+        self.saturation = sender.floatValue;
+    } else if (sender.tag == 3) {
+        self.contrast = sender.floatValue;
+    }
+    
+    IJKSDLColorConversionPreference colorPreference = self.player.view.colorPreference;
+    colorPreference.brightness = self.brightness;//B
+    colorPreference.saturation = self.saturation;//H
+    colorPreference.contrast = self.contrast;//C
+    self.player.view.colorPreference = colorPreference;
+}
+
+- (IBAction)onReset:(NSButton *)sender
+{
+    if (sender.tag == 1) {
+        self.brightness = 0.0;
+    } else if (sender.tag == 2) {
+        self.saturation = 1.0;
+    } else if (sender.tag == 3) {
+        self.contrast = 1.0;
+    } else {
+        self.brightness = 0.0;
+        self.saturation = 1.0;
+        self.contrast = 1.0;
+    }
+    
+    [self onChnageBSC:nil];
 }
 
 #pragma mark 音轨设置

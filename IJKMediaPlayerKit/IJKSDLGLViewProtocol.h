@@ -72,6 +72,13 @@ struct _IJKSDLRotatePreference {
     float degrees;
 };
 
+typedef struct _IJKSDLColorConversionPreference IJKSDLColorConversionPreference;
+struct _IJKSDLColorConversionPreference {
+    float brightness;
+    float saturation;
+    float contrast;
+};
+
 @protocol IJKSDLGLViewProtocol <NSObject>
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
@@ -82,6 +89,8 @@ struct _IJKSDLRotatePreference {
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
 // rotate preference
 @property(nonatomic) IJKSDLRotatePreference rotatePreference;
+// color conversion perference
+@property(nonatomic) IJKSDLColorConversionPreference colorPreference;
 
 #if !TARGET_OS_OSX
 - (void)display_pixels:(IJKOverlay *)overlay;

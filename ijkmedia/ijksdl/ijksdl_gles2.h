@@ -44,13 +44,13 @@ typedef struct SDL_VoutOverlay SDL_VoutOverlay;
  * Common
  */
 
-#ifdef DEBUG
-#define IJK_GLES2_checkError_TRACE(op)
-#define IJK_GLES2_checkError_DEBUG(op)
-#else
+//#ifdef DEBUG
+//#define IJK_GLES2_checkError_TRACE(op)
+//#define IJK_GLES2_checkError_DEBUG(op)
+//#else
 #define IJK_GLES2_checkError_TRACE(op) IJK_GLES2_checkError(op) 
 #define IJK_GLES2_checkError_DEBUG(op) IJK_GLES2_checkError(op)
-#endif
+//#endif
 
 void IJK_GLES2_printString(const char *name, GLenum s);
 void IJK_GLES2_checkError(const char *op);
@@ -73,6 +73,7 @@ GLboolean IJK_GLES2_Renderer_setupGLES(void);
 GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format);
 GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
+void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer,float brightness,float satutaion,float contrast);
 GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
 void* IJK_GLES2_Renderer_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
 GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay, void *subtitle);
