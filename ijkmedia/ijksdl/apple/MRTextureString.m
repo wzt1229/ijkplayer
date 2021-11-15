@@ -72,6 +72,7 @@
 
 @property(nonatomic, strong) NSAttributedString * attributedString;
 @property(nonatomic, assign) BOOL requiresUpdate;
+
 @end
 
 @implementation MRTextureString
@@ -83,11 +84,13 @@
 - (id)initWithAttributedString:(NSAttributedString *)attributedString withBoxColor:(NSColor *)box withBorderColor:(NSColor *)border
 {
     self = [super init];
-	self.attributedString = attributedString;
+    
+    self.attributedString = attributedString;
+    
     self.boxColor = box;
     self.borderColor = border;
     self.antialias = YES;
-    self.edgeInsets = NSEdgeInsetsMake(6.0f, 6.0f, 6.0f, 6.0f);
+    self.edgeInsets = NSEdgeInsetsMake(10.0f, 10.0f, 10.0f, 10.0f);
 	self.cRadius = 3.0f;
     self.requiresUpdate = YES;
 	return self;
@@ -165,7 +168,6 @@
 {
     if (!NSEdgeInsetsEqual(_edgeInsets, edgeInsets)) {
         _edgeInsets = edgeInsets;
-        self.size = CGSizeZero;
         self.requiresUpdate = YES;
     }
 }
@@ -180,27 +182,25 @@
     }
 }
 
-#pragma mark Frame
-
-- (NSSize)size
-{
-	if (CGSizeEqualToSize(CGSizeZero, _size)) { // find frame size if we have not already found it
-		CGSize frameSize = [self.attributedString size]; // current string size
-		frameSize.width += self.edgeInsets.left + self.edgeInsets.right; // add padding
-		frameSize.height += self.edgeInsets.top + self.edgeInsets.bottom; // add padding
-        _size.height = (size_t)ceilf(frameSize.height);
-        _size.width  = (size_t)ceilf(frameSize.width);
-	}
-	return _size;
-}
-
 #pragma mark String
 
-- (void)setString:(NSAttributedString *)attributedString // set string after initial creation
+- (void)setAttributedString:(NSAttributedString *)attributedString
 {
     if (_attributedString != attributedString) {
-        _attributedString = attributedString;
-        self.size = CGSizeZero;
+        
+        if (![[attributedString attributeKeys] containsObject:NSParagraphStyleAttributeName]) {
+            NSMutableParagraphStyle *pghStyle = [[NSMutableParagraphStyle alloc] init];
+            pghStyle.alignment = NSTextAlignmentCenter;
+            pghStyle.lineSpacing = 10;
+            //pghStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+            
+            NSMutableAttributedString * myAttributedString = [[NSMutableAttributedString alloc] initWithAttributedString:attributedString];
+            [myAttributedString addAttribute:NSParagraphStyleAttributeName value:pghStyle range:NSMakeRange(0, [attributedString.string length])];
+            _attributedString = myAttributedString;
+        } else {
+            _attributedString = attributedString;
+        }
+        
         self.requiresUpdate = YES;
     }
 }
@@ -212,7 +212,7 @@
 
 #if TARGET_OS_OSX
 
-- (void)drawMySelf:(CGSize)picSize
+- (void)drawBg:(CGSize)bgSize
 {
     CGPoint originPoint = CGPointZero;
     NSAffineTransform *transform = nil;
@@ -223,7 +223,7 @@
     
     if ([self.boxColor alphaComponent]) { // this should be == 0.0f but need to make sure
         [self.boxColor set];
-        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect (0.0f, 0.0f, picSize.width, picSize.height) , 0.5, 0.5) cornerRadius:0];
+        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect (0.0f, 0.0f, bgSize.width, bgSize.height) , 0.5, 0.5) cornerRadius:0];
         if (transform) {
             [path transformUsingAffineTransform:transform];
         }
@@ -232,7 +232,7 @@
     
     if ([self.borderColor alphaComponent]) {
         [self.borderColor set];
-        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect (0.0f, 0.0f, picSize.width, picSize.height), 0.5, 0.5)
+        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect (0.0f, 0.0f, bgSize.width, bgSize.height), 0.5, 0.5)
                                                         cornerRadius:self.cRadius];
         [path setLineWidth:1.0f];
         if (transform) {
@@ -240,9 +240,23 @@
         }
         [path stroke];
     }
-    
+}
+
+- (void)drawText:(NSRect)rect
+{
     // draw at offset position
-    [self.attributedString drawAtPoint:NSMakePoint(self.edgeInsets.left + originPoint.x, self.edgeInsets.top + originPoint.y)];
+//    [self.attributedString drawInRect:rect];
+    NSStringDrawingContext *ctx = [[NSStringDrawingContext alloc] init];
+    ctx.minimumScaleFactor = [[NSScreen mainScreen] backingScaleFactor];
+    [self.attributedString drawWithRect:rect options:NSStringDrawingUsesLineFragmentOrigin context:ctx];
+//    不能左右居中
+//    [self.attributedString drawAtPoint:NSMakePoint(self.edgeInsets.left + originPoint.x, self.edgeInsets.top + originPoint.y)];
+}
+
+- (CGSize)size
+{
+    CGSize frameSize = [self.attributedString size]; // current string size
+    return CGSizeMake(ceilf(frameSize.width), ceilf(frameSize.height));
 }
 
 - (NSImage *)image
@@ -254,7 +268,16 @@
     
     [[NSGraphicsContext currentContext] setShouldAntialias:self.antialias];
     
-    [self drawMySelf:picSize];
+    float width = picSize.width;
+    float height = picSize.height;
+    
+    width  += self.edgeInsets.left + self.edgeInsets.right; // add padding
+    height += self.edgeInsets.top + self.edgeInsets.bottom; // add padding
+    
+    [self drawBg:(CGSize){width,height}];
+    
+    NSRect rect = NSMakeRect(self.edgeInsets.left, self.edgeInsets.top, picSize.width, picSize.height);
+    [self drawText:rect];
     
     [image unlockFocus];
     return image;
@@ -267,6 +290,7 @@
     if (picSize.width > 4096 || picSize.height > 4096) {
         return NULL;
     }
+    
     NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
                              [NSNumber numberWithBool:YES], kCVPixelBufferOpenGLCompatibilityKey,
                              [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
@@ -277,6 +301,9 @@
      
     size_t height = (size_t)picSize.height;
     size_t width  = (size_t)picSize.width;
+    
+    width  += self.edgeInsets.left + self.edgeInsets.right; // add padding
+    height += self.edgeInsets.top  + self.edgeInsets.bottom; // add padding
     
     CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, width,
             height, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options,
@@ -299,7 +326,12 @@
     
     [NSGraphicsContext saveGraphicsState];
     [NSGraphicsContext setCurrentContext:graphicsContext];
-    [self drawMySelf:picSize];
+    
+    [self drawBg:(CGSize){width,height}];
+    
+    NSRect rect = NSMakeRect(self.edgeInsets.left, self.edgeInsets.top, picSize.width, picSize.height);
+    [self drawText:rect];
+    
     [NSGraphicsContext restoreGraphicsState];
     
     CGColorSpaceRelease(rgbColorSpace);
