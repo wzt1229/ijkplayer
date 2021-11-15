@@ -263,7 +263,10 @@
 - (CVPixelBufferRef)createPixelBuffer
 {
     CGSize picSize = [self size];
-
+    //(width = 285914, height = 397)
+    if (picSize.width > 4096 || picSize.height > 4096) {
+        return NULL;
+    }
     NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
                              [NSNumber numberWithBool:YES], kCVPixelBufferOpenGLCompatibilityKey,
                              [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
