@@ -207,7 +207,7 @@
 
 - (void)setString:(NSString *)aString withAttributes:(NSDictionary *)attribs; // set string after initial creation
 {
-	[self setString:[[NSAttributedString alloc] initWithString:aString attributes:attribs]];
+	[self setAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs]];
 }
 
 #if TARGET_OS_OSX
