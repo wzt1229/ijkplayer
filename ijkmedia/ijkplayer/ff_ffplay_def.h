@@ -288,6 +288,7 @@ typedef struct SubtitleExState{
     int eof;
     
     char* file_name;
+    SDL_mutex* mutex;
 } SubtitleExState;
 
 typedef struct VideoState {
