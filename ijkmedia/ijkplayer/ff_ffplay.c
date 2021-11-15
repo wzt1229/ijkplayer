@@ -5421,6 +5421,12 @@ void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)
     SDL_UnlockMutex(ffp->is->play_mutex);
 }
 
+float ffp_get_subtitle_extra_delay(FFPlayer *ffp)
+{
+    VideoState *is = ffp->is;
+    return is->subtitle_extra_delay;
+}
+
 int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
 {
     /* there is a length limit in avformat */

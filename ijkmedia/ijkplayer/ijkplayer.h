@@ -219,5 +219,6 @@ int             ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block);
 void            ijkmp_set_frame_at_time(IjkMediaPlayer *mp, const char *path, int64_t start_time, int64_t end_time, int num, int definition);
 void            ijkmp_invalidate_subtitle_effect(IjkMediaPlayer *mp);
 void            ijkmp_set_subtitle_extra_delay(IjkMediaPlayer *mp,const float delay);
+float           ijkmp_get_subtitle_extra_delay(IjkMediaPlayer *mp);
 int             ijkmp_set_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 #endif

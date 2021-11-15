@@ -1873,4 +1873,9 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
     ijkmp_set_subtitle_extra_delay(_mediaPlayer, delay);
 }
 
+- (float)currentSubtitleExtraDelay
+{
+    return ijkmp_get_subtitle_extra_delay(_mediaPlayer);
+}
+
 @end

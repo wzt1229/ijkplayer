@@ -161,6 +161,7 @@ typedef enum IJKLogLevel {
 // k_IJKM_VAL_TYPE__VIDEO, k_IJKM_VAL_TYPE__AUDIO, k_IJKM_VAL_TYPE__SUBTITLE
 - (void)closeCurrentStream:(NSString *)streamType;
 - (void)updateSubtitleExtraDelay:(const float)delay;
+- (float)currentSubtitleExtraDelay;
 
 @end
 
