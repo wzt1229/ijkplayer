@@ -830,10 +830,9 @@ static void free_picture(Frame *vp)
 // FFP_MERGE: upload_texture
 // FFP_MERGE: video_image_display
 
-static size_t parse_ass_subtitle(const char *ass, char *output, int buffSize)
+static const char * remove_ass_line_header(const char *ass)
 {
-    char *tok = NULL;
-    //Dialogue: 0,0:00:02.35,0:00:05.46,DNOP-CHS,NTP,0000,0000,0000,,{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了\r\n
+    const char *tok = NULL;
     tok = strchr(ass, ':'); if (tok) tok += 1; // skip event
     tok = strchr(tok, ','); if (tok) tok += 1; // skip layer
     tok = strchr(tok, ','); if (tok) tok += 1; // skip start_time
@@ -844,64 +843,105 @@ static size_t parse_ass_subtitle(const char *ass, char *output, int buffSize)
     tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_r
     tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_v
     tok = strchr(tok, ','); if (tok) tok += 1; // skip effect
-#ifdef __APPLE__
-    // Apple 平台暂时不处理 ass 字幕的特效
-    //{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了\r\n
-    /*{\an3\fnDFKai-SB\c&HFEFDFD&\3c&H070101&\pos(260,422)}{\fad(300,150)}字幕来源
-      X2&CASO
-    */
+    return tok;
+}
 
-    do {
-        //以{\开头
-        if (tok[0] == '{' && tok[1] == '\\') {
-            char* end = strchr(tok, '}');
+static void replace_N_to_n(char *buffer)
+{
+    int len = (int)strlen(buffer);
+    if (len > 0) {
+        do {
+            char *found = strstr(buffer, "\\N");
+            if (found) {
+                *(found) = '\n';
+                memmove(found + 1, found + 2, strlen(found + 2));
+                *(buffer+len - 1) = '\0';
+            } else {
+                break;
+            }
+        } while(1);
+    }
+}
+
+static void remove_last_rn(char *buffer)
+{
+    int len = (int)strlen(buffer);
+    if (len > 0) {
+        char *found = strstr(buffer, "\r\n");
+        if (found) {
+            if (found + 2 == buffer + len) {
+                *(found) = '\0';
+            }
+        }
+    }
+}
+
+static void remove_last_n(char *buffer)
+{
+    int len = (int)strlen(buffer);
+    if (len > 0) {
+        char *found = strstr(buffer, "\n");
+        if (found) {
+            if (found + 1 == buffer + len) {
+                *(found) = '\0';
+            }
+        }
+    }
+}
+
+static char * remove_ass_line_effect(const char *ass)
+{
+    while (ass && strlen(ass) > 2) {
+        //移除 { 开头并且 } 结尾的特效内容
+        if (ass[0] == '{') {
+            char* end = strchr(ass, '}');
             if (end) {
-                tok = end + 1;
+                ass = end + 1;
             } else {
                 break;
             }
         } else {
             break;
         }
-    } while (1);
-#endif
-    
-    if (tok) {
-        
-        char *text = tok;
-        size_t idx = 0;
-        do {
-            char *found = strstr(text, "\\N");
-            if (found) {
-                size_t n = found - text;
-                size_t len = buffSize - idx - 1 > n ? n : buffSize - idx - 1;
-                memcpy(output+idx, text, len);
-                output[idx + len] = '\n';
-                idx += len + 1;
-                text = found + 2;
-                
-                if (buffSize - 1 - idx <= 0) {
-                    output[buffSize - 1] = '\0';
-                    break;
-                }
-            }
-            else {
-                size_t left_text_len = strlen(text);
-                size_t len = buffSize - idx - 1 > left_text_len ? left_text_len : buffSize - idx - 1;
-                memcpy(output+idx, text, len);
-                if (output[idx + len - 1] == '\n' && output[idx + len - 2] == '\r') {
-                    output[idx + len - 2] = '\0';
-                } else if (output[idx + len - 1] == '\n') {
-                    output[idx + len - 1] = '\0';
-                } else {
-                    output[idx + len] = '\0';
-                }
-                break;
-            }
-        } while(1);
-        return strlen(output) + 1;
     }
-    return 0;
+    
+    char *buffer = malloc(strlen(ass) + 1);
+    bzero(buffer, strlen(ass) + 1);
+    memcpy(buffer, ass, strlen(ass));
+    
+    while (1) {
+        char *left  = strstr(buffer, "{");
+        char *right = strstr(buffer, "}");
+        if (left && right > left) {
+            if (right - buffer == strlen(buffer)) {
+                bzero(left, right - left);
+            } else {
+                int count = (int)strlen(buffer) - (int)(right - buffer);
+                memmove(left, right + 1, count);
+                bzero(left + count + 1, 1);
+            }
+        } else {
+            break;
+        }
+    }
+    return buffer;
+}
+
+//need free!
+static char * parse_ass_subtitle(const char *ass)
+{
+//    ass = "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,这里是自由城\\N{\\fn微软雅黑\\fs52.5\\b0\\bord0}{\\i1}This is Free City.{\\i}{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了\r\n{\\i1}";
+//    ass = "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,{\an3\fnDFKai-SB\c&HFEFDFD&\3c&H070101&\pos(260,422)}{\fad(300,150)}字幕来源 X2&CASO";
+    
+    const char *text = remove_ass_line_header(ass);
+    if (text && strlen(text) > 0) {
+        char *buffer = remove_ass_line_effect(text);
+        replace_N_to_n(buffer);
+        remove_last_rn(buffer);
+        remove_last_n(buffer);
+        return buffer;
+    }
+    return NULL;
 }
 
 static void update_subtitle_text(FFPlayer *ffp,const char *str)
@@ -941,13 +981,17 @@ static void video_image_display2(FFPlayer *ffp)
                 if (vp->pts >= is->subtitle_extra_delay + sp->pts + ((float) sp->sub.start_display_time / 1000)) {
                     if (!sp->uploaded) {
                         if (sp->sub.num_rects > 0) {
-                            char buffered_text[4096] = {0};
                             if (sp->sub.rects[0]->text) {
-                                strncpy(buffered_text, sp->sub.rects[0]->text, 4096);
+                                update_subtitle_text(ffp, sp->sub.rects[0]->text);
                             } else if (sp->sub.rects[0]->ass) {
-                                parse_ass_subtitle(sp->sub.rects[0]->ass, buffered_text,sizeof(buffered_text));
+                                char *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
+                                if (buffer) {
+                                    update_subtitle_text(ffp, buffer);
+                                    free(buffer);
+                                }
+                            } else {
+                                assert(0);
                             }
-                            update_subtitle_text(ffp, buffered_text);
                         }
                         sp->uploaded = 1;
                     }
@@ -963,13 +1007,17 @@ static void video_image_display2(FFPlayer *ffp)
                 if (vp->pts >= sp->pts + ((float) sp->sub.start_display_time / 1000)) {
                     if (!sp->uploaded) {
                         if (sp->sub.num_rects > 0) {
-                            char buffered_text[4096] = {0};
                             if (sp->sub.rects[0]->text) {
-                                strncpy(buffered_text, sp->sub.rects[0]->text, 4096);
+                                update_subtitle_text(ffp, sp->sub.rects[0]->text);
                             } else if (sp->sub.rects[0]->ass) {
-                                parse_ass_subtitle(sp->sub.rects[0]->ass, buffered_text,sizeof(buffered_text));
+                                char *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
+                                if (buffer) {
+                                    update_subtitle_text(ffp, buffer);
+                                    free(buffer);
+                                }
+                            } else {
+                                assert(0);
                             }
-                            update_subtitle_text(ffp, buffered_text);
                         }
                         sp->uploaded = 1;
                     }
