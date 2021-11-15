@@ -6,6 +6,7 @@ android/openssl-*
 ios/ffmpeg-*
 ios/openssl-*
 mac/ffmpeg-*
+mac/libass-*
 extra
 .DS_Store
 ijkmedia/ijkyuv/
