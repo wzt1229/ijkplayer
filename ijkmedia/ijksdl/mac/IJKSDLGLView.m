@@ -64,8 +64,9 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     self = [super initWithFrame:frame];
     if (self) {
         [self setup];
-        self.subtitlePreference = (IJKSDLSubtitlePreference){65,0xFFFFFF,0.1};
+        self.subtitlePreference = (IJKSDLSubtitlePreference){100,0xFFFFFF,0.1};
         self.rotatePreference = (IJKSDLRotatePreference){IJKSDLRotateNone,0.0};
+        self.colorPreference = (IJKSDLColorConversionPreference){0.0,1.0,1.0};
     }
     return self;
 }
@@ -287,6 +288,8 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         }
         self.currentPic = CVPixelBufferRetain(img);
     }
+    
+    IJK_GLES2_Renderer_updateColorConversion(_renderer, self.colorPreference.brightness, self.colorPreference.saturation,self.colorPreference.contrast);
     
     if (!IJK_GLES2_Renderer_renderOverlay(_renderer, overlay))
         ALOGE("[EGL] IJK_GLES2_render failed\n");

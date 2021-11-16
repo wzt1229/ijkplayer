@@ -45,6 +45,8 @@ static const char g_shader[] = IJK_GLES_STRING(
 static const char g_shader_rect[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform mat3 um3_ColorConversion;
+    //wtf? can't use 'um3_PreColorConversion'
+    uniform vec3 um3_Pre_ColorConversion;
     uniform sampler2DRect us2_SamplerX;
     uniform sampler2DRect us2_SamplerY;
     uniform vec2 textureDimensionX;
@@ -66,8 +68,33 @@ static const char g_shader_rect[] = IJK_GLES_STRING(
             //videotoolbox decoded video range pixel already! kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
             yuv.x = texture2DRect(us2_SamplerX, recTexCoordX).r;
             yuv.yz = (texture2DRect(us2_SamplerY, recTexCoordY).ra - vec2(0.5, 0.5));
+            
+            //C 是对比度值，B 是亮度值，H 是所需的色调角度
+            float B = um3_Pre_ColorConversion.x;
+            float H = um3_Pre_ColorConversion.y;
+            float C = um3_Pre_ColorConversion.z;
+            
+//            float Y = yuv.x;
+//            float U = yuv.y;
+//            float V = yuv.z;
+//
+//            yuv.x = ((Y - 16.0 / 256.0) * C) + B / 256.0 + 16.0 / 256.0;
+//            yuv.y = ((U) * cos(H) + (V) * sin(H));
+//            yuv.z = ((V) * cos(H) - (U) * sin(H));
+            
             rgb = um3_ColorConversion * yuv;
-            gl_FragColor = vec4(rgb, 1);
+            
+            rgb = rgb + vec3(B);
+            
+            rgb = rgb - vec3(0.5) * C + vec3(0.5);
+            
+            //saturation
+            const vec3 luminanceWeighting = vec3(0.2125, 0.7154, 0.0721);
+            float luminance = dot(rgb, luminanceWeighting);
+            vec3 greyScaleColor = vec3(luminance);
+            rgb = mix(greyScaleColor, rgb, H);
+            
+            gl_FragColor = vec4(rgb, 1.0);
         }
     }
 );

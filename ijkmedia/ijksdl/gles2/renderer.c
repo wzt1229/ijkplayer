@@ -473,6 +473,14 @@ void* IJK_GLES2_Renderer_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay 
         return NULL;
     }
 }
+
+void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer,float brightness,float satutaion,float contrast)
+{
+    renderer->PreColorConversion[0] = brightness;
+    renderer->PreColorConversion[1] = satutaion;
+    renderer->PreColorConversion[2] = contrast;
+}
+
 /*
  * Per-Frame routine
  */
@@ -567,6 +575,9 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     ijk_matrix proj_matrix = IJK_GLES2_defaultOrtho();
     ijk_matrix r_matrix;
     ijk_matrix_multiply(&proj_matrix,&rotation_matrix,&r_matrix);
+    
+    glUniform3fv(renderer->um3_pre_color_conversion, 1, renderer->PreColorConversion);
+        IJK_GLES2_checkError_TRACE("glUniform3fv(um3_pre_color_conversion)");
     
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&r_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
     

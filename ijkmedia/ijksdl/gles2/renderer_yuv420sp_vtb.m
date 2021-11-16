@@ -504,7 +504,8 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
     renderer->us2_sampler[1] = glGetUniformLocation(renderer->program, "us2_SamplerY"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(us2_SamplerY)");
 
     renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_ColorConversionMatrix)");
-
+    renderer->um3_pre_color_conversion = glGetUniformLocation(renderer->program, "um3_Pre_ColorConversion"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_PreColorConversionVector)");
+    
     renderer->func_use            = yuv420sp_vtb_use;
     renderer->func_getBufferWidth = yuv420sp_vtb_getBufferWidth;
     renderer->func_uploadTexture  = yuv420sp_vtb_uploadTexture;

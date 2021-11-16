@@ -44,15 +44,13 @@
 @property (nonatomic, strong) NSColor *boxColor;
 //border color,default is nil
 @property (nonatomic, strong) NSColor *borderColor;
-//text size + edgeInsets
-@property (nonatomic, assign) CGSize size;
 // set top,right,bottom,left margin
 @property (nonatomic, assign) NSEdgeInsets edgeInsets;
 @property(nonatomic, assign) float cRadius; // Corner radius, if 0 just a rectangle. Defaults to 3.0f
 
 @property (nonatomic, assign) BOOL antialias;
 
-- (void)setString:(NSAttributedString *)attributedString; // set string after initial creation
+- (void)setAttributedString:(NSAttributedString *)attributedString; // set string after initial creation
 - (void)setString:(NSString *)aString withAttributes:(NSDictionary *)attribs; // set string after initial creation
 - (CVPixelBufferRef)createPixelBuffer;
 
