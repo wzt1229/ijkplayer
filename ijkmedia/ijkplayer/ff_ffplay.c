@@ -3723,7 +3723,7 @@ static int read_thread(void *arg)
                 
                 ijkmeta_set_ex_subtitle_context_l(ffp);
                 
-                ffp_notify_msg1(ffp, FFP_MSG_PREPARED);
+                ffp_notify_msg1(ffp, FFP_MSG_EX_TIMED_TEXT_LOAD);
             }
         }
         

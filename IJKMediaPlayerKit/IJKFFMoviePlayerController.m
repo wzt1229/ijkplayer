@@ -1049,6 +1049,92 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
     }
 }
 
+- (void) traverseIJKMetaData:(IjkMediaMeta*)rawMeta
+{
+    if (rawMeta) {
+        ijkmeta_lock(rawMeta);
+
+        NSMutableDictionary *newMediaMeta = [[NSMutableDictionary alloc] init];
+
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_FORMAT, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_DURATION_US, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_START_US, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_BITRATE, nil);
+
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_VIDEO_STREAM, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_AUDIO_STREAM, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_TIMEDTEXT_STREAM, nil);
+        
+        int64_t video_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_VIDEO_STREAM, -1);
+        int64_t audio_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_AUDIO_STREAM, -1);
+        int64_t subtitle_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
+        NSMutableArray *streams = [[NSMutableArray alloc] init];
+
+        size_t count = ijkmeta_get_children_count_l(rawMeta);
+        for(size_t i = 0; i < count; ++i) {
+            IjkMediaMeta *streamRawMeta = ijkmeta_get_child_l(rawMeta, i);
+            NSMutableDictionary *streamMeta = [[NSMutableDictionary alloc] init];
+
+            if (streamRawMeta) {
+                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TYPE, k_IJKM_VAL_TYPE__UNKNOWN);
+                const char *type = ijkmeta_get_string_l(streamRawMeta, IJKM_KEY_TYPE);
+                if (type) {
+                    fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CODEC_NAME, nil);
+                    fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CODEC_PROFILE, nil);
+                    fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CODEC_LONG_NAME, nil);
+                    fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_BITRATE, nil);
+                    fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_STREAM_IDX, nil);
+                    if (0 == strcmp(type, IJKM_VAL_TYPE__VIDEO)) {
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_WIDTH, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_HEIGHT, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_FPS_NUM, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_FPS_DEN, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TBR_NUM, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TBR_DEN, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_SAR_NUM, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_SAR_DEN, nil);
+
+                        if (video_stream == i) {
+                            _monitor.videoMeta = streamMeta;
+
+                            int64_t fps_num = ijkmeta_get_int64_l(streamRawMeta, IJKM_KEY_FPS_NUM, 0);
+                            int64_t fps_den = ijkmeta_get_int64_l(streamRawMeta, IJKM_KEY_FPS_DEN, 0);
+                            if (fps_num > 0 && fps_den > 0) {
+                                _fpsInMeta = ((CGFloat)(fps_num)) / fps_den;
+                                NSLog(@"fps in meta %f\n", _fpsInMeta);
+                            }
+                        }
+
+                    } else if (0 == strcmp(type, IJKM_VAL_TYPE__AUDIO)) {
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_SAMPLE_RATE, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CHANNEL_LAYOUT, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
+                        
+                        if (audio_stream == i) {
+                            _monitor.audioMeta = streamMeta;
+                        }
+                    } else if (0 == strcmp(type, IJKM_VAL_TYPE__TIMEDTEXT)) {
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_EX_SUBTITLE_URL, nil);
+                        if (subtitle_stream == i) {
+                            _monitor.subtitleMeta = streamMeta;
+                        }
+                    }
+                }
+            }
+
+            [streams addObject:streamMeta];
+        }
+
+        [newMediaMeta setObject:streams forKey:kk_IJKM_KEY_STREAMS];
+
+        ijkmeta_unlock(rawMeta);
+        _monitor.mediaMeta = newMediaMeta;
+    }
+}
+
 - (void)postEvent: (IJKFFMoviePlayerMessage *)msg
 {
     if (!msg)
@@ -1075,6 +1161,15 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                     @"error": @(avmsg->arg1)}];
             break;
         }
+        case FFP_MSG_EX_TIMED_TEXT_LOAD:  {//load msg
+            NSLog(@"FFP_MSG_TIMED_TEXT_LOAD:\n");
+
+            IjkMediaMeta *rawMeta = ijkmp_get_meta_l(_mediaPlayer);
+            [self traverseIJKMetaData:rawMeta];
+            
+            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMPMoviePlayerExTimedTextFirstLoadtNotification object:self];
+            break;
+        }
         case FFP_MSG_PREPARED: {
             NSLog(@"FFP_MSG_PREPARED:\n");
 
@@ -1096,88 +1191,8 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             }
 
             IjkMediaMeta *rawMeta = ijkmp_get_meta_l(_mediaPlayer);
-            if (rawMeta) {
-                ijkmeta_lock(rawMeta);
-
-                NSMutableDictionary *newMediaMeta = [[NSMutableDictionary alloc] init];
-
-                fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_FORMAT, nil);
-                fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_DURATION_US, nil);
-                fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_START_US, nil);
-                fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_BITRATE, nil);
-
-                fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_VIDEO_STREAM, nil);
-                fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_AUDIO_STREAM, nil);
-                fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_TIMEDTEXT_STREAM, nil);
-                
-                int64_t video_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_VIDEO_STREAM, -1);
-                int64_t audio_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_AUDIO_STREAM, -1);
-                int64_t subtitle_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
-                NSMutableArray *streams = [[NSMutableArray alloc] init];
-
-                size_t count = ijkmeta_get_children_count_l(rawMeta);
-                for(size_t i = 0; i < count; ++i) {
-                    IjkMediaMeta *streamRawMeta = ijkmeta_get_child_l(rawMeta, i);
-                    NSMutableDictionary *streamMeta = [[NSMutableDictionary alloc] init];
-
-                    if (streamRawMeta) {
-                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TYPE, k_IJKM_VAL_TYPE__UNKNOWN);
-                        const char *type = ijkmeta_get_string_l(streamRawMeta, IJKM_KEY_TYPE);
-                        if (type) {
-                            fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CODEC_NAME, nil);
-                            fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CODEC_PROFILE, nil);
-                            fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CODEC_LONG_NAME, nil);
-                            fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_BITRATE, nil);
-                            fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_STREAM_IDX, nil);
-                            if (0 == strcmp(type, IJKM_VAL_TYPE__VIDEO)) {
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_WIDTH, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_HEIGHT, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_FPS_NUM, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_FPS_DEN, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TBR_NUM, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TBR_DEN, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_SAR_NUM, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_SAR_DEN, nil);
-
-                                if (video_stream == i) {
-                                    _monitor.videoMeta = streamMeta;
-
-                                    int64_t fps_num = ijkmeta_get_int64_l(streamRawMeta, IJKM_KEY_FPS_NUM, 0);
-                                    int64_t fps_den = ijkmeta_get_int64_l(streamRawMeta, IJKM_KEY_FPS_DEN, 0);
-                                    if (fps_num > 0 && fps_den > 0) {
-                                        _fpsInMeta = ((CGFloat)(fps_num)) / fps_den;
-                                        NSLog(@"fps in meta %f\n", _fpsInMeta);
-                                    }
-                                }
-
-                            } else if (0 == strcmp(type, IJKM_VAL_TYPE__AUDIO)) {
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_SAMPLE_RATE, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CHANNEL_LAYOUT, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
-                                
-                                if (audio_stream == i) {
-                                    _monitor.audioMeta = streamMeta;
-                                }
-                            } else if (0 == strcmp(type, IJKM_VAL_TYPE__TIMEDTEXT)) {
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
-                                fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_EX_SUBTITLE_URL, nil);
-                                if (subtitle_stream == i) {
-                                    _monitor.subtitleMeta = streamMeta;
-                                }
-                            }
-                        }
-                    }
-
-                    [streams addObject:streamMeta];
-                }
-
-                [newMediaMeta setObject:streams forKey:kk_IJKM_KEY_STREAMS];
-
-                ijkmeta_unlock(rawMeta);
-                _monitor.mediaMeta = newMediaMeta;
-            }
+            [self traverseIJKMetaData:rawMeta];
+            
             ijkmp_set_playback_rate(_mediaPlayer, [self playbackRate]);
             ijkmp_set_playback_volume(_mediaPlayer, [self playbackVolume]);
 
