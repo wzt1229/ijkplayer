@@ -205,6 +205,8 @@ if [ -f "${FFMPEG_DEP_LIBASS_LIB}/libass.a" ]; then
 
     FFMPEG_CFLAGS="$FFMPEG_CFLAGS -I${FFMPEG_DEP_LIBASS_INC}"
     FFMPEG_DEP_LIBS="$FFMPEG_DEP_LIBS $FFMPEG_CFLAGS -L${FFMPEG_DEP_LIBASS_LIB} -lass"
+
+    export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${FFMPEG_DEP_LIBASS_LIB}/pkgconfig
 fi
 
 echo "----------------------"
