@@ -78,10 +78,17 @@
 #define SDL_FCC_VTB_UYVY    SDL_FOURCC('V', 'T', 'B', 1 << 4)     /**< Apple VideoToolbox kCVPixelFormatType_422YpCbCr8 */
 
 
+#ifdef __APPLE__
+#define USE_FF_VTB 1
+#else
+#define USE_FF_VTB 0
+#endif
+
 // opaque formats
-#define SDL_FCC__AMC    SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */
-#define SDL_FCC__VTB    SDL_FOURCC('V', 'T', 'B', 0xFF)   /**< Apple VideoToolbox */
-#define SDL_FCC__GLES2  SDL_FOURCC('_', 'E', 'S', '2')    /**< let Vout choose format */
+#define SDL_FCC__AMC        SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */
+#define SDL_FCC__VTB        SDL_FOURCC('V', 'T', 'B', 0xFF)   /**< Apple VideoToolbox */
+#define SDL_FCC__FFVTB      SDL_FOURCC('F', 'F', 'V', 'T')   /**< USE FFmpeg decode video,But use Apple VideoToolbox Buffer, So video render same as VTB */
+#define SDL_FCC__GLES2      SDL_FOURCC('_', 'E', 'S', '2')    /**< let Vout choose format */
 
 // undefine
 #define SDL_FCC_UNDF    SDL_FOURCC('U', 'N', 'D', 'F')    /**< undefined */

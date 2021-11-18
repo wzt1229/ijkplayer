@@ -1,6 +1,6 @@
 {
   "name": "IJKMediaPlayerKit",
-  "version": "0.8.8",
+  "version": "0.9.0.1",
   "summary": "IJKMediaPlayerKit for macOS.",
   "description": "TODO: Add long description of the pod here.",
   "homepage": "https://github.com/debugly/ijkplayer",
@@ -13,7 +13,7 @@
   },
   "source": {
     "git": "https://github.com/debugly/ijkplayer",
-    "tag": "0.8.8"
+    "tag": "0.9.0.1"
   },
   "platforms": {
     "osx": "10.11",
@@ -110,6 +110,7 @@
         "ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c",
         "ijkmedia/ijkplayer/android/**/*.*",
         "ijkmedia/ijksdl/android/**/*.*",
+        "ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}",
         "ijkmedia/ijkplayer/ijkavutil/ijkdict.*",
         "ijkmedia/ijkplayer/ijkavutil/ijkfifo.*",
         "ijkmedia/ijkplayer/ijkavutil/ijkstl.*",

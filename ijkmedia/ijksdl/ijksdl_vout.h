@@ -30,14 +30,18 @@
 #include "ijksdl_mutex.h"
 #include "ijksdl_video.h"
 #include "ffmpeg/ijksdl_inc_ffmpeg.h"
+#include "ijksdl_fourcc.h"
 
 typedef struct SDL_VoutOverlay_Opaque SDL_VoutOverlay_Opaque;
 typedef struct SDL_VoutOverlay SDL_VoutOverlay;
 struct SDL_VoutOverlay {
     int w; /**< Read-only */
     int h; /**< Read-only */
-    Uint32 format; /**< Read-only */
-    Uint32 ff_format;/**< FFmpeg AV_PIXEL_FORMAT */
+    Uint32 format; /**< Read-only such as SDL_FCC__VTB */
+    Uint32 ff_format;/**< FFmpeg AV_PIXEL_FORMAT ; when format is SDL_FCC__VTB the value is CVPixelFormatType*/
+#if USE_FF_VTB
+    Uint32 cv_format;/**< when format is SDL_FCC__FFVTB the value is CVPixelFormatType*/
+#endif
     int planes; /**< Read-only */
     Uint16 *pitches; /**< in bytes, Read-only */
     Uint8 **pixels; /**< Read-write */

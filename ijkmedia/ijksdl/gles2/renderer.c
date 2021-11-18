@@ -22,7 +22,7 @@
 #include "internal.h"
 #ifdef __APPLE__
 #include <TargetConditionals.h>
-#import <CoreVideo/CoreVideo.h>
+#include <CoreVideo/CoreVideo.h>
 #endif
 #include "math_util.h"
 
@@ -170,7 +170,9 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
     
     switch (overlay->format)
     {
+#ifdef __APPLE__
         case SDL_FCC__VTB:
+        {
             if (overlay->ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || overlay->ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
                 renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
             } else if (overlay->ff_format == kCVPixelFormatType_32BGRA) {
@@ -180,16 +182,40 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
             } else if (overlay->ff_format == kCVPixelFormatType_32ARGB) {
                 renderer = IJK_GL_Renderer_create_xrgb();
             }
-#if TARGET_OS_OSX
+            #if TARGET_OS_OSX
             else if (overlay->ff_format == kCVPixelFormatType_422YpCbCr8) {
                 renderer = IJK_GL_Renderer_create_uyvy();
             }
-#endif
+            #endif
             else {
                 ALOGE("unknown pixformat!");
-                assert(0);
             }
+        }
             break;
+        #if USE_FF_VTB
+        case SDL_FCC__FFVTB:
+        {
+            if (overlay->cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || overlay->cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+                renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
+            } else if (overlay->cv_format == kCVPixelFormatType_32BGRA) {
+                renderer = IJK_GL_Renderer_create_rgbx();
+            } else if (overlay->cv_format == kCVPixelFormatType_24RGB) {
+                renderer = IJK_GL_Renderer_create_rgbx();
+            } else if (overlay->cv_format == kCVPixelFormatType_32ARGB) {
+                renderer = IJK_GL_Renderer_create_xrgb();
+            }
+            #if TARGET_OS_OSX
+            else if (overlay->cv_format == kCVPixelFormatType_422YpCbCr8) {
+                renderer = IJK_GL_Renderer_create_uyvy();
+            }
+            #endif
+            else {
+                ALOGE("unknown pixformat!");
+            }
+        }
+            break;
+        #endif
+#endif
         case SDL_FCC_I420:
             renderer = IJK_GLES2_Renderer_create_yuv420p();
             break;
@@ -469,7 +495,6 @@ void* IJK_GLES2_Renderer_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay 
     if (renderer->func_getImage) {
         return renderer->func_getImage(renderer,overlay);
     } else {
-        assert(renderer->func_getImage);
         return NULL;
     }
 }

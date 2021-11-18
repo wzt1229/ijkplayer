@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'IJKMediaPlayerKit'
-  s.version          = '0.8.8'
+  s.version          = '0.9.0.1'
   s.summary          = 'IJKMediaPlayerKit for macOS.'
   
 # This description is used to generate tags and improve search results.
@@ -88,6 +88,7 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
       'ijkmedia/ijkplayer/android/**/*.*',
       'ijkmedia/ijksdl/android/**/*.*',
+      'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}',
 
       # -w
       'ijkmedia/ijkplayer/ijkavutil/ijkdict.*',
