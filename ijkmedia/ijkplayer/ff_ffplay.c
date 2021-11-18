@@ -1845,8 +1845,21 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         // sws_getCachedContext(...);
 #endif
 #endif
+        //tell vout the target format.
+        ffp->vout->ff_format = vp->bmp->ff_format;
+        const AVFrame *outFrame = src_frame;
+        
+        #if USE_FF_VTB
+        //硬解不需要转格式
+        if (src_frame->format != IJK_AV_PIX_FMT__VIDEO_TOOLBOX) {
+            if (SDL_VoutConvertFrame(ffp->vout, src_frame, &outFrame)) {
+                //convert failed.
+                return -1;
+            }
+        }
+        #endif
         // FIXME: set swscale options
-        if (SDL_VoutFillFrameYUVOverlay(vp->bmp, src_frame) < 0) {
+        if (SDL_VoutFillFrameYUVOverlay(vp->bmp, outFrame) < 0) {
             av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
             exit(1);
         }

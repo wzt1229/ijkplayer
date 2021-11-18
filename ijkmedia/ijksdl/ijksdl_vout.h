@@ -73,12 +73,17 @@ struct SDL_Vout {
     void (*update_subtitle)(SDL_Vout *vout, const char *text);
     
     Uint32 overlay_format;
+    Uint32 ff_format;//(Read Only)same as SDL_VoutOverlay's ff_format.
+    //convert image
+    void *image_converter;
 };
 
 void SDL_VoutFree(SDL_Vout *vout);
 void SDL_VoutFreeP(SDL_Vout **pvout);
 int  SDL_VoutDisplayYUVOverlay(SDL_Vout *vout, SDL_VoutOverlay *overlay);
 int  SDL_VoutSetOverlayFormat(SDL_Vout *vout, Uint32 overlay_format);
+//convert a frame use vout. not free outFrame,when free vout the outFrame will free. if convert failed return greater then 0.
+int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame **outFrame);
 
 SDL_VoutOverlay *SDL_Vout_CreateOverlay(int width, int height, int frame_format, SDL_Vout *vout);
 int     SDL_VoutLockYUVOverlay(SDL_VoutOverlay *overlay);

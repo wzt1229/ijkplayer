@@ -109,7 +109,7 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
     return attributes;
 }
 
-static CVPixelBufferRef createCVPixelBufferFromAVFrame(AVFrame *frame,CVPixelBufferPoolRef poolRef)
+static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPixelBufferPoolRef poolRef)
 {
     if (NULL == frame) {
         return NULL;
@@ -120,6 +120,9 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(AVFrame *frame,CVPixelBuf
     const int w = frame->width;
     const int h = frame->height;
     const int format = frame->format;
+    
+    assert(w);
+    assert(h);
     
     if (poolRef) {
         result = CVPixelBufferPoolCreatePixelBuffer(NULL, poolRef, &pixelBuffer);
@@ -193,8 +196,7 @@ CVPixelBufferRef SDL_VoutFFmpeg_GetCVPixelBufferRef(SDL_VoutOverlay *overlay)
     return opaque->pixelBuffer;
 }
 
-#endif
-
+#else
 
 /* Always assume a linesize alignment of 1 here */
 // TODO: 9 alignment to speed up memcpy when display
@@ -260,6 +262,8 @@ static void overlay_fill(SDL_VoutOverlay *overlay, AVFrame *frame, int planes)
     }
 }
 
+#endif
+
 static void func_free_l(SDL_VoutOverlay *overlay)
 {
     ALOGE("SDL_Overlay(ffmpeg): overlay_free_l(%p)\n", overlay);
@@ -308,16 +312,20 @@ static int func_unlock(SDL_VoutOverlay *overlay)
     return SDL_UnlockMutex(opaque->mutex);
 }
 
+#if ! USE_FF_VTB
 static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
 {
     assert(overlay);
     SDL_VoutOverlay_Opaque *opaque = overlay->opaque;
     AVFrame swscale_dst_pic = { { 0 } };
-    
+
+    av_frame_unref(opaque->linked_frame);
+
     int need_swap_uv = 0;
     int use_linked_frame = 0;
+    
+    
     enum AVPixelFormat dst_format = AV_PIX_FMT_NONE;
-#if ! USE_FF_VTB
     switch (overlay->format) {
         case SDL_FCC_YV12:
             need_swap_uv = 1;
@@ -345,11 +353,8 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
         default:
             dst_format = overlay->ff_format;
     }
-#else
-    dst_format = overlay->ff_format;
-#endif
-    
-    av_frame_unref(opaque->linked_frame);
+
+
     // setup frame
     if (use_linked_frame) {
         // linked frame
@@ -378,7 +383,8 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
         if (need_swap_uv)
             FFSWAP(Uint8*, swscale_dst_pic.data[1], swscale_dst_pic.data[2]);
     }
-    
+
+
     // swscale / direct draw
     /*
      ALOGE("ijk_image_convert w=%d, h=%d, df=%d, dd=%d, dl=%d, sf=%d, sd=%d, sl=%d",
@@ -396,22 +402,14 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
     } else if (ijk_image_convert(frame->width, frame->height,
                                  dst_format, swscale_dst_pic.data, swscale_dst_pic.linesize,
                                  frame->format, (const uint8_t**) frame->data, frame->linesize)) {
-        @try {
-            //assert(frame->colorspace != AVCOL_SPC_UNSPECIFIED);
-            opaque->img_convert_ctx = sws_getCachedContext(opaque->img_convert_ctx,
-                                                           frame->width, frame->height, frame->format, frame->width, frame->height,
-                                                           dst_format, opaque->sws_flags, NULL, NULL, NULL);
-        } @catch (NSException *exception) {
-            
-        } @finally {
-
-        }
-        
+        opaque->img_convert_ctx = sws_getCachedContext(opaque->img_convert_ctx,
+                                                       frame->width, frame->height, frame->format, frame->width, frame->height,
+                                                       dst_format, opaque->sws_flags, NULL, NULL, NULL);
         if (opaque->img_convert_ctx == NULL) {
             ALOGE("sws_getCachedContext failed");
             return -1;
         }
-        
+
         sws_scale(opaque->img_convert_ctx, (const uint8_t**) frame->data, frame->linesize,
                   0, frame->height, swscale_dst_pic.data, swscale_dst_pic.linesize);
 
@@ -421,18 +419,23 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
         }
     }
     
-#if USE_FF_VTB
-    swscale_dst_pic.width = frame->width;
-    swscale_dst_pic.height = frame->height;
-    swscale_dst_pic.format = dst_format;
-    swscale_dst_pic.color_range = frame->color_range;
+    // TODO: 9 draw black if overlay is larger than screen
+    return 0;
+}
+
+#else
+
+static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AVFrame *frame)
+{
+    assert(overlay);
+    SDL_VoutOverlay_Opaque *opaque = overlay->opaque;
     
     if (opaque->pixelBuffer) {
         CVPixelBufferRelease(opaque->pixelBuffer);
         opaque->pixelBuffer = NULL;
     }
     
-    CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(&swscale_dst_pic, NULL);
+    CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, NULL);
     if (pixel_buffer) {
         opaque->pixelBuffer = pixel_buffer;
         overlay->cv_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
@@ -446,12 +449,12 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
             overlay->planes = 1;
             overlay->pitches[0] = CVPixelBufferGetWidth(pixel_buffer);
         }
+        
+        return 0;
     }
-#endif
-    
-    // TODO: 9 draw black if overlay is larger than screen
-    return 0;
+    return 1;
 }
+#endif
 
 #ifndef __clang_analyzer__
 SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_format, SDL_Vout *display)
@@ -504,8 +507,11 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
     overlay->free_l             = func_free_l;
     overlay->lock               = func_lock;
     overlay->unlock             = func_unlock;
+#if USE_FF_VTB
+    overlay->func_fill_frame    = func_fill_avframe_to_cvpixelbuffer;
+#else
     overlay->func_fill_frame    = func_fill_frame;
-
+#endif
     enum AVPixelFormat ff_format = AV_PIX_FMT_NONE;
     int buf_width = width;
     switch (overlay_format) {
@@ -624,7 +630,7 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
     
     //record ff_format
     overlay->ff_format = ff_format;
-
+#if ! USE_FF_VTB
     int buf_height = height;
     opaque->managed_frame = opaque_setup_frame(opaque, ff_format, buf_width, buf_height);
     if (!opaque->managed_frame) {
@@ -632,7 +638,7 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
         goto fail;
     }
     overlay_fill(overlay, opaque->managed_frame, opaque->planes);
-    
+#endif
     return overlay;
 
 fail:

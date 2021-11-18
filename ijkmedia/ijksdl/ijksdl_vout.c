@@ -29,12 +29,28 @@
 #if defined(__ANDROID__)
 #include <android/native_window_jni.h>
 #endif
+#include "ijksdl_image_convert.h"
+
+typedef struct _SDL_Image_Converter
+{
+    struct SwsContext *sws_ctx;
+    AVFrame *frame;
+    AVBufferRef *frame_buffer;
+}_SDL_Image_Converter;
 
 void SDL_VoutFree(SDL_Vout *vout)
 {
     if (!vout)
         return;
 
+    _SDL_Image_Converter *convert = vout->image_converter;
+    if (NULL != convert) {
+        sws_freeContext(convert->sws_ctx);
+        av_frame_free(&convert->frame);
+        av_buffer_unref(&convert->frame_buffer);
+        vout->image_converter = NULL;
+    }
+    
     if (vout->free_l) {
         vout->free_l(vout);
     } else {
@@ -66,6 +82,71 @@ int SDL_VoutSetOverlayFormat(SDL_Vout *vout, Uint32 overlay_format)
 
     vout->overlay_format = overlay_format;
     return 0;
+}
+
+int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame **outFrame)
+{
+    if (!vout) {
+        return -1;
+    }
+    
+    if (inFrame->format == vout->ff_format) {
+        if (outFrame) {
+            *outFrame = inFrame;
+        }
+        return 0;
+    }
+    
+    _SDL_Image_Converter *convert = vout->image_converter;
+    if (NULL == convert) {
+        convert = malloc(sizeof(_SDL_Image_Converter));
+        bzero(convert, sizeof(_SDL_Image_Converter));
+        
+        convert->sws_ctx = sws_getCachedContext(convert->sws_ctx, inFrame->width, inFrame->height,
+                                      inFrame->format, inFrame->width, inFrame->height,
+                                      vout->ff_format, SWS_BILINEAR, NULL, NULL, NULL);
+        
+        if (convert->sws_ctx == NULL) {
+            ALOGE("sws_getCachedContext failed");
+            return -3;
+        }
+        
+        convert->frame = av_frame_alloc();
+        
+        int frame_bytes = av_image_get_buffer_size(vout->ff_format, inFrame->width, inFrame->height, 1);
+        AVBufferRef *frame_buffer_ref = av_buffer_alloc(frame_bytes);
+        if (!frame_buffer_ref)
+            return -2;
+        
+        av_frame_copy_props(convert->frame, inFrame);
+        convert->frame->format  = vout->ff_format;
+        
+        av_image_fill_arrays(convert->frame->data, convert->frame->linesize,
+                             frame_buffer_ref->data, vout->ff_format, inFrame->width, inFrame->height, 1);
+        convert->frame_buffer  = frame_buffer_ref;
+        
+        vout->image_converter = convert;
+    }
+    
+    //优先使用libyuv转换
+    int r = ijk_image_convert(inFrame->width, inFrame->height,
+                             vout->ff_format, convert->frame->data, convert->frame->linesize,
+                             inFrame->format, (const uint8_t**) inFrame->data, inFrame->linesize);
+    
+    //libyuv转换失败？
+    if (r) {
+        sws_scale(convert->sws_ctx, (const uint8_t**) inFrame->data, inFrame->linesize,
+                  0, inFrame->height, convert->frame->data, convert->frame->linesize);
+        r = 0;
+    }
+    
+    if (r == 0 && outFrame) {
+        convert->frame->width  = inFrame->width;
+        convert->frame->height = inFrame->height;
+        *outFrame = convert->frame;
+    }
+    
+    return r;
 }
 
 SDL_VoutOverlay *SDL_Vout_CreateOverlay(int width, int height, int frame_format, SDL_Vout *vout)
