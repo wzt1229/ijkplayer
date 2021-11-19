@@ -60,7 +60,7 @@
     self.subtitleMargin = 0.7;
     [self onReset:nil];
     
-    [self.playList addObject:[NSURL URLWithString:@"https://kvideo01.youju.sohu.com/120392a9-f111-41a8-bf5a-d1c44d3cd9c92_0_0.mp4"]];
+    [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?u=1&new=/0/139/gJvOkbryQZao9tYPQPeDyE.mp4&key=40sW4pTGkTZl6Qv2tyTwKrnfyBbowy1m&vid=290759323&qd=mweb&cv=&pt=&ch=my&pg=1&ca=3&mkey=ycj6ipK4IqRadjIt9bgNhEyhHCTryy47&prod=ifox"]];
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
     
     NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
