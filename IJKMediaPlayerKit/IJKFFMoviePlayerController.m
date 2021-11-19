@@ -1068,6 +1068,16 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         int64_t video_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_VIDEO_STREAM, -1);
         int64_t audio_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_AUDIO_STREAM, -1);
         int64_t subtitle_stream = ijkmeta_get_int64_l(rawMeta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
+        if (-1 == video_stream) {
+            _monitor.videoMeta = nil;
+        }
+        if (-1 == audio_stream) {
+            _monitor.audioMeta = nil;
+        }
+        if (-1 == subtitle_stream) {
+            _monitor.subtitleMeta = nil;
+        }
+        
         NSMutableArray *streams = [[NSMutableArray alloc] init];
 
         size_t count = ijkmeta_get_children_count_l(rawMeta);
@@ -1161,13 +1171,13 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                     @"error": @(avmsg->arg1)}];
             break;
         }
-        case FFP_MSG_EX_TIMED_TEXT_LOAD:  {//load msg
-            NSLog(@"FFP_MSG_TIMED_TEXT_LOAD:\n");
+        case FFP_MSG_SELECTED_STREAM_CHANGED:  {//stream changed msg
+            NSLog(@"FFP_MSG_SELECTED_STREAM_CHANGED:\n");
 
             IjkMediaMeta *rawMeta = ijkmp_get_meta_l(_mediaPlayer);
             [self traverseIJKMetaData:rawMeta];
             
-            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMPMoviePlayerExTimedTextFirstLoadtNotification object:self];
+            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self];
             break;
         }
         case FFP_MSG_PREPARED: {
@@ -1873,12 +1883,10 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
 - (void)closeCurrentStream:(NSString *)streamType
 {
     NSDictionary *dic = self.monitor.mediaMeta;
-    for (NSDictionary *stream in dic[kk_IJKM_KEY_STREAMS]) {
-        NSString *type = stream[k_IJKM_KEY_TYPE];
-        if ([type isEqualToString:streamType]) {
-            int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
-            ijkmp_set_stream_selected(_mediaPlayer,streamIdx,0);
-            break;
+    if (dic[streamType] != nil) {
+        int streamIdx = [dic[streamType] intValue];
+        if (streamIdx > -1) {
+             ijkmp_set_stream_selected(_mediaPlayer,streamIdx,0);
         }
     }
 }
