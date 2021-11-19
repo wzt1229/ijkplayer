@@ -3736,6 +3736,8 @@ static int read_thread(void *arg)
                 }
                 
                 ijkmeta_set_ex_subtitle_context_l(ffp);
+                
+                ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
             }
         }
         
