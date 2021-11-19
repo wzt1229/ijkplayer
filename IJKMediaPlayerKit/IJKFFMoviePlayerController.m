@@ -1155,8 +1155,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         case FFP_MSG_FLUSH:
             break;
         case FFP_MSG_ERROR: {
-            NSLog(@"FFP_MSG_ERROR: %d\n", avmsg->arg1);
-
             [self setScreenOn:NO];
 
             [[NSNotificationCenter defaultCenter]
@@ -1172,8 +1170,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_SELECTED_STREAM_CHANGED:  {//stream changed msg
-            NSLog(@"FFP_MSG_SELECTED_STREAM_CHANGED:\n");
-
             IjkMediaMeta *rawMeta = ijkmp_get_meta_l(_mediaPlayer);
             [self traverseIJKMetaData:rawMeta];
             
@@ -1181,8 +1177,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_PREPARED: {
-            NSLog(@"FFP_MSG_PREPARED:\n");
-
             _monitor.prepareDuration = (int64_t)SDL_GetTickHR() - _monitor.prepareStartTick;
             int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
             switch (vdec) {
@@ -1233,7 +1227,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_VIDEO_SIZE_CHANGED:
-            NSLog(@"FFP_MSG_VIDEO_SIZE_CHANGED: %d, %d\n", avmsg->arg1, avmsg->arg2);
             if (avmsg->arg1 > 0)
                 _videoWidth = avmsg->arg1;
             if (avmsg->arg2 > 0)
@@ -1241,7 +1234,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             [self changeNaturalSize];
             break;
         case FFP_MSG_SAR_CHANGED:
-            NSLog(@"FFP_MSG_SAR_CHANGED: %d, %d\n", avmsg->arg1, avmsg->arg2);
             if (avmsg->arg1 > 0)
                 _sampleAspectRatioNumerator = avmsg->arg1;
             if (avmsg->arg2 > 0)
@@ -1249,8 +1241,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             [self changeNaturalSize];
             break;
         case FFP_MSG_BUFFERING_START: {
-            NSLog(@"FFP_MSG_BUFFERING_START:\n");
-
             _monitor.lastPrerollStartTick = (int64_t)SDL_GetTickHR();
 
             _loadState = IJKMPMovieLoadStateStalled;
@@ -1263,8 +1253,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_BUFFERING_END: {
-            NSLog(@"FFP_MSG_BUFFERING_END:\n");
-
             _monitor.lastPrerollDuration = (int64_t)SDL_GetTickHR() - _monitor.lastPrerollStartTick;
 
             _loadState = IJKMPMovieLoadStatePlayable | IJKMPMovieLoadStatePlaythroughOK;
@@ -1297,7 +1285,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
              object:self];
             break;
         case FFP_MSG_SEEK_COMPLETE: {
-            NSLog(@"FFP_MSG_SEEK_COMPLETE:\n");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerDidSeekCompleteNotification
              object:self
@@ -1308,14 +1295,12 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         }
         case FFP_MSG_VIDEO_DECODER_OPEN: {
             _isVideoToolboxOpen = avmsg->arg1;
-            NSLog(@"FFP_MSG_VIDEO_DECODER_OPEN: %@\n", _isVideoToolboxOpen ? @"true" : @"false");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerVideoDecoderOpenNotification
              object:self];
             break;
         }
         case FFP_MSG_VIDEO_RENDERING_START: {
-            NSLog(@"FFP_MSG_VIDEO_RENDERING_START:\n");
             _monitor.firstVideoFrameLatency = (int64_t)SDL_GetTickHR() - _monitor.prepareStartTick;
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerFirstVideoFrameRenderedNotification
@@ -1323,49 +1308,42 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_AUDIO_RENDERING_START: {
-            NSLog(@"FFP_MSG_AUDIO_RENDERING_START:\n");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerFirstAudioFrameRenderedNotification
              object:self];
             break;
         }
         case FFP_MSG_AUDIO_DECODED_START: {
-            NSLog(@"FFP_MSG_AUDIO_DECODED_START:\n");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerFirstAudioFrameDecodedNotification
              object:self];
             break;
         }
         case FFP_MSG_VIDEO_DECODED_START: {
-            NSLog(@"FFP_MSG_VIDEO_DECODED_START:\n");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerFirstVideoFrameDecodedNotification
              object:self];
             break;
         }
         case FFP_MSG_OPEN_INPUT: {
-            NSLog(@"FFP_MSG_OPEN_INPUT:\n");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerOpenInputNotification
              object:self];
             break;
         }
         case FFP_MSG_FIND_STREAM_INFO: {
-            NSLog(@"FFP_MSG_FIND_STREAM_INFO:\n");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerFindStreamInfoNotification
              object:self];
             break;
         }
         case FFP_MSG_COMPONENT_OPEN: {
-            NSLog(@"FFP_MSG_COMPONENT_OPEN:\n");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerComponentOpenNotification
              object:self];
             break;
         }
         case FFP_MSG_ACCURATE_SEEK_COMPLETE: {
-            NSLog(@"FFP_MSG_ACCURATE_SEEK_COMPLETE:\n");
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerAccurateSeekCompleteNotification
              object:self
@@ -1373,7 +1351,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_VIDEO_SEEK_RENDERING_START: {
-            NSLog(@"FFP_MSG_VIDEO_SEEK_RENDERING_START:\n");
             _isVideoSync = avmsg->arg1;
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerSeekVideoStartNotification
@@ -1382,7 +1359,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_AUDIO_SEEK_RENDERING_START: {
-            NSLog(@"FFP_MSG_AUDIO_SEEK_RENDERING_START:\n");
             _isAudioSync = avmsg->arg1;
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerSeekAudioStartNotification
