@@ -1023,6 +1023,8 @@ static void video_image_display2(FFPlayer *ffp)
                     }
                 }
             }
+        } else {
+            update_subtitle_text(ffp, "");
         }
         
         if (ffp->render_wait_start && !ffp->start_on_prepared && is->pause_req) {
@@ -5289,7 +5291,10 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             
     switch (type) {
         case AVMEDIA_TYPE_VIDEO:
-            if (stream != is->video_stream && is->video_stream >= 0) {
+            if (selected && stream == is->video_stream) {
+                return 1;
+            }
+            if (is->video_stream >= 0) {
                 stream_component_close(ffp, is->video_stream);
                 closed = 1;
             }
@@ -5298,7 +5303,10 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             }
             break;
         case AVMEDIA_TYPE_AUDIO:
-            if (stream != is->audio_stream && is->audio_stream >= 0) {
+            if (selected && stream == is->audio_stream) {
+                return 1;
+            }
+            if (is->audio_stream >= 0) {
                 stream_component_close(ffp, is->audio_stream);
                 closed = 1;
             }
@@ -5307,7 +5315,10 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             }
             break;
         case AVMEDIA_TYPE_SUBTITLE:
-            if (stream != is->subtitle_stream && is->subtitle_stream >= 0) {
+            if (selected && stream == is->subtitle_stream) {
+                return 1;
+            }
+            if (is->subtitle_stream >= 0) {
                 stream_component_close(ffp, is->subtitle_stream);
                 closed = 1;
             }
@@ -5322,11 +5333,16 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             }
             break;
         case AVMEDIA_TYPE_NB + 1:
-            if (stream != is->subtitle_stream && is->subtitle_stream >= 0) {
+            
+            if (selected && stream == is->subtitle_ex->sub_st_idx) {
+                return 1;
+            }
+            
+            if (is->subtitle_stream >= 0) {
                 stream_component_close(ffp, is->subtitle_stream);
                 closed = 1;
             }
-
+            
             if (is->subtitle_ex && is->subtitle_ex->sub_st_idx > 0) {
                 external_subtitle_close(ffp);
                 closed = 1;

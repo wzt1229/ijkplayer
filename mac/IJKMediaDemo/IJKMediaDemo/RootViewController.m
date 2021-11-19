@@ -503,7 +503,7 @@
 - (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender
 {
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.bottomMargin = sender.intValue / 100.0;
+    p.bottomMargin = sender.floatValue;
     self.player.view.subtitlePreference = p;
     [self.player invalidateSubtitleEffect];
 }
