@@ -451,6 +451,9 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
     CFDictionarySetValue(destinationPixelBufferAttributes, kCVPixelBufferIOSurfacePropertiesKey, (__bridge void *)[NSDictionary dictionary]);
     CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferOpenGLTextureCacheCompatibilityKey, YES);
 //    CFDictionarySetBoolean(destinationPixelBufferAttributes, kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey, YES);
+#else
+    CFDictionarySetBoolean(destinationPixelBufferAttributes,
+                              kCVPixelBufferOpenGLESCompatibilityKey, YES);
 #endif
 //    CFDictionarySetBoolean(destinationPixelBufferAttributes,
 //                           kCVPixelBufferMetalCompatibilityKey, NO);
@@ -950,15 +953,14 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
     switch (codec) {
         case AV_CODEC_ID_HEVC:
             format_id = kCMVideoCodecType_HEVC;
-            if (@available(macOS 10.13, *)) {
+            if (@available(iOS 11.0,macOS 10.13, *)) {
                 isHevcSupported = VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC);
-                
 //                CFMutableDictionaryRef encoderSpecification = CFDictionaryCreateMutable( NULL,0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 //                        CFDictionarySetValue(encoderSpecification, kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_HEVC_Main_AutoLevel);
 //                        CFDictionarySetValue(encoderSpecification, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
 //                        OSStatus status = VTCopySupportedPropertyDictionaryForEncoder(3840, 2160, kCMVideoCodecType_HEVC, encoderSpecification, nil, nil);
 //                isHevcSupported = status == kVTCouldNotFindVideoEncoderErr;
-#warning force as support hevc
+//FIXME  15年产的 MBP 返回 false，但实际上支持硬解，因此只要系统满足就认为支持
                 isHevcSupported = true;
             } else {
                 // Fallback on earlier versions
@@ -1037,6 +1039,8 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
     fmt_desc->max_ref_frames = FFMAX(fmt_desc->max_ref_frames, 2);
     fmt_desc->max_ref_frames = FFMIN(fmt_desc->max_ref_frames, 5);
     
+    ALOGI("m_max_ref_frames %d \n", fmt_desc->max_ref_frames);
+    
 //    //video toolbox 不支持
 //    pixelFormatType = kCVPixelFormatType_16LE565;
 //    pixelFormatType = kCVPixelFormatType_16BE565;
@@ -1044,7 +1048,7 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
 //    pixelFormatType = kCVPixelFormatType_24BGR;
 //    pixelFormatType = kCVPixelFormatType_32RGBA;
 //    pixelFormatType = kCVPixelFormatType_32ABGR;
-    //支持
+#if TARGET_OS_MAC
     int pixelFormatType = -1;
     if (overlay_format == SDL_FCC_VTB_BGRA) {
         pixelFormatType = kCVPixelFormatType_32BGRA;
@@ -1058,13 +1062,14 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
         bool fullRange = false;//codecpar->color_range != AVCOL_RANGE_MPEG;
         pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
     }
+#else
+    pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
+#endif
     
     assert(pixelFormatType != -1);
     
     fmt_desc->pixelBufferPixelFormat = pixelFormatType;
     
-    ALOGI("m_max_ref_frames %d \n", fmt_desc->max_ref_frames);
-
     return 0;
 fail:
     vtbformat_destroy(fmt_desc);

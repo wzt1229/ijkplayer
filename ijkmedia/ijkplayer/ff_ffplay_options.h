@@ -177,7 +177,7 @@ static const AVOption ffp_context_options[] = {
     { "video-mime-type",                    "default video mime type",
         OPTION_OFFSET(video_mime_type),     OPTION_STR(NULL) },
 
-        // iOS only options
+        // Apple only options
     { "videotoolbox",                       "VideoToolbox: enable",
         OPTION_OFFSET(videotoolbox),        OPTION_INT(0, 0, 1) },
     { "videotoolbox-max-frame-width",       "VideoToolbox: max width of output frame",
