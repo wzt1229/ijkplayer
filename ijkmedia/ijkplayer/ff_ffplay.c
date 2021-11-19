@@ -3735,8 +3735,6 @@ static int read_thread(void *arg)
                 }
                 
                 ijkmeta_set_ex_subtitle_context_l(ffp);
-                
-                ffp_notify_msg1(ffp, FFP_MSG_EX_TIMED_TEXT_LOAD);
             }
         }
         
@@ -5241,6 +5239,23 @@ int ffp_get_video_rotate_degrees(FFPlayer *ffp)
     return theta;
 }
 
+void _ijkmeta_set_stream(FFPlayer* ffp, int type, int stream)
+{
+    switch (type) {
+        case AVMEDIA_TYPE_VIDEO:
+            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_VIDEO_STREAM, stream);
+            break;
+        case AVMEDIA_TYPE_AUDIO:
+            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_AUDIO_STREAM, stream);
+            break;
+        case AVMEDIA_TYPE_SUBTITLE:
+            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, stream);
+            break;
+        default:
+            break;
+    }
+}
+
 int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
 {
     VideoState        *is = ffp->is;
@@ -5271,34 +5286,53 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
         type = AVMEDIA_TYPE_NB+1;
     }
 
+    int closed = 0;
     if (selected) {
         switch (type) {
             case AVMEDIA_TYPE_VIDEO:
-                if (stream != is->video_stream && is->video_stream >= 0)
+                if (stream != is->video_stream && is->video_stream >= 0) {
                     stream_component_close(ffp, is->video_stream);
+                    closed = 1;
+                }
                 break;
             case AVMEDIA_TYPE_AUDIO:
-                if (stream != is->audio_stream && is->audio_stream >= 0)
+                if (stream != is->audio_stream && is->audio_stream >= 0) {
                     stream_component_close(ffp, is->audio_stream);
+                    closed = 1;
+                }
                 break;
             case AVMEDIA_TYPE_SUBTITLE:
-                if (stream != is->subtitle_stream && is->subtitle_stream >= 0)
+                if (stream != is->subtitle_stream && is->subtitle_stream >= 0) {
                     stream_component_close(ffp, is->subtitle_stream);
+                    closed = 1;
+                }
 
-                if (is->subtitle_ex && is->subtitle_ex->sub_st_idx > 0)
+                if (is->subtitle_ex && is->subtitle_ex->sub_st_idx > 0) {
                     external_subtitle_close(ffp);
+                    closed = 1;
+                }
 
                 break;
             case AVMEDIA_TYPE_NB + 1:
-                if (is->subtitle_stream >= 0)
+                if (is->subtitle_stream >= 0) {
                     stream_component_close(ffp, is->subtitle_stream);
+                    closed = 1;
+                }
                 if (is->subtitle_ex) {
                     int arr_idx =(stream - ic->nb_streams)% MAX_EX_SUBTITLE_NUM;
 
                     if (0 != av_strncasecmp(is->subtitle_ex->file_name, is->ex_sub_url[arr_idx], 1024)) {
                         external_subtitle_close(ffp);
                         is->subtitle_ex->file_name = strdup(is->ex_sub_url[arr_idx]);
-                        return external_subtitle_open(ffp);
+                        int ret = external_subtitle_open(ffp);
+                        if (ret >= 0) {
+                            _ijkmeta_set_stream(ffp, type, stream);
+                        } else {
+                            _ijkmeta_set_stream(ffp, type, -1);
+                        }
+                        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+                        
+                        return ret;
                     }
                 }
                 break;
@@ -5306,7 +5340,17 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 av_log(ffp, AV_LOG_ERROR, "select invalid stream %d of video type %d\n", stream, codecpar->codec_type);
                 return -1;
         }
-        return stream_component_open(ffp, stream);
+        
+        int ret = stream_component_open(ffp, stream);
+        if (closed || ret >= 0) {
+            if (ret < 0) {
+                stream = -1;
+            }
+            _ijkmeta_set_stream(ffp, type, stream);
+            ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+        }
+        
+        return ret;
     } else {
         switch (type) {
             case AVMEDIA_TYPE_VIDEO:
@@ -5329,6 +5373,8 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 av_log(ffp, AV_LOG_ERROR, "select invalid stream %d of audio type %d\n", stream, codecpar->codec_type);
                 return -1;
         }
+        _ijkmeta_set_stream(ffp, type, -1);
+        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
         return 0;
     }
 }
