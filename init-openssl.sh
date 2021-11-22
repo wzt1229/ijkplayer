@@ -50,10 +50,7 @@ function main()
 {
     if [ "$TARGET" = 'ios' ];then
         pull_base
-        pull_fork "armv7" "$TARGET"
-        pull_fork "armv7s" "$TARGET"
         pull_fork "arm64" "$TARGET"
-        pull_fork "i386" "$TARGET"
         pull_fork "x86_64" "$TARGET"
     elif [ "$TARGET" = 'mac' ];then
         pull_base
