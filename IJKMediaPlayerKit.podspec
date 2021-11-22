@@ -132,4 +132,5 @@ TODO: Add long description of the pod here.
   s.osx.vendored_libraries = 'mac/build/universal/lib/*.a'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
   s.osx.frameworks = 'AudioUnit', 'Cocoa', 'OpenGL', 'GLKit'
+  
 end
