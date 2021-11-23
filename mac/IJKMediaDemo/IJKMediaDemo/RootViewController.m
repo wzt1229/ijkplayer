@@ -587,15 +587,15 @@
 - (IBAction)onReset:(NSButton *)sender
 {
     if (sender.tag == 1) {
-        self.brightness = 0.6;
+        self.brightness = 0.2;
     } else if (sender.tag == 2) {
         self.saturation = 1.0;
     } else if (sender.tag == 3) {
-        self.contrast = 1.0;
+        self.contrast = 0.8;
     } else {
-        self.brightness = 0.6;
+        self.brightness = 0.2;
         self.saturation = 1.0;
-        self.contrast = 1.0;
+        self.contrast = 0.8;
     }
     
     [self onChnageBSC:nil];

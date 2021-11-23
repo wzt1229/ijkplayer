@@ -52,24 +52,17 @@ static const char g_shader_rect[] = IJK_GLES_STRING(
     uniform vec2 textureDimensionX;
     uniform vec2 textureDimensionY;
     uniform int isSubtitle;
-            
-    vec3 rgb2hsv(vec3 c)
-    {
-        vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-        vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
-        vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
-
-        float d = q.x - min(q.w, q.y);
-        float e = 1.0e-10;
-        return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-    }
-
-    vec3 hsv2rgb(vec3 c)
-    {
-        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-    }
+                                                    
+//    vec3 applyHue(vec3 aColor, float aHue)
+//    {
+//        //Range(-360, 360)
+//        float angle = radians(aHue);
+//        vec3 k = vec3(0.57735, 0.57735, 0.57735);
+//        float cosAngle = cos(angle);
+//        //Rodrigues' rotation formula
+//        return aColor * cosAngle + cross(k, aColor) * sin(angle) + k * dot(k, aColor) * (1.0 - cosAngle);
+//    }
+                                                    
                                                     
     void main()
     {
@@ -87,33 +80,21 @@ static const char g_shader_rect[] = IJK_GLES_STRING(
             yuv.x = texture2DRect(us2_SamplerX, recTexCoordX).r;
             yuv.yz = (texture2DRect(us2_SamplerY, recTexCoordY).ra - vec2(0.5, 0.5));
             
-            //C 是对比度值，B 是亮度值，H 是所需的色调角度
+            //C 是对比度值，B 是亮度值，S 是饱和度
             float B = um3_Pre_ColorConversion.x;
-            float H = um3_Pre_ColorConversion.y;
+            float S = um3_Pre_ColorConversion.y;
             float C = um3_Pre_ColorConversion.z;
 
             rgb = um3_ColorConversion * yuv;
 
-            vec3 fragHSV = rgb2hsv(rgb);
-            fragHSV.x *= H;
-            fragHSV.yz *= vec2(C, B);
-            fragHSV.x = mod(fragHSV.x, 1.0);
-            fragHSV.y = mod(fragHSV.y, 1.0);
-            fragHSV.z = mod(fragHSV.z, 1.0);
-            gl_FragColor = vec4(hsv2rgb(fragHSV), 1.0);
+//            rgb = applyHue(rgb, 0.0);
+            rgb = (rgb - 0.5) * C + 0.5;
+            rgb = rgb + B;
+            vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
+            rgb = intensity + S * (rgb - intensity);
 
-//            rgb = rgb + vec3(B);
-//
-//            rgb = rgb - vec3(0.5) * C + vec3(0.5);
-//
-//            const vec3 luminanceWeighting = vec3(0.2125, 0.7154, 0.0721);
-//            float luminance = dot(rgb, luminanceWeighting);
-//            vec3 greyScaleColor = vec3(luminance);
-//            rgb = mix(greyScaleColor, rgb, H);
-//
-//            vec4 result = vec4(rgb, 1.0);
-//
-//            gl_FragColor = result;
+            vec4 result = vec4(rgb, 1.0);
+            gl_FragColor = result;
         }
     }
 );
