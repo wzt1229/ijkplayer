@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="18122" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="18122"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -90,7 +90,7 @@
                                     </textFieldCell>
                                 </textField>
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rTl-xm-zXC">
-                                    <rect key="frame" x="75" y="3" width="72" height="32"/>
+                                    <rect key="frame" x="75" y="3" width="71" height="32"/>
                                     <buttonCell key="cell" type="push" title="Pause" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="E5l-a7-uZ0">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -100,7 +100,7 @@
                                     </connections>
                                 </button>
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bQf-yX-of7">
-                                    <rect key="frame" x="141" y="3" width="64" height="32"/>
+                                    <rect key="frame" x="140" y="3" width="63" height="32"/>
                                     <buttonCell key="cell" type="push" title="Next" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="y4b-OA-dtb">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -110,7 +110,7 @@
                                     </connections>
                                 </button>
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1yx-t2-Xvg">
-                                    <rect key="frame" x="199" y="3" width="64" height="32"/>
+                                    <rect key="frame" x="197" y="3" width="63" height="32"/>
                                     <buttonCell key="cell" type="push" title="-50s" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ipC-eK-eao">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -120,7 +120,7 @@
                                     </connections>
                                 </button>
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gBs-35-k87">
-                                    <rect key="frame" x="257" y="3" width="66" height="32"/>
+                                    <rect key="frame" x="254" y="3" width="65" height="32"/>
                                     <buttonCell key="cell" type="push" title="+50s" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="xql-DQ-KZz">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -130,7 +130,7 @@
                                     </connections>
                                 </button>
                                 <textField horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RcO-yC-Eif">
-                                    <rect key="frame" x="324" y="12" width="41" height="16"/>
+                                    <rect key="frame" x="320" y="12" width="41" height="16"/>
                                     <constraints>
                                         <constraint firstAttribute="height" constant="20" id="0nn-Cf-YW0"/>
                                         <constraint firstAttribute="width" constant="80" id="Lyo-qp-CcI"/>
@@ -510,7 +510,7 @@
                                                         <constraint firstAttribute="width" constant="200" id="IhZ-RN-2Z9"/>
                                                         <constraint firstAttribute="height" constant="30" id="qvE-Hf-2CL"/>
                                                     </constraints>
-                                                    <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="-1" maxValue="1" tickMarkPosition="above" sliderType="linear" id="L6h-kq-zG0"/>
+                                                    <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.40000000000000002" maxValue="1" doubleValue="0.5" tickMarkPosition="above" sliderType="linear" id="L6h-kq-zG0"/>
                                                     <connections>
                                                         <action selector="onChnageBSC:" target="-2" id="VYU-sd-m9A"/>
                                                         <binding destination="-2" name="value" keyPath="brightness" id="PPG-3T-Ak6"/>
@@ -558,7 +558,7 @@
                                                         <constraint firstAttribute="width" constant="200" id="H9l-1H-bwI"/>
                                                         <constraint firstAttribute="height" constant="30" id="aAz-YK-2F1"/>
                                                     </constraints>
-                                                    <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="2" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="tEU-5o-VPQ"/>
+                                                    <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="2.5" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="tEU-5o-VPQ"/>
                                                     <connections>
                                                         <action selector="onChnageBSC:" target="-2" id="9MG-jN-Pff"/>
                                                         <binding destination="-2" name="value" keyPath="saturation" id="xbg-ds-dXS"/>
@@ -606,7 +606,7 @@
                                                         <constraint firstAttribute="height" constant="30" id="el9-uL-mAX"/>
                                                         <constraint firstAttribute="width" constant="200" id="iLU-V3-MFe"/>
                                                     </constraints>
-                                                    <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="4" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="0a1-UR-de0"/>
+                                                    <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="2.5" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="0a1-UR-de0"/>
                                                     <connections>
                                                         <action selector="onChnageBSC:" target="-2" id="KDg-19-4cj"/>
                                                         <binding destination="-2" name="value" keyPath="contrast" id="e4w-Fm-Vd8"/>
