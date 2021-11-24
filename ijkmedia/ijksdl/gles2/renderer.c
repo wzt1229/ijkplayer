@@ -501,9 +501,9 @@ void* IJK_GLES2_Renderer_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay 
 
 void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer,float brightness,float satutaion,float contrast)
 {
-    renderer->PreColorConversion[0] = brightness-0.2;
+    renderer->PreColorConversion[0] = brightness;
     renderer->PreColorConversion[1] = satutaion;
-    renderer->PreColorConversion[2] = contrast+0.2;
+    renderer->PreColorConversion[2] = contrast;
 }
 
 /*

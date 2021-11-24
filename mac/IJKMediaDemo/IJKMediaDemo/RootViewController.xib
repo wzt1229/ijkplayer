@@ -510,7 +510,7 @@
                                                         <constraint firstAttribute="width" constant="200" id="IhZ-RN-2Z9"/>
                                                         <constraint firstAttribute="height" constant="30" id="qvE-Hf-2CL"/>
                                                     </constraints>
-                                                    <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.69999999999999996" doubleValue="0.69999999999999996" tickMarkPosition="above" sliderType="linear" id="L6h-kq-zG0"/>
+                                                    <sliderCell key="cell" continuous="YES" alignment="left" maxValue="2" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="L6h-kq-zG0"/>
                                                     <connections>
                                                         <action selector="onChnageBSC:" target="-2" id="VYU-sd-m9A"/>
                                                         <binding destination="-2" name="value" keyPath="brightness" id="PPG-3T-Ak6"/>

@@ -89,7 +89,7 @@ static const char g_shader_rect[] = IJK_GLES_STRING(
 
 //            rgb = applyHue(rgb, 0.0);
             rgb = (rgb - 0.5) * C + 0.5;
-            rgb = rgb + B;
+            rgb = rgb + (0.75*B-0.5)/2.5 - 0.1;
             vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
             rgb = intensity + S * (rgb - intensity);
 

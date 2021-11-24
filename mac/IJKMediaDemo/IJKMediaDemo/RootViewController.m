@@ -148,7 +148,7 @@
     [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
     [options setPlayerOptionIntValue:0      forKey:@"videotoolbox-async"];
     
-    BOOL isVideoToolBox = YES;
+    BOOL isVideoToolBox = NO;
     if (isVideoToolBox) {
         //        [options setPlayerOptionValue:@"fcc-vtb-RGB24"         forKey:@"overlay-format"];
         //        [options setPlayerOptionValue:@"fcc-vtb-ARGB"          forKey:@"overlay-format"];
@@ -579,7 +579,7 @@
     
     IJKSDLColorConversionPreference colorPreference = self.player.view.colorPreference;
     colorPreference.brightness = self.brightness;//B
-    colorPreference.saturation = self.saturation;//H
+    colorPreference.saturation = self.saturation;//S
     colorPreference.contrast = self.contrast;//C
     self.player.view.colorPreference = colorPreference;
 }
@@ -587,15 +587,15 @@
 - (IBAction)onReset:(NSButton *)sender
 {
     if (sender.tag == 1) {
-        self.brightness = 0.2;
+        self.brightness = 1.0;
     } else if (sender.tag == 2) {
         self.saturation = 1.0;
     } else if (sender.tag == 3) {
-        self.contrast = 0.8;
+        self.contrast = 1.0;
     } else {
-        self.brightness = 0.2;
+        self.brightness = 1.0;
         self.saturation = 1.0;
-        self.contrast = 0.8;
+        self.contrast = 1.0;
     }
     
     [self onChnageBSC:nil];
