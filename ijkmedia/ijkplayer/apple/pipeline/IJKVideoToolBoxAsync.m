@@ -973,43 +973,43 @@ int videotoolbox_async_decode_frame(Ijk_VideoToolBox_Opaque* context)
         }
 
         if (!d->packet_pending || d->queue->serial != d->pkt_serial) {
-            AVPacket pkt;
             do {
                 if (d->queue->nb_packets == 0)
                     SDL_CondSignal(d->empty_queue_cond);
                 ffp_video_statistic_l(ffp);
-                if (ffp_packet_queue_get_or_buffering(ffp, d->queue, &pkt, &d->pkt_serial, &d->finished) < 0)
+                
+                int old_serial = d->pkt_serial;
+                if (ffp_packet_queue_get_or_buffering(ffp, d->queue, d->pkt, &d->pkt_serial, &d->finished) < 0)
                     return -1;
-                if (ffp_is_flush_packet(&pkt)) {
+                if (old_serial != d->pkt_serial) {
                     avcodec_flush_buffers(d->avctx);
                     context->refresh_request = true;
                     context->serial += 1;
                     d->finished = 0;
-                    ALOGI("flushed last keyframe pts %lld \n",d->pkt.pts);
+                    ALOGI("flushed last keyframe pts %lld \n",d->pkt->pts);
                     d->next_pts = d->start_pts;
                     d->next_pts_tb = d->start_pts_tb;
                 }
-            } while (ffp_is_flush_packet(&pkt) || d->queue->serial != d->pkt_serial);
+                
+                if (d->queue->serial == d->pkt_serial)
+                    break;
+                av_packet_unref(d->pkt);
+            } while (1);
 
-            av_packet_split_side_data(&pkt);
-
-            av_packet_unref(&d->pkt);
-            d->pkt_temp = d->pkt = pkt;
             d->packet_pending = 1;
         }
 
-        ret = decode_video(context, d->avctx, &d->pkt_temp, &got_frame);
+        ret = decode_video(context, d->avctx, d->pkt, &got_frame);
         if (ret < 0) {
             d->packet_pending = 0;
         } else {
-            d->pkt_temp.dts =
-            d->pkt_temp.pts = AV_NOPTS_VALUE;
-            if (d->pkt_temp.data) {
+            d->pkt->pts = AV_NOPTS_VALUE;
+            if (d->pkt->data) {
                 if (d->avctx->codec_type != AVMEDIA_TYPE_AUDIO)
-                    ret = d->pkt_temp.size;
-                d->pkt_temp.data += ret;
-                d->pkt_temp.size -= ret;
-                if (d->pkt_temp.size <= 0)
+                    ret = d->pkt->size;
+                d->pkt->data += ret;
+                d->pkt->size -= ret;
+                if (d->pkt->size <= 0)
                     d->packet_pending = 0;
             } else {
                 if (!got_frame) {
