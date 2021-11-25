@@ -595,26 +595,24 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
             av_packet_unref(d->pkt);
         } while (1);
 
-        {
-            if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-                int got_frame = 0;
-                ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
-                if (ret < 0) {
-                    ret = AVERROR(EAGAIN);
-                } else {
-                    if (got_frame && !d->pkt->data) {
-                       d->packet_pending = 1;
-                    }
-                    ret = got_frame ? 0 : (d->pkt->data ? AVERROR(EAGAIN) : AVERROR_EOF);
-                }
-                av_packet_unref(d->pkt);
+        if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+            int got_frame = 0;
+            ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
+            if (ret < 0) {
+                ret = AVERROR(EAGAIN);
             } else {
-                if (avcodec_send_packet(d->avctx, d->pkt) == AVERROR(EAGAIN)) {
-                    av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
+                if (got_frame && !d->pkt->data) {
                     d->packet_pending = 1;
-                } else {
-                    av_packet_unref(d->pkt);
                 }
+                ret = got_frame ? 0 : (d->pkt->data ? AVERROR(EAGAIN) : AVERROR_EOF);
+            }
+            av_packet_unref(d->pkt);
+        } else {
+            if (avcodec_send_packet(d->avctx, d->pkt) == AVERROR(EAGAIN)) {
+                av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
+                d->packet_pending = 1;
+            } else {
+                av_packet_unref(d->pkt);
             }
         }
     }
@@ -2991,7 +2989,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     VideoState *is = ffp->is;
     AVFormatContext *ic = is->ic;
     AVCodecContext *avctx;
-    AVCodec *codec = NULL;
+    const AVCodec *codec = NULL;
     const char *forced_codec_name = NULL;
     AVDictionary *opts = NULL;
     AVDictionaryEntry *t = NULL;
@@ -3728,14 +3726,10 @@ static int read_thread(void *arg)
                 av_log(NULL, AV_LOG_ERROR,
                        "%s: error while seeking\n", is->ic->url);
             } else {
-                if (is->audio_stream >= 0) {
+                if (is->audio_stream >= 0)
                     packet_queue_flush(&is->audioq);
-                    // TODO: clear invaild audio data
-                    // SDL_AoutFlushAudio(ffp->aout);
-                }
-                if (is->subtitle_stream >= 0) {
+                if (is->subtitle_stream >= 0)
                     packet_queue_flush(&is->subtitleq);
-                }
                 if (is->video_stream >= 0) {
                     if (ffp->node_vdec) {
                         ffpipenode_flush(ffp->node_vdec);
