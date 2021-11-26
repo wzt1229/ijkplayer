@@ -408,10 +408,20 @@ GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravit
 
 void IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int degrees)
 {
-    renderer->rotate_type = type;
-    renderer->rotate_degrees = degrees;
+    int flag = 0;
+    if (renderer->rotate_type != type) {
+        renderer->rotate_type = type;
+        flag = 1;
+    }
+    
+    if (renderer->rotate_degrees != degrees) {
+        renderer->rotate_degrees = degrees;
+        flag = 1;
+    }
     //旋转角度发生变化后，要修改 vertices
-    renderer->vertices_changed = 1;
+    if (flag) {
+        renderer->vertices_changed = 1;
+    }
 }
 
 void IJK_GLES2_Renderer_updateSubtitleBottomMargin(IJK_GLES2_Renderer *renderer,float value)
