@@ -379,8 +379,8 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
 
 static void IJK_GLES2_Renderer_Vertices_reloadVertex(IJK_GLES2_Renderer *renderer)
 {
-    glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, renderer->vertices);    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
-    glEnableVertexAttribArray(renderer->av4_position);                                      IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
+    glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, renderer->vertices);    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av4_position)");
+    glEnableVertexAttribArray(renderer->av4_position);                                      IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av4_position)");
 }
 
 #define IJK_GLES2_GRAVITY_MIN                   (0)
@@ -601,8 +601,10 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     ijk_matrix r_matrix;
     ijk_matrix_multiply(&proj_matrix,&rotation_matrix,&r_matrix);
     
-    glUniform3fv(renderer->um3_pre_color_conversion, 1, renderer->PreColorConversion);
-        IJK_GLES2_checkError_TRACE("glUniform3fv(um3_pre_color_conversion)");
+    if (renderer->um3_pre_color_conversion) {
+        glUniform3fv(renderer->um3_pre_color_conversion, 1, renderer->PreColorConversion);
+            IJK_GLES2_checkError_TRACE("glUniform3fv(um3_pre_color_conversion)");
+    }
     
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&r_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
     
@@ -658,8 +660,8 @@ GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_Vo
         vertices[6] = rightX;
         vertices[7] = topY;
         
-        glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, vertices);    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
-        glEnableVertexAttribArray(renderer->av4_position);                                      IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
+        glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, vertices);    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av4_position)2");
+        glEnableVertexAttribArray(renderer->av4_position);                                      IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av4_position)");
         
         ijk_matrix proj_matrix = IJK_GLES2_defaultOrtho();
         
