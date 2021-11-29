@@ -80,21 +80,20 @@ static const char g_shader_rect[] = IJK_GLES_STRING(
             yuv.x = texture2DRect(us2_SamplerX, recTexCoordX).r;
             yuv.yz = (texture2DRect(us2_SamplerY, recTexCoordY).ra - vec2(0.5, 0.5));
             
+            rgb = um3_ColorConversion * yuv;
+            
             //C 是对比度值，B 是亮度值，S 是饱和度
             float B = um3_Pre_ColorConversion.x;
             float S = um3_Pre_ColorConversion.y;
             float C = um3_Pre_ColorConversion.z;
 
-            rgb = um3_ColorConversion * yuv;
-
-//            rgb = applyHue(rgb, 0.0);
+            // rgb = applyHue(rgb, 0.0);
             rgb = (rgb - 0.5) * C + 0.5;
-            rgb = rgb + (0.75*B-0.5)/2.5 - 0.1;
+            rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
             vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
             rgb = intensity + S * (rgb - intensity);
 
-            vec4 result = vec4(rgb, 1.0);
-            gl_FragColor = result;
+            gl_FragColor = vec4(rgb, 1.0);
         }
     }
 );

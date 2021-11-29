@@ -173,17 +173,18 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 #ifdef __APPLE__
         case SDL_FCC__VTB:
         {
-            if (overlay->ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || overlay->ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+            const Uint32 ff_format = overlay->ff_format;
+            if (ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
                 renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
-            } else if (overlay->ff_format == kCVPixelFormatType_32BGRA) {
+            } else if (ff_format == kCVPixelFormatType_32BGRA) {
                 renderer = IJK_GL_Renderer_create_rgbx();
-            } else if (overlay->ff_format == kCVPixelFormatType_24RGB) {
+            } else if (ff_format == kCVPixelFormatType_24RGB) {
                 renderer = IJK_GL_Renderer_create_rgbx();
-            } else if (overlay->ff_format == kCVPixelFormatType_32ARGB) {
+            } else if (ff_format == kCVPixelFormatType_32ARGB) {
                 renderer = IJK_GL_Renderer_create_xrgb();
             }
             #if TARGET_OS_OSX
-            else if (overlay->ff_format == kCVPixelFormatType_422YpCbCr8) {
+            else if (ff_format == kCVPixelFormatType_422YpCbCr8) {
                 renderer = IJK_GL_Renderer_create_uyvy();
             }
             #endif
@@ -195,17 +196,21 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
         #if USE_FF_VTB
         case SDL_FCC__FFVTB:
         {
-            if (overlay->cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || overlay->cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+            const Uint32 cv_format = overlay->cv_format;
+            if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
                 renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
-            } else if (overlay->cv_format == kCVPixelFormatType_32BGRA) {
+            } else if (cv_format == kCVPixelFormatType_32BGRA) {
                 renderer = IJK_GL_Renderer_create_rgbx();
-            } else if (overlay->cv_format == kCVPixelFormatType_24RGB) {
+            } else if (cv_format == kCVPixelFormatType_24RGB) {
                 renderer = IJK_GL_Renderer_create_rgbx();
-            } else if (overlay->cv_format == kCVPixelFormatType_32ARGB) {
+            } else if (cv_format == kCVPixelFormatType_32ARGB) {
                 renderer = IJK_GL_Renderer_create_xrgb();
+            } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
+                       cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
+                //FIXME yuv420p
             }
             #if TARGET_OS_OSX
-            else if (overlay->cv_format == kCVPixelFormatType_422YpCbCr8) {
+            else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
                 renderer = IJK_GL_Renderer_create_uyvy();
             }
             #endif
