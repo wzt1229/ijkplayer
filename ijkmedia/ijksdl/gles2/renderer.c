@@ -579,7 +579,12 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
         IJK_GLES2_Renderer_TexCoords_reloadVertex(renderer);
     }
     
-    IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
+    //IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
+    
+    if (renderer->um3_pre_color_conversion) {
+        glUniform3fv(renderer->um3_pre_color_conversion, 1, renderer->PreColorConversion);
+            IJK_GLES2_checkError_TRACE("glUniform3fv(um3_pre_color_conversion)");
+    }
     
     ijk_float3_vector rotate_v3 = { 0.0 };
     //rotate x
