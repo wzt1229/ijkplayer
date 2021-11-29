@@ -55,7 +55,7 @@ typedef struct IJK_GLES2_Renderer
 
     GLint us2_sampler[IJK_GLES2_MAX_PLANE];
     GLint um3_color_conversion;
-    GLint um3_pre_color_conversion;
+    GLint um3_rgb_adjustment;
     
     GLboolean (*func_use)(IJK_GLES2_Renderer *renderer);
     GLsizei   (*func_getBufferWidth)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
@@ -90,7 +90,7 @@ typedef struct IJK_GLES2_Renderer
     int rotate_type;//x=1;y=2;z=3
     int rotate_degrees;
     float subtitle_bottom_margin;
-    GLfloat PreColorConversion[3];
+    GLfloat rgb_adjustment[3];
 } IJK_GLES2_Renderer;
 
 ijk_matrix IJK_GLES2_makeOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far);
@@ -105,7 +105,7 @@ const char *IJK_GL_getFragmentShader_yuv420sp(void);
 const char *IJK_GL_getFragmentShader_yuv420p(void);
 
 #if TARGET_OS_OSX
-const char *IJK_GL_getFragmentShader_yuv420sp_rect(void);
+const char *IJK_GL_getFragmentShader_yuv420sp_rect(int samples);
 const char *IJK_GLES2_getFragmentShader_rect_rgb(void);
 #else
 const char *IJK_GLES2_getFragmentShader_yuv444p10le();
@@ -118,7 +118,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx(void);
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay);
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay,int samples);
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp(void);
 
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420p(void);

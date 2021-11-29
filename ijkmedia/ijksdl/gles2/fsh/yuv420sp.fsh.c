@@ -26,68 +26,107 @@
 static const char g_shader[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform mat3 um3_ColorConversion;
-    uniform sampler2D us2_SamplerX;
-    uniform sampler2D us2_SamplerY;
+    uniform sampler2D us2_Sampler0;
+    uniform sampler2D us2_Sampler1;
 
     void main()
     {
         vec3 yuv;
         vec3 rgb;
 
-        yuv.x  = (texture2D(us2_SamplerX,  vv2_Texcoord).r  - (16.0 / 255.0));
-        yuv.yz = (texture2D(us2_SamplerY,  vv2_Texcoord).rg - vec2(0.5, 0.5));
+        yuv.x  = (texture2D(us2_Sampler0,  vv2_Texcoord).r  - (16.0 / 255.0));
+        yuv.yz = (texture2D(us2_Sampler1,  vv2_Texcoord).rg - vec2(0.5, 0.5));
         rgb = um3_ColorConversion * yuv;
         gl_FragColor = vec4(rgb, 1);
     }
 );
 
 //macOS use sampler2DRect,need texture dimensions
-static const char g_shader_rect[] = IJK_GLES_STRING(
+static const char g_shader_rect_2[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform mat3 um3_ColorConversion;
-    //wtf? can't use 'um3_PreColorConversion'
-    uniform vec3 um3_Pre_ColorConversion;
-    uniform sampler2DRect us2_SamplerX;
-    uniform sampler2DRect us2_SamplerY;
-    uniform vec2 textureDimensionX;
-    uniform vec2 textureDimensionY;
+    uniform vec3 um3_rgbAdjustment;
+    uniform sampler2DRect us2_Sampler0;
+    uniform sampler2DRect us2_Sampler1;
+    uniform vec2 textureDimension0;
+    uniform vec2 textureDimension1;
     uniform int isSubtitle;
-                                                    
-//    vec3 applyHue(vec3 aColor, float aHue)
-//    {
-//        //Range(-360, 360)
-//        float angle = radians(aHue);
-//        vec3 k = vec3(0.57735, 0.57735, 0.57735);
-//        float cosAngle = cos(angle);
-//        //Rodrigues' rotation formula
-//        return aColor * cosAngle + cross(k, aColor) * sin(angle) + k * dot(k, aColor) * (1.0 - cosAngle);
-//    }
-                                                    
-                                                    
+    
+                                                      
     void main()
     {
         if (isSubtitle == 1) {
-            vec2 recTexCoordX = vv2_Texcoord * textureDimensionX;
-            gl_FragColor = texture2DRect(us2_SamplerX, recTexCoordX);
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            gl_FragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
             vec3 yuv;
             vec3 rgb;
             
-            vec2 recTexCoordX = vv2_Texcoord * textureDimensionX;
-            vec2 recTexCoordY = vv2_Texcoord * textureDimensionY;
-            //yuv.x = (texture2DRect(us2_SamplerX, recTexCoord).r  - (16.0 / 255.0));
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
+            //yuv.x = (texture2DRect(us2_Sampler0, recTexCoord).r  - (16.0 / 255.0));
             //videotoolbox decoded video range pixel already! kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
-            yuv.x = texture2DRect(us2_SamplerX, recTexCoordX).r;
-            yuv.yz = (texture2DRect(us2_SamplerY, recTexCoordY).ra - vec2(0.5, 0.5));
+            yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
+            yuv.yz = (texture2DRect(us2_Sampler1, recTexCoord1).ra - vec2(0.5, 0.5));
             
             rgb = um3_ColorConversion * yuv;
             
             //C 是对比度值，B 是亮度值，S 是饱和度
-            float B = um3_Pre_ColorConversion.x;
-            float S = um3_Pre_ColorConversion.y;
-            float C = um3_Pre_ColorConversion.z;
+            float B = um3_rgbAdjustment.x;
+            float S = um3_rgbAdjustment.y;
+            float C = um3_rgbAdjustment.z;
 
-            // rgb = applyHue(rgb, 0.0);
+            rgb = (rgb - 0.5) * C + 0.5;
+            rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
+            vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
+            rgb = intensity + S * (rgb - intensity);
+
+            gl_FragColor = vec4(rgb, 1.0);
+        }
+    }
+);
+
+//for yuv420p
+static const char g_shader_rect_3[] = IJK_GLES_STRING(
+    varying vec2 vv2_Texcoord;
+    uniform mat3 um3_ColorConversion;
+    uniform vec3 um3_rgbAdjustment;
+                                                     
+    uniform sampler2DRect us2_Sampler0;
+    uniform sampler2DRect us2_Sampler1;
+    uniform sampler2DRect us2_Sampler2;
+                                                     
+    uniform vec2 textureDimension0;
+    uniform vec2 textureDimension1;
+    uniform vec2 textureDimension2;
+                                                     
+    uniform int isSubtitle;
+                                                    
+
+    void main()
+    {
+        if (isSubtitle == 1) {
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            gl_FragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+        } else {
+            vec3 yuv;
+            vec3 rgb;
+            
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
+            vec2 recTexCoord2 = vv2_Texcoord * textureDimension2;
+
+            yuv.x = (texture2DRect(us2_Sampler0, recTexCoord0).r - (16.0 / 255.0));
+            yuv.y = (texture2DRect(us2_Sampler1, recTexCoord1).r - 0.5);
+            yuv.z = (texture2DRect(us2_Sampler2, recTexCoord2).r - 0.5);
+            
+            rgb = um3_ColorConversion * yuv;
+            
+            //C 是对比度值，B 是亮度值，S 是饱和度
+            float B = um3_rgbAdjustment.x;
+            float S = um3_rgbAdjustment.y;
+            float C = um3_rgbAdjustment.z;
+
             rgb = (rgb - 0.5) * C + 0.5;
             rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
             vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
@@ -103,9 +142,16 @@ const char *IJK_GL_getFragmentShader_yuv420sp()
     return g_shader;
 }
 
-const char *IJK_GL_getFragmentShader_yuv420sp_rect()
+const char *IJK_GL_getFragmentShader_yuv420sp_rect(int samples)
 {
-    return g_shader_rect;
+    if (samples == 2) {
+        return g_shader_rect_2;
+    } else if (samples == 3) {
+        return g_shader_rect_3;
+    } else {
+        assert(0);
+        return "";
+    }
 }
 
 #else

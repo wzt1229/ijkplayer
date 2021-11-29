@@ -156,6 +156,32 @@ fail:
     return NULL;
 }
 
+static IJK_GLES2_Renderer * _smart_create_renderer(SDL_VoutOverlay *overlay,const Uint32 cv_format)
+{
+    if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+        ALOGI("create render yuv420sp vtb\n");
+        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,2);
+    } else if (cv_format == kCVPixelFormatType_32BGRA) {
+        return IJK_GL_Renderer_create_rgbx();
+    } else if (cv_format == kCVPixelFormatType_24RGB) {
+        return IJK_GL_Renderer_create_rgbx();
+    } else if (cv_format == kCVPixelFormatType_32ARGB) {
+        return IJK_GL_Renderer_create_xrgb();
+    } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
+               cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
+        ALOGI("create render yuv420p vtb\n");
+        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,3);
+    }
+    #if TARGET_OS_OSX
+    else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
+        return IJK_GL_Renderer_create_uyvy();
+    }
+    #endif
+    else {
+        return NULL;
+    }
+}
+
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 {
     if (!overlay)
@@ -168,88 +194,52 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 
     IJK_GLES2_Renderer *renderer = NULL;
     
-    switch (overlay->format)
-    {
 #ifdef __APPLE__
-        case SDL_FCC__VTB:
-        {
-            const Uint32 ff_format = overlay->ff_format;
-            if (ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || ff_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
-                renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
-            } else if (ff_format == kCVPixelFormatType_32BGRA) {
-                renderer = IJK_GL_Renderer_create_rgbx();
-            } else if (ff_format == kCVPixelFormatType_24RGB) {
-                renderer = IJK_GL_Renderer_create_rgbx();
-            } else if (ff_format == kCVPixelFormatType_32ARGB) {
-                renderer = IJK_GL_Renderer_create_xrgb();
-            }
-            #if TARGET_OS_OSX
-            else if (ff_format == kCVPixelFormatType_422YpCbCr8) {
-                renderer = IJK_GL_Renderer_create_uyvy();
-            }
-            #endif
-            else {
-                ALOGE("unknown pixformat!");
-            }
-        }
-            break;
-        #if USE_FF_VTB
-        case SDL_FCC__FFVTB:
-        {
-            const Uint32 cv_format = overlay->cv_format;
-            if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
-                renderer = IJK_GL_Renderer_create_yuv420sp_vtb(overlay);
-            } else if (cv_format == kCVPixelFormatType_32BGRA) {
-                renderer = IJK_GL_Renderer_create_rgbx();
-            } else if (cv_format == kCVPixelFormatType_24RGB) {
-                renderer = IJK_GL_Renderer_create_rgbx();
-            } else if (cv_format == kCVPixelFormatType_32ARGB) {
-                renderer = IJK_GL_Renderer_create_xrgb();
-            } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
-                       cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
-                //FIXME yuv420p
-            }
-            #if TARGET_OS_OSX
-            else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
-                renderer = IJK_GL_Renderer_create_uyvy();
-            }
-            #endif
-            else {
-                ALOGE("unknown pixformat!");
-            }
-        }
-            break;
-        #endif
+    if (SDL_FCC__VTB == overlay->format) {
+        const Uint32 ff_format = overlay->ff_format;
+        renderer = _smart_create_renderer(overlay, ff_format);
+    }
+    #if USE_FF_VTB
+    else if (SDL_FCC__FFVTB == overlay->format) {
+        const Uint32 cv_format = overlay->cv_format;
+        renderer = _smart_create_renderer(overlay, cv_format);
+    }
+    #endif
 #endif
-        case SDL_FCC_I420:
-            renderer = IJK_GLES2_Renderer_create_yuv420p();
-            break;
-        case SDL_FCC_NV12:
-            renderer = IJK_GL_Renderer_create_yuv420sp();
-            break;
-        case SDL_FCC_RGB565:
-        case SDL_FCC_BGR565:
-        case SDL_FCC_BGR24:
-        case SDL_FCC_RGB24:
-        case SDL_FCC_RGBA:
-        case SDL_FCC_RGB0:
-        case SDL_FCC_BGRA:
-        case SDL_FCC_BGR0:
-            renderer = IJK_GL_Renderer_create_rgbx();
-            break;
-        case SDL_FCC_ARGB:
-        case SDL_FCC_0RGB:
-            renderer = IJK_GL_Renderer_create_xrgb();
-            break;
-        case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p();
-            break;
-#if TARGET_OS_IPHONE
-        case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le();
-            break;
-#endif
-        default:
-            assert(0);
-            break;
+    
+    if (!renderer) {
+        switch (overlay->format)
+        {
+            case SDL_FCC_I420:
+                renderer = IJK_GLES2_Renderer_create_yuv420p();
+                break;
+            case SDL_FCC_NV12:
+                renderer = IJK_GL_Renderer_create_yuv420sp();
+                break;
+            case SDL_FCC_RGB565:
+            case SDL_FCC_BGR565:
+            case SDL_FCC_BGR24:
+            case SDL_FCC_RGB24:
+            case SDL_FCC_RGBA:
+            case SDL_FCC_RGB0:
+            case SDL_FCC_BGRA:
+            case SDL_FCC_BGR0:
+                renderer = IJK_GL_Renderer_create_rgbx();
+                break;
+            case SDL_FCC_ARGB:
+            case SDL_FCC_0RGB:
+                renderer = IJK_GL_Renderer_create_xrgb();
+                break;
+            case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p();
+                break;
+    #if TARGET_OS_IPHONE
+            case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le();
+                break;
+    #endif
+            default:
+                assert(0);
+                break;
+        }
     }
 
     if (renderer) {
@@ -516,9 +506,9 @@ void* IJK_GLES2_Renderer_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay 
 
 void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer,float brightness,float satutaion,float contrast)
 {
-    renderer->PreColorConversion[0] = brightness;
-    renderer->PreColorConversion[1] = satutaion;
-    renderer->PreColorConversion[2] = contrast;
+    renderer->rgb_adjustment[0] = brightness;
+    renderer->rgb_adjustment[1] = satutaion;
+    renderer->rgb_adjustment[2] = contrast;
 }
 
 /*
@@ -586,9 +576,9 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     
     //IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
     
-    if (renderer->um3_pre_color_conversion) {
-        glUniform3fv(renderer->um3_pre_color_conversion, 1, renderer->PreColorConversion);
-            IJK_GLES2_checkError_TRACE("glUniform3fv(um3_pre_color_conversion)");
+    if (renderer->um3_rgb_adjustment >= 0) {
+        glUniform3fv(renderer->um3_rgb_adjustment, 1, renderer->rgb_adjustment);
+            IJK_GLES2_checkError_TRACE("glUniform3fv(um3_rgb_adjustment)");
     }
     
     ijk_float3_vector rotate_v3 = { 0.0 };
@@ -621,9 +611,9 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     ijk_matrix r_matrix;
     ijk_matrix_multiply(&proj_matrix,&rotation_matrix,&r_matrix);
     
-    if (renderer->um3_pre_color_conversion) {
-        glUniform3fv(renderer->um3_pre_color_conversion, 1, renderer->PreColorConversion);
-            IJK_GLES2_checkError_TRACE("glUniform3fv(um3_pre_color_conversion)");
+    if (renderer->um3_rgb_adjustment >= 0) {
+        glUniform3fv(renderer->um3_rgb_adjustment, 1, renderer->rgb_adjustment);
+            IJK_GLES2_checkError_TRACE("glUniform3fv(um3_rgb_adjustment)");
     }
     
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&r_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
