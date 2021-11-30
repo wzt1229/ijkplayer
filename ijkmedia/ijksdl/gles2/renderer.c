@@ -325,7 +325,7 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
 
     float frame_width  = (float)renderer->frame_width;
     float frame_height = (float)renderer->frame_height;
-  
+
     float layer_width  = (float)renderer->layer_width;
     float layer_height = (float)renderer->layer_height;
     
@@ -351,6 +351,15 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
         frame_width = frame_width * renderer->frame_sar_num / renderer->frame_sar_den;
     }
 
+    if (renderer->frame_dar_num > 0 && renderer->frame_dar_den > 0) {
+        if (frame_width/frame_height > (float)renderer->frame_dar_num/renderer->frame_dar_den) {
+            frame_height = frame_width * renderer->frame_dar_den/renderer->frame_dar_num;
+        }
+        else {
+            frame_width = frame_height * renderer->frame_dar_num / renderer->frame_dar_den;
+        }
+    }
+    
     const float ratioW  = layer_width  / frame_width;
     const float ratioH  = layer_height / frame_height;
     float ratio         = 1.0f;
@@ -433,6 +442,14 @@ void IJK_GLES2_Renderer_updateSubtitleBottomMargin(IJK_GLES2_Renderer *renderer,
 void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degrees)
 {
     renderer->auto_z_rotate_degrees = degrees;
+}
+
+void IJK_GLES2_Renderer_updateUserDefinedDAR(IJK_GLES2_Renderer *renderer,int dar_num, int dar_den)
+{
+    renderer->frame_dar_num = dar_num;
+    renderer->frame_dar_den = dar_den;
+    
+    renderer->vertices_changed = true;
 }
 
 static void IJK_GLES2_Renderer_TexCoords_cropRight(IJK_GLES2_Renderer *renderer, GLfloat cropRight)

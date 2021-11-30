@@ -79,6 +79,12 @@ struct _IJKSDLColorConversionPreference {
     float contrast;
 };
 
+typedef struct _IJKSDLDARPreference IJKSDLDARPreference;
+struct _IJKSDLDARPreference {
+    int num; //width
+    int den; //height
+};
+
 @protocol IJKSDLGLViewProtocol <NSObject>
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
@@ -91,6 +97,11 @@ struct _IJKSDLColorConversionPreference {
 @property(nonatomic) IJKSDLRotatePreference rotatePreference;
 // color conversion perference
 @property(nonatomic) IJKSDLColorConversionPreference colorPreference;
+//user defined display aspect ratio
+@property(nonatomic) IJKSDLDARPreference darPreference;
+@property(atomic)    BOOL darWillChange;
+
+- (void)onDARChange:(int)dar_num den:(int)dar_den;
 
 #if !TARGET_OS_OSX
 - (void)display_pixels:(IJKOverlay *)overlay;

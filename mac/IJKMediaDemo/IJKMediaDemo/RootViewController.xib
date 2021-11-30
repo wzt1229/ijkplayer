@@ -690,14 +690,41 @@
                                     </connections>
                                 </popUpButton>
                             </beginningViews>
+                            <middleViews>
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="das-sX-RFn">
+                                    <rect key="frame" x="230" y="6" width="139" height="25"/>
+                                    <popUpButtonCell key="cell" type="push" title="1:1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="vVv-4M-RD0" id="3cM-T9-yqY">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="menu"/>
+                                        <menu key="menu" id="prw-O2-cVC">
+                                            <items>
+                                                <menuItem title="4:3" tag="1" id="pnd-im-c2G">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                                <menuItem title="16:9" tag="2" id="ukf-LU-JHF">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                                <menuItem title="1:1" state="on" tag="3" id="vVv-4M-RD0">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                            </items>
+                                        </menu>
+                                        <connections>
+                                            <action selector="onChangDAR:" target="-1" id="4QG-En-bWO"/>
+                                        </connections>
+                                    </popUpButtonCell>
+                                </popUpButton>
+                            </middleViews>
                             <constraints>
                                 <constraint firstAttribute="height" constant="40" id="MfF-gY-0m7"/>
                             </constraints>
                             <visibilityPriorities>
                                 <integer value="1000"/>
                                 <integer value="1000"/>
+                                <integer value="1000"/>
                             </visibilityPriorities>
                             <customSpacing>
+                                <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                             </customSpacing>

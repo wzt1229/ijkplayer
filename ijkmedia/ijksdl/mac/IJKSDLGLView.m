@@ -52,12 +52,13 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     GLint               _backingWidth;
     GLint               _backingHeight;
     BOOL                _isRenderBufferInvalidated;
-
 }
 
 @synthesize isThirdGLView              = _isThirdGLView;
 @synthesize scaleFactor                = _scaleFactor;
 @synthesize fps                        = _fps;
+@synthesize darPreference              = _darPreference;
+@synthesize darWillChange              = _darWillChange;
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
@@ -217,6 +218,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     //[self invalidateRenderBuffer];
 }
 
+- (void)onDARChange:(int)dar_num den:(int)dar_den
+{
+    IJKSDLDARPreference preference;
+    preference.num = dar_num;
+    preference.den = dar_den;
+    
+    self.darPreference = preference;
+    self.darWillChange = YES;
+}
+
 - (void)resetViewPort
 {
     // We draw on a secondary thread through the display link. However, when
@@ -290,6 +301,11 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     }
     
     IJK_GLES2_Renderer_updateColorConversion(_renderer, self.colorPreference.brightness, self.colorPreference.saturation,self.colorPreference.contrast);
+    
+    if (self.darWillChange) {
+        IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.num, self.darPreference.num);
+        self.darWillChange = NO;
+    }
     
     if (!IJK_GLES2_Renderer_renderOverlay(_renderer, overlay))
         ALOGE("[EGL] IJK_GLES2_render failed\n");

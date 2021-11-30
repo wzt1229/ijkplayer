@@ -160,6 +160,8 @@
         
         [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];
         [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
+        
+//        [options setPlayerOptionIntValue:1 forKey:@"videotoolbox-async"];
     } else {
         //#warning bgr565 not support
         //[options setPlayerOptionValue:@"fcc-bgr565"      forKey:@"overlay-format"];
@@ -582,6 +584,16 @@
     colorPreference.saturation = self.saturation;//S
     colorPreference.contrast = self.contrast;//C
     self.player.view.colorPreference = colorPreference;
+}
+
+- (IBAction)onChangDAR:(NSPopUpButton *)sender
+{
+    int dar_num = 1;
+    int dar_den = 1;
+    const char* str = sender.titleOfSelectedItem.UTF8String;
+    sscanf(str, "%d:%d", &dar_num, &dar_den);
+    
+    [self.player.view onDARChange:dar_num den:dar_den];
 }
 
 - (IBAction)onReset:(NSButton *)sender

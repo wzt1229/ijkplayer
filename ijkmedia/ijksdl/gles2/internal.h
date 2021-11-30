@@ -81,6 +81,10 @@ typedef struct IJK_GLES2_Renderer
     int     frame_height;
     int     frame_sar_num;
     int     frame_sar_den;
+    
+    //user defined
+    int     frame_dar_num;
+    int     frame_dar_den;
 
     GLsizei last_buffer_width;
     
