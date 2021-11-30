@@ -241,7 +241,8 @@ static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, CVPixelB
     assert(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange == pixel_fmt ||
            kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
            kCVPixelFormatType_420YpCbCr8Planar == pixel_fmt ||
-           kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt);
+           kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt ||
+           kCVPixelFormatType_32BGRA == pixel_fmt);
     
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
     
@@ -473,7 +474,13 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
         renderer->us2_sampler[i] = glGetUniformLocation(renderer->program, name); IJK_GLES2_checkError_TRACE("glGetUniformLocation(us2_Sampler)");
     }
 
-    renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_ColorConversionMatrix)");
+    if (samples > 1) {
+        renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_ColorConversionMatrix)");
+        GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
+        assert(isFullRange >= 0);
+        renderer->opaque->isFullRange = isFullRange;
+    }
+    
     renderer->um3_rgb_adjustment = glGetUniformLocation(renderer->program, "um3_rgbAdjustment"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_rgb_adjustmentVector)");
     
     renderer->func_use            = yuv420sp_vtb_use;
@@ -512,10 +519,6 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
     assert(isSubtitle >= 0);
     renderer->opaque->isSubtitle = isSubtitle;
 #endif
-    
-    GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
-    assert(isFullRange >= 0);
-    renderer->opaque->isFullRange = isFullRange;
     
     return renderer;
 fail:
