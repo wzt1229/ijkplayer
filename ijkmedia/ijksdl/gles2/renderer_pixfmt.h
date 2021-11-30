@@ -35,6 +35,8 @@
 #ifndef IJKSDL__renderer_pixfmt__INTERNAL__H
 #define IJKSDL__renderer_pixfmt__INTERNAL__H
 
+#import <CoreVideo/CoreVideo.h>
+
 #if TARGET_OS_OSX
     #define OpenGLTextureCacheRef   CVOpenGLTextureCacheRef
     #define OpenGLTextureRef        CVOpenGLTextureRef
@@ -195,6 +197,22 @@ static struct vt_format vt_formats[] = {
         }
     },
     {
+        .cvpixfmt = kCVPixelFormatType_420YpCbCr8PlanarFullRange,
+        .imgfmt = IMGFMT_420P,
+        .planes = 3,
+        .gl = {
+#if TARGET_OS_OSX
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED }
+#else
+            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT },
+            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT },
+            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT }
+#endif
+        }
+    },
+    {
         .cvpixfmt = kCVPixelFormatType_32BGRA,
         .imgfmt = IMGFMT_BGR0,
         .planes = 1,
@@ -208,7 +226,7 @@ static struct vt_format vt_formats[] = {
     },
 };
 
-static struct vt_format *vt_get_gl_format(uint32_t cvpixfmt)
+static inline struct vt_format *vt_get_gl_format(uint32_t cvpixfmt)
 {
     for (int i = 0; i < MP_ARRAY_SIZE(vt_formats); i++) {
         if (vt_formats[i].cvpixfmt == cvpixfmt)

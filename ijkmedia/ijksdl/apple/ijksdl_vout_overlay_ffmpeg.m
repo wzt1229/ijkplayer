@@ -73,7 +73,7 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
         pixelFormatType = kCVPixelFormatType_32ARGB;
     } else if (format == AV_PIX_FMT_NV12 || format == AV_PIX_FMT_NV21) {
         pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
-        //for AV_PIX_FMT_NV21: later will swap VU. we won't modify the avframe data, because the frame can be dispaly again!
+        #warning FIX AV_PIX_FMT_NV21: later will swap VU. we won't modify the avframe data, because the frame can be dispaly again!
     } else if (format == AV_PIX_FMT_BGRA || format == AV_PIX_FMT_BGR0) {
         pixelFormatType = kCVPixelFormatType_32BGRA;
     } else if (format == AV_PIX_FMT_YUV420P) {

@@ -196,13 +196,6 @@ static GLboolean upload_vtp_Texture(IJK_GLES2_Renderer *renderer, SDL_VoutOverla
     int pft = CVPixelBufferGetPixelFormatType(pixel_buffer);
     assert(kCVPixelFormatType_32BGRA == pft || kCVPixelFormatType_32ARGB == pft || kCVPixelFormatType_24RGB == pft);
     
-    CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
-    
-    if (CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-        glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt601());
-    } else /* kCVImageBufferYCbCrMatrix_ITU_R_709_2 */ {
-        glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
-    }
     glActiveTexture(GL_TEXTURE0);
     
 #if RGB_RENDER_TYPE == RGB_RENDER_FAST_UPLOAD
