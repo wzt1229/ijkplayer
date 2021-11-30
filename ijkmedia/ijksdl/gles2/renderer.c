@@ -576,8 +576,6 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
         IJK_GLES2_Renderer_TexCoords_reloadVertex(renderer);
     }
     
-    //IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
-    
     ijk_float3_vector rotate_v3 = { 0.0 };
     //rotate x
     if (renderer->rotate_type == 1) {
@@ -669,6 +667,9 @@ GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_Vo
         
         glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, vertices);    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av4_position)2");
         glEnableVertexAttribArray(renderer->av4_position);                                      IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av4_position)");
+        
+        //标记下，渲染视频的时候能修正回来；
+        renderer->vertices_changed = 1;
         
         ijk_matrix proj_matrix = IJK_GLES2_defaultOrtho();
         
