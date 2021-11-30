@@ -554,6 +554,7 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
                                                                  0,
                                                                  &kCFTypeDictionaryKeyCallBacks,
                                                                  &kCFTypeDictionaryValueCallBacks);
+#warning TODO FIXME
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
                           kCVPixelBufferPixelFormatTypeKey, kCVPixelFormatType_32BGRA);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,

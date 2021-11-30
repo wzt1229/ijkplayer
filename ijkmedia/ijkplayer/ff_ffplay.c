@@ -4529,16 +4529,11 @@ void ffp_set_option_int(FFPlayer *ffp, int opt_category, const char *name, int64
 
 void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
 {
+#warning TODO REVIEW
     switch (chroma_fourcc) {
         case SDL_FCC__GLES2:
         case SDL_FCC_I420:
         case SDL_FCC_YV12:
-        case SDL_FCC_RGB565:
-        case SDL_FCC_BGR565:
-        case SDL_FCC_RGB24:
-        case SDL_FCC_BGR24:
-        case SDL_FCC_RGBA:
-        case SDL_FCC_RGB0:
         case SDL_FCC_BGRA:
         case SDL_FCC_BGR0:
         case SDL_FCC_ARGB:

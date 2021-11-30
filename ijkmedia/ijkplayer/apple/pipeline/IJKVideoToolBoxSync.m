@@ -1047,19 +1047,21 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
 //    pixelFormatType = kCVPixelFormatType_24BGR;
 //    pixelFormatType = kCVPixelFormatType_32RGBA;
 //    pixelFormatType = kCVPixelFormatType_32ABGR;
+//    IOSurface 无法渲染
+//    pixelFormatType = kCVPixelFormatType_24RGB;
 #if TARGET_OS_MAC
+    
     int pixelFormatType = -1;
-    if (overlay_format == SDL_FCC_VTB_BGRA) {
+    if (overlay_format == SDL_FCC_BGRA) {
         pixelFormatType = kCVPixelFormatType_32BGRA;
-    } else if (overlay_format == SDL_FCC_VTB_RGB24) {
-        pixelFormatType = kCVPixelFormatType_24RGB;
-    } else if (overlay_format == SDL_FCC_VTB_ARGB) {
+    } else if (overlay_format == SDL_FCC_ARGB) {
         pixelFormatType = kCVPixelFormatType_32ARGB;
-    } else if (overlay_format == SDL_FCC_VTB_UYVY) {
+    } else if (overlay_format == SDL_FCC_UYVY) {
         pixelFormatType = kCVPixelFormatType_422YpCbCr8;
+    } else if (overlay_format == SDL_FCC_I420) {
+        pixelFormatType = kCVPixelFormatType_420YpCbCr8Planar;
     } else {
-        bool fullRange = false;//codecpar->color_range != AVCOL_RANGE_MPEG;
-        pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
+        pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
     }
 #else
     pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;

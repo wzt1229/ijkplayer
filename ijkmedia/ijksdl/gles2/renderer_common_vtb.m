@@ -453,12 +453,12 @@ static GLboolean yuv420sp_uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subt
 }
 #endif
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type)
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type)
 {
 #if TARGET_OS_OSX
     assert(overlay->format == SDL_FCC__VTB || overlay->format == SDL_FCC__FFVTB);
     
-    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp_rect(type));
+    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getAppleCommonFragmentShader(type));
 #else
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
 #endif

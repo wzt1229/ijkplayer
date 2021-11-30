@@ -104,27 +104,21 @@ static const AVOption ffp_context_options[] = {
         OPTION_OFFSET(max_fps),         OPTION_INT(31, -1, 121) },
 
     { "overlay-format",                 "fourcc of overlay format",
-        OPTION_OFFSET(overlay_format),  OPTION_INT(SDL_FCC_RGB0, INT_MIN, INT_MAX),
+        OPTION_OFFSET(overlay_format),  OPTION_INT(SDL_FCC_RV32, INT_MIN, INT_MAX),
         .unit = "overlay-format" },
     { "fcc-_es2",                       "", 0, OPTION_CONST(SDL_FCC__GLES2), .unit = "overlay-format" },
     { "fcc-i420",                       "", 0, OPTION_CONST(SDL_FCC_I420), .unit = "overlay-format" },
     { "fcc-yv12",                       "", 0, OPTION_CONST(SDL_FCC_YV12), .unit = "overlay-format" },
     { "fcc-nv12",                       "", 0, OPTION_CONST(SDL_FCC_NV12), .unit = "overlay-format" },
-    { "fcc-rgb565",                     "", 0, OPTION_CONST(SDL_FCC_RGB565), .unit = "overlay-format" },
-    { "fcc-bgr565",                     "", 0, OPTION_CONST(SDL_FCC_BGR565), .unit = "overlay-format" },
-    { "fcc-rgb24",                      "", 0, OPTION_CONST(SDL_FCC_RGB24), .unit = "overlay-format" },
-    { "fcc-bgr24",                      "", 0, OPTION_CONST(SDL_FCC_BGR24), .unit = "overlay-format" },
-    { "fcc-rgba",                       "", 0, OPTION_CONST(SDL_FCC_RGBA), .unit = "overlay-format" },
-    { "fcc-rgb0",                       "", 0, OPTION_CONST(SDL_FCC_RGB0), .unit = "overlay-format" },
     { "fcc-bgra",                       "", 0, OPTION_CONST(SDL_FCC_BGRA), .unit = "overlay-format" },
     { "fcc-bgr0",                       "", 0, OPTION_CONST(SDL_FCC_BGR0), .unit = "overlay-format" },
     { "fcc-argb",                       "", 0, OPTION_CONST(SDL_FCC_ARGB), .unit = "overlay-format" },
     { "fcc-0rgb",                       "", 0, OPTION_CONST(SDL_FCC_0RGB), .unit = "overlay-format" },
-    { "fcc-vtb-RGB24",                  "", 0, OPTION_CONST(SDL_FCC_VTB_RGB24), .unit = "overlay-format" },
-    { "fcc-vtb-ARGB",                   "", 0, OPTION_CONST(SDL_FCC_VTB_ARGB), .unit = "overlay-format" },
-    { "fcc-vtb-BGRA",                   "", 0, OPTION_CONST(SDL_FCC_VTB_BGRA), .unit = "overlay-format" },
-    { "fcc-vtb-NV12",                   "", 0, OPTION_CONST(SDL_FCC_VTB_NV12), .unit = "overlay-format" },
-    { "fcc-vtb-UYVY",                   "", 0, OPTION_CONST(SDL_FCC_VTB_UYVY), .unit = "overlay-format" },
+    { "fcc-uyvy",                       "", 0, OPTION_CONST(SDL_FCC_UYVY), .unit = "overlay-format" },
+    { "fcc-rv16",                       "", 0, OPTION_CONST(SDL_FCC_RV16), .unit = "overlay-format" },
+    { "fcc-rv24",                       "", 0, OPTION_CONST(SDL_FCC_RV24), .unit = "overlay-format" },
+    { "fcc-rv32",                       "", 0, OPTION_CONST(SDL_FCC_RV32), .unit = "overlay-format" },
+
     { "start-on-prepared",                  "automatically start playing on prepared",
         OPTION_OFFSET(start_on_prepared),   OPTION_INT(1, 0, 1) },
 
@@ -177,7 +171,7 @@ static const AVOption ffp_context_options[] = {
     { "video-mime-type",                    "default video mime type",
         OPTION_OFFSET(video_mime_type),     OPTION_STR(NULL) },
 
-        // Apple only options
+        // iOS only options
     { "videotoolbox",                       "VideoToolbox: enable",
         OPTION_OFFSET(videotoolbox),        OPTION_INT(0, 0, 1) },
     { "videotoolbox-max-frame-width",       "VideoToolbox: max width of output frame",

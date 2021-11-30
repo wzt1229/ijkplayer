@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'IJKMediaPlayerKit'
-  s.version          = '0.9.0.1'
+  s.version          = '0.9.0.2'
   s.summary          = 'IJKMediaPlayerKit for macOS.'
   
 # This description is used to generate tags and improve search results.
@@ -100,9 +100,15 @@ TODO: Add long description of the pod here.
 
     ss.osx.exclude_files = 
       'ijkmedia/ijksdl/ios/*.*',
-      'ijkmedia/ijksdl/gles2/fsh/ios/*.*',
-      'ijkmedia/ijksdl/gles2/vsh/ios/*.*',
-      'ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c'
+      'ijkmedia/ijksdl/gles2/fsh/rgb.fsh.c',
+      'ijkmedia/ijksdl/gles2/fsh/yuv420p.fsh.c',
+      'ijkmedia/ijksdl/gles2/fsh/yuv420sp.fsh.c',
+      'ijkmedia/ijksdl/gles2/fsh/yuv444p10le.fsh.c',
+      'ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c',
+      'ijkmedia/ijksdl/gles2/renderer_rgb.c',
+      'ijkmedia/ijksdl/gles2/renderer_yuv420p.c',
+      'ijkmedia/ijksdl/gles2/renderer_yuv420sp.c',
+      'ijkmedia/ijksdl/gles2/vsh/mvp.vsh.c'
     
     ss.ios.exclude_files = 
       'ijkmedia/ijksdl/mac/*.*',

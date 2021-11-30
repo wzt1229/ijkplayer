@@ -36,6 +36,7 @@
 
 typedef struct IJK_GLES2_Renderer_Opaque IJK_GLES2_Renderer_Opaque;
 
+#ifdef __APPLE__
 typedef enum : int {
     NONE_SHADER,
     BGRX_SHADER,
@@ -69,6 +70,7 @@ static inline const int IJK_Sample_Count_For_Shader(IJK_SHADER_TYPE type)
         }
     }
 }
+#endif
 
 typedef struct IJK_Subtile_Size {
     int w;
@@ -137,36 +139,33 @@ ijk_matrix IJK_GLES2_makeOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfl
 
 ijk_matrix IJK_GLES2_defaultOrtho(void);
 
+const char *IJK_GLES2_getVertexShader_default(void);
+
+#ifndef __APPLE__
 const char *IJK_GLES2_getFragmentShader_rgb(void);
 const char *IJK_GLES2_getFragmentShader_argb(void);
-const char *IJK_GLES2_getVertexShader_default(void);
 
 const char *IJK_GL_getFragmentShader_yuv420sp(void);
 const char *IJK_GL_getFragmentShader_yuv420p(void);
 
-#if TARGET_OS_OSX
-const char *IJK_GL_getFragmentShader_yuv420sp_rect(IJK_SHADER_TYPE type);
-const char *IJK_GLES2_getFragmentShader_rect_rgb(void);
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx(void);
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
+
 #else
-const char *IJK_GLES2_getFragmentShader_yuv444p10le();
+
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type);
+const char *IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type);
+
 #endif
+
+#if TARGET_OS_IOS
+const char *IJK_GLES2_getFragmentShader_yuv444p10le();
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv444p10le();
+#endif
+
 const GLfloat *IJK_GLES2_getColorMatrix_bt709(void);
 const GLfloat *IJK_GLES2_getColorMatrix_bt601(void);
 
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_source);
-
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx(void);
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
-
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type);
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp(void);
-
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420p(void);
-
-#if TARGET_OS_OSX
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_uyvy(void);
-#else
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv444p10le();
-#endif
 
 #endif

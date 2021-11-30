@@ -57,32 +57,20 @@
 #define SDL_FCC_YVYU        SDL_FOURCC('Y', 'V', 'Y', 'U')  /**< bpp=16, Packed mode: Y0+V0+Y1+U0 (1 plane) */
 
 #define SDL_FCC_NV12        SDL_FOURCC('N', 'V', '1', '2')
-
+#define SDL_FCC_UYVY        SDL_FOURCC('U', 'Y', 'V', 'Y')
 // RGB formats
-#define SDL_FCC_RGB565      SDL_FOURCC('R', 'G', 'B', 565)        /**< bpp=16, RGB565 */
-#define SDL_FCC_BGR565      SDL_FOURCC('B', 'G', 'R', 565)        /**< bpp=16, BGR565 */
-#define SDL_FCC_BGR24       SDL_FOURCC('B', 'G', 'R', 24)         /**< bpp=24,  BGR888*/
-#define SDL_FCC_RGB24       SDL_FOURCC('R', 'G', 'B', 24)         /**< bpp=24, RGB888 */
-#define SDL_FCC_RGB0        SDL_FOURCC('R', 'G', 'B', 0)          /**< bpp=32, RGBXRGBX */
-#define SDL_FCC_RGBA        SDL_FOURCC('R', 'G', 'B', 'A')        /**< bpp=32, RGBARGBA */
 #define SDL_FCC_BGR0        SDL_FOURCC('B', 'G', 'R', 0)          /**< bpp=32, BGRXBGRX */
 #define SDL_FCC_BGRA        SDL_FOURCC('B', 'G', 'R', 'A')        /**< bpp=32, BGRABGRA */
 #define SDL_FCC_ARGB        SDL_FOURCC('A', 'R', 'G', 'B')        /**< bpp=32, ARGBARGB */
 #define SDL_FCC_0RGB        SDL_FOURCC('0', 'R', 'G', 'B')        /**< bpp=32, XRGBXRGB */
-
-// Apple VideoToolbox decoder supported:
-#define SDL_FCC_VTB_RGB24   SDL_FOURCC('V', 'T', 'B', 1 << 0)     /**< Apple VideoToolbox kCVPixelFormatType_24RGB */
-#define SDL_FCC_VTB_ARGB    SDL_FOURCC('V', 'T', 'B', 1 << 1)     /**< Apple VideoToolbox kCVPixelFormatType_32ARGB */
-#define SDL_FCC_VTB_BGRA    SDL_FOURCC('V', 'T', 'B', 1 << 2)     /**< Apple VideoToolbox kCVPixelFormatType_32BGRA */
-#define SDL_FCC_VTB_NV12    SDL_FOURCC('V', 'T', 'B', 1 << 3)     /**< Apple VideoToolbox kCVPixelFormatType_420YpCbCr8BiPlanar */
-#define SDL_FCC_VTB_UYVY    SDL_FOURCC('V', 'T', 'B', 1 << 4)     /**< Apple VideoToolbox kCVPixelFormatType_422YpCbCr8 */
-
-
 #ifdef __APPLE__
 #define USE_FF_VTB 1
 #else
 #define USE_FF_VTB 0
 #endif
+#define SDL_FCC_RV16    SDL_FOURCC('R', 'V', '1', '6')    /**< bpp=16, RGB565 */
+#define SDL_FCC_RV24    SDL_FOURCC('R', 'V', '2', '4')    /**< bpp=24, RGB888 */
+#define SDL_FCC_RV32    SDL_FOURCC('R', 'V', '3', '2')    /**< bpp=32, RGBX8888 */
 
 // opaque formats
 #define SDL_FCC__AMC        SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */

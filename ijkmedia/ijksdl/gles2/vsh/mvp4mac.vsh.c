@@ -34,7 +34,7 @@ static const char g_shader[] = IJK_GLES_STRING(
     }
 );
 
-const char *IJK_GLES2_getVertexShader_default()
+const char *IJK_GLES2_getVertexShader_default(void)
 {
     return g_shader;
 }

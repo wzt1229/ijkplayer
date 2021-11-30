@@ -148,17 +148,18 @@
     [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
     [options setPlayerOptionIntValue:0      forKey:@"videotoolbox-async"];
     
-    //        [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
-    //        [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
-    //        [options setPlayerOptionValue:@"fcc-argb"        forKey:@"overlay-format"];
-    //        [options setPlayerOptionValue:@"fcc-0rgb"        forKey:@"overlay-format"];
-    //        [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
-    //default is NV12 for videotoolbox
-    //        [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
+//    [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
+//    [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
+//    [options setPlayerOptionValue:@"fcc-argb"        forKey:@"overlay-format"];
+//    [options setPlayerOptionValue:@"fcc-0rgb"        forKey:@"overlay-format"];
+//    [options setPlayerOptionValue:@"fcc-uyvy"        forKey:@"overlay-format"];
+//    [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
+    
+    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
 
     BOOL useVideoToolBox = YES;
     [options setPlayerOptionIntValue:useVideoToolBox      forKey:@"videotoolbox"];
-    //[options setPlayerOptionIntValue:1      forKey:@"videotoolbox-async"];
+//    [options setPlayerOptionIntValue:1      forKey:@"videotoolbox-async"];
     [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
     
     [self.player.view removeFromSuperview];

@@ -42,7 +42,7 @@ static const char g_shader[] = IJK_GLES_STRING(
     }
 );
 
-const char *IJK_GL_getFragmentShader_yuv420p()
+const char *IJK_GLES2_getFragmentShader_yuv420p()
 {
     return g_shader;
 }

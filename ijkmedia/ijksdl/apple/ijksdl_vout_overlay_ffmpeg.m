@@ -570,49 +570,6 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
             opaque->planes = 2;
             break;
         }
-        case SDL_FCC_RGB565: {
-            ff_format = AV_PIX_FMT_RGB565;
-            buf_width = IJKALIGN(width, 8); // 2 bytes per pixel
-            opaque->planes = 1;
-            break;
-        }
-        case SDL_FCC_BGR565: {
-            ff_format = AV_PIX_FMT_BGR565;
-            buf_width = IJKALIGN(width, 8); // 2 bytes per pixel
-            opaque->planes = 1;
-            break;
-        }
-        case SDL_FCC_RGB24: {
-            ff_format = AV_PIX_FMT_RGB24;
-    #if defined(__ANDROID__)
-            // 16 bytes align pitch for arm-neon image-convert
-            buf_width = IJKALIGN(width, 16); // 1 bytes per pixel for Y-plane
-    #elif defined(__APPLE__)
-            buf_width = width;
-    #else
-            buf_width = IJKALIGN(width, 16); // unknown platform
-    #endif
-            opaque->planes = 1;
-            break;
-        }
-        case SDL_FCC_BGR24: {
-            ff_format = AV_PIX_FMT_BGR24;
-            buf_width = IJKALIGN(width, 3); // 3 bytes per pixel
-            opaque->planes = 1;
-            break;
-        }
-        case SDL_FCC_RGBA: {
-            ff_format = AV_PIX_FMT_RGBA;
-            buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
-            opaque->planes = 1;
-            break;
-        }
-        case SDL_FCC_RGB0: {
-            ff_format = AV_PIX_FMT_RGB0;//AV_PIX_FMT_0BGR32;
-            buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
-            opaque->planes = 1;
-            break;
-        }
         case SDL_FCC_BGRA: {
             ff_format = AV_PIX_FMT_BGRA;
             buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
@@ -633,6 +590,12 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
         }
         case SDL_FCC_0RGB: {
             ff_format = AV_PIX_FMT_0RGB;
+            buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
+            opaque->planes = 1;
+            break;
+        }
+        case SDL_FCC_UYVY: {
+            ff_format = AV_PIX_FMT_UYVY422;
             buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
             opaque->planes = 1;
             break;

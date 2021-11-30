@@ -158,33 +158,34 @@ fail:
     return NULL;
 }
 
-static IJK_GLES2_Renderer * _smart_create_renderer(SDL_VoutOverlay *overlay,const Uint32 cv_format)
+#ifdef __APPLE__
+static IJK_GLES2_Renderer * _smart_create_renderer_appple(SDL_VoutOverlay *overlay,const Uint32 cv_format)
 {
     if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
         ALOGI("create render yuv420sp vtb\n");
-        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,YUV_2P_SHADER);
+        return IJK_GL_Renderer_create_common_vtb(overlay,YUV_2P_SHADER);
     } else if (cv_format == kCVPixelFormatType_32BGRA) {
         ALOGI("create render bgrx vtb\n");
-        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,BGRX_SHADER);
-        return IJK_GL_Renderer_create_rgbx();
+        return IJK_GL_Renderer_create_common_vtb(overlay,BGRX_SHADER);
     } else if (cv_format == kCVPixelFormatType_32ARGB) {
-        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,XRGB_SHADER);
-        return IJK_GL_Renderer_create_xrgb();
+        ALOGI("create render xrgb vtb\n");
+        return IJK_GL_Renderer_create_common_vtb(overlay,XRGB_SHADER);
     } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
                cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
         ALOGI("create render yuv420p vtb\n");
-        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,YUV_3P_SHADER);
+        return IJK_GL_Renderer_create_common_vtb(overlay,YUV_3P_SHADER);
     }
     #if TARGET_OS_OSX
     else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
-        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,UYVY_SHADER);
-        return IJK_GL_Renderer_create_uyvy();
+        ALOGI("create render uyvy vtb\n");
+        return IJK_GL_Renderer_create_common_vtb(overlay,UYVY_SHADER);
     }
     #endif
     else {
         return NULL;
     }
 }
+#endif
 
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 {
@@ -201,51 +202,31 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 #ifdef __APPLE__
     if (SDL_FCC__VTB == overlay->format) {
         const Uint32 ff_format = overlay->ff_format;
-        renderer = _smart_create_renderer(overlay, ff_format);
+        renderer = _smart_create_renderer_appple(overlay, ff_format);
     }
     #if USE_FF_VTB
     else if (SDL_FCC__FFVTB == overlay->format) {
         const Uint32 cv_format = overlay->cv_format;
-        renderer = _smart_create_renderer(overlay, cv_format);
+        renderer = _smart_create_renderer_appple(overlay, cv_format);
     }
     #endif
-#endif
-    
-    if (!renderer) {
-        switch (overlay->format)
-        {
-            case SDL_FCC_I420:
-                renderer = IJK_GLES2_Renderer_create_yuv420p();
-                break;
-            case SDL_FCC_NV12:
-                renderer = IJK_GL_Renderer_create_yuv420sp();
-                break;
-            case SDL_FCC_RGB565:
-            case SDL_FCC_BGR565:
-            case SDL_FCC_BGR24:
-            case SDL_FCC_RGB24:
-            case SDL_FCC_RGBA:
-            case SDL_FCC_RGB0:
-            case SDL_FCC_BGRA:
-            case SDL_FCC_BGR0:
-                renderer = IJK_GL_Renderer_create_rgbx();
-                break;
-            case SDL_FCC_ARGB:
-            case SDL_FCC_0RGB:
-                renderer = IJK_GL_Renderer_create_xrgb();
-                break;
-            case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p();
-                break;
-    #if TARGET_OS_IPHONE
-            case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le();
-                break;
+#else
+    switch (overlay->format) {
+            case SDL_FCC_RV16:      renderer = IJK_GLES2_Renderer_create_rgb565(); break;
+            case SDL_FCC_RV24:      renderer = IJK_GLES2_Renderer_create_rgb888(); break;
+            case SDL_FCC_RV32:      renderer = IJK_GLES2_Renderer_create_rgbx8888(); break;
+    #ifdef __APPLE__
+            case SDL_FCC_NV12:      renderer = IJK_GLES2_Renderer_create_yuv420sp(); break;
+            case SDL_FCC__VTB:      renderer = IJK_GLES2_Renderer_create_yuv420sp_vtb(overlay); break;
     #endif
+            case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
+            case SDL_FCC_I420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
+            case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le(); break;
             default:
-                assert(0);
-                break;
+                ALOGE("[GLES2] unknown format %4s(%d)\n", (char *)&overlay->format, overlay->format);
+                return NULL;
         }
-    }
-
+#endif
     if (renderer) {
         renderer->format = overlay->format;
     }
