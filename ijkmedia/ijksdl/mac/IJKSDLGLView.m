@@ -303,7 +303,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     IJK_GLES2_Renderer_updateColorConversion(_renderer, self.colorPreference.brightness, self.colorPreference.saturation,self.colorPreference.contrast);
     
     if (self.darWillChange) {
-        IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.num, self.darPreference.num);
+        IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.num, self.darPreference.den);
         self.darWillChange = NO;
     }
     
