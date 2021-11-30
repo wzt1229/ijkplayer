@@ -554,7 +554,7 @@
     
     self.player.view.rotatePreference = preference;
     
-    NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
+    NSLog(@"rotate:%@ %d",@[@"None",@"X",@"Y",@"Z"][preference.type],(int)preference.degrees);
 }
 
 - (IBAction)onCaptureShot:(id)sender
