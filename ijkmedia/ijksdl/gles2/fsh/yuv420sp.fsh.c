@@ -42,6 +42,46 @@ static const char g_shader[] = IJK_GLES_STRING(
 );
 
 //macOS use sampler2DRect,need texture dimensions
+
+//for rgbx
+static const char g_shader_rect_1[] = IJK_GLES_STRING(
+    varying vec2 vv2_Texcoord;
+    uniform vec3 um3_rgbAdjustment;
+    
+    uniform sampler2DRect us2_Sampler0;
+    uniform vec2 textureDimension0;
+    
+    uniform int isSubtitle;
+
+    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
+        //C 是对比度值，B 是亮度值，S 是饱和度
+        float B = rgbAdjustment.x;
+        float S = rgbAdjustment.y;
+        float C = rgbAdjustment.z;
+
+        rgb = (rgb - 0.5) * C + 0.5;
+        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
+        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
+        return intensity + S * (rgb - intensity);
+    }
+                                                      
+    void main()
+    {
+        if (isSubtitle == 1) {
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            gl_FragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+        } else {
+            vec3 rgb;
+            
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
+            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
+
+            gl_FragColor = vec4(rgb, 1.0);
+        }
+    }
+);
+
 //for 420sp
 static const char g_shader_rect_2[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
@@ -161,9 +201,16 @@ const char *IJK_GL_getFragmentShader_yuv420sp()
 
 const char *IJK_GL_getFragmentShader_yuv420sp_rect(int samples)
 {
-    if (samples == 2) {
+    //for rgbx
+    if (samples == 1) {
+        return g_shader_rect_1;
+    }
+    //for 420sp
+    else if (samples == 2) {
         return g_shader_rect_2;
-    } else if (samples == 3) {
+    }
+    //for 420p
+    else if (samples == 3) {
         return g_shader_rect_3;
     } else {
         assert(0);

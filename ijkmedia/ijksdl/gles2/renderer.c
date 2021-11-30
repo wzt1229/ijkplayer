@@ -164,6 +164,8 @@ static IJK_GLES2_Renderer * _smart_create_renderer(SDL_VoutOverlay *overlay,cons
         ALOGI("create render yuv420sp vtb\n");
         return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,2);
     } else if (cv_format == kCVPixelFormatType_32BGRA) {
+        ALOGI("create render bgrx vtb\n");
+        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,1);
         return IJK_GL_Renderer_create_rgbx();
     } else if (cv_format == kCVPixelFormatType_24RGB) {
         return IJK_GL_Renderer_create_rgbx();
