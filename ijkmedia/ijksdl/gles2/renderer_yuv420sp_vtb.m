@@ -476,9 +476,6 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
 
     if (samples > 1) {
         renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_ColorConversionMatrix)");
-        GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
-        assert(isFullRange >= 0);
-        renderer->opaque->isFullRange = isFullRange;
     }
     
     renderer->um3_rgb_adjustment = glGetUniformLocation(renderer->program, "um3_rgbAdjustment"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_rgb_adjustmentVector)");
@@ -497,6 +494,9 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
         goto fail;
     bzero(renderer->opaque, sizeof(IJK_GLES2_Renderer_Opaque));
     renderer->opaque->samples = samples;
+    renderer->opaque->isSubtitle  = -1;
+    renderer->opaque->isFullRange = -1;
+    
 #if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
     if (!create_gltexture(renderer)) {
         goto fail;
@@ -515,6 +515,12 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
         }
     }
 
+    if (samples > 1) {
+        GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
+        assert(isFullRange >= 0);
+        renderer->opaque->isFullRange = isFullRange;
+    }
+    
     GLint isSubtitle = glGetUniformLocation(renderer->program, "isSubtitle");
     assert(isSubtitle >= 0);
     renderer->opaque->isSubtitle = isSubtitle;
