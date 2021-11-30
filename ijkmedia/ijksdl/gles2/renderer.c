@@ -162,22 +162,22 @@ static IJK_GLES2_Renderer * _smart_create_renderer(SDL_VoutOverlay *overlay,cons
 {
     if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
         ALOGI("create render yuv420sp vtb\n");
-        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,2);
+        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,YUV_2P_SHADER);
     } else if (cv_format == kCVPixelFormatType_32BGRA) {
         ALOGI("create render bgrx vtb\n");
-        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,1);
-        return IJK_GL_Renderer_create_rgbx();
-    } else if (cv_format == kCVPixelFormatType_24RGB) {
+        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,BGRX_SHADER);
         return IJK_GL_Renderer_create_rgbx();
     } else if (cv_format == kCVPixelFormatType_32ARGB) {
+        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,XRGB_SHADER);
         return IJK_GL_Renderer_create_xrgb();
     } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
                cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
         ALOGI("create render yuv420p vtb\n");
-        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,3);
+        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,YUV_3P_SHADER);
     }
     #if TARGET_OS_OSX
     else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
+        return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,UYVY_SHADER);
         return IJK_GL_Renderer_create_uyvy();
     }
     #endif

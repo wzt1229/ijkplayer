@@ -87,6 +87,18 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
     } else if (format == AV_PIX_FMT_YUYV422) {
         pixelFormatType = kCVPixelFormatType_422YpCbCr8_yuvs;
     }
+    //    kCVReturnInvalidPixelFormat
+//    else if (format == AV_PIX_FMT_BGR24) {
+//        pixelFormatType = kCVPixelFormatType_24BGR;
+//    }
+//    else if (format == AV_PIX_FMT_RGB565BE) {
+//        pixelFormatType = kCVPixelFormatType_16BE565;
+//    } else if (format == AV_PIX_FMT_RGB565LE) {
+//        pixelFormatType = kCVPixelFormatType_16LE565;
+//    }
+//    else if (format == AV_PIX_FMT_RGB0 || format == AV_PIX_FMT_RGBA) {
+//        pixelFormatType = kCVPixelFormatType_32RGBA;
+//    }
 //    RGB555 可以创建出 CVPixelBuffer，但是显示时失败了。
 //    else if (format == AV_PIX_FMT_RGB555BE) {
 //        pixelFormatType = kCVPixelFormatType_16BE555;
@@ -168,6 +180,8 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
         }
         return pixelBuffer;
     } else {
+        ALOGE("CVPixelBufferCreate Failed:%d\n", result);
+        assert(0);
         return NULL;
     }
 }

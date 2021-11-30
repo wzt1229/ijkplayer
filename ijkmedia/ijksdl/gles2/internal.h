@@ -36,6 +36,40 @@
 
 typedef struct IJK_GLES2_Renderer_Opaque IJK_GLES2_Renderer_Opaque;
 
+typedef enum : int {
+    NONE_SHADER,
+    BGRX_SHADER,
+    XRGB_SHADER,
+    YUV_2P_SHADER,//for 420sp
+    YUV_3P_SHADER,//for 420p
+    UYVY_SHADER   //for uyvy
+} IJK_SHADER_TYPE;
+
+static inline const int IJK_Sample_Count_For_Shader(IJK_SHADER_TYPE type)
+{
+    switch (type) {
+        case BGRX_SHADER:
+        case XRGB_SHADER:
+        case UYVY_SHADER:
+        {
+            return 1;
+        }
+        case YUV_2P_SHADER:
+        {
+            return 2;
+        }
+        case YUV_3P_SHADER:
+        {
+            return 3;
+        }
+        case NONE_SHADER:
+        {
+            assert(0);
+            return 0;
+        }
+    }
+}
+
 typedef struct IJK_Subtile_Size {
     int w;
     int h;
@@ -111,7 +145,7 @@ const char *IJK_GL_getFragmentShader_yuv420sp(void);
 const char *IJK_GL_getFragmentShader_yuv420p(void);
 
 #if TARGET_OS_OSX
-const char *IJK_GL_getFragmentShader_yuv420sp_rect(int samples);
+const char *IJK_GL_getFragmentShader_yuv420sp_rect(IJK_SHADER_TYPE type);
 const char *IJK_GLES2_getFragmentShader_rect_rgb(void);
 #else
 const char *IJK_GLES2_getFragmentShader_yuv444p10le();
@@ -124,7 +158,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_rgbx(void);
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay,int samples);
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type);
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp(void);
 
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv420p(void);

@@ -73,7 +73,7 @@ typedef struct IJK_GLES2_Renderer_Opaque
 
 static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
 {
-    ALOGI("use render yuv420sp_vtb\n");
+    ALOGI("use common vtb render\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
@@ -94,7 +94,11 @@ static GLsizei yuv420sp_vtb_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_Vou
     if (!overlay)
         return 0;
 
-    return overlay->pitches[0] / 1;
+    if (overlay->format == SDL_FCC__VTB || overlay->format == SDL_FCC__FFVTB) {
+        return overlay->pitches[0];
+    } else {
+        assert(0);
+    }
 }
 
 #if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
@@ -220,7 +224,7 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
                                               i);
 
         if (err != kCGLNoError) {
-            ALOGE("error creating IOSurface texture for plane %d: %s\n",
+            ALOGE("creating IOSurface texture for plane %d failed: %s\n",
                    0, CGLErrorString(err));
             return GL_FALSE;
         } else {
@@ -236,17 +240,9 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
 
 static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, CVPixelBufferRef pixel_buffer)
 {
-    int pixel_fmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
-    
-    assert(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange == pixel_fmt ||
-           kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
-           kCVPixelFormatType_420YpCbCr8Planar == pixel_fmt ||
-           kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt ||
-           kCVPixelFormatType_32BGRA == pixel_fmt);
-    
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
     
-    if (!opaque->color_attachments) {
+    if (opaque && !opaque->color_attachments) {
         CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
         if (color_attachments == nil ||
             CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
@@ -259,6 +255,8 @@ static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, CVPixelB
         }
 
         opaque->color_attachments = CFRetain(color_attachments);
+        
+        int pixel_fmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
         
         //full color range
         if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
@@ -455,18 +453,20 @@ static GLboolean yuv420sp_uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subt
 }
 #endif
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay,int samples)
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type)
 {
 #if TARGET_OS_OSX
     assert(overlay->format == SDL_FCC__VTB || overlay->format == SDL_FCC__FFVTB);
     
-    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp_rect(samples));
+    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp_rect(type));
 #else
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
 #endif
     
     if (!renderer)
         goto fail;
+    
+    const int samples = IJK_Sample_Count_For_Shader(type);
     
     for (int i = 0; i < samples; i++) {
         char name[20] = "us2_Sampler";

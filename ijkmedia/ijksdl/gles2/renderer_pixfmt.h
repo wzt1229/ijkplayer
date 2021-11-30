@@ -224,6 +224,33 @@ static struct vt_format vt_formats[] = {
 #endif
         }
     },
+    {
+        .cvpixfmt = kCVPixelFormatType_32ARGB,
+        .imgfmt = IMGFMT_ARGB,
+        .planes = 1,
+        .gl = {
+#if TARGET_OS_OSX
+            { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, GL_RGBA }
+#else
+            { GL_BGRA, GL_UNSIGNED_INT, GL_RGBA }
+#endif
+        }
+    },
+#if 0
+    {
+//        creating IOSurface texture invalid numerical value: kCVPixelFormatType_24RGB
+        .cvpixfmt = kCVPixelFormatType_24RGB,
+        .imgfmt = IMGFMT_RGB24,
+        .planes = 1,
+        .gl = {
+#if TARGET_OS_OSX
+            { GL_BGR, GL_UNSIGNED_INT_8_8_8_8_REV, GL_RGBA }
+#else
+            { GL_BGR, GL_UNSIGNED_INT, GL_RGBA }
+#endif
+        }
+    }
+#endif
 };
 
 static inline struct vt_format *vt_get_gl_format(uint32_t cvpixfmt)
