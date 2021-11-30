@@ -35,10 +35,12 @@
 #define IJK_GLES_STRING(x)      IJK_GLES_STRINGIZE2(x)
 
 typedef struct IJK_GLES2_Renderer_Opaque IJK_GLES2_Renderer_Opaque;
+
 typedef struct IJK_Subtile_Size {
     int w;
     int h;
 }IJK_Subtile_Size;
+
 typedef struct IJK_GLES2_Renderer
 {
     IJK_GLES2_Renderer_Opaque *opaque;

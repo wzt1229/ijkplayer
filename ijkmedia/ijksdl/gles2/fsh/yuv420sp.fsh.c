@@ -42,16 +42,20 @@ static const char g_shader[] = IJK_GLES_STRING(
 );
 
 //macOS use sampler2DRect,need texture dimensions
+//for 420sp
 static const char g_shader_rect_2[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform mat3 um3_ColorConversion;
     uniform vec3 um3_rgbAdjustment;
+    
     uniform sampler2DRect us2_Sampler0;
     uniform sampler2DRect us2_Sampler1;
+    
     uniform vec2 textureDimension0;
     uniform vec2 textureDimension1;
-    uniform int isSubtitle;
     
+    uniform int isSubtitle;
+    uniform int isVideoRange;
                                                       
     void main()
     {
@@ -64,10 +68,12 @@ static const char g_shader_rect_2[] = IJK_GLES_STRING(
             
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
-            //yuv.x = (texture2DRect(us2_Sampler0, recTexCoord).r  - (16.0 / 255.0));
-            //videotoolbox decoded video range pixel already! kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+            
             yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
-            yuv.yz = (texture2DRect(us2_Sampler1, recTexCoord1).ra - vec2(0.5, 0.5));
+            if (isFullRange == 1) {
+                yuv.x = yuv.x - (16.0 / 255.0);
+            }
+            yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).ra - vec2(0.5, 0.5);
             
             rgb = um3_ColorConversion * yuv;
             
@@ -91,17 +97,17 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform mat3 um3_ColorConversion;
     uniform vec3 um3_rgbAdjustment;
-                                                     
+                                                   
     uniform sampler2DRect us2_Sampler0;
     uniform sampler2DRect us2_Sampler1;
     uniform sampler2DRect us2_Sampler2;
-                                                     
+                                                   
     uniform vec2 textureDimension0;
     uniform vec2 textureDimension1;
     uniform vec2 textureDimension2;
-                                                     
+                                                   
     uniform int isSubtitle;
-                                                    
+    uniform int isFullRange;
 
     void main()
     {
@@ -111,17 +117,20 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
         } else {
             vec3 yuv;
             vec3 rgb;
-            
+
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
             vec2 recTexCoord2 = vv2_Texcoord * textureDimension2;
 
-            yuv.x = (texture2DRect(us2_Sampler0, recTexCoord0).r - (16.0 / 255.0));
-            yuv.y = (texture2DRect(us2_Sampler1, recTexCoord1).r - 0.5);
-            yuv.z = (texture2DRect(us2_Sampler2, recTexCoord2).r - 0.5);
-            
+            yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
+            if (isFullRange == 1) {
+                yuv.x = yuv.x - (16.0 / 255.0);
+            }
+            yuv.y = texture2DRect(us2_Sampler1, recTexCoord1).r - 0.5;
+            yuv.z = texture2DRect(us2_Sampler2, recTexCoord2).r - 0.5;
+
             rgb = um3_ColorConversion * yuv;
-            
+
             //C 是对比度值，B 是亮度值，S 是饱和度
             float B = um3_rgbAdjustment.x;
             float S = um3_rgbAdjustment.y;

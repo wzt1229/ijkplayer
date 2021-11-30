@@ -144,7 +144,9 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
     renderer->av4_position = glGetAttribLocation(renderer->program, "av4_Position");                IJK_GLES2_checkError_TRACE("glGetAttribLocation(av4_Position)");
     renderer->av2_texcoord = glGetAttribLocation(renderer->program, "av2_Texcoord");                IJK_GLES2_checkError_TRACE("glGetAttribLocation(av2_Texcoord)");
     renderer->um4_mvp      = glGetUniformLocation(renderer->program, "um4_ModelViewProjection");    IJK_GLES2_checkError_TRACE("glGetUniformLocation(um4_ModelViewProjection)");
-
+    renderer->um3_color_conversion = -1;
+    renderer->um3_rgb_adjustment = -1;
+    
     return renderer;
 
 fail:
@@ -168,7 +170,7 @@ static IJK_GLES2_Renderer * _smart_create_renderer(SDL_VoutOverlay *overlay,cons
     } else if (cv_format == kCVPixelFormatType_32ARGB) {
         return IJK_GL_Renderer_create_xrgb();
     } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
-               cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
+               cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
         ALOGI("create render yuv420p vtb\n");
         return IJK_GL_Renderer_create_yuv420sp_vtb(overlay,3);
     }
@@ -575,11 +577,6 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     }
     
     //IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
-    
-    if (renderer->um3_rgb_adjustment >= 0) {
-        glUniform3fv(renderer->um3_rgb_adjustment, 1, renderer->rgb_adjustment);
-            IJK_GLES2_checkError_TRACE("glUniform3fv(um3_rgb_adjustment)");
-    }
     
     ijk_float3_vector rotate_v3 = { 0.0 };
     //rotate x

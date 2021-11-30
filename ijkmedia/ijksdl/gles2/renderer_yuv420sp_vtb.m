@@ -64,6 +64,7 @@ typedef struct IJK_GLES2_Renderer_Opaque
     CFTypeRef             color_attachments;
     GLint                 textureDimension[3];
     GLint                 isSubtitle;
+    GLint                 isFullRange;
     Frame_Size            frameSize[3];
     OpenGLTextureRef      subCVGLTexture;
     Frame_Size            subTextureSize;
@@ -240,7 +241,7 @@ static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, CVPixelB
     assert(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange == pixel_fmt ||
            kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
            kCVPixelFormatType_420YpCbCr8Planar == pixel_fmt ||
-           kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange == pixel_fmt);
+           kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt);
     
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
     
@@ -257,6 +258,12 @@ static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, CVPixelB
         }
 
         opaque->color_attachments = CFRetain(color_attachments);
+        
+        //full color range
+        if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
+            kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt) {
+            glUniform1i(renderer->opaque->isFullRange, GL_TRUE);
+        }
     }
 
 #if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
@@ -505,6 +512,10 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_yuv420sp_vtb(SDL_VoutOverlay *overlay
     assert(isSubtitle >= 0);
     renderer->opaque->isSubtitle = isSubtitle;
 #endif
+    
+    GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
+    assert(isFullRange >= 0);
+    renderer->opaque->isFullRange = isFullRange;
     
     return renderer;
 fail:
