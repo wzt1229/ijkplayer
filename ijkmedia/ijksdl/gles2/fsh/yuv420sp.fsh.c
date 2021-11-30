@@ -55,7 +55,19 @@ static const char g_shader_rect_2[] = IJK_GLES_STRING(
     uniform vec2 textureDimension1;
     
     uniform int isSubtitle;
-    uniform int isVideoRange;
+    uniform int isFullRange;
+
+    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
+        //C 是对比度值，B 是亮度值，S 是饱和度
+        float B = rgbAdjustment.x;
+        float S = rgbAdjustment.y;
+        float C = rgbAdjustment.z;
+
+        rgb = (rgb - 0.5) * C + 0.5;
+        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
+        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
+        return intensity + S * (rgb - intensity);
+    }
                                                       
     void main()
     {
@@ -77,15 +89,7 @@ static const char g_shader_rect_2[] = IJK_GLES_STRING(
             
             rgb = um3_ColorConversion * yuv;
             
-            //C 是对比度值，B 是亮度值，S 是饱和度
-            float B = um3_rgbAdjustment.x;
-            float S = um3_rgbAdjustment.y;
-            float C = um3_rgbAdjustment.z;
-
-            rgb = (rgb - 0.5) * C + 0.5;
-            rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
-            vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
-            rgb = intensity + S * (rgb - intensity);
+            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
             gl_FragColor = vec4(rgb, 1.0);
         }
@@ -109,6 +113,18 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
     uniform int isSubtitle;
     uniform int isFullRange;
 
+    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
+        //C 是对比度值，B 是亮度值，S 是饱和度
+        float B = rgbAdjustment.x;
+        float S = rgbAdjustment.y;
+        float C = rgbAdjustment.z;
+
+        rgb = (rgb - 0.5) * C + 0.5;
+        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
+        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
+        return intensity + S * (rgb - intensity);
+    }
+                                                      
     void main()
     {
         if (isSubtitle == 1) {
@@ -131,15 +147,7 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
 
             rgb = um3_ColorConversion * yuv;
 
-            //C 是对比度值，B 是亮度值，S 是饱和度
-            float B = um3_rgbAdjustment.x;
-            float S = um3_rgbAdjustment.y;
-            float C = um3_rgbAdjustment.z;
-
-            rgb = (rgb - 0.5) * C + 0.5;
-            rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
-            vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
-            rgb = intensity + S * (rgb - intensity);
+            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
             gl_FragColor = vec4(rgb, 1.0);
         }
