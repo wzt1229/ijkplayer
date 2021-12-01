@@ -1570,7 +1570,7 @@ display:
             video_display2(ffp);
     }
     is->force_refresh = 0;
-    if (ffp->show_status) {
+    if (ffp->show_status == 1 && AV_LOG_INFO > av_log_get_level()) {
         AVBPrint buf;
         static int64_t last_time;
         int64_t cur_time;
@@ -1612,12 +1612,7 @@ display:
                                   sqsize,
                                   is->video_st ? is->viddec.avctx->pts_correction_num_faulty_dts : 0,
                                   is->video_st ? is->viddec.avctx->pts_correction_num_faulty_pts : 0);
-            if (ffp->show_status == 1 && AV_LOG_INFO > av_log_get_level())
-                fprintf(stderr, "%s", buf.str);
-            else
-                av_log(NULL, AV_LOG_INFO, "%s", buf.str);
-            
-            fflush(stderr);
+            av_log(NULL, AV_LOG_INFO, "%s", buf.str);
             av_bprint_finalize(&buf, NULL);
             
             last_time = cur_time;
