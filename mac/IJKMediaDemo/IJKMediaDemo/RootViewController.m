@@ -388,8 +388,8 @@
 
 - (void)playURL:(NSURL *)url
 {
-    self.urlInput.stringValue = [url absoluteString];
-    NSString *title = [[url resourceSpecifier] lastPathComponent];
+    self.urlInput.stringValue = [url isFileURL] ? [url path] : [url absoluteString];
+    NSString *title = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     [self.view.window setTitle:title];
     
     [self perpareIJKPlayer:url];
