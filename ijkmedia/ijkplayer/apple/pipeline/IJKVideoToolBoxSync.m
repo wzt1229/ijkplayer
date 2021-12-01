@@ -851,7 +851,6 @@ int videotoolbox_sync_decode_frame(Ijk_VideoToolBox_Opaque* context)
         }
 
         if (!d->packet_pending || d->queue->serial != d->pkt_serial) {
-            AVPacket pkt;
             do {
                 if (d->queue->nb_packets == 0)
                     SDL_CondSignal(d->empty_queue_cond);
