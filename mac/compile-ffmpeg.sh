@@ -135,8 +135,6 @@ elif [ "$FF_TARGET" = "clean" ]; then
         cd ffmpeg-$ARCH && git clean -xdf && cd -
     done
     rm -rf build/ffmpeg-*
-    rm -rf build/universal/include
-    rm -rf build/universal/lib
 else
     echo "Usage:"
     echo "  compile-ffmpeg.sh all"
