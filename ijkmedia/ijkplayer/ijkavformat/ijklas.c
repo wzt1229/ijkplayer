@@ -2070,7 +2070,8 @@ static int las_read_seek(AVFormatContext* s, int stream_index,
 #define FLAGS AV_OPT_FLAG_DECODING_PARAM
 static const AVOption las_options[] = {
     {
-        "user-agent", "user agent",
+        //the user-agent option is deprecated, please use user_agent option
+        "user_agent", "user agent",
         OFFSET(user_agent), AV_OPT_TYPE_STRING, { .str = NULL }, CHAR_MIN, CHAR_MAX, FLAGS
     },
     {
