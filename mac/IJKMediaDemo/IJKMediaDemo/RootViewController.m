@@ -25,19 +25,20 @@
 @property (weak) IBOutlet NSButton *playCtrlBtn;
 @property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
 @property (weak) IBOutlet NSPopUpButton *audioPopUpBtn;
-//for cocoa bind
+
+//for cocoa binding begin
 @property (assign) float subtitleFontSize;
-//for cocoa bind
 @property (assign) float subtitleDelay;
-//for cocoa bind
 @property (assign) float subtitleMargin;
 
-//for cocoa bind
 @property (assign) float brightness;
-//for cocoa bind
 @property (assign) float saturation;
-//for cocoa bind
 @property (assign) float contrast;
+
+@property (assign) BOOL useVideoToolBox;
+@property (assign) int useAsyncVTB;
+@property (copy) NSString *fcc;
+//for cocoa binding end
 
 @end
 
@@ -58,6 +59,9 @@
 
     self.subtitleFontSize = 100;
     self.subtitleMargin = 0.7;
+    self.useVideoToolBox = YES;
+    self.fcc = @"fcc-nv12";
+    
     [self onReset:nil];
     
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
@@ -154,13 +158,12 @@
 //    [options setPlayerOptionValue:@"fcc-0rgb"        forKey:@"overlay-format"];
 //    [options setPlayerOptionValue:@"fcc-uyvy"        forKey:@"overlay-format"];
 //    [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
-    
-    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
+//    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
 
-    BOOL useVideoToolBox = YES;
-    [options setPlayerOptionIntValue:useVideoToolBox      forKey:@"videotoolbox"];
-//    [options setPlayerOptionIntValue:1      forKey:@"videotoolbox-async"];
-    [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
+    [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
+    [options setPlayerOptionIntValue:self.useVideoToolBox forKey:@"videotoolbox"];
+    [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
+    [options setPlayerOptionIntValue:3840 forKey:@"videotoolbox-max-frame-width"];
     
     [self.player.view removeFromSuperview];
     [self.player stop];
@@ -631,6 +634,15 @@
     } else {
         [self.player closeCurrentStream:k_IJKM_VAL_TYPE__AUDIO];
     }
+}
+
+#pragma mark 解码设置
+
+- (IBAction)onSelectFCC:(NSPopUpButton*)sender
+{
+    NSString *title = sender.selectedItem.title;
+    NSString *fcc = [@"fcc-" stringByAppendingString:title];
+    self.fcc = fcc;
 }
 
 @end
