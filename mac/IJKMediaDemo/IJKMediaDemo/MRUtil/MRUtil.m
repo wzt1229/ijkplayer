@@ -29,17 +29,27 @@
         @"flv",
         @"ts",
         @"webm",
-        @"ass"
         ];
 }
 
 + (NSArray <NSString *>*)subtitleType
 {
     return @[
-        @"ass"
+        @"srt",
+        @"sub",
+        @"ass",
+        @"ssa",
+        @"psb"
         ];
 }
 
++ (NSArray <NSString *>*)acceptMediaType
+{
+    NSMutableArray *r = [[NSMutableArray alloc] init];
+    [r addObjectsFromArray:[self videoType]];
+    [r addObjectsFromArray:[self subtitleType]];
+    return r;
+}
 + (NSDictionary *)makeBookmarkWithURL:(NSURL *)url
 {
     NSData *bookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope

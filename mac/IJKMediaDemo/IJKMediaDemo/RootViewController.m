@@ -311,14 +311,13 @@
             if (isDirectory) {
                 //扫描文件夹
                 NSString *dir = [url path];
-                NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil videoType]];
+                NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil acceptMediaType]];
                 if ([dicArr count] > 0) {
                     [bookmarkArr addObjectsFromArray:dicArr];
                 }
             } else {
                 NSString *pathExtension = [[url pathExtension] lowercaseString];
-                if ([[MRUtil videoType] containsObject:pathExtension]) {
-                    //视频
+                if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
                     NSDictionary *dic = [MRUtil makeBookmarkWithURL:url];
                     [bookmarkArr addObject:dic];
                 }
@@ -326,29 +325,33 @@
         }
     }
     
-    NSURL* subtitleUrl = nil;
-    if ([bookmarkArr count] > 0) {
+    NSMutableArray *videos = [NSMutableArray array];
+    NSMutableArray *subtitles = [NSMutableArray array];
+    
+    for (NSDictionary *dic in bookmarkArr) {
+        NSURL *url = dic[@"url"];
         
+        if ([self existTaskForUrl:url]) {
+            continue;
+        }
+        
+        NSString *pathExtension = [[url pathExtension] lowercaseString];
+        if ([[MRUtil videoType] containsObject:pathExtension]) {
+            [videos addObject:url];
+        } else if ([MRUtil subtitleType]) {
+            [subtitles addObject:url];
+        }
+    }
+    
+    //拖进来新的视频时，清理老的视频列表
+    if ([videos count] > 0) {
         [self.playList removeAllObjects];
-        for (NSDictionary *dic in bookmarkArr) {
-            NSURL *url = dic[@"url"];
-            
-            if ([self existTaskForUrl:url]) {
-                continue;
-            }
-            
-            NSString *pathExtension = [[url pathExtension] lowercaseString];
-            if (![[MRUtil subtitleType] containsObject:pathExtension]) {
-                [self.playList addObject:url];
-            } else {
-                subtitleUrl = url;
-            }
-        }
-        
+        self.playList = videos;
         [self playFirstIfNeed];
-        if (subtitleUrl) {
-            [self.player loadSubtitleFile:[subtitleUrl path]];
-        }
+    }
+    
+    for (NSURL *url in subtitles) {
+        [self.player loadSubtitleFile:[url path]];
     }
 }
 
@@ -369,7 +372,7 @@
                     }
                 } else {
                     NSString *pathExtension = [[url pathExtension] lowercaseString];
-                    if ([[MRUtil videoType] containsObject:pathExtension]) {
+                    if ([[MRUtil videoType] containsObject:pathExtension] || [[MRUtil subtitleType] containsObject:pathExtension]) {
                         return NSDragOperationCopy;
                     }
                 }
