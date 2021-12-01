@@ -1049,11 +1049,10 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
 //    IOSurface 无法渲染
 //    pixelFormatType = kCVPixelFormatType_24RGB;
 #if TARGET_OS_MAC
-    
     int pixelFormatType = -1;
-    if (overlay_format == SDL_FCC_BGRA) {
+    if (overlay_format == SDL_FCC_BGRA || overlay_format == SDL_FCC_BGR0) {
         pixelFormatType = kCVPixelFormatType_32BGRA;
-    } else if (overlay_format == SDL_FCC_ARGB) {
+    } else if (overlay_format == SDL_FCC_ARGB || overlay_format == SDL_FCC_0RGB ) {
         pixelFormatType = kCVPixelFormatType_32ARGB;
     } else if (overlay_format == SDL_FCC_UYVY) {
         pixelFormatType = kCVPixelFormatType_422YpCbCr8;

@@ -73,6 +73,7 @@ typedef struct VTBFormatDesc
     int32_t                     max_ref_frames;
     bool                        convert_bytestream;
     bool                        convert_3byteTo4byteNALSize;
+    int                         pixelBufferPixelFormat;
 } VTBFormatDesc;
 
 struct Ijk_VideoToolBox_Opaque {
@@ -106,7 +107,7 @@ struct Ijk_VideoToolBox_Opaque {
 
 
 static void vtbformat_destroy(VTBFormatDesc *fmt_desc);
-static int  vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar);
+static int  vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, int overlay_format);
 
 static const char *vtb_get_error_string(OSStatus status) {
     switch (status) {
@@ -404,10 +405,11 @@ static void VTDecoderCallback(void *decompressionOutputRefCon,
 #endif
 
         OSType format_type = CVPixelBufferGetPixelFormatType(imageBuffer);
-        if (format_type != kCVPixelFormatType_32BGRA) {
-            ALOGI("format_type error \n");
+        if (format_type != ctx->fmt_desc.pixelBufferPixelFormat) {
+            ALOGE("format_type error \n");
             goto failed;
         }
+        
         if (kVTDecodeInfo_FrameDropped & infoFlags) {
             ALOGI("droped\n");
             goto failed;
@@ -539,7 +541,7 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
     VTDecompressionOutputCallbackRecord outputCallback;
     OSStatus status;
 
-    ret = vtbformat_init(&context->fmt_desc, context->codecpar);
+    ret = vtbformat_init(&context->fmt_desc, context->codecpar, ffp->overlay_format);
 
     if (ffp->vtb_max_frame_width > 0 && width > ffp->vtb_max_frame_width) {
         double w_scaler = (float)ffp->vtb_max_frame_width / width;
@@ -554,9 +556,8 @@ static VTDecompressionSessionRef vtbsession_create(Ijk_VideoToolBox_Opaque* cont
                                                                  0,
                                                                  &kCFTypeDictionaryKeyCallBacks,
                                                                  &kCFTypeDictionaryValueCallBacks);
-#warning TODO FIXME
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
-                          kCVPixelBufferPixelFormatTypeKey, kCVPixelFormatType_32BGRA);
+                          kCVPixelBufferPixelFormatTypeKey, context->fmt_desc.pixelBufferPixelFormat);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
                           kCVPixelBufferWidthKey, width);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
@@ -1032,7 +1033,7 @@ static void vtbformat_destroy(VTBFormatDesc *fmt_desc)
     fmt_desc->fmt_desc = NULL;
 }
 
-static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar)
+static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, int overlay_format)
 {
     int width           = codecpar->width;
     int height          = codecpar->height;
@@ -1158,6 +1159,36 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar)
 
     ALOGI("m_max_ref_frames %d \n", fmt_desc->max_ref_frames);
 
+    //    //video toolbox 不支持
+    //    pixelFormatType = kCVPixelFormatType_16LE565;
+    //    pixelFormatType = kCVPixelFormatType_16BE565;
+    //    pixelFormatType = kCVPixelFormatType_16LE555;
+    //    pixelFormatType = kCVPixelFormatType_24BGR;
+    //    pixelFormatType = kCVPixelFormatType_32RGBA;
+    //    pixelFormatType = kCVPixelFormatType_32ABGR;
+    //    IOSurface 无法渲染
+    //    pixelFormatType = kCVPixelFormatType_24RGB;
+#if TARGET_OS_MAC
+    int pixelFormatType = -1;
+    if (overlay_format == SDL_FCC_BGRA || overlay_format == SDL_FCC_BGR0) {
+        pixelFormatType = kCVPixelFormatType_32BGRA;
+    } else if (overlay_format == SDL_FCC_ARGB || overlay_format == SDL_FCC_0RGB ) {
+        pixelFormatType = kCVPixelFormatType_32ARGB;
+    } else if (overlay_format == SDL_FCC_UYVY) {
+        pixelFormatType = kCVPixelFormatType_422YpCbCr8;
+    } else if (overlay_format == SDL_FCC_I420) {
+        pixelFormatType = kCVPixelFormatType_420YpCbCr8Planar;
+    } else {
+        pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
+    }
+#else
+    pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
+#endif
+    
+    assert(pixelFormatType != -1);
+    
+    fmt_desc->pixelBufferPixelFormat = pixelFormatType;
+
     return 0;
 fail:
     vtbformat_destroy(fmt_desc);
@@ -1193,7 +1224,7 @@ Ijk_VideoToolBox_Opaque* videotoolbox_async_create(FFPlayer* ffp, AVCodecContext
     context_vtb->ffp = ffp;
     context_vtb->idr_based_identified = true;
 
-    ret = vtbformat_init(&context_vtb->fmt_desc, context_vtb->codecpar);
+    ret = vtbformat_init(&context_vtb->fmt_desc, context_vtb->codecpar, ffp->overlay_format);
     if (ret)
         goto fail;
     assert(context_vtb->fmt_desc.fmt_desc);
