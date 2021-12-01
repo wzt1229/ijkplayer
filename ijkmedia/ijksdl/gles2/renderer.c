@@ -327,13 +327,20 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
         layer_height = tmp;
     }
     
+    //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
+    if (abs(renderer->auto_z_rotate_degrees) / 90 % 2 == 1) {
+        float tmp = layer_width;
+        layer_width = layer_height;
+        layer_height = tmp;
+    }
+    
     if (renderer->frame_sar_num > 0 && renderer->frame_sar_den > 0) {
         frame_width = frame_width * renderer->frame_sar_num / renderer->frame_sar_den;
     }
 
     if (renderer->frame_dar_num > 0 && renderer->frame_dar_den > 0) {
-        if (frame_width/frame_height > (float)renderer->frame_dar_num/renderer->frame_dar_den) {
-            frame_height = frame_width * renderer->frame_dar_den/renderer->frame_dar_num;
+        if (frame_width / frame_height > (float)renderer->frame_dar_num / renderer->frame_dar_den) {
+            frame_height = frame_width * renderer->frame_dar_den / renderer->frame_dar_num;
         }
         else {
             frame_width = frame_height * renderer->frame_dar_num / renderer->frame_dar_den;
@@ -426,10 +433,20 @@ void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degre
 
 void IJK_GLES2_Renderer_updateUserDefinedDAR(IJK_GLES2_Renderer *renderer,int dar_num, int dar_den)
 {
-    renderer->frame_dar_num = dar_num;
-    renderer->frame_dar_den = dar_den;
+    int flag = 0;
+    if (renderer->frame_dar_num != dar_num) {
+        renderer->frame_dar_num = dar_num;
+        flag = 1;
+    }
     
-    renderer->vertices_changed = true;
+    if (renderer->frame_dar_den != dar_den) {
+        renderer->frame_dar_den = dar_den;
+        flag = 1;
+    }
+    
+    if (flag) {
+        renderer->vertices_changed = true;
+    }
 }
 
 static void IJK_GLES2_Renderer_TexCoords_cropRight(IJK_GLES2_Renderer *renderer, GLfloat cropRight)
