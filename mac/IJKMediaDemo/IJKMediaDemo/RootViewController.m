@@ -181,8 +181,26 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self.player];
     
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackDidFinishNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerDidFinish:) name:IJKMPMoviePlayerPlaybackDidFinishNotification object:self.player];
+    
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
+}
+
+- (void)ijkPlayerDidFinish:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        int reason = [notifi.userInfo[IJKMPMoviePlayerPlaybackDidFinishReasonUserInfoKey] intValue];
+        if (IJKMPMovieFinishReasonPlaybackError == reason) {
+            int errCode = [notifi.userInfo[@"error"] intValue];
+            NSLog(@"播放出错:%d",errCode);
+            [self.player stop];
+        } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
+            NSLog(@"播放结束");
+            [self playNext:nil];
+        }
+    }
 }
 
 - (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi

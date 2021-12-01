@@ -3625,6 +3625,12 @@ static int read_thread(void *arg)
     if (is->video_stream < 0 && is->audio_stream < 0) {
         av_log(NULL, AV_LOG_FATAL, "Failed to open file '%s' or configure filtergraph\n",
                is->filename);
+        //record open stream err code.
+        if (is->audio_stream < 0) {
+            last_error |= 1;
+        } else if (is->video_stream < 0) {
+            last_error |= 2;
+        }
         ret = -1;
         goto fail;
     }
@@ -4012,7 +4018,6 @@ static int read_thread(void *arg)
     }
             
     if (!ffp->prepared || !is->abort_request) {
-        ffp->last_error = last_error;
         ffp_notify_msg2(ffp, FFP_MSG_ERROR, last_error);
     }
     SDL_DestroyMutex(wait_mutex);

@@ -669,7 +669,6 @@ typedef struct FFPlayer {
     char *subtitle_codec_info;
     Uint32 overlay_format;
 
-    int last_error;
     int prepared;
     int auto_resume;
     int error;
@@ -818,7 +817,6 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
 #else
     ffp->overlay_format         = SDL_FCC_RV32;
 #endif
-    ffp->last_error             = 0;
     ffp->prepared               = 0;
     ffp->auto_resume            = 0;
     ffp->error                  = 0;
