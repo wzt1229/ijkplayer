@@ -141,6 +141,8 @@
 
 - (void)mouseDown:(NSEvent *)theEvent
 {
+    [self.window makeFirstResponder:self];
+    
     if (self.window.ignoresMouseEvents) {
         return;
     }

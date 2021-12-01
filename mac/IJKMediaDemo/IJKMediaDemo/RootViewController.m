@@ -76,7 +76,7 @@
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
     
     [self.ctrlView setWantsLayer:YES];
-    self.ctrlView.layer.backgroundColor = [[NSColor colorWithWhite:0.2 alpha:0.5] CGColor];
+    //self.ctrlView.layer.backgroundColor = [[NSColor colorWithWhite:0.2 alpha:0.5] CGColor];
     self.ctrlView.layer.cornerRadius = 4;
     self.ctrlView.layer.masksToBounds = YES;
 
@@ -97,6 +97,18 @@
         baseView.delegate = self;
         baseView.needTracking = YES;
     }
+     
+    NSUInteger keyCod = kVK_ANSI_Period;
+    NSUInteger keyMod = cmdKey;
+    BOOL isSys = [self isSystemHotKey:keyCod keyMod:keyMod];
+    NSLog(@"----cmd + . isSys:%d",isSys);
+    
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyDownMask handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
+        if ([theEvent keyCode] == kVK_ANSI_Period && theEvent.modifierFlags & NSEventModifierFlagCommand){
+            [self stopPlay:nil];
+        }
+        return theEvent;
+    }];
 }
 
 - (void)baseView:(SHBaseView *)baseView mouseEntered:(NSEvent *)event
@@ -144,6 +156,44 @@
 {
     BOOL isShowing = self.ctrlView.frame.origin.y >= 0;
     [self switchCtrlView:!isShowing];
+}
+
+- (BOOL)isSystemHotKey:(NSUInteger)keyCode
+                keyMod:(NSUInteger)keyMod {
+    CFArrayRef systemHotKeys = NULL;
+    if (CopySymbolicHotKeys(&systemHotKeys)) {
+        return YES;
+    }
+
+    CFIndex size = CFArrayGetCount(systemHotKeys);
+    for (CFIndex i=0; i<size; ++i) {
+        CFDictionaryRef hotKeyDict = (CFDictionaryRef)CFArrayGetValueAtIndex(
+            systemHotKeys, i);
+        if (!hotKeyDict ||
+            (CFGetTypeID(hotKeyDict) != CFDictionaryGetTypeID())) {
+            continue;
+        }
+
+        if (kCFBooleanTrue != (CFBooleanRef)CFDictionaryGetValue(
+            hotKeyDict, kHISymbolicHotKeyEnabled)) {
+            continue;
+        }
+
+        CFNumberRef keyCodeRef = (CFNumberRef)CFDictionaryGetValue(
+            hotKeyDict, kHISymbolicHotKeyCode);
+        NSInteger hotKeyCode = 0;
+        CFNumberGetValue(keyCodeRef, kCFNumberLongType, &hotKeyCode);
+
+        CFNumberRef keyModRef = (CFNumberRef)CFDictionaryGetValue(
+            hotKeyDict, kHISymbolicHotKeyModifiers);
+        NSInteger hotKeyMod = 0;
+        CFNumberGetValue(keyModRef, kCFNumberLongType, &hotKeyMod);
+        if (keyCode == hotKeyCode && keyMod == hotKeyMod) {
+            return YES;
+        }
+    }
+
+    return NO;
 }
 
 - (void)keyDown:(NSEvent *)event
@@ -207,6 +257,10 @@
         [self pauseOrPlay:nil];
     } else if ([event keyCode] == kVK_ANSI_S && event.modifierFlags & NSEventModifierFlagCommand) {
         [self onCaptureShot:nil];
+    } else if ([event keyCode] == kVK_ANSI_Period && event.modifierFlags & NSEventModifierFlagCommand) {
+        [self stopPlay:nil];
+    } else {
+        NSLog(@"0x%X",[event keyCode]);
     }
 }
 
@@ -243,9 +297,7 @@
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
     [options setPlayerOptionIntValue:3840 forKey:@"videotoolbox-max-frame-width"];
     
-    [self.player.view removeFromSuperview];
-    [self.player stop];
-    [self.player shutdown];
+    [self stopPlay:nil];
     
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
     CGRect rect = self.view.frame;
@@ -487,6 +539,14 @@
         self.playList[idx] = url;
         [self playURL:url];
     }
+}
+
+- (IBAction)stopPlay:(NSButton *)sender
+{
+    [self.player.view removeFromSuperview];
+    [self.player stop];
+    [self.player shutdown];
+    self.player = nil;
 }
 
 - (IBAction)pauseOrPlay:(NSButton *)sender
