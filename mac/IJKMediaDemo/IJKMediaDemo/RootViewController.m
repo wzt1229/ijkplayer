@@ -12,10 +12,31 @@
 #import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
 #import <Carbon/Carbon.h>
 #import "NSFileManager+Sandbox.h"
+#import "SHBaseView.h"
+#import <Quartz/Quartz.h>
 
-@interface RootViewController ()<MRDragViewDelegate>
+#ifndef __MRWS__
+#define __MRWS__
 
-@property (weak) IBOutlet NSView *contentView;
+#ifndef __weakSelf__
+#define __weakSelf__  __weak    typeof(self)weakSelf = self;
+#endif
+
+#ifndef __strongSelf__
+#define __strongSelf__ __strong typeof(weakSelf)self = weakSelf;
+#endif
+
+#define __weakObj(obj)   __weak   typeof(obj)weak##obj = obj;
+#define __strongObj(obj) __strong typeof(weak##obj)obj = weak##obj;
+
+#endif
+
+@interface RootViewController ()<MRDragViewDelegate,SHBaseViewDelegate>
+
+@property (weak) IBOutlet NSView *ctrlView;
+@property (weak) IBOutlet NSLayoutConstraint *ctrlViewBottomCons;
+@property (assign) BOOL isCtrlViewAnimating;
+
 @property (strong) IJKFFMoviePlayerController * player;
 @property (weak) IBOutlet NSTextField *playedTimeLb;
 @property (nonatomic, strong) NSMutableArray *playList;
@@ -25,6 +46,8 @@
 @property (weak) IBOutlet NSButton *playCtrlBtn;
 @property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
 @property (weak) IBOutlet NSPopUpButton *audioPopUpBtn;
+
+@property (weak) NSTrackingArea *trackingArea;
 
 //for cocoa binding begin
 @property (assign) float subtitleFontSize;
@@ -52,10 +75,10 @@
     //[self.view setWantsLayer:YES];
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
     
-    [self.contentView setWantsLayer:YES];
-    self.contentView.layer.backgroundColor = [[NSColor colorWithWhite:0.2 alpha:0.5] CGColor];
-    self.contentView.layer.cornerRadius = 4;
-    self.contentView.layer.masksToBounds = YES;
+    [self.ctrlView setWantsLayer:YES];
+    self.ctrlView.layer.backgroundColor = [[NSColor colorWithWhite:0.2 alpha:0.5] CGColor];
+    self.ctrlView.layer.cornerRadius = 4;
+    self.ctrlView.layer.masksToBounds = YES;
 
     self.subtitleFontSize = 100;
     self.subtitleMargin = 0.7;
@@ -68,6 +91,59 @@
     
     NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
     [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
+    
+    if ([self.view isKindOfClass:[SHBaseView class]]) {
+        SHBaseView *baseView = (SHBaseView *)self.view;
+        baseView.delegate = self;
+        baseView.needTracking = YES;
+    }
+}
+
+- (void)baseView:(SHBaseView *)baseView mouseEntered:(NSEvent *)event
+{
+    [self showCtrlView];
+}
+
+- (void)baseView:(SHBaseView *)baseView mouseExited:(NSEvent *)event
+{
+    [self hideCtrlView];
+}
+
+- (void)switchCtrlView:(BOOL)wantShow
+{
+    if (self.isCtrlViewAnimating) {
+        return;
+    }
+    self.isCtrlViewAnimating = YES;
+    
+    __weakSelf__
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+        context.duration = 0.35;
+        context.allowsImplicitAnimation = YES;
+        context.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+        __strongSelf__
+        
+        self.ctrlViewBottomCons.animator.constant = wantShow ? 0 : - self.ctrlView.bounds.size.height;
+    } completionHandler:^{
+        __strongSelf__
+        self.isCtrlViewAnimating = NO;
+    }];
+}
+
+- (void)showCtrlView
+{
+    [self switchCtrlView:YES];
+}
+
+- (void)hideCtrlView
+{
+    [self switchCtrlView:NO];
+}
+
+- (void)toggleCtrlViewShow
+{
+    BOOL isShowing = self.ctrlView.frame.origin.y >= 0;
+    [self switchCtrlView:!isShowing];
 }
 
 - (void)keyDown:(NSEvent *)event
@@ -75,7 +151,9 @@
     if ([event keyCode] == kVK_RightArrow && event.modifierFlags & NSEventModifierFlagCommand) {
         [self playNext:nil];
     } else if ([event keyCode] == kVK_ANSI_B && event.modifierFlags & NSEventModifierFlagCommand) {
-        self.contentView.hidden = !self.contentView.isHidden;
+        
+        [self toggleCtrlViewShow];
+        
     } else if ([event keyCode] == kVK_ANSI_R && event.modifierFlags & NSEventModifierFlagCommand) {
         
         IJKSDLRotatePreference preference = self.player.view.rotatePreference;

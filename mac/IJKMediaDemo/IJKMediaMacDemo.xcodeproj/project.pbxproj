@@ -35,6 +35,7 @@
 		DD9B13D622C24095002D1D79 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13D522C24095002D1D79 /* libxml2.tbd */; };
 		DD9B13D822C240A5002D1D79 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13D722C240A5002D1D79 /* libiconv.tbd */; };
 		DD9B13E822C24971002D1D79 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9B13E722C24971002D1D79 /* libz.tbd */; };
+		DDB7827B2757266900382094 /* SHBaseView.m in Sources */ = {isa = PBXBuildFile; fileRef = DDB7827A2757266900382094 /* SHBaseView.m */; };
 		DDE9FC70273BD3CF00481560 /* NSFileManager+Sandbox.m in Sources */ = {isa = PBXBuildFile; fileRef = DDE9FC6F273BD3CF00481560 /* NSFileManager+Sandbox.m */; };
 /* End PBXBuildFile section */
 
@@ -79,6 +80,8 @@
 		DD9B13D522C24095002D1D79 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		DD9B13D722C240A5002D1D79 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		DD9B13E722C24971002D1D79 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		DDB782792757266800382094 /* SHBaseView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SHBaseView.h; sourceTree = "<group>"; };
+		DDB7827A2757266900382094 /* SHBaseView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SHBaseView.m; sourceTree = "<group>"; };
 		DDE9FC6E273BD3CF00481560 /* NSFileManager+Sandbox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSFileManager+Sandbox.h"; sourceTree = "<group>"; };
 		DDE9FC6F273BD3CF00481560 /* NSFileManager+Sandbox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+Sandbox.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -155,6 +158,8 @@
 			children = (
 				DD9B138B22C23A79002D1D79 /* AppDelegate.h */,
 				DD9B138C22C23A79002D1D79 /* AppDelegate.m */,
+				DDB782792757266800382094 /* SHBaseView.h */,
+				DDB7827A2757266900382094 /* SHBaseView.m */,
 				DD4EAFFF27310F1C00FBCD3A /* WindowController.h */,
 				DD4EB00027310F1C00FBCD3A /* WindowController.m */,
 				DD4EAF20272FC22D00FBCD3A /* RootViewController.h */,
@@ -328,6 +333,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DDB7827B2757266900382094 /* SHBaseView.m in Sources */,
 				DD9B139522C23A7A002D1D79 /* main.m in Sources */,
 				DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */,
 				DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */,
