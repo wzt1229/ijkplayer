@@ -5186,6 +5186,7 @@ static void _ijkmeta_set_stream(FFPlayer* ffp, int type, int stream)
             ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_AUDIO_STREAM, stream);
             break;
         case AVMEDIA_TYPE_SUBTITLE:
+        case AVMEDIA_TYPE_NB + 1:
             ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, stream);
             break;
         default:
@@ -5259,7 +5260,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 closed = 1;
             }
 
-            if (is->subtitle_ex && is->subtitle_ex->sub_st_idx > 0) {
+            if (is->subtitle_ex && is->subtitle_ex->sub_st_idx >= 0) {
                 external_subtitle_close(ffp);
                 closed = 1;
             }
@@ -5279,7 +5280,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 closed = 1;
             }
             
-            if (is->subtitle_ex && is->subtitle_ex->sub_st_idx > 0) {
+            if (is->subtitle_ex && is->subtitle_ex->sub_st_idx >= 0) {
                 external_subtitle_close(ffp);
                 closed = 1;
             }
@@ -5287,7 +5288,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             if (selected) {
                 int arr_idx = (stream - ic->nb_streams) % MAX_EX_SUBTITLE_NUM;
 
-                if (0 != av_strncasecmp(is->subtitle_ex->file_name, is->ex_sub_url[arr_idx], 1024)) {
+                if (!is->subtitle_ex->file_name || 0 != av_strncasecmp(is->subtitle_ex->file_name, is->ex_sub_url[arr_idx], 1024)) {
                     is->subtitle_ex->file_name = strdup(is->ex_sub_url[arr_idx]);
                     opened = external_subtitle_open(ffp) == 0;
                 }
@@ -5487,7 +5488,7 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
         return -1;
     }
     
-    if (ffp->is->subtitle_ex) {
+    if (ffp->is->subtitle_ex && ffp->is->subtitle_ex->file_name) {
         if (0 == av_strncasecmp(ffp->is->subtitle_ex->file_name, file_name, 1024))
             return 0;
     }
