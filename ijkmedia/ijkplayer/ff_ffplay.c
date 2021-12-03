@@ -3283,10 +3283,17 @@ static int external_subtitle_thread(void *arg)
         
         pts = 0;
         if (got_frame) {
-            if (pkt.pts != AV_NOPTS_VALUE)
-                pts = pkt.pts / 100.0;
+            //ctx的时间基不对，所以无法通过time_base计算
+            if (d->avctx->codec_id == AV_CODEC_ID_ASS) {
+                sp->sub.end_display_time = pkt.duration * 10.0;
+                if (pkt.pts != AV_NOPTS_VALUE)
+                    pts = pkt.pts / 100.0;
+            } else if (d->avctx->codec_id == AV_CODEC_ID_SUBRIP) {
+                sp->sub.end_display_time = (uint32_t)pkt.duration;
+                if (pkt.pts != AV_NOPTS_VALUE)
+                    pts = pkt.pts / 1000.0;
+            }
             sp->pts = pts;
-            sp->sub.end_display_time = pkt.duration * 10.0;
             sp->serial = ss->subdec.pkt_serial;
             sp->width = ss->subdec.avctx->width;
             sp->height = ss->subdec.avctx->height;
@@ -3358,6 +3365,8 @@ static int external_subtitle_open(FFPlayer* ffp)
     decoder_init(&ss->subdec, avctx, &ss->subtitleq, ffp->is->continue_read_thread);
     
     decoder_start(&ss->subdec, external_subtitle_thread, ffp, "ff_ex_subtitle_thread");
+    
+    ss->eof = 0;
 fail :
     SDL_UnlockMutex(ss->mutex);
     return ret;
@@ -3692,7 +3701,7 @@ static int read_thread(void *arg)
             
             if (external_subtitle_open(ffp) < 0) {
                 av_log(NULL, AV_LOG_WARNING, "%s: could not open external subtitle\n",
-                        is->filename);
+                        is->subtitle_ex->file_name);
             } else {
                 if (is->subtitle_stream >= 0)
                     stream_component_close(ffp, is->subtitle_stream);
@@ -3757,9 +3766,9 @@ static int read_thread(void *arg)
                 } else {
                     if (is->subtitle_ex->sub_st_idx >= 0) {
                         packet_queue_flush(&is->subtitle_ex->subtitleq);
+                        is->subtitle_ex->eof = 0;
                     }
                 }
-                is->subtitle_ex->eof = 0;
             }
             
             ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
@@ -5288,10 +5297,8 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             if (selected) {
                 int arr_idx = (stream - ic->nb_streams) % MAX_EX_SUBTITLE_NUM;
 
-                if (!is->subtitle_ex->file_name || 0 != av_strncasecmp(is->subtitle_ex->file_name, is->ex_sub_url[arr_idx], 1024)) {
-                    is->subtitle_ex->file_name = strdup(is->ex_sub_url[arr_idx]);
-                    opened = external_subtitle_open(ffp) == 0;
-                }
+                is->subtitle_ex->file_name = strdup(is->ex_sub_url[arr_idx]);
+                opened = external_subtitle_open(ffp) == 0;
             }
             break;
         default:
@@ -5520,7 +5527,6 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
     }
     is->ex_sub_url[is->ex_sub_index++ % MAX_EX_SUBTITLE_NUM] = av_strdup(file_name);
 
-    is->eof = 0;
     is->load_sub_ex = 1;
     return 0;
 }
