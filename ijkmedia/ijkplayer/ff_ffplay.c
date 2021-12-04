@@ -3381,6 +3381,7 @@ static int read_thread(void *arg)
     int err, i, ret __unused;
     int st_index[AVMEDIA_TYPE_NB];
     AVPacket *pkt = NULL;
+    AVPacket *ex_subpkt = NULL;
     int64_t stream_start_time;
     int completed = 0;
     int pkt_in_play_range = 0;
@@ -3409,6 +3410,13 @@ static int read_thread(void *arg)
         goto fail;
     }
 
+    ex_subpkt = av_packet_alloc();
+    if (!ex_subpkt) {
+        av_log(NULL, AV_LOG_FATAL, "Could not allocate packet.\n");
+        ret = AVERROR(ENOMEM);
+        goto fail;
+    }
+    
     ic = avformat_alloc_context();
     if (!ic) {
         av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
@@ -3939,13 +3947,14 @@ static int read_thread(void *arg)
         }
 
         if (is->subtitle_ex && is->subtitle_ex->ic && !is->subtitle_ex->eof) {
-            int ret2 = av_read_frame(is->subtitle_ex->ic, pkt);
+            ex_subpkt->flags = 0;
+            int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
             
             if (ret2 >= 0 && pkt->stream_index == is->subtitle_ex->sub_st_idx){
-                packet_queue_put(&is->subtitle_ex->subtitleq, pkt);
+                packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
             } else {
                 if (ret2 == AVERROR_EOF) {
-                    packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, pkt, is->subtitle_ex->sub_st_idx);
+                    packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, ex_subpkt, is->subtitle_ex->sub_st_idx);
                     is->subtitle_ex->eof = 1;
                 }
             }
@@ -4017,6 +4026,7 @@ static int read_thread(void *arg)
         avformat_close_input(&ic);
     
     av_packet_free(&pkt);
+    av_packet_free(&ex_subpkt);
     if (is->subtitle_ex && is->subtitle_ex->ic) {
         avformat_close_input(&is->subtitle_ex->ic);
     }
