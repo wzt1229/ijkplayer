@@ -5505,12 +5505,14 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
         return -1;
     }
     
-    if (ffp->is->subtitle_ex && ffp->is->subtitle_ex->file_name) {
-        if (0 == av_strncasecmp(ffp->is->subtitle_ex->file_name, file_name, 1024))
-            return 0;
+    VideoState* is = ffp->is;
+    
+    for (int i = 0; i < is->ex_sub_index; i++) {
+        char* next = is->ex_sub_url[i];
+        if (0 == av_strncasecmp(next, file_name, 1024))
+            return 1;
     }
     
-    VideoState* is = ffp->is;
     if (is->subtitle_ex) {
         external_subtitle_close(ffp);
     } else {
