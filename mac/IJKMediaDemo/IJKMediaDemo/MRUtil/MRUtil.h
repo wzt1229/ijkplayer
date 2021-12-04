@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MRUtil : NSObject
 
++ (NSArray <NSString *>*)audioType;
 + (NSArray <NSString *>*)videoType;
 + (NSArray <NSString *>*)subtitleType;
 + (NSArray <NSString *>*)acceptMediaType;

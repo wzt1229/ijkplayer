@@ -13,6 +13,13 @@
 
 @implementation MRUtil
 
++ (NSArray <NSString *>*)audioType
+{
+    return @[
+        @"mp3"
+        ];
+}
+
 + (NSArray <NSString *>*)videoType
 {
     return @[
@@ -46,10 +53,12 @@
 + (NSArray <NSString *>*)acceptMediaType
 {
     NSMutableArray *r = [[NSMutableArray alloc] init];
+    [r addObjectsFromArray:[self audioType]];
     [r addObjectsFromArray:[self videoType]];
     [r addObjectsFromArray:[self subtitleType]];
     return r;
 }
+
 + (NSDictionary *)makeBookmarkWithURL:(NSURL *)url
 {
     NSData *bookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope

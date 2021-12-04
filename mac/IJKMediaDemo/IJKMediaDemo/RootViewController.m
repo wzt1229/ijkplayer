@@ -469,10 +469,12 @@
         }
         
         NSString *pathExtension = [[url pathExtension] lowercaseString];
-        if ([[MRUtil videoType] containsObject:pathExtension]) {
+        if ([[MRUtil videoType] containsObject:pathExtension] || [[MRUtil audioType] containsObject:pathExtension]) {
             [videos addObject:url];
         } else if ([MRUtil subtitleType]) {
             [subtitles addObject:url];
+        } else {
+            NSAssert(NO, @"没有处理的文件:%@",url);
         }
     }
     
@@ -499,13 +501,13 @@
                 if (isDirectory) {
                    //扫描文件夹
                    NSString *dir = [url path];
-                   NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil videoType]];
+                   NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil acceptMediaType]];
                     if ([dicArr count] > 0) {
                         return NSDragOperationCopy;
                     }
                 } else {
                     NSString *pathExtension = [[url pathExtension] lowercaseString];
-                    if ([[MRUtil videoType] containsObject:pathExtension] || [[MRUtil subtitleType] containsObject:pathExtension]) {
+                    if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
                         return NSDragOperationCopy;
                     }
                 }
