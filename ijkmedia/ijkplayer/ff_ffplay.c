@@ -1088,20 +1088,21 @@ static void external_subtitle_close(FFPlayer* ffp)
     SubtitleExState *is = ffp->is->subtitle_ex;
     AVFormatContext *ic = is->ic;
     
-    decoder_abort(&is->subdec, &is->subpq);
-    decoder_destroy(&is->subdec);
-    
-    SDL_LockMutex(is->mutex);
-    if (is->file_name) {
-        av_free(is->file_name);
-        is->file_name = NULL;
-    }
-    is->subtitle_st = NULL;
-    is->sub_st_idx = -1;
-    
-    if (!ic)
+    if (ic) {
+        decoder_abort(&is->subdec, &is->subpq);
+        decoder_destroy(&is->subdec);
         avformat_close_input(&ic);
-    SDL_UnlockMutex(is->mutex);
+        
+        SDL_LockMutex(is->mutex);
+        if (is->file_name) {
+            av_free(is->file_name);
+            is->file_name = NULL;
+        }
+        is->subtitle_st = NULL;
+        is->sub_st_idx = -1;
+        is->ic = NULL;
+        SDL_UnlockMutex(is->mutex);
+    }
 }
 
 static void stream_close(FFPlayer *ffp)
