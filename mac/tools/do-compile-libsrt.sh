@@ -80,7 +80,7 @@ FF_XCODE_BITCODE=
 if [[ "$FF_ARCH" == "x86_64" ]]; then
     FF_BUILD_NAME="libsrt-x86_64"
     FF_XCRUN_OSVERSION="-mmacosx-version-min=10.10"
-    LIBASS_CFG_FLAGS="--disable-dependency-tracking --disable-fontconfig $LIBSRT_CFG_FLAGS"
+    LIBASS_CFG_FLAGS="--disable-dependency-tracking --disable-debug $LIBSRT_CFG_FLAGS"
 else
     echo "unknown architecture $FF_ARCH";
     exit 1
