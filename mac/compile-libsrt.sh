@@ -49,8 +49,6 @@ resolve_depends () {
     echo "===================="
     echo "FF_ALL_ARCHS = $FF_ALL_ARCHS"
     echo "[*] check depends ..."
-    install_depends 'autoconf'
-    install_depends 'automake'
     install_depends 'libtool'
     install_depends 'pkg-config'
     echo "===================="

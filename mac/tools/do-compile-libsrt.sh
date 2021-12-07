@@ -131,7 +131,6 @@ cd $FF_BUILD_SOURCE
 if [ -f "./Makefile" ]; then
     echo 'reuse configure'
 else
-    autoreconf -i
     echo "config: $LIBSRT_CFG_FLAGS"
     ./configure \
         $LIBSRT_CFG_FLAGS

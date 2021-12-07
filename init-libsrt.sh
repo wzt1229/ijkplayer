@@ -38,7 +38,7 @@ function pull_base()
 
 function pull_fork()
 {
-    echo "== pull libass fork $2 $1 =="
+    echo "== pull libsrt fork $2 $1 =="
     dir="$2/libsrt-$1"
     sh $TOOLS/pull-repo-ref.sh $IJK_LIBSRT_FORK $dir ${IJK_LIBSRT_LOCAL_REPO}
     cd $dir
