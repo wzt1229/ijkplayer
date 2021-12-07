@@ -1086,12 +1086,16 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
 static void external_subtitle_close(FFPlayer* ffp)
 {
     SubtitleExState *is = ffp->is->subtitle_ex;
-    AVFormatContext *ic = is->ic;
     
+    AVFormatContext *ic = is->ic;
     if (ic) {
+        avformat_close_input(&ic);
+        is->ic = NULL;
+    }
+    
+    if (is->subtitle_st) {
         decoder_abort(&is->subdec, &is->subpq);
         decoder_destroy(&is->subdec);
-        avformat_close_input(&ic);
         
         SDL_LockMutex(is->mutex);
         if (is->file_name) {
@@ -1100,7 +1104,7 @@ static void external_subtitle_close(FFPlayer* ffp)
         }
         is->subtitle_st = NULL;
         is->sub_st_idx = -1;
-        is->ic = NULL;
+        
         SDL_UnlockMutex(is->mutex);
     }
 }
@@ -1123,7 +1127,6 @@ static void stream_close(FFPlayer *ffp)
     if (is->subtitle_stream >= 0)
         stream_component_close(ffp, is->subtitle_stream);
 
-    avformat_close_input(&is->ic);
     if (is->subtitle_ex) {
         external_subtitle_close(ffp);
     }
@@ -3316,8 +3319,7 @@ static int external_subtitle_open(FFPlayer* ffp)
     
     SubtitleExState* ss = ffp->is->subtitle_ex;
     SDL_LockMutex(ss->mutex);
-    ss->ic = avformat_alloc_context();
-    AVFormatContext* ic = ss->ic;
+    AVFormatContext* ic = avformat_alloc_context();
     err = avformat_open_input(&ic, ss->file_name, NULL, NULL);
     if (err < 0) {
         print_error(ss->file_name, err);
@@ -3328,6 +3330,7 @@ static int external_subtitle_open(FFPlayer* ffp)
     err = avformat_find_stream_info(ic, NULL);
     if (err < 0) {
         print_error(ss->file_name, err);
+        avformat_close_input(&ic);
         ret = -2;
         goto fail;
     }
@@ -3335,40 +3338,58 @@ static int external_subtitle_open(FFPlayer* ffp)
     //字幕流的索引
     for (size_t i = 0; i < ic->nb_streams; ++i) {
         if (ic->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-            ss->sub_st_idx = (int)i;
+            ss->sub_st_idx  = (int)i;
             ss->subtitle_st = ic->streams[i];
+            break;
         }
     }
     
     AVCodec* codec = avcodec_find_decoder(ss->subtitle_st->codecpar->codec_id);
     if (!codec) {
+        ss->sub_st_idx = -1;
+        ss->subtitle_st = NULL;
+        avformat_close_input(&ic);
         ret = -3;
         goto fail;
     }
     
     AVCodecContext* avctx = avcodec_alloc_context3(NULL);
     if (!avctx) {
+        ss->sub_st_idx = -1;
+        ss->subtitle_st = NULL;
+        avformat_close_input(&ic);
         ret = -4;
         goto fail;
     }
 
     err = avcodec_parameters_to_context(avctx, ss->subtitle_st->codecpar);
     if (err < 0) {
+        print_error(ss->file_name, err);
+        ss->sub_st_idx = -1;
+        ss->subtitle_st = NULL;
+        avformat_close_input(&ic);
+        avcodec_free_context(&avctx);
         ret = -5;
         goto fail;
     }
     
     if ((err = avcodec_open2(avctx, codec, NULL)) < 0) {
+        print_error(ss->file_name, err);
+        ss->sub_st_idx = -1;
+        ss->subtitle_st = NULL;
+        avformat_close_input(&ic);
+        avcodec_free_context(&avctx);
         ret = -6;
         goto fail;
     }
-
+    
+    ss->ic = ic;
     decoder_init(&ss->subdec, avctx, &ss->subtitleq, ffp->is->continue_read_thread);
     
     decoder_start(&ss->subdec, external_subtitle_thread, ffp, "ff_ex_subtitle_thread");
     
     ss->eof = 0;
-fail :
+fail:
     SDL_UnlockMutex(ss->mutex);
     return ret;
 }
@@ -5531,7 +5552,7 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
             return -4;
         }
     }
-
+    
     is->subtitle_ex->file_name = av_strdup(file_name);
     //recycle，release mem if the url array has been used
     char* next = is->ex_sub_url[is->ex_sub_index % MAX_EX_SUBTITLE_NUM];
