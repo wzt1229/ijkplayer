@@ -1089,15 +1089,15 @@ static void external_subtitle_close(FFPlayer* ffp)
     
     AVFormatContext *ic = is->ic;
     if (ic) {
+        SDL_LockMutex(is->mutex);
+
+        ffp->is->load_sub_ex = 0;
         avformat_close_input(&ic);
         is->ic = NULL;
-    }
-    
-    if (is->subtitle_st) {
+        
         decoder_abort(&is->subdec, &is->subpq);
         decoder_destroy(&is->subdec);
         
-        SDL_LockMutex(is->mutex);
         if (is->file_name) {
             av_free(is->file_name);
             is->file_name = NULL;
@@ -1127,7 +1127,7 @@ static void stream_close(FFPlayer *ffp)
     if (is->subtitle_stream >= 0)
         stream_component_close(ffp, is->subtitle_stream);
 
-    if (is->subtitle_ex) {
+    if (is->subtitle_ex && is->subtitle_ex->subtitle_st) {
         external_subtitle_close(ffp);
     }
 
@@ -3319,6 +3319,7 @@ static int external_subtitle_open(FFPlayer* ffp)
     
     SubtitleExState* ss = ffp->is->subtitle_ex;
     SDL_LockMutex(ss->mutex);
+    AVCodecContext* avctx = NULL;
     AVFormatContext* ic = avformat_alloc_context();
     err = avformat_open_input(&ic, ss->file_name, NULL, NULL);
     if (err < 0) {
@@ -3330,7 +3331,6 @@ static int external_subtitle_open(FFPlayer* ffp)
     err = avformat_find_stream_info(ic, NULL);
     if (err < 0) {
         print_error(ss->file_name, err);
-        avformat_close_input(&ic);
         ret = -2;
         goto fail;
     }
@@ -3346,18 +3346,12 @@ static int external_subtitle_open(FFPlayer* ffp)
     
     AVCodec* codec = avcodec_find_decoder(ss->subtitle_st->codecpar->codec_id);
     if (!codec) {
-        ss->sub_st_idx = -1;
-        ss->subtitle_st = NULL;
-        avformat_close_input(&ic);
         ret = -3;
         goto fail;
     }
     
-    AVCodecContext* avctx = avcodec_alloc_context3(NULL);
+    avctx = avcodec_alloc_context3(NULL);
     if (!avctx) {
-        ss->sub_st_idx = -1;
-        ss->subtitle_st = NULL;
-        avformat_close_input(&ic);
         ret = -4;
         goto fail;
     }
@@ -3365,31 +3359,31 @@ static int external_subtitle_open(FFPlayer* ffp)
     err = avcodec_parameters_to_context(avctx, ss->subtitle_st->codecpar);
     if (err < 0) {
         print_error(ss->file_name, err);
-        ss->sub_st_idx = -1;
-        ss->subtitle_st = NULL;
-        avformat_close_input(&ic);
-        avcodec_free_context(&avctx);
         ret = -5;
         goto fail;
     }
     
     if ((err = avcodec_open2(avctx, codec, NULL)) < 0) {
         print_error(ss->file_name, err);
-        ss->sub_st_idx = -1;
-        ss->subtitle_st = NULL;
-        avformat_close_input(&ic);
-        avcodec_free_context(&avctx);
         ret = -6;
         goto fail;
     }
     
-    ss->ic = ic;
     decoder_init(&ss->subdec, avctx, &ss->subtitleq, ffp->is->continue_read_thread);
     
     decoder_start(&ss->subdec, external_subtitle_thread, ffp, "ff_ex_subtitle_thread");
     
+    ss->ic = ic;
     ss->eof = 0;
 fail:
+    if (ret < 0) {
+        ss->sub_st_idx = -1;
+        ss->subtitle_st = NULL;
+        if (ic)
+            avformat_close_input(&ic);
+        if (avctx)
+            avcodec_free_context(&avctx);
+    }
     SDL_UnlockMutex(ss->mutex);
     return ret;
 }
@@ -3726,30 +3720,22 @@ static int read_thread(void *arg)
             continue;
         }
 #endif
-        if (is->load_sub_ex) {
+        if (is->load_sub_ex && is->subtitle_ex->ic) {
             is->load_sub_ex = 0;
             
-            if (external_subtitle_open(ffp) < 0) {
-                av_log(NULL, AV_LOG_WARNING, "%s: could not open external subtitle\n",
-                        is->subtitle_ex->file_name);
-            } else {
-                if (is->subtitle_stream >= 0)
-                    stream_component_close(ffp, is->subtitle_stream);
-                
-                double pts = get_clock(&is->vidclk);
-                double seek_time = pts * av_q2d(ic->streams[is->video_stream]->time_base);
-                
-                ret = avformat_seek_file(is->subtitle_ex->ic, -1, INT64_MIN, seek_time, INT64_MAX, 0);
-                
-                if (ret < 0) {
-                    av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %0.3f\n",
-                            is->filename, seek_time);
-                }
-                
-                ijkmeta_set_ex_subtitle_context_l(ffp);
-                
-                ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+            if (is->subtitle_stream >= 0)
+                stream_component_close(ffp, is->subtitle_stream);
+            
+            double pts = get_clock(&is->vidclk);
+            double seek_time = pts * av_q2d(ic->streams[is->video_stream]->time_base);
+            
+            ret = avformat_seek_file(is->subtitle_ex->ic, -1, INT64_MIN, seek_time, INT64_MAX, 0);
+            
+            if (ret < 0) {
+                av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %0.3f\n",
+                        is->subtitle_ex->file_name, seek_time);
             }
+            is->subtitle_ex->eof = 0;
         }
         
         if (is->seek_req) {
@@ -5311,7 +5297,6 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             }
             break;
         case AVMEDIA_TYPE_NB + 1:
-            
             if (selected && stream == is->subtitle_ex->sub_st_idx) {
                 return 1;
             }
@@ -5331,6 +5316,10 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
 
                 is->subtitle_ex->file_name = strdup(is->ex_sub_url[arr_idx]);
                 opened = external_subtitle_open(ffp) == 0;
+                if (opened) {
+                    //for file seek pos
+                    is->load_sub_ex = 1;
+                }
             }
             break;
         default:
@@ -5535,7 +5524,7 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
             return 1;
     }
     
-    if (is->subtitle_ex) {
+    if (is->subtitle_ex && is->subtitle_ex->subtitle_st) {
         external_subtitle_close(ffp);
     } else {
         is->subtitle_ex = av_mallocz(sizeof(SubtitleExState));
@@ -5561,7 +5550,16 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
     }
     is->ex_sub_url[is->ex_sub_index++ % MAX_EX_SUBTITLE_NUM] = av_strdup(file_name);
 
-    is->load_sub_ex = 1;
+    if (external_subtitle_open(ffp) < 0) {
+        av_log(NULL, AV_LOG_WARNING, "%s: could not open external subtitle\n",
+                file_name);
+    } else  {
+        ijkmeta_set_ex_subtitle_context_l(ffp);
+        is->load_sub_ex = 1;
+        
+        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+    }
+    
     return 0;
 }
 
