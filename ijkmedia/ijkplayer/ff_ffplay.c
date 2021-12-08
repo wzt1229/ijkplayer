@@ -3896,7 +3896,7 @@ static int read_thread(void *arg)
             ex_subpkt->flags = 0;
             int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
             
-            if (ret2 >= 0 && pkt->stream_index == is->subtitle_ex->sub_st_idx){
+            if (ret2 >= 0 && ex_subpkt->stream_index == is->subtitle_ex->sub_st_idx){
                 packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
             } else {
                 if (ret2 == AVERROR_EOF) {
