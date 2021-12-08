@@ -92,6 +92,12 @@
     NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:@"996747-5277368-31" ofType:@"m3u8"];
     [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
     
+    if ([self.playList count] > 0) {
+        self.urlInput.placeholderString = [[self.playList firstObject] description];
+    } else {
+        self.urlInput.placeholderString = @"请输入播放地址或者拖入视频播放";
+    }
+    
     if ([self.view isKindOfClass:[SHBaseView class]]) {
         SHBaseView *baseView = (SHBaseView *)self.view;
         baseView.delegate = self;
@@ -134,7 +140,6 @@
         context.allowsImplicitAnimation = YES;
         context.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
         __strongSelf__
-        
         self.ctrlViewBottomCons.animator.constant = wantShow ? 0 : - self.ctrlView.bounds.size.height;
     } completionHandler:^{
         __strongSelf__
@@ -388,12 +393,13 @@
 
 - (void)playURL:(NSURL *)url
 {
+    [self perpareIJKPlayer:url];
+    self.playingUrl = url;
     self.urlInput.stringValue = [url isFileURL] ? [url path] : [url absoluteString];
+    self.urlInput.placeholderString = @"";
     NSString *title = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     [self.view.window setTitle:title];
     
-    [self perpareIJKPlayer:url];
-    self.playingUrl = url;
     [self onReset:nil];
     
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
@@ -540,6 +546,8 @@
         NSURL *url = [NSURL URLWithString:self.urlInput.stringValue];
         self.playList[idx] = url;
         [self playURL:url];
+    } else {
+        [self playNext:nil];
     }
 }
 
@@ -549,6 +557,14 @@
     [self.player stop];
     [self.player shutdown];
     self.player = nil;
+    self.playingUrl = nil;
+    self.urlInput.stringValue = @"";
+    [self.view.window setTitle:@""];
+    if ([self.playList count] > 0) {
+        self.urlInput.placeholderString = [[self.playList firstObject] description];
+    } else {
+        self.urlInput.placeholderString = @"请输入播放地址或者拖入视频播放";
+    }
 }
 
 - (IBAction)pauseOrPlay:(NSButton *)sender
