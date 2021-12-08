@@ -3268,19 +3268,17 @@ static int external_subtitle_thread(void *arg)
                 }
             } while (d->queue->serial != d->pkt_serial);
 
-            {
-                if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-                    ret = avcodec_decode_subtitle2(d->avctx, &sp->sub, &got_frame, &pkt);
-                    if (ret < 0) {
-                        ret = AVERROR(EAGAIN);
-                        return 0;
-                    } else {
-                        if (got_frame && !pkt.data) {
-                           d->packet_pending = 1;
-                           av_packet_move_ref(d->pkt, &pkt);
-                        }
-                        break;
+            if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+                ret = avcodec_decode_subtitle2(d->avctx, &sp->sub, &got_frame, &pkt);
+                if (ret < 0) {
+                    ret = AVERROR(EAGAIN);
+                    return 0;
+                } else {
+                    if (got_frame && !pkt.data) {
+                       d->packet_pending = 1;
+                       av_packet_move_ref(d->pkt, &pkt);
                     }
+                    break;
                 }
             }
         }
