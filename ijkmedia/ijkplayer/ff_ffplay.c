@@ -3890,6 +3890,22 @@ static int read_thread(void *arg)
                 }
             }
         }
+            
+            
+        if (is->subtitle_ex && is->subtitle_ex->ic && !is->subtitle_ex->eof) {
+            ex_subpkt->flags = 0;
+            int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
+            
+            if (ret2 >= 0 && pkt->stream_index == is->subtitle_ex->sub_st_idx){
+                packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
+            } else {
+                if (ret2 == AVERROR_EOF) {
+                    packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, ex_subpkt, is->subtitle_ex->sub_st_idx);
+                    is->subtitle_ex->eof = 1;
+                }
+            }
+        }
+        
         pkt->flags = 0;
         ret = av_read_frame(ic, pkt);
         if (ret < 0) {
@@ -3943,6 +3959,7 @@ static int read_thread(void *arg)
 //                else
 //                    break;
 //            }
+            
             SDL_LockMutex(wait_mutex);
             SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
             SDL_UnlockMutex(wait_mutex);
@@ -3950,20 +3967,6 @@ static int read_thread(void *arg)
             continue;
         } else {
             is->eof = 0;
-        }
-
-        if (is->subtitle_ex && is->subtitle_ex->ic && !is->subtitle_ex->eof) {
-            ex_subpkt->flags = 0;
-            int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
-            
-            if (ret2 >= 0 && pkt->stream_index == is->subtitle_ex->sub_st_idx){
-                packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
-            } else {
-                if (ret2 == AVERROR_EOF) {
-                    packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, ex_subpkt, is->subtitle_ex->sub_st_idx);
-                    is->subtitle_ex->eof = 1;
-                }
-            }
         }
         
         if (pkt->flags & AV_PKT_FLAG_DISCONTINUITY) {
