@@ -3724,14 +3724,14 @@ static int read_thread(void *arg)
             if (is->subtitle_stream >= 0)
                 stream_component_close(ffp, is->subtitle_stream);
             
-            double pts = get_clock(&is->vidclk);
-            double seek_time = pts * av_q2d(ic->streams[is->video_stream]->time_base);
+            int64_t cp = ffp_get_current_position_l(ffp);
+            int64_t seek_time = milliseconds_to_fftime(cp);
             
             ret = avformat_seek_file(is->subtitle_ex->ic, -1, INT64_MIN, seek_time, INT64_MAX, 0);
             
             if (ret < 0) {
-                av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %0.3f\n",
-                        is->subtitle_ex->file_name, seek_time);
+                av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %lld\n",
+                        is->subtitle_ex->file_name, cp);
             }
             is->subtitle_ex->eof = 0;
         }
