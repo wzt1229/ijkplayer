@@ -66,7 +66,6 @@ typedef struct IJK_GLES2_Renderer_Opaque
     GLint                 isSubtitle;
     GLint                 isFullRange;
     Frame_Size            frameSize[3];
-    OpenGLTextureRef      subCVGLTexture;
     Frame_Size            subTextureSize;
     int samples;
 } IJK_GLES2_Renderer_Opaque;
@@ -427,29 +426,28 @@ OpenGLTextureRef createGLTexture(IJK_GLES2_Renderer_Opaque* opaque, CVPixelBuffe
 #if TARGET_OS_OSX
 static GLboolean yuv420sp_uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle, IJK_Subtile_Size* size)
 {
-    CVPixelBufferRef cvPixelRef = (CVPixelBufferRef)subtitle;
-    if (cvPixelRef) {
-        CVPixelBufferRetain(cvPixelRef);
-        
-        int width = (int)CVPixelBufferGetWidth(cvPixelRef);
-        int height = (int)CVPixelBufferGetHeight(cvPixelRef);
-        
-        IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-        
-        opaque->subTextureSize.w = width;
-        opaque->subTextureSize.h = height;
-        
-        if (opaque->subCVGLTexture) {
-            CFRelease(opaque->subCVGLTexture);
-            opaque->subCVGLTexture = 0;
+    GLboolean ok = GL_FALSE;
+    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
+    if (opaque) {
+        CVPixelBufferRef cvPixelRef = (CVPixelBufferRef)subtitle;
+        if (cvPixelRef) {
+            CVPixelBufferRetain(cvPixelRef);
+            
+            int width  = (int)ceil(CVPixelBufferGetWidth(cvPixelRef));
+            int height = (int)ceil(CVPixelBufferGetHeight(cvPixelRef));
+            
+            opaque->subTextureSize.w = width;
+            opaque->subTextureSize.h = height;
+            
+            ok = upload_texture_use_IOSurface(cvPixelRef, renderer);
+            if (ok && size) {
+                size->w = width;
+                size->h = height;
+            }
+            CVPixelBufferRelease(cvPixelRef);
         }
-        
-        upload_texture_use_IOSurface(cvPixelRef, renderer);
-        size->w = width / 2.0;
-        size->h = height / 2.0;
-        CVPixelBufferRelease(cvPixelRef);
     }
-    return GL_TRUE;
+    return ok;
 }
 #endif
 

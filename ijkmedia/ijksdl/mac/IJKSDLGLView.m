@@ -65,9 +65,9 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     self = [super initWithFrame:frame];
     if (self) {
         [self setup];
-        self.subtitlePreference = (IJKSDLSubtitlePreference){100,0xFFFFFF,0.1};
-        self.rotatePreference = (IJKSDLRotatePreference){IJKSDLRotateNone,0.0};
-        self.colorPreference = (IJKSDLColorConversionPreference){1.0,1.0,1.0};
+        self.subtitlePreference = (IJKSDLSubtitlePreference){45, 0xFFFFFF, 0.1};
+        self.rotatePreference   = (IJKSDLRotatePreference)  {IJKSDLRotateNone, 0.0};
+        self.colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     }
     return self;
 }

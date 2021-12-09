@@ -925,6 +925,16 @@ void subtitle_invalidate_uploaded(FFPlayer *ffp)
                 sp->uploaded = 0;
             }
         }
+    } else if (is->subtitle_ex) {
+        SubtitleExState * ex = is->subtitle_ex;
+        if (ex->subtitle_st) {
+            if (frame_queue_nb_remaining(&ex->subpq) > 0) {
+                Frame *sp = frame_queue_peek(&ex->subpq);
+                if (sp->uploaded) {
+                    sp->uploaded = 0;
+                }
+            }
+        }
     }
 }
 
@@ -3684,6 +3694,16 @@ static int read_thread(void *arg)
         AVCodecParameters *codecpar = is->video_st->codecpar;
         ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, codecpar->width, codecpar->height);
         ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codecpar->sample_aspect_ratio.num, codecpar->sample_aspect_ratio.den);
+        //以1080尺寸为标准，定义出字幕字体默认大小为45pt
+        if (codecpar->width > 0) {
+            int degrees = ffp_get_video_rotate_degrees(ffp);
+            if (degrees / 90 % 2 == 1) {
+                ffp->vout->subtitle_ratio = codecpar->height / 800.0;
+            } else {
+                ffp->vout->subtitle_ratio = codecpar->width / 800.0;
+            }
+            
+        }
     }
     ffp->prepared = true;
     ffp_notify_msg1(ffp, FFP_MSG_PREPARED);
@@ -3729,14 +3749,14 @@ static int read_thread(void *arg)
             if (is->subtitle_stream >= 0)
                 stream_component_close(ffp, is->subtitle_stream);
             
-            double pts = get_clock(&is->vidclk);
-            double seek_time = pts * av_q2d(ic->streams[is->video_stream]->time_base);
+            int64_t cp = ffp_get_current_position_l(ffp);
+            int64_t seek_time = milliseconds_to_fftime(cp);
             
             ret = avformat_seek_file(is->subtitle_ex->ic, -1, INT64_MIN, seek_time, INT64_MAX, 0);
             
             if (ret < 0) {
-                av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %0.3f\n",
-                        is->subtitle_ex->file_name, seek_time);
+                av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %lld\n",
+                        is->subtitle_ex->file_name, cp);
             }
             is->subtitle_ex->eof = 0;
         }
@@ -3895,6 +3915,22 @@ static int read_thread(void *arg)
                 }
             }
         }
+            
+            
+        if (is->subtitle_ex && is->subtitle_ex->ic && !is->subtitle_ex->eof) {
+            ex_subpkt->flags = 0;
+            int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
+            
+            if (ret2 >= 0 && ex_subpkt->stream_index == is->subtitle_ex->sub_st_idx){
+                packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
+            } else {
+                if (ret2 == AVERROR_EOF) {
+                    packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, ex_subpkt, is->subtitle_ex->sub_st_idx);
+                    is->subtitle_ex->eof = 1;
+                }
+            }
+        }
+        
         pkt->flags = 0;
         ret = av_read_frame(ic, pkt);
         if (ret < 0) {
@@ -3948,6 +3984,7 @@ static int read_thread(void *arg)
 //                else
 //                    break;
 //            }
+            
             SDL_LockMutex(wait_mutex);
             SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
             SDL_UnlockMutex(wait_mutex);
@@ -3955,20 +3992,6 @@ static int read_thread(void *arg)
             continue;
         } else {
             is->eof = 0;
-        }
-
-        if (is->subtitle_ex && is->subtitle_ex->ic && !is->subtitle_ex->eof) {
-            ex_subpkt->flags = 0;
-            int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
-            
-            if (ret2 >= 0 && ex_subpkt->stream_index == is->subtitle_ex->sub_st_idx){
-                packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
-            } else {
-                if (ret2 == AVERROR_EOF) {
-                    packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, ex_subpkt, is->subtitle_ex->sub_st_idx);
-                    is->subtitle_ex->eof = 1;
-                }
-            }
         }
         
         if (pkt->flags & AV_PKT_FLAG_DISCONTINUITY) {
