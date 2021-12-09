@@ -1093,30 +1093,29 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
     }
 }
 
+//外部调用时以subtitle_st为判空条件，不能以subtitle_ex->ic为判空条件
 static void external_subtitle_close(FFPlayer* ffp)
 {
     SubtitleExState *is = ffp->is->subtitle_ex;
-    
     AVFormatContext *ic = is->ic;
-    if (ic) {
-        SDL_LockMutex(is->mutex);
 
-        ffp->is->load_sub_ex = 0;
-        avformat_close_input(&ic);
-        is->ic = NULL;
+    SDL_LockMutex(is->mutex);
+
+    ffp->is->load_sub_ex = 0;
+    avformat_close_input(&ic);
+    is->ic = NULL;
         
-        decoder_abort(&is->subdec, &is->subpq);
-        decoder_destroy(&is->subdec);
+    decoder_abort(&is->subdec, &is->subpq);
+    decoder_destroy(&is->subdec);
         
-        if (is->file_name) {
-            av_free(is->file_name);
-            is->file_name = NULL;
-        }
-        is->subtitle_st = NULL;
-        is->sub_st_idx = -1;
-        
-        SDL_UnlockMutex(is->mutex);
+    if (is->file_name) {
+        av_free(is->file_name);
+        is->file_name = NULL;
     }
+    is->subtitle_st = NULL;
+    is->sub_st_idx = -1;
+    
+    SDL_UnlockMutex(is->mutex);
 }
 
 static void stream_close(FFPlayer *ffp)
