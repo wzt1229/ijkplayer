@@ -925,6 +925,16 @@ void subtitle_invalidate_uploaded(FFPlayer *ffp)
                 sp->uploaded = 0;
             }
         }
+    } else if (is->subtitle_ex) {
+        SubtitleExState * ex = is->subtitle_ex;
+        if (ex->subtitle_st) {
+            if (frame_queue_nb_remaining(&ex->subpq) > 0) {
+                Frame *sp = frame_queue_peek(&ex->subpq);
+                if (sp->uploaded) {
+                    sp->uploaded = 0;
+                }
+            }
+        }
     }
 }
 
