@@ -80,7 +80,7 @@
     self.ctrlView.layer.cornerRadius = 4;
     self.ctrlView.layer.masksToBounds = YES;
 
-    self.subtitleFontSize = 100;
+    self.subtitleFontSize = 45;
     self.subtitleMargin = 0.7;
     self.useVideoToolBox = YES;
     self.fcc = @"fcc-nv12";

@@ -90,8 +90,6 @@
     self.boxColor = box;
     self.borderColor = border;
     self.antialias = YES;
-    self.edgeInsets = NSEdgeInsetsMake(10.0f, 10.0f, 10.0f, 10.0f);
-	self.cRadius = 3.0f;
     self.requiresUpdate = YES;
 	return self;
 }
@@ -223,7 +221,7 @@
     
     if ([self.boxColor alphaComponent]) { // this should be == 0.0f but need to make sure
         [self.boxColor set];
-        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect (0.0f, 0.0f, bgSize.width, bgSize.height) , 0.5, 0.5) cornerRadius:0];
+        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect(0.0f, 0.0f, bgSize.width, bgSize.height) , 0.5, 0.5) cornerRadius:self.cRadius];
         if (transform) {
             [path transformUsingAffineTransform:transform];
         }
@@ -287,7 +285,7 @@
 {
     CGSize picSize = [self size];
     //(width = 285914, height = 397)
-    if (picSize.width > 4096 || picSize.height > 4096) {
+    if (picSize.width > 40960 || picSize.height > 40960) {
         return NULL;
     }
     

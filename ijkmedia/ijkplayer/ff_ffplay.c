@@ -3689,6 +3689,16 @@ static int read_thread(void *arg)
         AVCodecParameters *codecpar = is->video_st->codecpar;
         ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, codecpar->width, codecpar->height);
         ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codecpar->sample_aspect_ratio.num, codecpar->sample_aspect_ratio.den);
+        //以1080尺寸为标准，定义出字幕字体默认大小为45pt
+        if (codecpar->width > 0) {
+            int degrees = ffp_get_video_rotate_degrees(ffp);
+            if (degrees / 90 % 2 == 1) {
+                ffp->vout->subtitle_ratio = codecpar->height / 800.0;
+            } else {
+                ffp->vout->subtitle_ratio = codecpar->width / 800.0;
+            }
+            
+        }
     }
     ffp->prepared = true;
     ffp_notify_msg1(ffp, FFP_MSG_PREPARED);

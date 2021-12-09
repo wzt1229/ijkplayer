@@ -137,7 +137,7 @@ static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 }
 
-static void vout_update_subtitle(SDL_Vout *vout,const char *text)
+static void vout_update_subtitle(SDL_Vout *vout, const char *text)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (!opaque) {
@@ -153,23 +153,38 @@ static void vout_update_subtitle(SDL_Vout *vout,const char *text)
         return;
     }
     
-    //字幕默认配置
-    NSMutableDictionary * stanStringAttrib = [NSMutableDictionary dictionary];
+    if (!opaque->gl_view) {
+        return;
+    }
     
-    int fontSize = opaque->gl_view.subtitlePreference.fontSize;
-    UIFont *subtitleFont = [NSFont boldSystemFontOfSize:fontSize];
+    IJKSDLSubtitlePreference sp = opaque->gl_view.subtitlePreference;
     
-    [stanStringAttrib setObject:subtitleFont forKey:NSFontAttributeName];
-    int32_t bgrValue = opaque->gl_view.subtitlePreference.color;
-    NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF))/255.0 green:((float)((bgrValue & 0xFF00) >> 8))/255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16))/255.0 alpha:1.0];
+    int fontSize = sp.fontSize;
+    int32_t bgrValue = sp.color;
+    float ratio = vout->subtitle_ratio;
     
-    [stanStringAttrib setObject:subtitleColor forKey:NSForegroundColorAttributeName];
-    NSString *aStr = [[NSString alloc] initWithUTF8String:text];
-    
-    MRTextureString *textureString = [[MRTextureString alloc] initWithString:aStr withAttributes:stanStringAttrib withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
-    [aStr release];
-    opaque->subtitle = [textureString createPixelBuffer];
-    [textureString release];
+    @autoreleasepool {
+        //字幕默认配置
+        NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
+        
+        UIFont *subtitleFont = [UIFont systemFontOfSize:fontSize * ratio];
+        [attributes setObject:subtitleFont forKey:NSFontAttributeName];
+        
+        NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
+        
+        [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
+        NSString *aStr = [[NSString alloc] initWithUTF8String:text];
+        
+        MRTextureString *textureString = [[MRTextureString alloc] initWithString:aStr withAttributes:attributes withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
+        float inset = subtitleFont.pointSize / 2.0;
+        textureString.edgeInsets = NSEdgeInsetsMake(inset, inset, inset, inset);
+        textureString.cRadius = inset / 2.0;
+        
+        [aStr release];
+        [attributes release];
+        opaque->subtitle = [textureString createPixelBuffer];
+        [textureString release];
+    }
 }
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2()
@@ -185,6 +200,7 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2()
     vout->free_l = vout_free_l;
     vout->display_overlay = vout_display_overlay;
     vout->update_subtitle = vout_update_subtitle;
+    vout->subtitle_ratio = 1.0;
     return vout;
 }
 
