@@ -3249,6 +3249,11 @@ static int external_subtitle_thread(void *arg)
         AVPacket pkt;
 
         for (;;) {
+            if (d->queue->serial == d->pkt_serial) {
+                if (d->queue->abort_request)
+                    return -1;
+            }
+            
             do {
                 if (d->queue->nb_packets == 0)
                     SDL_CondSignal(d->empty_queue_cond);
@@ -3268,19 +3273,17 @@ static int external_subtitle_thread(void *arg)
                 }
             } while (d->queue->serial != d->pkt_serial);
 
-            {
-                if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-                    ret = avcodec_decode_subtitle2(d->avctx, &sp->sub, &got_frame, &pkt);
-                    if (ret < 0) {
-                        ret = AVERROR(EAGAIN);
-                        return 0;
-                    } else {
-                        if (got_frame && !pkt.data) {
-                           d->packet_pending = 1;
-                           av_packet_move_ref(d->pkt, &pkt);
-                        }
-                        break;
+            if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+                ret = avcodec_decode_subtitle2(d->avctx, &sp->sub, &got_frame, &pkt);
+                if (ret < 0) {
+                    ret = AVERROR(EAGAIN);
+                    return 0;
+                } else {
+                    if (got_frame && !pkt.data) {
+                        d->packet_pending = 1;
+                        av_packet_move_ref(d->pkt, &pkt);
                     }
+                    break;
                 }
             }
         }
@@ -3958,7 +3961,7 @@ static int read_thread(void *arg)
             ex_subpkt->flags = 0;
             int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
             
-            if (ret2 >= 0 && pkt->stream_index == is->subtitle_ex->sub_st_idx){
+            if (ret2 >= 0 && ex_subpkt->stream_index == is->subtitle_ex->sub_st_idx){
                 packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
             } else {
                 if (ret2 == AVERROR_EOF) {
