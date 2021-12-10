@@ -1093,27 +1093,37 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
     }
 }
 
-//外部调用时以subtitle_st为判空条件，不能以subtitle_ex->ic为判空条件
 static void external_subtitle_close(FFPlayer* ffp)
 {
-    SubtitleExState *is = ffp->is->subtitle_ex;
-    AVFormatContext *ic = is->ic;
-
+    VideoState* vs = ffp->is;
+    if (!vs || !vs->subtitle_ex) {
+        return;
+    }
+    
+    SubtitleExState *is = vs->subtitle_ex;
+    
+    if (!is->subtitle_st) {
+        return;
+    }
+    
     SDL_LockMutex(is->mutex);
 
-    ffp->is->load_sub_ex = 0;
-    avformat_close_input(&ic);
-    is->ic = NULL;
-        
+    AVFormatContext *ic = is->ic;
+    if (ic) {
+        avformat_close_input(&ic);
+        is->ic = NULL;
+    }
+    
     decoder_abort(&is->subdec, &is->subpq);
     decoder_destroy(&is->subdec);
-        
+    
     if (is->file_name) {
         av_free(is->file_name);
         is->file_name = NULL;
     }
     is->subtitle_st = NULL;
-    is->sub_st_idx = -1;
+    is->sub_st_idx  = -1;
+    is->load_sub_ex = 0;
     
     SDL_UnlockMutex(is->mutex);
 }
@@ -1136,7 +1146,7 @@ static void stream_close(FFPlayer *ffp)
     if (is->subtitle_stream >= 0)
         stream_component_close(ffp, is->subtitle_stream);
 
-    if (is->subtitle_ex && is->subtitle_ex->subtitle_st) {
+    if (is->subtitle_ex) {
         external_subtitle_close(ffp);
     }
 
@@ -5312,7 +5322,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 closed = 1;
             }
 
-            if (is->subtitle_ex && is->subtitle_ex->sub_st_idx >= 0) {
+            if (is->subtitle_ex) {
                 external_subtitle_close(ffp);
                 closed = 1;
             }
@@ -5331,7 +5341,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 closed = 1;
             }
             
-            if (is->subtitle_ex && is->subtitle_ex->sub_st_idx >= 0) {
+            if (is->subtitle_ex) {
                 external_subtitle_close(ffp);
                 closed = 1;
             }
@@ -5549,7 +5559,7 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
             return 1;
     }
     
-    if (is->subtitle_ex && is->subtitle_ex->subtitle_st) {
+    if (is->subtitle_ex) {
         external_subtitle_close(ffp);
     } else {
         is->subtitle_ex = av_mallocz(sizeof(SubtitleExState));
