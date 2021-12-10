@@ -754,9 +754,14 @@
 {
     int dar_num = 1;
     int dar_den = 1;
-    const char* str = sender.titleOfSelectedItem.UTF8String;
-    sscanf(str, "%d:%d", &dar_num, &dar_den);
-    
+    if ([sender.titleOfSelectedItem isEqual:@"还原"]) {
+        dar_num = dar_den = 0;
+    }
+    else {
+        const char* str = sender.titleOfSelectedItem.UTF8String;
+        sscanf(str, "%d:%d", &dar_num, &dar_den);
+    }
+
     [self.player.view onDARChange:dar_num den:dar_den];
 }
 
