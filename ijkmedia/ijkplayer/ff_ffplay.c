@@ -1123,7 +1123,7 @@ static void external_subtitle_close(FFPlayer* ffp)
     }
     is->subtitle_st = NULL;
     is->sub_st_idx  = -1;
-    is->load_sub_ex = 0;
+    vs->load_sub_ex = 0;
     
     SDL_UnlockMutex(is->mutex);
 }
