@@ -3314,11 +3314,13 @@ static int external_subtitle_thread(void *arg)
                 sp->sub.end_display_time = pkt.duration * 10.0;
                 if (pkt.pts != AV_NOPTS_VALUE)
                     pts = pkt.pts / 100.0;
-            } else if (d->avctx->codec_id == AV_CODEC_ID_SUBRIP) {
+            } else if (d->avctx->codec_id == AV_CODEC_ID_SUBRIP
+                       || d->avctx->codec_id == AV_CODEC_ID_WEBVTT) {
                 sp->sub.end_display_time = (uint32_t)pkt.duration;
                 if (pkt.pts != AV_NOPTS_VALUE)
                     pts = pkt.pts / 1000.0;
-            }
+            }//其它格式pts为0，可暴露问题
+            
             sp->pts = pts;
             sp->serial = ss->subdec.pkt_serial;
             sp->width = ss->subdec.avctx->width;
@@ -5588,6 +5590,7 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
     if (external_subtitle_open(ffp) < 0) {
         av_log(NULL, AV_LOG_WARNING, "%s: could not open external subtitle\n",
                 file_name);
+        return  -5;
     } else  {
         ijkmeta_set_ex_subtitle_context_l(ffp);
         is->load_sub_ex = 1;

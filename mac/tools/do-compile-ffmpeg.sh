@@ -197,34 +197,36 @@ fi
 echo "----------------------"
 
 #--------------------
-echo "\n--------------------"
-echo "[*] check libass"
+#echo "\n--------------------"
+#echo "[*] check libass"
 
-FFMPEG_DEP_LIBASS_INC=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBASS/output/include
-FFMPEG_DEP_LIBASS_LIB=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBASS/output/lib
+#FFMPEG_DEP_LIBASS_INC=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBASS/output/include
+#FFMPEG_DEP_LIBASS_LIB=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBASS/output/lib
 #--------------------
 # with libass
-if [ -f "${FFMPEG_DEP_LIBASS_LIB}/libass.a" ]; then
-    echo "find libass!"
-    FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libass --enable-demuxer=ass --enable-filter=subtitles"
+#if [ -f "${FFMPEG_DEP_LIBASS_LIB}/libass.a" ]; then
+#    echo "find libass!"
+#    FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-demuxer=ass --enable-demuxer=webvtt --enable-demuxer=srt --enable-filter=subtitles"
 
-    FFMPEG_CFLAGS="$FFMPEG_CFLAGS -I${FFMPEG_DEP_LIBASS_INC}"
-    FFMPEG_DEP_LIBS="$FFMPEG_DEP_LIBS $FFMPEG_CFLAGS -L${FFMPEG_DEP_LIBASS_LIB} -lass"
+    #FFMPEG_CFLAGS="$FFMPEG_CFLAGS -I${FFMPEG_DEP_LIBASS_INC}"
+    #FFMPEG_DEP_LIBS="$FFMPEG_DEP_LIBS $FFMPEG_CFLAGS -L${FFMPEG_DEP_LIBASS_LIB} -lass"
 
-    export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${FFMPEG_DEP_LIBASS_LIB}/pkgconfig
-fi
+#    export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${FFMPEG_DEP_LIBASS_LIB}/pkgconfig
+#fi
 
-FFMPEG_DEP_LIBSRT_INC=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBSRT/output/include
-FFMPEG_DEP_LIBSRT_LIB=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBSRT/output/lib
+#FFMPEG_DEP_LIBSRT_INC=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBSRT/output/include
+#FFMPEG_DEP_LIBSRT_LIB=$FF_BUILD_ROOT/build/$FF_BUILD_NAME_LIBSRT/output/lib
 
-if [ -f "${FFMPEG_DEP_LIBSRT_LIB}/libsrt.a" ]; then
-    echo "find libasrt"
-    FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libsrt --enable-demuxer=srt"
-    FFMPEG_CFLAGS="$FFMPEG_CFLAGS -I${FFMPEG_DEP_LIBSRT_INC}"
-    FFMPEG_DEP_LIBS="$FFMPEG_DEP_LIBS $FFMPEG_CFLAGS  -L${FFMPEG_DEP_LIBSRT_LIB} -lsrt"
+#if [ -f "${FFMPEG_DEP_LIBSRT_LIB}/libsrt.a" ]; then
+#    echo "find libasrt"
+#    FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libsrt --enable-demuxer=srt"
+#    FFMPEG_CFLAGS="$FFMPEG_CFLAGS -I${FFMPEG_DEP_LIBSRT_INC}"
+#    FFMPEG_DEP_LIBS="$FFMPEG_DEP_LIBS $FFMPEG_CFLAGS  -L${FFMPEG_DEP_LIBSRT_LIB} -lsrt"
 
-    export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${FFMPEG_DEP_LIBSRT_LIB}pkgconfig
-fi
+#    export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${FFMPEG_DEP_LIBSRT_LIB}pkgconfig
+#fi
+
+FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-demuxer=ass --enable-demuxer=webvtt --enable-demuxer=srt"
 
 echo $PKG_CONFIG_PATH
 

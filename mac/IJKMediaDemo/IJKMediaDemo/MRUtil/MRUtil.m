@@ -43,10 +43,9 @@
 {
     return @[
         @"srt",
-        @"sub",
         @"ass",
         @"ssa",
-        @"psb"
+        @"vtt"
         ];
 }
 
