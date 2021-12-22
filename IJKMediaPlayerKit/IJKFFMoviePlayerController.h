@@ -44,6 +44,8 @@
 #define k_IJKM_KEY_CODEC_LONG_NAME @"codec_long_name"
 #define k_IJKM_KEY_STREAM_IDX      @"stream_idx"
 
+#define k_IJKM_KEY_EX_SUBTITLE_URL @"ex_subtile_url"
+
 // stream: video
 #define k_IJKM_KEY_WIDTH          @"width"
 #define k_IJKM_KEY_HEIGHT         @"height"
