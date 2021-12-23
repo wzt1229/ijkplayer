@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'IJKMediaPlayerKit'
-  s.version          = '0.9.0.2'
+  s.version          = '0.9.0.3'
   s.summary          = 'IJKMediaPlayerKit for macOS.'
   
 # This description is used to generate tags and improve search results.
@@ -33,7 +33,8 @@ TODO: Add long description of the pod here.
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',
     'HEADER_SEARCH_PATHS' => [
       '$(inherited)',
-      '${PODS_TARGET_SRCROOT}/mac/build/universal/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ffmpeg/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/libyuv/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ]
   }
@@ -43,7 +44,8 @@ TODO: Add long description of the pod here.
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',
     'HEADER_SEARCH_PATHS' => [
       '$(inherited)',
-      '${PODS_TARGET_SRCROOT}/ios/build/universal/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/libyuv/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ]
   }
@@ -134,8 +136,8 @@ TODO: Add long description of the pod here.
   end
   
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
-  s.ios.vendored_libraries = 'ios/build/universal/lib/*.a'
-  s.osx.vendored_libraries = 'mac/build/universal/lib/*.a'
+  s.ios.vendored_libraries = 'shell/build/product/ios/universal/lib/*.a'
+  s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
   s.osx.frameworks = 'AudioUnit', 'Cocoa', 'OpenGL', 'GLKit'
   

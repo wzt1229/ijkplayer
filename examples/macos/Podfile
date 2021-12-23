@@ -1,0 +1,57 @@
+install! 'cocoapods', :generate_multiple_pod_projects => true
+
+target 'IJKMediaMacDemo' do
+    pod 'IJKMediaPlayerKit', :path => '../../'
+    project 'IJKMediaMacDemo.xcodeproj'
+    platform :osx, '10.11'
+    use_frameworks!
+end
+
+def footer_log(s)
+    #puts "#{s}"
+end
+
+def fix_deployment_target(installer)
+    if !installer
+        return
+    end
+    footer_log("Make the pods deployment target version the same as our target")
+    
+    project = installer.pods_project
+    deploymentMap = {}
+    project.build_configurations.each do |config|
+        deploymentMap[config.name] = config.build_settings['MACOSX_DEPLOYMENT_TARGET']
+    end
+    # p deploymentMap
+    installer.pod_target_subprojects.each do |proj|
+        proj.targets.each do |target|
+        footer_log(" ╟ #{target.name}")
+        target.build_configurations.each do |config|
+            config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = "NO"
+            # https://stackoverflow.com/questions/42991455/silencing-documentation-issue-warnings-in-xcode
+            config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = "NO"
+            # Module compiled with Swift 5.4.2 cannot be imported by the Swift 5.5 compiler: /Users/qianlongxu/Documents/GitWorkSpace/SHVideoPlayer/Pods/lottie-ios/Lottie.framework/Modules/Lottie.swiftmodule/x86_64-apple-macos.swiftmodule
+            # https://stackoverflow.com/questions/58654714/module-compiled-with-swift-5-1-cannot-be-imported-by-the-swift-5-1-2-compiler
+            config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = "YES"
+            # 将子工程的develop target 改为和主工程一样，避免三方库兼容低版本时产生的不必要警告！
+            oldTarget = config.build_settings['MACOSX_DEPLOYMENT_TARGET']
+            newTarget = deploymentMap[config.name]
+            if oldTarget == newTarget
+                next
+            end
+            footer_log("   - #{config.name} deployment target: #{oldTarget} => #{newTarget}")
+            config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = newTarget
+        end
+        end
+    end
+end
+
+post_install do |installer|
+
+    footer_log("##### post_install hook start #####")
+
+    fix_deployment_target(installer)
+
+    footer_log("##### post_install hook end #####")
+
+end
