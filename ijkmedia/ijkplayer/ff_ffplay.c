@@ -5367,9 +5367,6 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
     }
     
     if (opened || closed) {
-        if (closed)
-            update_subtitle_text(ffp, "");
-        
         int idx = opened ? stream : -1;
         _ijkmeta_set_stream(ffp, type, idx);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
