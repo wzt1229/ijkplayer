@@ -3757,10 +3757,8 @@ static int read_thread(void *arg)
         if (is->load_sub_ex && is->subtitle_ex->ic) {
             is->load_sub_ex = 0;
             
-            if (is->subtitle_stream >= 0) {
+            if (is->subtitle_stream >= 0)
                 stream_component_close(ffp, is->subtitle_stream);
-                update_subtitle_text(ffp, "");
-            }
             
             int64_t cp = ffp_get_current_position_l(ffp);
             int64_t seek_time = milliseconds_to_fftime(cp);
