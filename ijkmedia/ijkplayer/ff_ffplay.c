@@ -910,7 +910,9 @@ static void update_subtitle_text(FFPlayer *ffp,const char *str)
 {
     //update subtitle,save into vout's opaque
     if (ffp->vout->update_subtitle) {
+        SDL_LockMutex(ffp->vout->mutex);
         ffp->vout->update_subtitle(ffp->vout, str);
+        SDL_UnlockMutex(ffp->vout->mutex);
     }
     ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)str, (int)strlen(str) + 1);
 }
@@ -1087,6 +1089,7 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
     case AVMEDIA_TYPE_SUBTITLE:
         is->subtitle_st = NULL;
         is->subtitle_stream = -1;
+        update_subtitle_text(ffp, "");
         break;
     default:
         break;
@@ -1126,6 +1129,8 @@ static void external_subtitle_close(FFPlayer* ffp)
     vs->load_sub_ex = 0;
     
     SDL_UnlockMutex(is->mutex);
+
+    update_subtitle_text(ffp, "");
 }
 
 static void stream_close(FFPlayer *ffp)
