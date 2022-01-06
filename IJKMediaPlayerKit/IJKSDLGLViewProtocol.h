@@ -108,7 +108,11 @@ struct _IJKSDLDARPreference {
 - (UIImage *)snapshot;
 #else
 - (CGImageRef)snapshot;
+- (CGImageRef)snapshot2;
 #endif
+
+@optional;
+- (void)display_pixels:(IJKOverlay *)overlay;
 
 @end
 

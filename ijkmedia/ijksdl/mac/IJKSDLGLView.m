@@ -105,6 +105,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         NSOpenGLPFANoRecovery,
         NSOpenGLPFADoubleBuffer,
         NSOpenGLPFADepthSize, 24,
+//        NSOpenGLPFAAllowOfflineRenderers, 1,
         0
     };
     
@@ -380,6 +381,94 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     CGImageRef imageRef = [context createCGImage:ciImage fromRect:rect];
     CVPixelBufferRelease(pixelBuffer);
     return (CGImageRef)CFAutorelease(imageRef);
+}
+
+static CGContextRef _CreateCGBitmapContext(size_t w, size_t h, size_t bpc, size_t bpp, size_t bpr, int bmi)
+{
+    assert(bpp != 24);
+    /*
+     AV_PIX_FMT_RGB24 bpp is 24! not supported!
+     Crash:
+     2020-06-06 00:08:20.245208+0800 FFmpegTutorial[23649:2335631] [Unknown process name] CGBitmapContextCreate: unsupported parameter combination: set CGBITMAP_CONTEXT_LOG_ERRORS environmental variable to see the details
+     2020-06-06 00:08:20.245417+0800 FFmpegTutorial[23649:2335631] [Unknown process name] CGBitmapContextCreateImage: invalid context 0x0. If you want to see the backtrace, please set CG_CONTEXT_SHOW_BACKTRACE environmental variable.
+     */
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef bitmapContext = CGBitmapContextCreate(
+        NULL,
+        w,
+        h,
+        bpc,
+        bpr,
+        colorSpace,
+        bmi
+    );
+    
+    CGColorSpaceRelease(colorSpace);
+    if (bitmapContext) {
+        return (CGContextRef)CFAutorelease(bitmapContext);
+    }
+    return NULL;
+}
+
+static CGImageRef _FlipCGImage(CGImageRef src)
+{
+    if (!src) {
+        return NULL;
+    }
+    
+    const size_t height = CGImageGetHeight(src);
+    const size_t width  = CGImageGetWidth(src);
+    const size_t bpc    = CGImageGetBitsPerComponent(src);
+    const size_t bpr    = bpc * CGImageGetWidth(src);
+    const CGContextRef ctx = _CreateCGBitmapContext(width,
+                                              height,
+                                              bpc,
+                                              CGImageGetBitsPerPixel(src),
+                                              bpr,
+                                              CGImageGetBitmapInfo(src));
+    CGContextTranslateCTM(ctx, 0, height);
+    CGContextScaleCTM(ctx, 1.0, -1.0);
+    CGContextDrawImage(ctx, CGRectMake(0, 0, width, height), src);
+    CGImageRef dst = CGBitmapContextCreateImage(ctx);
+    return (CGImageRef)CFAutorelease(dst);
+}
+
+- (CGImageRef)snapshot2
+{
+    NSOpenGLContext *openGLContext = [self openGLContext];
+    if (!openGLContext) {
+        return nil;
+    }
+ 
+    NSRect bounds = [self bounds];
+    CGFloat scale = self.layer.contentsScale;
+    CGSize size = CGSizeMake(bounds.size.width * scale, bounds.size.height * scale);
+    
+    if (CGSizeEqualToSize(CGSizeZero, size)) {
+        return nil;
+    }
+    
+    const int height = size.height;
+    const int width  = size.width;
+
+    GLint bytesPerRow = width * 4;
+    const GLint bitsPerPixel = 32;
+    CGContextRef ctx = _CreateCGBitmapContext(width, height, 8, 32, bytesPerRow, kCGBitmapByteOrderDefault |kCGImageAlphaNoneSkipLast);
+    if (ctx) {
+        void * bitmapData = CGBitmapContextGetData(ctx);
+        if (bitmapData) {
+            [openGLContext makeCurrentContext];
+            glPixelStorei(GL_PACK_ROW_LENGTH, 8 * bytesPerRow / bitsPerPixel);
+            glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmapData);
+            CGImageRef cgImage = CGBitmapContextCreateImage(ctx);
+            if (cgImage) {
+                CGImageRef result = _FlipCGImage(cgImage);
+                CFRelease(cgImage);
+                return result;
+            }
+        }
+    }
+    return NULL;
 }
 
 - (NSView *)hitTest:(NSPoint)point
