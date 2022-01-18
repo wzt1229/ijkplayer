@@ -136,7 +136,7 @@ TODO: Add long description of the pod here.
   end
   
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
-  s.ios.vendored_libraries = 'shell/build/product/ios/universal/lib/*.a'
+  s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
   s.osx.frameworks = 'AudioUnit', 'Cocoa', 'OpenGL', 'GLKit'
