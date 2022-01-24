@@ -51,7 +51,7 @@ static const char g_shader_rect_bgrx_1[] = IJK_GLES_STRING(
     {
         if (isSubtitle == 1) {
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            gl_FragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
             vec3 rgb;
             
@@ -59,7 +59,7 @@ static const char g_shader_rect_bgrx_1[] = IJK_GLES_STRING(
             rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
-            gl_FragColor = vec4(rgb, 1.0);
+            fragColor = vec4(rgb, 1.0);
         }
     }
 );
@@ -90,7 +90,7 @@ static const char g_shader_rect_rgbx_1[] = IJK_GLES_STRING(
     {
         if (isSubtitle == 1) {
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            gl_FragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
             vec3 rgb;
             
@@ -98,7 +98,7 @@ static const char g_shader_rect_rgbx_1[] = IJK_GLES_STRING(
             rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
-            gl_FragColor = vec4(rgb, 1.0);
+            fragColor = vec4(rgb, 1.0);
         }
     }
 );
@@ -129,7 +129,7 @@ static const char g_shader_rect_xrgb_1[] = IJK_GLES_STRING(
     {
         if (isSubtitle == 1) {
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            gl_FragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
             vec3 rgb;
             
@@ -139,7 +139,7 @@ static const char g_shader_rect_xrgb_1[] = IJK_GLES_STRING(
             rgb = texture2DRect(us2_Sampler0, recTexCoord0).gra;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
-            gl_FragColor = vec4(rgb, 1.0);
+            fragColor = vec4(rgb, 1.0);
         }
     }
 );
@@ -175,7 +175,7 @@ static const char g_shader_rect_2[] = IJK_GLES_STRING(
     {
         if (isSubtitle == 1) {
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            gl_FragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
             vec3 yuv;
             vec3 rgb;
@@ -187,13 +187,13 @@ static const char g_shader_rect_2[] = IJK_GLES_STRING(
             if (isFullRange == 1) {
                 yuv.x = yuv.x - (16.0 / 255.0);
             }
-            yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).ra - vec2(0.5, 0.5);
+            yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).rg - vec2(0.5, 0.5);
             
             rgb = um3_ColorConversion * yuv;
             
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
-            gl_FragColor = vec4(rgb, 1.0);
+            fragColor = vec4(rgb, 1.0);
         }
     }
 );
@@ -231,7 +231,7 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
     {
         if (isSubtitle == 1) {
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            gl_FragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
             vec3 yuv;
             vec3 rgb;
@@ -251,43 +251,62 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
 
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
-            gl_FragColor = vec4(rgb, 1.0);
+            fragColor = vec4(rgb, 1.0);
         }
     }
 );
 
-const char *IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type)
+void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
 {
+    *out = '\0';
+    sprintf(out, "#version %d\n",ver);
+    if (ver >= 330) {
+        strcat(out, "#define varying in\n");
+        strcat(out, "#define texture2DRect texture\n");
+        strcat(out, "out vec4 fragColor;\n");
+    } else {
+        strcat(out, "#define fragColor gl_FragColor\n");
+    }
+    
+    const char * buffer;
     //for rgbx
     switch (type) {
         case BGRX_SHADER:
         {
-            return g_shader_rect_bgrx_1;
+            buffer = g_shader_rect_bgrx_1;
         }
+            break;
         case XRGB_SHADER:
         {
-            return g_shader_rect_xrgb_1;
+            buffer = g_shader_rect_xrgb_1;
         }
+            break;
         case YUV_2P_SHADER:
         {
-            return g_shader_rect_2;
+            buffer = g_shader_rect_2;
         }
+            break;
         case YUV_3P_SHADER:
         {
-            return g_shader_rect_3;
+            buffer = g_shader_rect_3;
         }
+            break;
         case UYVY_SHADER:
         {
-            return g_shader_rect_rgbx_1;
+#warning fixme: opengl 330 need convert yuv422 to rgb.
+            buffer = g_shader_rect_rgbx_1;
         }
+            break;
         case NONE_SHADER:
         {
             assert(0);
-            return "";
+            buffer = "";
         }
+            break;
     }
+    
+    strcat(out, buffer);
 }
-
 #else
 
 static const char g_shader[] = IJK_GLES_STRING(
@@ -305,7 +324,7 @@ static const char g_shader[] = IJK_GLES_STRING(
         yuv.x  = (texture2D(us2_SamplerX,  vv2_Texcoord).r  - (16.0 / 255.0));
         yuv.yz = (texture2D(us2_SamplerY,  vv2_Texcoord).rg - vec2(0.5, 0.5));
         rgb = um3_ColorConversion * yuv;
-        gl_FragColor = vec4(rgb, 1);
+        fragColor = vec4(rgb, 1);
     }
 );
 

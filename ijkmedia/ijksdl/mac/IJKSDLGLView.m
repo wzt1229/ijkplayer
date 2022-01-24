@@ -105,6 +105,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         NSOpenGLPFANoRecovery,
         NSOpenGLPFADoubleBuffer,
         NSOpenGLPFADepthSize, 24,
+        NSOpenGLPFAOpenGLProfile,NSOpenGLProfileVersion3_2Core,
 //        NSOpenGLPFAAllowOfflineRenderers, 1,
         0
     };
@@ -153,7 +154,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
         
-        _renderer = IJK_GLES2_Renderer_create(overlay);
+        _renderer = IJK_GLES2_Renderer_create(overlay,0);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         

@@ -110,7 +110,10 @@ typedef struct IJK_GLES2_Renderer
 
     GLfloat vertices[8];
     int     vertices_changed;
-
+    /// 顶点对象
+    GLuint vbo;
+    GLuint vao;
+    
     int     format;
     int     gravity;
     GLsizei layer_width;
@@ -139,7 +142,7 @@ ijk_matrix IJK_GLES2_makeOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfl
 
 ijk_matrix IJK_GLES2_defaultOrtho(void);
 
-const char *IJK_GLES2_getVertexShader_default(void);
+void IJK_GLES2_getVertexShader_default(char *out,int ver);
 
 #ifndef __APPLE__
 const char *IJK_GLES2_getFragmentShader_rgb(void);
@@ -153,8 +156,8 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
 
 #else
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type);
-const char *IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type);
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type,int openglVer);
+void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver);
 
 #endif
 
@@ -166,6 +169,6 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv444p10le();
 const GLfloat *IJK_GLES2_getColorMatrix_bt709(void);
 const GLfloat *IJK_GLES2_getColorMatrix_bt601(void);
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_source);
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_source,int openglVer);
 
 #endif

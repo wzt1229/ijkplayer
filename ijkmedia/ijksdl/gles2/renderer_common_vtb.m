@@ -74,7 +74,7 @@ static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
 {
     ALOGI("use common vtb render\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glEnable(GL_TEXTURE_TARGET);
+    //glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
 
 #if NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
@@ -451,12 +451,13 @@ static GLboolean yuv420sp_uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subt
 }
 #endif
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type)
+IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type,int openglVer)
 {
 #if TARGET_OS_OSX
     assert(overlay->format == SDL_FCC__VTB || overlay->format == SDL_FCC__FFVTB);
-    
-    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getAppleCommonFragmentShader(type));
+    char shader_buffer[2048] = { '\0' };
+    IJK_GL_getAppleCommonFragmentShader(type,shader_buffer,openglVer);
+    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(shader_buffer,openglVer);
 #else
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
 #endif

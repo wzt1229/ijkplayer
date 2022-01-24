@@ -67,6 +67,12 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、Lame、X264、Fdk-aac、l
     └── pull-repo-ref.sh
 ```
 
+## Use Mirror
+
+从 Github 克隆代码可能很慢，所以最好在内网做一套仓库镜像，这样团队协作时，其他人就能很快的克隆代码了，时间不应浪费在这里。
+
+
+
 ## Init Lib Repo
 
 脚本参数比较灵活，可根据需要搭配使用

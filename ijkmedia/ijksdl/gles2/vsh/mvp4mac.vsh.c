@@ -20,21 +20,34 @@
  */
 
 #include "ijksdl/gles2/internal.h"
-//The precision keyword is a OpenGL/ES extension.
-static const char g_shader[] = IJK_GLES_STRING(
-    varying   vec2 vv2_Texcoord;
-    attribute vec4 av4_Position;
-    attribute vec2 av2_Texcoord;
-    uniform   mat4 um4_ModelViewProjection;
 
-    void main()
-    {
-        gl_Position  = um4_ModelViewProjection * av4_Position;
-        vv2_Texcoord = av2_Texcoord.xy;
-    }
-);
-
-const char *IJK_GLES2_getVertexShader_default(void)
+void IJK_GLES2_getVertexShader_default(char *out,int ver)
 {
-    return g_shader;
+    *out = '\0';
+    
+    sprintf(out, "#version %d\n",ver);
+    
+    if (ver >= 330) {
+        strcat(out, IJK_GLES_STRING(
+                    out vec2 vv2_Texcoord;
+                    in vec2 av2_Texcoord;
+                    in vec4 av4_Position;
+                    uniform mat4 um4_ModelViewProjection;
+                                    ));
+    } else {
+        strcat(out, IJK_GLES_STRING(
+                    varying   vec2 vv2_Texcoord;
+                    attribute vec4 av4_Position;
+                    attribute vec2 av2_Texcoord;
+                    uniform   mat4 um4_ModelViewProjection;
+                                    ));
+    }
+    
+    strcat(out, IJK_GLES_STRING(
+                void main()
+                {
+                    gl_Position  = um4_ModelViewProjection * av4_Position;
+                    vv2_Texcoord = av2_Texcoord.xy;
+                }
+                                ));
 }

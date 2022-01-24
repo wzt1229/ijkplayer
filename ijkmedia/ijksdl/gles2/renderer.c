@@ -23,6 +23,7 @@
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #include <CoreVideo/CoreVideo.h>
+#include <OpenGL/gl3.h>
 #endif
 #include "math_util.h"
 
@@ -79,6 +80,9 @@ void IJK_GLES2_Renderer_reset(IJK_GLES2_Renderer *renderer)
             renderer->plane_textures[i] = 0;
         }
     }
+    
+    glDeleteBuffers(1, &renderer->vbo);
+    glDeleteVertexArrays(1, &renderer->vao);
 }
 
 void IJK_GLES2_Renderer_free(IJK_GLES2_Renderer *renderer)
@@ -112,18 +116,23 @@ void IJK_GLES2_Renderer_freeP(IJK_GLES2_Renderer **renderer)
     *renderer = NULL;
 }
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_source)
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_source,int openglVer)
 {
     assert(fragment_shader_source);
-
+    
     IJK_GLES2_Renderer *renderer = (IJK_GLES2_Renderer *)calloc(1, sizeof(IJK_GLES2_Renderer));
     if (!renderer)
         goto fail;
-
-    renderer->vertex_shader = IJK_GLES2_loadShader(GL_VERTEX_SHADER, IJK_GLES2_getVertexShader_default());
+    char vsh_buffer[1024] = { '\0' };
+    IJK_GLES2_getVertexShader_default(vsh_buffer,openglVer);
+    
+    ALOGI("vertex shader source:\n%s\n",vsh_buffer);
+    ALOGI("fragment shader source:\n%s\n",fragment_shader_source);
+    
+    renderer->vertex_shader = IJK_GLES2_loadShader(GL_VERTEX_SHADER, vsh_buffer);
     if (!renderer->vertex_shader)
         goto fail;
-
+    
     renderer->fragment_shader = IJK_GLES2_loadShader(GL_FRAGMENT_SHADER, fragment_shader_source);
     if (!renderer->fragment_shader)
         goto fail;
@@ -159,26 +168,26 @@ fail:
 }
 
 #ifdef __APPLE__
-static IJK_GLES2_Renderer * _smart_create_renderer_appple(SDL_VoutOverlay *overlay,const Uint32 cv_format)
+static IJK_GLES2_Renderer * _smart_create_renderer_appple(SDL_VoutOverlay *overlay, const Uint32 cv_format, int openglVer)
 {
     if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
         ALOGI("create render yuv420sp vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,YUV_2P_SHADER);
+        return IJK_GL_Renderer_create_common_vtb(overlay,YUV_2P_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_32BGRA) {
         ALOGI("create render bgrx vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,BGRX_SHADER);
+        return IJK_GL_Renderer_create_common_vtb(overlay,BGRX_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_32ARGB) {
         ALOGI("create render xrgb vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,XRGB_SHADER);
+        return IJK_GL_Renderer_create_common_vtb(overlay,XRGB_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
                cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
         ALOGI("create render yuv420p vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,YUV_3P_SHADER);
+        return IJK_GL_Renderer_create_common_vtb(overlay,YUV_3P_SHADER,openglVer);
     }
     #if TARGET_OS_OSX
     else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
         ALOGI("create render uyvy vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,UYVY_SHADER);
+        return IJK_GL_Renderer_create_common_vtb(overlay,UYVY_SHADER,openglVer);
     }
     #endif
     else {
@@ -187,7 +196,7 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(SDL_VoutOverlay *overl
 }
 #endif
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openglVer)
 {
     if (!overlay)
         return NULL;
@@ -196,18 +205,29 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
     IJK_GLES2_printString("Vendor", GL_VENDOR);
     IJK_GLES2_printString("Renderer", GL_RENDERER);
     IJK_GLES2_printString("Extensions", GL_EXTENSIONS);
-
+    
+    if (openglVer == 0) {
+        const char *version_string = (const char *) glGetString(GL_VERSION);
+        int major = 0, minor = 0;
+        if (sscanf(version_string, "%d.%d", &major, &minor) == 2) {
+            openglVer = major * 100 + minor * 10;
+        } else {
+            //use legacy opengl?
+            openglVer = 210;
+        }
+    }
+    
     IJK_GLES2_Renderer *renderer = NULL;
     
 #ifdef __APPLE__
     if (SDL_FCC__VTB == overlay->format) {
         const Uint32 ff_format = overlay->ff_format;
-        renderer = _smart_create_renderer_appple(overlay, ff_format);
+        renderer = _smart_create_renderer_appple(overlay, ff_format, openglVer);
     }
     #if USE_FF_VTB
     else if (SDL_FCC__FFVTB == overlay->format) {
         const Uint32 cv_format = overlay->cv_format;
-        renderer = _smart_create_renderer_appple(overlay, cv_format);
+        renderer = _smart_create_renderer_appple(overlay, cv_format, openglVer);
     }
     #endif
 #else
@@ -229,6 +249,15 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
 #endif
     if (renderer) {
         renderer->format = overlay->format;
+        
+        glGenVertexArrays(1, &renderer->vao);
+        /// 创建顶点缓存对象
+        glGenBuffers(1, &renderer->vbo);
+        
+        glBindVertexArray(renderer->vao);
+        /// 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
+        /// 同时也指定了_VBO的对象类型是一个顶点数据对象
+        glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
     }
     return renderer;
 }
@@ -482,12 +511,41 @@ static void IJK_GLES2_Renderer_TexCoords_reset(IJK_GLES2_Renderer *renderer)
     IJK_GLES2_Renderer_TexCoords_cropRight(renderer, 0.0f);
 }
 
-static void IJK_GLES2_Renderer_TexCoords_reloadVertex(IJK_GLES2_Renderer *renderer)
+static void IJK_GLES2_Renderer_Upload_Vbo_Data(IJK_GLES2_Renderer *renderer)
 {
-    glVertexAttribPointer(renderer->av2_texcoord, 2, GL_FLOAT, GL_FALSE, 0, renderer->texcoords);
+    GLfloat quadData [] = {
+        renderer->vertices[0],renderer->vertices[1],
+        renderer->vertices[2],renderer->vertices[3],
+        renderer->vertices[4],renderer->vertices[5],
+        renderer->vertices[6],renderer->vertices[7],
+        //Texture Postition
+        renderer->texcoords[0],renderer->texcoords[1],
+        renderer->texcoords[2],renderer->texcoords[3],
+        renderer->texcoords[4],renderer->texcoords[5],
+        renderer->texcoords[6],renderer->texcoords[7],
+    };
+    
+    /// 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
+    glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
+    /// 将CPU数据发送到GPU,数据类型GL_ARRAY_BUFFER
+    /// GL_STATIC_DRAW 表示数据不会被修改,将其放置在GPU显存的更合适的位置,增加其读取速度
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadData), quadData, GL_DYNAMIC_DRAW);
+    
+    /// 指定顶点着色器位置为0的参数的数据读取方式与数据类型
+    /// 第一个参数: 参数位置
+    /// 第二个参数: 一次读取数据
+    /// 第三个参数: 数据类型
+    /// 第四个参数: 是否归一化数据
+    /// 第五个参数: 间隔多少个数据读取下一次数据
+    /// 第六个参数: 指定读取第一个数据在顶点数据中的偏移量
+    glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av4_position)");
+    //
+    glEnableVertexAttribArray(renderer->av4_position);
+    // texture coord attribute
+    glVertexAttribPointer(renderer->av2_texcoord, 2, GL_FLOAT, GL_FALSE, 0, (void*)(8 * sizeof(float)));
     IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
     glEnableVertexAttribArray(renderer->av2_texcoord);
-    IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
 }
 
 /*
@@ -506,11 +564,8 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&proj_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
 
     IJK_GLES2_Renderer_TexCoords_reset(renderer);
-    IJK_GLES2_Renderer_TexCoords_reloadVertex(renderer);
-
     IJK_GLES2_Renderer_Vertices_reset(renderer);
-    IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
-
+    IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
     return GL_TRUE;
 }
 
@@ -580,7 +635,6 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
         renderer->vertices_changed = 0;
 
         IJK_GLES2_Renderer_Vertices_apply(renderer);
-        IJK_GLES2_Renderer_Vertices_reloadVertex(renderer);
 
         renderer->buffer_width  = buffer_width;
         renderer->visible_width = visible_width;
@@ -590,7 +644,7 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
 
         IJK_GLES2_Renderer_TexCoords_reset(renderer);
         IJK_GLES2_Renderer_TexCoords_cropRight(renderer, padding_normalized);
-        IJK_GLES2_Renderer_TexCoords_reloadVertex(renderer);
+        IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
     }
     
     ijk_float3_vector rotate_v3 = { 0.0 };
@@ -630,6 +684,7 @@ GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_Vou
     
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&r_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
     
+    glBindVertexArray(renderer->vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);      IJK_GLES2_checkError_TRACE("glDrawArrays");
 
     return GL_TRUE;
@@ -692,6 +747,41 @@ GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_Vo
         
         glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&proj_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
         
+        GLfloat quadData [] = {
+            vertices[0],vertices[1],
+            vertices[2],vertices[3],
+            vertices[4],vertices[5],
+            vertices[6],vertices[7],
+            //Texture Postition
+            renderer->texcoords[0],renderer->texcoords[1],
+            renderer->texcoords[2],renderer->texcoords[3],
+            renderer->texcoords[4],renderer->texcoords[5],
+            renderer->texcoords[6],renderer->texcoords[7],
+        };
+        
+        /// 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
+        glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
+        /// 将CPU数据发送到GPU,数据类型GL_ARRAY_BUFFER
+        /// GL_STATIC_DRAW 表示数据不会被修改,将其放置在GPU显存的更合适的位置,增加其读取速度
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadData), quadData, GL_DYNAMIC_DRAW);
+        
+        /// 指定顶点着色器位置为0的参数的数据读取方式与数据类型
+        /// 第一个参数: 参数位置
+        /// 第二个参数: 一次读取数据
+        /// 第三个参数: 数据类型
+        /// 第四个参数: 是否归一化数据
+        /// 第五个参数: 间隔多少个数据读取下一次数据
+        /// 第六个参数: 指定读取第一个数据在顶点数据中的偏移量
+        glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av4_position)");
+        //
+        glEnableVertexAttribArray(renderer->av4_position);
+        // texture coord attribute
+        glVertexAttribPointer(renderer->av2_texcoord, 2, GL_FLOAT, GL_FALSE, 0, (void*)(8 * sizeof(float)));
+        IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
+        glEnableVertexAttribArray(renderer->av2_texcoord);
+        
+        glBindVertexArray(renderer->vao);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);      IJK_GLES2_checkError_TRACE("glDrawArrays");
     }
     return GL_TRUE;

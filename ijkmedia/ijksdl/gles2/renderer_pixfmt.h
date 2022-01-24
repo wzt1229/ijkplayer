@@ -152,13 +152,11 @@ static struct vt_format vt_formats[] = {
         .planes = 2,
         .gl = {
 //           when use RED/RG,the fsh must use r and rg!
-//            { GL_RED, GL_UNSIGNED_BYTE, GL_R8 },
-//            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG8 } ,
-//            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
-//            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG } ,
-//           when use LUMINANCE/LUMINANCE_ALPHA,the fsh must use r and ra!
-            { GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_LUMINANCE },
-            { GL_LUMINANCE_ALPHA,  GL_UNSIGNED_BYTE, GL_LUMINANCE_ALPHA }
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG } ,
+//           330 后使用这个绿屏，when use LUMINANCE/LUMINANCE_ALPHA,the fsh must use r and ra!
+//            { GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_LUMINANCE },
+//            { GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, GL_LUMINANCE_ALPHA }
         }
     },
     {
@@ -166,8 +164,8 @@ static struct vt_format vt_formats[] = {
         .imgfmt = IMGFMT_NV12,
         .planes = 2,
         .gl = {
-            { GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_LUMINANCE },
-            { GL_LUMINANCE_ALPHA,  GL_UNSIGNED_BYTE, GL_LUMINANCE_ALPHA }
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG }
         }
     },
 #if TARGET_OS_OSX
@@ -176,6 +174,8 @@ static struct vt_format vt_formats[] = {
         .imgfmt = IMGFMT_UYVY,
         .planes = 1,
         .gl = {
+            //330
+            { GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB },
             { GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB }
         }
     },
