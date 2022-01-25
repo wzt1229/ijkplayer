@@ -85,6 +85,13 @@ struct _IJKSDLDARPreference {
     int den; //height
 };
 
+typedef enum : NSUInteger {
+    IJKSDLSnapshot_Origin, //视频原始画面，不带任何特效和字幕等；
+    IJKSDLSnapshot_Screen, //尺寸和当前屏幕一样
+    IJKSDLSnapshot_Effect_Origin,//带特效的，尺寸和原始画面一样
+    IJKSDLSnapshot_Effect_Subtitle_Origin ////带特效和字幕的尺寸和原始画面一样
+} IJKSDLSnapshotType;
+
 @protocol IJKSDLGLViewProtocol <NSObject>
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
@@ -97,9 +104,10 @@ struct _IJKSDLDARPreference {
 @property(nonatomic) IJKSDLRotatePreference rotatePreference;
 // color conversion perference
 @property(nonatomic) IJKSDLColorConversionPreference colorPreference;
-//user defined display aspect ratio
+// user defined display aspect ratio
 @property(nonatomic) IJKSDLDARPreference darPreference;
-@property(atomic)    BOOL darWillChange;
+// video size
+@property (assign) CGSize videoSize;
 
 - (void)onDARChange:(int)dar_num den:(int)dar_den;
 
@@ -107,8 +115,7 @@ struct _IJKSDLDARPreference {
 - (void)display_pixels:(IJKOverlay *)overlay;
 - (UIImage *)snapshot;
 #else
-- (CGImageRef)snapshot;
-- (CGImageRef)snapshot2;
+- (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
 #endif
 
 @optional;

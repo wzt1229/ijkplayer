@@ -74,13 +74,21 @@ GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format);
 GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer,float brightness,float satutaion,float contrast);
-GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
-void* IJK_GLES2_Renderer_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
-GLboolean IJK_GLES2_Renderer_renderSubtitle(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay, void *subtitle);
 
-#define IJK_GLES2_GRAVITY_RESIZE                (0) // Stretch to fill view bounds.
-#define IJK_GLES2_GRAVITY_RESIZE_ASPECT         (1) // Preserve aspect ratio; fit within view bounds.
-#define IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL    (2) // Preserve aspect ratio; fill view bounds.
+GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+GLboolean IJK_GLES2_Renderer_uploadTexture(IJK_GLES2_Renderer *renderer, void *texture);
+void IJK_GLES2_Renderer_drawArrays(void);
+
+void* IJK_GLES2_Renderer_getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+void IJK_GLES2_Renderer_updateSubtitleVetex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay, float width, float height);
+GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer, void *texture);
+
+#define IJK_GLES2_GRAVITY_MIN                   (0)
+#define IJK_GLES2_GRAVITY_RESIZE                (0) // Stretch to fill layer bounds.
+#define IJK_GLES2_GRAVITY_RESIZE_ASPECT         (1) // Preserve aspect ratio; fit within layer bounds.
+#define IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL    (2) // Preserve aspect ratio; fill layer bounds.
+#define IJK_GLES2_GRAVITY_MAX                   (2)
+
 GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravity, GLsizei view_width, GLsizei view_height);
 
 void      IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int degrees);

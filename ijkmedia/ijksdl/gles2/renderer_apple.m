@@ -70,7 +70,7 @@ typedef struct IJK_GLES2_Renderer_Opaque
     int samples;
 } IJK_GLES2_Renderer_Opaque;
 
-static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
+static GLboolean use(IJK_GLES2_Renderer *renderer)
 {
     ALOGI("use common vtb render\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -88,7 +88,7 @@ static GLboolean yuv420sp_vtb_use(IJK_GLES2_Renderer *renderer)
     return GL_TRUE;
 }
 
-static GLsizei yuv420sp_vtb_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+static GLsizei getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
     if (!overlay)
         return 0;
@@ -101,7 +101,7 @@ static GLsizei yuv420sp_vtb_getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_Vou
 }
 
 #if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
-static GLvoid yuv420sp_vtb_clean_textures(IJK_GLES2_Renderer *renderer)
+static GLvoid clean_textures(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
         return;
@@ -127,7 +127,7 @@ static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVP
         return GL_FALSE;
     }
     
-    yuv420sp_vtb_clean_textures(renderer);
+    clean_textures(renderer);
     
     GLenum gl_target = GL_TEXTURE_TARGET;
     const int planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
@@ -177,7 +177,7 @@ static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVP
 #if NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
 static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
 {
-    IOSurfaceRef surface  = CVPixelBufferGetIOSurface(pixel_buffer);
+    IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
     
     if (!surface) {
         printf("CVPixelBuffer has no IOSurface\n");
@@ -237,11 +237,19 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
 }
 #endif
 
-static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, CVPixelBufferRef pixel_buffer)
+static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
 {
-    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
+    if (!texture) {
+        return GL_FALSE;
+    }
+    CVPixelBufferRef pixel_buffer = (CVPixelBufferRef)texture;
     
-    if (opaque && !opaque->color_attachments) {
+    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
+    if (!opaque) {
+        return GL_FALSE;
+    }
+    CVPixelBufferRetain(pixel_buffer);
+    if (!opaque->color_attachments) {
         CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
         if (color_attachments == nil ||
             CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
@@ -269,10 +277,11 @@ static GLboolean upload_420sp_vtp_Texture(IJK_GLES2_Renderer *renderer, CVPixelB
 #else
     upload_texture_use_IOSurface(pixel_buffer, renderer);
 #endif
+    CVPixelBufferRelease(pixel_buffer);
     return GL_TRUE;
 }
 
-static CVPixelBufferRef yuv420sp_getCVPixelBufferRef(SDL_VoutOverlay *overlay)
+static CVPixelBufferRef getCVPixelBufferRef(SDL_VoutOverlay *overlay)
 {
     switch (overlay->format) {
         case SDL_FCC__VTB:
@@ -286,34 +295,22 @@ static CVPixelBufferRef yuv420sp_getCVPixelBufferRef(SDL_VoutOverlay *overlay)
     }
 }
 
-static GLboolean yuv420sp_vtb_uploadTexture(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
-{
-    if (!renderer || !renderer->opaque || !overlay)
-        return GL_FALSE;
-    
-    CVPixelBufferRef pixel_buffer = yuv420sp_getCVPixelBufferRef(overlay);
-    if (!pixel_buffer) {
-        ALOGE("nil pixelBuffer in overlay\n");
-        return GL_FALSE;
-    }
-    return upload_420sp_vtp_Texture(renderer, pixel_buffer);
-}
 
-void * yuv420sp_vtb_getImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+static void * getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
     if (!renderer || !renderer->opaque || !overlay)
         return NULL;
-    return yuv420sp_getCVPixelBufferRef(overlay);
+    return getCVPixelBufferRef(overlay);
 }
 
-static GLvoid yuv420sp_vtb_destroy(IJK_GLES2_Renderer *renderer)
+static GLvoid destroy(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
         return;
     
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
 #if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
-    yuv420sp_vtb_clean_textures(renderer);
+    clean_textures(renderer);
     if (opaque->cv_texture_cache) {
         CFRelease(opaque->cv_texture_cache);
         opaque->cv_texture_cache = nil;
@@ -352,7 +349,7 @@ static GLboolean create_gltexture(IJK_GLES2_Renderer *renderer)
 
 #if TARGET_OS_OSX
 
-static GLvoid yuv420sp_useSubtitle(IJK_GLES2_Renderer *renderer,GLboolean subtitle)
+static GLvoid useSubtitle(IJK_GLES2_Renderer *renderer,GLboolean subtitle)
 {
     glUniform1i(renderer->opaque->isSubtitle, (GLint)subtitle);
 }
@@ -424,29 +421,26 @@ OpenGLTextureRef createGLTexture(IJK_GLES2_Renderer_Opaque* opaque, CVPixelBuffe
 #endif // !(TARGET_IOS || TARGET_TVOS)
 
 #if TARGET_OS_OSX
-static GLboolean yuv420sp_uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle, IJK_Subtile_Size* size)
+static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
 {
-    GLboolean ok = GL_FALSE;
-    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-    if (opaque) {
-        CVPixelBufferRef cvPixelRef = (CVPixelBufferRef)subtitle;
-        if (cvPixelRef) {
-            CVPixelBufferRetain(cvPixelRef);
-            
-            int width  = (int)ceil(CVPixelBufferGetWidth(cvPixelRef));
-            int height = (int)ceil(CVPixelBufferGetHeight(cvPixelRef));
-            
-            opaque->subTextureSize.w = width;
-            opaque->subTextureSize.h = height;
-            
-            ok = upload_texture_use_IOSurface(cvPixelRef, renderer);
-            if (ok && size) {
-                size->w = width;
-                size->h = height;
-            }
-            CVPixelBufferRelease(cvPixelRef);
-        }
+    if (!subtitle) {
+        return GL_FALSE;
     }
+        
+    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
+    if (!opaque) {
+        return GL_FALSE;
+    }
+    
+    CVPixelBufferRef cvPixelRef = (CVPixelBufferRef)subtitle;
+    CVPixelBufferRetain(cvPixelRef);
+    
+    opaque->subTextureSize.w = (int)ceil(CVPixelBufferGetWidth(cvPixelRef));
+    opaque->subTextureSize.h = (int)ceil(CVPixelBufferGetHeight(cvPixelRef));
+    
+    GLboolean ok = upload_texture_use_IOSurface(cvPixelRef, renderer);
+    CVPixelBufferRelease(cvPixelRef);
+    
     return ok;
 }
 #endif
@@ -479,14 +473,14 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,I
     
     renderer->um3_rgb_adjustment = glGetUniformLocation(renderer->program, "um3_rgbAdjustment"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_rgb_adjustmentVector)");
     
-    renderer->func_use            = yuv420sp_vtb_use;
-    renderer->func_getBufferWidth = yuv420sp_vtb_getBufferWidth;
-    renderer->func_uploadTexture  = yuv420sp_vtb_uploadTexture;
-    renderer->func_getImage       = yuv420sp_vtb_getImage;
-    renderer->func_destroy        = yuv420sp_vtb_destroy;
+    renderer->func_use            = use;
+    renderer->func_getBufferWidth = getBufferWidth;
+    renderer->func_uploadTexture  = upload_Texture;
+    renderer->func_getVideoImage  = getVideoImage;
+    renderer->func_destroy        = destroy;
 #if TARGET_OS_OSX
-    renderer->func_useSubtitle    = yuv420sp_useSubtitle;
-    renderer->func_uploadSubtitle = yuv420sp_uploadSubtitle;
+    renderer->func_useSubtitle    = useSubtitle;
+    renderer->func_uploadSubtitle = uploadSubtitle;
 #endif
     renderer->opaque = calloc(1, sizeof(IJK_GLES2_Renderer_Opaque));
     if (!renderer->opaque)

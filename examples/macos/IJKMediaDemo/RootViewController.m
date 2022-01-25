@@ -723,7 +723,7 @@
 
 - (IBAction)onCaptureShot:(id)sender
 {
-    CGImageRef img = [self.player.view snapshot];
+    CGImageRef img = [self.player.view snapshot:IJKSDLSnapshot_Screen];
     if (img) {
         NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:@[@"ijkPro",[self.playingUrl lastPathComponent]]];
         NSString *fileName = [NSString stringWithFormat:@"%ld.jpg",(long)CFAbsoluteTimeGetCurrent()];

@@ -39,6 +39,8 @@ typedef UIView GLView;
 @interface IJKSDLGLView : GLView <IJKSDLGLViewProtocol>
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
+// video size
+@property (assign) CGSize videoSize;
 
 - (id)initWithFrame:(CGRect)frame;
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
@@ -49,7 +51,7 @@ typedef UIView GLView;
 // color conversion perference
 @property(nonatomic) IJKSDLColorConversionPreference colorPreference;
 
-- (CGImageRef)snapshot;
+- (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
 #if !TARGET_OS_OSX
 - (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));
 #endif

@@ -50,14 +50,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     int                 _rendererGravity;
     GLint               _backingWidth;
     GLint               _backingHeight;
-    BOOL                _isRenderBufferInvalidated;
+    //for snapshot.
+    CGSize _FBOTextureSize;
+    GLuint _FBO;
+    GLuint _ColorTexture;
 }
 
 @synthesize isThirdGLView              = _isThirdGLView;
 @synthesize scaleFactor                = _scaleFactor;
 @synthesize fps                        = _fps;
 @synthesize darPreference              = _darPreference;
-@synthesize darWillChange              = _darWillChange;
 
 - (void)dealloc
 {
@@ -65,6 +67,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         CVPixelBufferRelease(self.currentPic);
         self.currentPic = NULL;
     }
+    [self destroyFBO];
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -196,7 +199,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     preference.den = dar_den;
     
     self.darPreference = preference;
-    self.darWillChange = YES;
 }
 
 - (void)resetViewPort
@@ -244,52 +246,59 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
-- (void)displayInternal:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
+- (void)updateRenderSettings
 {
-    if (![self setupRenderer:overlay]) {
-        if (!overlay && !_renderer) {
-            ALOGW("IJKSDLGLView: setupDisplay not ready\n");
-        } else {
-            ALOGE("IJKSDLGLView: setupDisplay failed\n");
-        }
-        return;
-    }
-    
     IJK_GLES2_Renderer_updateRotate(_renderer, self.rotatePreference.type, self.rotatePreference.degrees);
     IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, self.subtitlePreference.bottomMargin);
-    if (_isRenderBufferInvalidated) {
-        _isRenderBufferInvalidated = NO;
-        [self resetViewPort];
-        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
-    }
-    CVPixelBufferRef img = (CVPixelBufferRef)IJK_GLES2_Renderer_getImage(_renderer, overlay);
-    if (img) {
-        if (self.currentPic) {
-            CVPixelBufferRelease(self.currentPic);
-            self.currentPic = NULL;
-        }
-        self.currentPic = CVPixelBufferRetain(img);
-    }
-    
+
     IJK_GLES2_Renderer_updateColorConversion(_renderer, self.colorPreference.brightness, self.colorPreference.saturation,self.colorPreference.contrast);
     
-    if (self.darWillChange) {
-        IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.num, self.darPreference.den);
-        self.darWillChange = NO;
-    }
-    
-    if (!IJK_GLES2_Renderer_renderOverlay(_renderer, overlay))
-        ALOGE("[EGL] IJK_GLES2_render failed\n");
-    
-    if (!IJK_GLES2_Renderer_renderSubtitle(_renderer, overlay,(void *)subtitle))
-        ALOGE("[EGL] IJK_GLES2_render failed\n");
+    IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.num, self.darPreference.den);
 }
 
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
 {
+    if (!overlay) {
+        ALOGW("IJKSDLGLView: overlay is nil\n");
+        return;
+    }
+    
     [[self openGLContext] makeCurrentContext];
     CGLLockContext([[self openGLContext] CGLContextObj]);
-    [self displayInternal:overlay subtitle:(CVPixelBufferRef)subtitle];
+    
+    if ([self setupRenderer:overlay] && _renderer) {
+        
+        [self updateRenderSettings];
+        
+        //for video
+        if (!IJK_GLES2_Renderer_updateVetex(_renderer, overlay))
+            ALOGE("[GL] Renderer_updateVetex failed\n");
+        
+        CVPixelBufferRef videoPic = (CVPixelBufferRef)IJK_GLES2_Renderer_getVideoImage(_renderer, overlay);
+        if (videoPic) {
+            if (self.currentPic) {
+                CVPixelBufferRelease(self.currentPic);
+                self.currentPic = NULL;
+            }
+            self.currentPic = CVPixelBufferRetain(videoPic);
+        }
+        
+        if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)videoPic))
+            ALOGE("[GL] Renderer_updateVetex failed\n");
+        
+        IJK_GLES2_Renderer_drawArrays();
+        
+        //for subtitle
+        if (subtitle) {
+            IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, overlay, CVPixelBufferGetWidth(subtitle), CVPixelBufferGetHeight(subtitle));
+            if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)subtitle))
+                ALOGE("[GL] GLES2 Render Subtitle failed\n");
+            IJK_GLES2_Renderer_drawArrays();
+        }
+    } else {
+        ALOGW("IJKSDLGLView: not ready.\n");
+    }
+   
     CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
@@ -336,7 +345,83 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
 }
 
-- (CGImageRef)snapshot
+#pragma mark - for snapshot
+
+- (void)destroyFBO
+{
+    glDeleteFramebuffers(1, &_FBO);
+    glDeleteFramebuffers(1, &_ColorTexture);
+    _FBOTextureSize = CGSizeZero;
+}
+
+// Create texture and framebuffer objects to render and snapshot.
+- (BOOL)prepareFBOIfNeed:(CGSize)size
+{
+    if (CGSizeEqualToSize(CGSizeZero, size)) {
+        return NO;
+    }
+    
+    if (CGSizeEqualToSize(_FBOTextureSize, size)) {
+        return YES;
+    } else {
+        [self destroyFBO];
+    }
+    
+    // Create a texture object that you apply to the model.
+    glGenTextures(1, &_ColorTexture);
+    glBindTexture(GL_TEXTURE_2D, _ColorTexture);
+
+    // Set up filter and wrap modes for the texture object.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    // Allocate a texture image to which you can render to. Pass `NULL` for the data parameter
+    // becuase you don't need to load image data. You generate the image by rendering to the texture.
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.width, size.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glGenFramebuffers(1, &_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, _FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _ColorTexture, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+        _FBOTextureSize = size;
+        return YES;
+    } else {
+    #if DEBUG
+        NSAssert(NO, @"Failed to make complete framebuffer object %x.",  glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    #endif
+        return NO;
+    }
+}
+
+- (CGImageRef)_snapshot_effect_origin
+{
+    if (self.currentPic) {
+        CGSize picSize = self.videoSize;
+        if ([self prepareFBOIfNeed:picSize]) {
+            [[self openGLContext] makeCurrentContext];
+            CGLLockContext([[self openGLContext] CGLContextObj]);
+            
+            // Bind the snapshot FBO and render the scene.
+            glBindFramebuffer(GL_FRAMEBUFFER, _FBO);
+            glViewport(0, 0, picSize.width, picSize.height);
+            // Bind the texture that you previously render to (i.e. the snapshot texture).
+            glBindTexture(GL_TEXTURE_2D, _ColorTexture);
+            
+//            self displayInternal:<#(SDL_VoutOverlay *)#> subtitle:<#(CVPixelBufferRef)#>
+//
+//            CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+//            CGLUnlockContext([[self openGLContext] CGLContextObj]);
+//
+//            return [MRConvertUtil snapshotFBO:_ColorTexture size:picSize];
+        }
+    }
+    return NULL;
+}
+
+- (CGImageRef)_snapshot_origin
 {
     CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(self.currentPic);
     CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
@@ -403,7 +488,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     return (CGImageRef)CFAutorelease(dst);
 }
 
-- (CGImageRef)snapshot2
+- (CGImageRef)_snapshot_screen
 {
     NSOpenGLContext *openGLContext = [self openGLContext];
     if (!openGLContext) {
@@ -411,8 +496,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     }
  
     NSRect bounds = [self bounds];
-    CGFloat scale = self.layer.contentsScale;
-    CGSize size = CGSizeMake(bounds.size.width * scale, bounds.size.height * scale);
+    CGSize size =  [self convertSizeToBacking:bounds.size];;
     
     if (CGSizeEqualToSize(CGSizeZero, size)) {
         return nil;
@@ -439,6 +523,21 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         }
     }
     return NULL;
+}
+
+- (CGImageRef)snapshot:(IJKSDLSnapshotType)aType
+{
+    switch (aType) {
+        case IJKSDLSnapshot_Origin:
+            return [self _snapshot_origin];
+        case IJKSDLSnapshot_Screen:
+            return [self _snapshot_screen];
+        case IJKSDLSnapshot_Effect_Origin:
+#warning TODO snapshot USE FBO
+            return [self _snapshot_effect_origin];
+        case IJKSDLSnapshot_Effect_Subtitle_Origin:
+            return nil;
+    }
 }
 
 - (NSView *)hitTest:(NSPoint)point

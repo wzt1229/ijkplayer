@@ -72,11 +72,6 @@ static inline const int IJK_Sample_Count_For_Shader(IJK_SHADER_TYPE type)
 }
 #endif
 
-typedef struct IJK_Subtile_Size {
-    int w;
-    int h;
-}IJK_Subtile_Size;
-
 typedef struct IJK_GLES2_Renderer
 {
     IJK_GLES2_Renderer_Opaque *opaque;
@@ -97,10 +92,10 @@ typedef struct IJK_GLES2_Renderer
     
     GLboolean (*func_use)(IJK_GLES2_Renderer *renderer);
     GLsizei   (*func_getBufferWidth)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
-    GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+    GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, void *texture);
     GLvoid    (*func_useSubtitle)(IJK_GLES2_Renderer *renderer,GLboolean subtitle);
-    GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer,void* subtitle,IJK_Subtile_Size* size);
-    void*     (*func_getImage)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+    GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer,void* subtitle);
+    void*     (*func_getVideoImage)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
     GLvoid    (*func_destroy)(IJK_GLES2_Renderer *renderer);
 
     GLsizei buffer_width;
@@ -118,6 +113,8 @@ typedef struct IJK_GLES2_Renderer
     int     gravity;
     GLsizei layer_width;
     GLsizei layer_height;
+    
+    //record last overly info
     int     frame_width;
     int     frame_height;
     int     frame_sar_num;
