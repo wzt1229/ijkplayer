@@ -41,8 +41,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 @interface IJKSDLGLView()
 
-@property(atomic,strong) NSRecursiveLock *glActiveLock;
-@property(atomic) BOOL glActivePaused;
 @property(atomic) CVPixelBufferRef currentPic;
 
 @end
@@ -61,6 +59,14 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 @synthesize darPreference              = _darPreference;
 @synthesize darWillChange              = _darWillChange;
 
+- (void)dealloc
+{
+    if (self.currentPic) {
+        CVPixelBufferRelease(self.currentPic);
+        self.currentPic = NULL;
+    }
+}
+
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
@@ -75,31 +81,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 - (void)setup
 {
-//    NSOpenGLPixelFormatAttribute attrs[] =
-//    {
-//        NSOpenGLPFADoubleBuffer,
-//        NSOpenGLPFASampleAlpha,
-//        NSOpenGLPFAColorSize, 32,
-//        NSOpenGLPFASamples, 8,
-//        NSOpenGLPFAAccelerated,
-//        NSOpenGLPFADepthSize, 16,
-//        // Must specify the 3.2 Core Profile to use OpenGL 3.2
-//#if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3
-//        NSOpenGLPFAOpenGLProfile,
-//        NSOpenGLProfileVersion3_2Core,
-//#endif
-//        0
-//    };
-    //kEAGLDrawablePropertyColorFormat kEAGLColorFormatRGBA8
-    
-//    NSOpenGLPixelFormatAttribute attrs[] =
-//    {
-//        NSOpenGLPFAColorSize, 32,
-//        NSOpenGLPFADoubleBuffer,
-//        NSOpenGLPFADepthSize, 24,
-//        0
-//    };
-    
     NSOpenGLPixelFormatAttribute attrs[] =
     {
         NSOpenGLPFAAccelerated,
@@ -112,19 +93,13 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 //        NSOpenGLPFAAllowOfflineRenderers, 1,
         0
     };
-    
-//    NSOpenGLPixelFormatAttribute attrs[] =
-//    {
-//        NSOpenGLPFAAccelerated,
-//        0
-//    };
-
-    
+   
     NSOpenGLPixelFormat *pf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
     
     if (!pf)
     {
         ALOGE("No OpenGL pixel format");
+        return;
     }
     
     NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil];
@@ -140,10 +115,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
-#if 1 || SUPPORT_RETINA_RESOLUTION
-    // Opt-In to Retina resolution
     [self setWantsBestResolutionOpenGLSurface:YES];
-#endif // SUPPORT_RETINA_RESOLUTION
 }
 
 - (BOOL)setupRenderer:(SDL_VoutOverlay *)overlay
@@ -156,7 +128,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
-        int openglVer = 0;
+        int openglVer = 330;
     #if USE_LEGACY_OPENGL
         openglVer = 120;
     #endif
@@ -175,12 +147,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     }
     
     return YES;
-}
-
-- (void)invalidateRenderBuffer
-{
-    _isRenderBufferInvalidated = YES;
-    [self display:nil subtitle:NULL];
 }
 
 - (void)layout
@@ -202,8 +168,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
     }
-
-//    [self invalidateRenderBuffer];
 }
 
 - (void)setScalingMode:(IJKMPMovieScalingMode)scalingMode
@@ -223,7 +187,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     if (IJK_GLES2_Renderer_isValid(_renderer)) {
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
     }
-    //[self invalidateRenderBuffer];
 }
 
 - (void)onDARChange:(int)dar_num den:(int)dar_den
