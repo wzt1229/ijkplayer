@@ -1231,6 +1231,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                 _videoWidth = avmsg->arg1;
             if (avmsg->arg2 > 0)
                 _videoHeight = avmsg->arg2;
+            NSLog(@"video size:(%ld,%ld)",(long)_videoWidth,(long)_videoHeight);
             [self changeNaturalSize];
             break;
         case FFP_MSG_SAR_CHANGED:

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="18122" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="18122"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -31,13 +30,13 @@
                     </connections>
                 </customView>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="2yP-HX-Sd0">
-                    <rect key="frame" x="15" y="10" width="635" height="394"/>
+                    <rect key="frame" x="15" y="10" width="636" height="394"/>
                     <subviews>
                         <visualEffectView blendingMode="withinWindow" material="mediumLight" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="DNQ-ai-PSU">
-                            <rect key="frame" x="0.0" y="0.0" width="635" height="394"/>
+                            <rect key="frame" x="0.0" y="0.0" width="636" height="394"/>
                         </visualEffectView>
                         <stackView distribution="fill" orientation="horizontal" alignment="centerY" spacing="10" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DWt-c6-7z6" userLabel="Address">
-                            <rect key="frame" x="0.0" y="354" width="635" height="40"/>
+                            <rect key="frame" x="0.0" y="354" width="636" height="40"/>
                             <subviews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ah4-Dr-8UD">
                                     <rect key="frame" x="8" y="12" width="68" height="16"/>
@@ -48,7 +47,7 @@
                                     </textFieldCell>
                                 </textField>
                                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="HCe-qm-k3g">
-                                    <rect key="frame" x="84" y="10" width="484" height="20"/>
+                                    <rect key="frame" x="84" y="10" width="485" height="20"/>
                                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" refusesFirstResponder="YES" sendsActionOnEndEditing="YES" borderStyle="border" drawsBackground="YES" id="QhO-Sf-ih8">
                                         <font key="font" usesAppearanceFont="YES"/>
                                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -56,7 +55,7 @@
                                     </textFieldCell>
                                 </textField>
                                 <button verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="2KQ-aj-Ik4">
-                                    <rect key="frame" x="571" y="3" width="61" height="32"/>
+                                    <rect key="frame" x="572" y="3" width="61" height="32"/>
                                     <buttonCell key="cell" type="push" title="播放" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="B7O-ub-X90">
                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -82,7 +81,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GJE-pz-4U5" userLabel="Basic Ctrl">
-                            <rect key="frame" x="0.0" y="314" width="635" height="40"/>
+                            <rect key="frame" x="0.0" y="314" width="636" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3fS-nf-f3V" userLabel="播放控制：">
@@ -179,7 +178,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lAC-1p-lC2" userLabel="Speed Ctrl">
-                            <rect key="frame" x="0.0" y="274" width="635" height="40"/>
+                            <rect key="frame" x="0.0" y="274" width="636" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Edi-Lb-ca1">
@@ -262,7 +261,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dr3-RU-wfk" userLabel="Subtitle Ctrl">
-                            <rect key="frame" x="0.0" y="234" width="635" height="40"/>
+                            <rect key="frame" x="0.0" y="234" width="636" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="exg-Zu-Ce2">
@@ -413,7 +412,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView distribution="fillProportionally" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tvh-Jh-v0C" userLabel="Pic Ctrl">
-                            <rect key="frame" x="0.0" y="80" width="635" height="154"/>
+                            <rect key="frame" x="0.0" y="80" width="636" height="154"/>
                             <subviews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xJN-HC-Odz">
                                     <rect key="frame" x="8" y="69" width="68" height="16"/>
@@ -424,7 +423,7 @@
                                     </textFieldCell>
                                 </textField>
                                 <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="esm-Fm-2pL">
-                                    <rect key="frame" x="82" y="0.0" width="543" height="154"/>
+                                    <rect key="frame" x="82" y="0.0" width="544" height="154"/>
                                     <subviews>
                                         <stackView distribution="fill" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="D1K-px-dU4">
                                             <rect key="frame" x="0.0" y="124" width="294" height="20"/>
@@ -528,7 +527,7 @@
                                                     </constraints>
                                                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="2" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="L6h-kq-zG0"/>
                                                     <connections>
-                                                        <action selector="onChnageBSC:" target="-2" id="VYU-sd-m9A"/>
+                                                        <action selector="onChangeBSC:" target="-2" id="VYU-sd-m9A"/>
                                                         <binding destination="-2" name="value" keyPath="brightness" id="PPG-3T-Ak6"/>
                                                     </connections>
                                                 </slider>
@@ -576,7 +575,7 @@
                                                     </constraints>
                                                     <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="2" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="tEU-5o-VPQ"/>
                                                     <connections>
-                                                        <action selector="onChnageBSC:" target="-2" id="9MG-jN-Pff"/>
+                                                        <action selector="onChangeBSC:" target="-2" id="9MG-jN-Pff"/>
                                                         <binding destination="-2" name="value" keyPath="saturation" id="xbg-ds-dXS"/>
                                                     </connections>
                                                 </slider>
@@ -624,7 +623,7 @@
                                                     </constraints>
                                                     <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.20000000000000001" maxValue="1.8" doubleValue="1" tickMarkPosition="above" sliderType="linear" id="0a1-UR-de0"/>
                                                     <connections>
-                                                        <action selector="onChnageBSC:" target="-2" id="KDg-19-4cj"/>
+                                                        <action selector="onChangeBSC:" target="-2" id="KDg-19-4cj"/>
                                                         <binding destination="-2" name="value" keyPath="contrast" id="e4w-Fm-Vd8"/>
                                                     </connections>
                                                 </slider>
@@ -677,7 +676,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="h0I-Bb-PhV" userLabel="Audio Ctrl">
-                            <rect key="frame" x="0.0" y="40" width="635" height="40"/>
+                            <rect key="frame" x="0.0" y="40" width="636" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F4l-nd-opz">
@@ -718,12 +717,12 @@
                                 </textField>
                                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="das-sX-RFn">
                                     <rect key="frame" x="321" y="6" width="66" height="25"/>
-                                    <popUpButtonCell key="cell" type="push" title="还原" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="pnd-im-c2G" id="3cM-T9-yqY">
+                                    <popUpButtonCell key="cell" type="push" title="还原" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="pnd-im-c2G" id="3cM-T9-yqY">
                                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                         <font key="font" metaFont="menu"/>
                                         <menu key="menu" id="prw-O2-cVC">
                                             <items>
-                                                <menuItem title="还原" tag="1" id="pnd-im-c2G" userLabel="还原">
+                                                <menuItem title="还原" state="on" tag="1" id="pnd-im-c2G" userLabel="还原">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
                                                 <menuItem title="4:3" tag="1" id="od7-FD-PUd">
@@ -732,13 +731,13 @@
                                                 <menuItem title="16:9" tag="2" id="ukf-LU-JHF">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
-                                                <menuItem title="1:1" state="on" tag="3" id="vVv-4M-RD0">
+                                                <menuItem title="1:1" tag="3" id="vVv-4M-RD0">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
                                             </items>
                                         </menu>
                                         <connections>
-                                            <action selector="onChangDAR:" target="-1" id="4QG-En-bWO"/>
+                                            <action selector="onChangeDAR:" target="-1" id="4QG-En-bWO"/>
                                         </connections>
                                     </popUpButtonCell>
                                 </popUpButton>
@@ -760,7 +759,7 @@
                             </customSpacing>
                         </stackView>
                         <stackView orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6aw-Az-n9w" userLabel="Codec Ctrl">
-                            <rect key="frame" x="0.0" y="0.0" width="635" height="40"/>
+                            <rect key="frame" x="0.0" y="0.0" width="636" height="40"/>
                             <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                             <beginningViews>
                                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aNP-9f-hzd">
@@ -798,7 +797,7 @@
                                             </items>
                                         </menu>
                                         <connections>
-                                            <action selector="onChangDAR:" target="-1" id="R1b-10-c9l"/>
+                                            <action selector="onChangeDAR:" target="-1" id="R1b-10-c9l"/>
                                         </connections>
                                     </popUpButtonCell>
                                     <connections>
@@ -848,7 +847,7 @@
                                             </items>
                                         </menu>
                                         <connections>
-                                            <action selector="onChangDAR:" target="-1" id="bRD-OT-cRg"/>
+                                            <action selector="onChangeDAR:" target="-1" id="bRD-OT-cRg"/>
                                         </connections>
                                     </popUpButtonCell>
                                     <connections>

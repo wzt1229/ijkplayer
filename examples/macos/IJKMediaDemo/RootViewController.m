@@ -723,9 +723,10 @@
 
 - (IBAction)onCaptureShot:(id)sender
 {
-    CGImageRef img = [self.player.view snapshot:IJKSDLSnapshot_Screen];
+    CGImageRef img = [self.player.view snapshot:IJKSDLSnapshot_Effect_Subtitle_Origin];
     if (img) {
-        NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:@[@"ijkPro",[self.playingUrl lastPathComponent]]];
+        //,[self.playingUrl lastPathComponent]
+        NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:@[@"ijkPro"]];
         NSString *fileName = [NSString stringWithFormat:@"%ld.jpg",(long)CFAbsoluteTimeGetCurrent()];
         NSString *filePath = [path stringByAppendingPathComponent:fileName];
         NSLog(@"截屏:%@",filePath);
@@ -733,7 +734,7 @@
     }
 }
 
-- (IBAction)onChnageBSC:(NSSlider *)sender
+- (IBAction)onChangeBSC:(NSSlider *)sender
 {
     if (sender.tag == 1) {
         self.brightness = sender.floatValue;
@@ -750,7 +751,7 @@
     self.player.view.colorPreference = colorPreference;
 }
 
-- (IBAction)onChangDAR:(NSPopUpButton *)sender
+- (IBAction)onChangeDAR:(NSPopUpButton *)sender
 {
     int dar_num = 1;
     int dar_den = 1;
@@ -779,7 +780,7 @@
         self.contrast = 1.0;
     }
     
-    [self onChnageBSC:nil];
+    [self onChangeBSC:nil];
 }
 
 #pragma mark 音轨设置

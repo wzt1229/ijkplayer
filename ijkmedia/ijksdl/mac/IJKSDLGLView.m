@@ -41,7 +41,8 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 @interface IJKSDLGLView()
 
-@property(atomic) CVPixelBufferRef currentPic;
+@property(atomic) CVPixelBufferRef currentVideoPic;
+@property(atomic) CVPixelBufferRef currentSubtitle;
 
 @end
 
@@ -54,6 +55,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     CGSize _FBOTextureSize;
     GLuint _FBO;
     GLuint _ColorTexture;
+    float widthRatio;
 }
 
 @synthesize isThirdGLView              = _isThirdGLView;
@@ -63,10 +65,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 - (void)dealloc
 {
-    if (self.currentPic) {
-        CVPixelBufferRelease(self.currentPic);
-        self.currentPic = NULL;
+    if (self.currentVideoPic) {
+        CVPixelBufferRelease(self.currentVideoPic);
+        self.currentVideoPic = NULL;
     }
+    
+    if (self.currentSubtitle) {
+        CVPixelBufferRelease(self.currentSubtitle);
+        self.currentSubtitle = NULL;
+    }
+    
     [self destroyFBO];
 }
 
@@ -74,6 +82,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 {
     self = [super initWithFrame:frame];
     if (self) {
+        widthRatio = 1.0;
         [self setup];
         self.subtitlePreference = (IJKSDLSubtitlePreference){45, 0xFFFFFF, 0.1};
         self.rotatePreference   = (IJKSDLRotatePreference)  {IJKSDLRotateNone, 0.0};
@@ -126,6 +135,10 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     if (overlay == nil)
         return _renderer != nil;
     
+    if (overlay->sar_num > 0 && overlay->sar_den > 0) {
+        widthRatio = 1.0 * overlay->sar_num / overlay->sar_den;
+    }
+    
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
         !IJK_GLES2_Renderer_isFormat(_renderer, overlay->format)) {
         
@@ -155,22 +168,13 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 - (void)layout
 {
     [super layout];
-    if (IJK_GLES2_Renderer_isValid(_renderer)) {
-        
-        NSRect viewRectPoints = [self bounds];
-        
-    #if SUPPORT_RETINA_RESOLUTION
-        NSRect viewRectPixels = [self convertRectToBacking:viewRectPoints];
-    #else //if !SUPPORT_RETINA_RESOLUTION
-        // Points:Pixels is always 1:1 when not supporting retina resolutions
-        NSRect viewRectPixels = viewRectPoints;
-    #endif // !SUPPORT_RETINA_RESOLUTION
-        
-        _backingWidth = viewRectPixels.size.width;
-        _backingHeight = viewRectPixels.size.height;
-        
-        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
-    }
+    [self resetViewPort];
+}
+
+- (void)reshape
+{
+    [super reshape];
+    [self resetViewPort];
 }
 
 - (void)setScalingMode:(IJKMPMovieScalingMode)scalingMode
@@ -203,47 +207,18 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
 - (void)resetViewPort
 {
-    // We draw on a secondary thread through the display link. However, when
-    // resizing the view, -drawRect is called on the main thread.
-    // Add a mutex around to avoid the threads accessing the context
-    // simultaneously when resizing.
-    CGLLockContext([[self openGLContext] CGLContextObj]);
-    
-    // Get the view size in Points
-    NSRect viewRectPoints = [self bounds];
-    
-#if SUPPORT_RETINA_RESOLUTION
-    
-    // Rendering at retina resolutions will reduce aliasing, but at the potential
-    // cost of framerate and battery life due to the GPU needing to render more
-    // pixels.
-    
-    // Any calculations the renderer does which use pixel dimentions, must be
-    // in "retina" space.  [NSView convertRectToBacking] converts point sizes
-    // to pixel sizes.  Thus the renderer gets the size in pixels, not points,
-    // so that it can set it's viewport and perform and other pixel based
-    // calculations appropriately.
-    // viewRectPixels will be larger than viewRectPoints for retina displays.
-    // viewRectPixels will be the same as viewRectPoints for non-retina displays
-    NSRect viewRectPixels = [self convertRectToBacking:viewRectPoints];
-    
-#else //if !SUPPORT_RETINA_RESOLUTION
-    
-    // App will typically render faster and use less power rendering at
-    // non-retina resolutions since the GPU needs to render less pixels.
-    // There is the cost of more aliasing, but it will be no-worse than
-    // on a Mac without a retina display.
-    
-    // Points:Pixels is always 1:1 when not supporting retina resolutions
-    NSRect viewRectPixels = viewRectPoints;
-    
-#endif // !SUPPORT_RETINA_RESOLUTION
-    
-    _backingWidth = viewRectPixels.size.width;
+    NSRect viewRectPixels = [self convertRectToBacking:[self bounds]];
+    _backingWidth  = viewRectPixels.size.width;
     _backingHeight = viewRectPixels.size.height;
-    // Set the new dimensions in our renderer
-    glViewport(0, 0, _backingWidth, _backingHeight);
-    CGLUnlockContext([[self openGLContext] CGLContextObj]);
+    if (IJK_GLES2_Renderer_isValid(_renderer)) {
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
+    }
+}
+
+- (void)viewDidChangeBackingProperties
+{
+    [super viewDidChangeBackingProperties];
+    [self resetViewPort];
 }
 
 - (void)updateRenderSettings
@@ -265,36 +240,49 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     [[self openGLContext] makeCurrentContext];
     CGLLockContext([[self openGLContext] CGLContextObj]);
+    // Bind the FBO to screen.
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, _backingWidth, _backingHeight);
+    glClear(GL_COLOR_BUFFER_BIT);
     
     if ([self setupRenderer:overlay] && _renderer) {
-        
-        [self updateRenderSettings];
-        
         //for video
-        if (!IJK_GLES2_Renderer_updateVetex(_renderer, overlay))
-            ALOGE("[GL] Renderer_updateVetex failed\n");
+
+        if (self.currentVideoPic) {
+            CVPixelBufferRelease(self.currentVideoPic);
+            self.currentVideoPic = NULL;
+        }
         
         CVPixelBufferRef videoPic = (CVPixelBufferRef)IJK_GLES2_Renderer_getVideoImage(_renderer, overlay);
         if (videoPic) {
-            if (self.currentPic) {
-                CVPixelBufferRelease(self.currentPic);
-                self.currentPic = NULL;
-            }
-            self.currentPic = CVPixelBufferRetain(videoPic);
+            
+            [self updateRenderSettings];
+            if (!IJK_GLES2_Renderer_updateVetex(_renderer, overlay))
+                ALOGE("[GL] Renderer_updateVetex failed\n");
+            
+            self.currentVideoPic = CVPixelBufferRetain(videoPic);
+            
+            if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)videoPic))
+                ALOGE("[GL] Renderer_updateVetex failed\n");
+            
+            IJK_GLES2_Renderer_drawArrays();
         }
         
-        if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)videoPic))
-            ALOGE("[GL] Renderer_updateVetex failed\n");
-        
-        IJK_GLES2_Renderer_drawArrays();
-        
         //for subtitle
+        if (self.currentSubtitle) {
+            CVPixelBufferRelease(self.currentSubtitle);
+            self.currentSubtitle = NULL;
+        }
+        
         if (subtitle) {
-            IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, overlay, CVPixelBufferGetWidth(subtitle), CVPixelBufferGetHeight(subtitle));
+            self.currentSubtitle = CVPixelBufferRetain(subtitle);
+            
+            IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(subtitle), CVPixelBufferGetHeight(subtitle));
             if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)subtitle))
                 ALOGE("[GL] GLES2 Render Subtitle failed\n");
             IJK_GLES2_Renderer_drawArrays();
         }
+        
     } else {
         ALOGW("IJKSDLGLView: not ready.\n");
     }
@@ -332,12 +320,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     // OpenGL render buffers will be destroyed.  If display link continues to
     // fire without renderbuffers, OpenGL draw calls will set errors.
     // todo
-}
-
-- (void)reshape
-{
-    [super reshape];
-    [self resetViewPort];
 }
 
 - (void)display_pixels:(IJKOverlay *)overlay
@@ -396,34 +378,58 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     }
 }
 
-- (CGImageRef)_snapshot_effect_origin
+- (CGImageRef)_snapshotEffectOriginWithSubtitle:(BOOL)containSub
 {
-    if (self.currentPic) {
-        CGSize picSize = self.videoSize;
+    CGImageRef img = NULL;
+    [[self openGLContext] makeCurrentContext];
+    CGLLockContext([[self openGLContext] CGLContextObj]);
+    if (self.currentVideoPic && _renderer) {
+        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * widthRatio, CVPixelBufferGetHeight(self.currentVideoPic));
+        //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
+        if (IJK_GLES2_Renderer_NeedSwapForZAutoRotate(_renderer)) {
+            float pic_width = picSize.width;
+            float pic_height = picSize.height;
+            float tmp = pic_width;
+            pic_width = pic_height;
+            pic_height = tmp;
+            picSize = CGSizeMake(pic_width, pic_height);
+        }
         if ([self prepareFBOIfNeed:picSize]) {
-            [[self openGLContext] makeCurrentContext];
-            CGLLockContext([[self openGLContext] CGLContextObj]);
+            if (self.currentVideoPic) {
+                // Bind the snapshot FBO and render the scene.
+                glBindFramebuffer(GL_FRAMEBUFFER, _FBO);
+                glViewport(0, 0, picSize.width, picSize.height);
+                glClear(GL_COLOR_BUFFER_BIT);
+                // Bind the texture that you previously render to (i.e. the snapshot texture).
+                glBindTexture(GL_TEXTURE_2D, _ColorTexture);
+                
+                if (!IJK_GLES2_Renderer_resetVao(_renderer))
+                    ALOGE("[GL] Renderer_resetVao failed\n");
+                
+                if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)self.currentVideoPic))
+                    ALOGE("[GL] Renderer_updateVetex failed\n");
+                
+                IJK_GLES2_Renderer_drawArrays();
+            }
             
-            // Bind the snapshot FBO and render the scene.
-            glBindFramebuffer(GL_FRAMEBUFFER, _FBO);
-            glViewport(0, 0, picSize.width, picSize.height);
-            // Bind the texture that you previously render to (i.e. the snapshot texture).
-            glBindTexture(GL_TEXTURE_2D, _ColorTexture);
+            if (self.currentSubtitle && containSub) {
+                IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(self.currentSubtitle), CVPixelBufferGetHeight(self.currentSubtitle));
+                if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
+                    ALOGE("[GL] GLES2 Render Subtitle failed\n");
+                IJK_GLES2_Renderer_drawArrays();
+            }
             
-//            self displayInternal:<#(SDL_VoutOverlay *)#> subtitle:<#(CVPixelBufferRef)#>
-//
-//            CGLFlushDrawable([[self openGLContext] CGLContextObj]);
-//            CGLUnlockContext([[self openGLContext] CGLContextObj]);
-//
-//            return [MRConvertUtil snapshotFBO:_ColorTexture size:picSize];
+            img = [self _snapshotTheContextWithSize:picSize];
         }
     }
-    return NULL;
+    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+    CGLUnlockContext([[self openGLContext] CGLContextObj]);
+    return img;
 }
 
 - (CGImageRef)_snapshot_origin
 {
-    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(self.currentPic);
+    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(self.currentVideoPic);
     CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
     
     static CIContext *context = nil;
@@ -488,30 +494,17 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     return (CGImageRef)CFAutorelease(dst);
 }
 
-- (CGImageRef)_snapshot_screen
+- (CGImageRef)_snapshotTheContextWithSize:(const CGSize)size
 {
-    NSOpenGLContext *openGLContext = [self openGLContext];
-    if (!openGLContext) {
-        return nil;
-    }
- 
-    NSRect bounds = [self bounds];
-    CGSize size =  [self convertSizeToBacking:bounds.size];;
-    
-    if (CGSizeEqualToSize(CGSizeZero, size)) {
-        return nil;
-    }
-    
     const int height = size.height;
     const int width  = size.width;
-
+    
     GLint bytesPerRow = width * 4;
     const GLint bitsPerPixel = 32;
     CGContextRef ctx = _CreateCGBitmapContext(width, height, 8, 32, bytesPerRow, kCGBitmapByteOrderDefault |kCGImageAlphaNoneSkipLast);
     if (ctx) {
         void * bitmapData = CGBitmapContextGetData(ctx);
         if (bitmapData) {
-            [openGLContext makeCurrentContext];
             glPixelStorei(GL_PACK_ROW_LENGTH, 8 * bytesPerRow / bitsPerPixel);
             glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmapData);
             CGImageRef cgImage = CGBitmapContextCreateImage(ctx);
@@ -525,6 +518,23 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     return NULL;
 }
 
+- (CGImageRef)_snapshot_screen
+{
+    NSOpenGLContext *openGLContext = [self openGLContext];
+    if (!openGLContext) {
+        return nil;
+    }
+ 
+    NSRect bounds = [self bounds];
+    CGSize size =  [self convertSizeToBacking:bounds.size];;
+    
+    if (CGSizeEqualToSize(CGSizeZero, size)) {
+        return nil;
+    }
+    [openGLContext makeCurrentContext];
+    return [self _snapshotTheContextWithSize:size];
+}
+
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType
 {
     switch (aType) {
@@ -533,10 +543,9 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         case IJKSDLSnapshot_Screen:
             return [self _snapshot_screen];
         case IJKSDLSnapshot_Effect_Origin:
-#warning TODO snapshot USE FBO
-            return [self _snapshot_effect_origin];
+            return [self _snapshotEffectOriginWithSubtitle:NO];
         case IJKSDLSnapshot_Effect_Subtitle_Origin:
-            return nil;
+            return [self _snapshotEffectOriginWithSubtitle:YES];
     }
 }
 

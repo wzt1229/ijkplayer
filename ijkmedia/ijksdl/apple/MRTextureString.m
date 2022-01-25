@@ -253,6 +253,7 @@
 
 - (CGSize)size
 {
+    //on retina screen auto return 2x size.
     CGSize frameSize = [self.attributedString size]; // current string size
     return CGSizeMake(ceilf(frameSize.width), ceilf(frameSize.height));
 }
@@ -288,7 +289,7 @@
     if (picSize.width > 40960 || picSize.height > 40960) {
         return NULL;
     }
-    
+     
     NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
                              [NSNumber numberWithBool:YES], kCVPixelBufferOpenGLCompatibilityKey,
                              [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,

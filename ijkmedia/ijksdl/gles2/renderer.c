@@ -316,6 +316,15 @@ static void IJK_GLES2_Renderer_Vertices_reset(IJK_GLES2_Renderer *renderer)
     renderer->vertices[7] =  1.0f;
 }
 
+// 视频带有旋转 90 度倍数时需要将显示宽高交换后计算
+int IJK_GLES2_Renderer_NeedSwapForZAutoRotate(IJK_GLES2_Renderer *renderer)
+{
+    if (!renderer) {
+        return 0;
+    }
+    return abs(renderer->auto_z_rotate_degrees) / 90 % 2 == 1 ? 1 : 0;
+}
+
 static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
 {
     switch (renderer->gravity) {
@@ -355,18 +364,19 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
         layer_width = layer_height;
         layer_height = tmp;
     }
-    
+        
+    //先处理视频尺寸比例调整
+    if (renderer->frame_sar_num > 0 && renderer->frame_sar_den > 0) {
+        frame_width = frame_width * renderer->frame_sar_num / renderer->frame_sar_den;
+    }
+
     //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
-    if (abs(renderer->auto_z_rotate_degrees) / 90 % 2 == 1) {
+    if (IJK_GLES2_Renderer_NeedSwapForZAutoRotate(renderer)) {
         float tmp = layer_width;
         layer_width = layer_height;
         layer_height = tmp;
     }
     
-    if (renderer->frame_sar_num > 0 && renderer->frame_sar_den > 0) {
-        frame_width = frame_width * renderer->frame_sar_num / renderer->frame_sar_den;
-    }
-
     if (renderer->frame_dar_num > 0 && renderer->frame_dar_den > 0) {
         if (frame_width / frame_height > (float)renderer->frame_dar_num / renderer->frame_dar_den) {
             frame_height = frame_width * renderer->frame_dar_den / renderer->frame_dar_num;
@@ -468,7 +478,6 @@ void IJK_GLES2_Renderer_updateUserDefinedDAR(IJK_GLES2_Renderer *renderer,int da
 
 static void IJK_GLES2_Renderer_TexCoords_cropRight(IJK_GLES2_Renderer *renderer, GLfloat cropRight)
 {
-    
     if (cropRight != 0) {
         ALOGE("IJK_GLES2_Renderer_TexCoords_cropRight:%g\n",cropRight);
     }
@@ -582,8 +591,6 @@ GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutO
     if (!renderer)
         return GL_FALSE;
 
-    glClear(GL_COLOR_BUFFER_BIT); IJK_GLES2_checkError_TRACE("glClear");
-
     GLsizei visible_width  = renderer->frame_width;
     GLsizei visible_height = renderer->frame_height;
     if (overlay) {
@@ -673,6 +680,21 @@ GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutO
 }
 
 /*
+ * reset vao
+ */
+GLboolean IJK_GLES2_Renderer_resetVao(IJK_GLES2_Renderer *renderer)
+{
+    if (!renderer)
+        return GL_FALSE;
+    renderer->vertices_changed = 1;
+    IJK_GLES2_Renderer_Vertices_reset(renderer);
+    IJK_GLES2_Renderer_TexCoords_reset(renderer);
+    IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
+    glBindVertexArray(renderer->vao); IJK_GLES2_checkError_TRACE("glBindVertexArray");
+    return GL_TRUE;
+}
+
+/*
  * upload video texture
  */
 GLboolean IJK_GLES2_Renderer_uploadTexture(IJK_GLES2_Renderer *renderer, void *texture)
@@ -716,7 +738,7 @@ GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer,
 /*
  * update subtitle vetex
  */
-void IJK_GLES2_Renderer_updateSubtitleVetex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay, float width, float height)
+void IJK_GLES2_Renderer_updateSubtitleVetex(IJK_GLES2_Renderer *renderer, float width, float height)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -724,11 +746,11 @@ void IJK_GLES2_Renderer_updateSubtitleVetex(IJK_GLES2_Renderer *renderer, SDL_Vo
     GLfloat vertices[8] = {0.0f};
     
     //字幕图片在纹理坐标系上的尺寸
-    float ratioW = 1.0 * width / renderer->layer_width / 2.0;
-    float ratioH = 1.0 * height / renderer->layer_height / 2.0;
+    float ratioW = 1.0 * width / renderer->layer_width;
+    float ratioH = 1.0 * height / renderer->layer_height;
     
     //跟随视频缩放；画面放大，字幕也放大；画面缩小，字幕也缩小
-    float scale = FFMIN(1.0 * renderer->layer_width / overlay->w,1.0 * renderer->layer_height / overlay->h);
+    float scale = FFMIN(1.0 * renderer->layer_width / renderer->frame_width,1.0 * renderer->layer_height / renderer->frame_height);
     
     ratioW *= scale;
     ratioH *= scale;
