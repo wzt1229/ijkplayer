@@ -37,6 +37,8 @@
 
 #import <CoreVideo/CoreVideo.h>
 
+#define USE_LEGACY_OPENGL 0
+
 #if TARGET_OS_OSX
     #define OpenGLTextureCacheRef   CVOpenGLTextureCacheRef
     #define OpenGLTextureRef        CVOpenGLTextureRef
@@ -175,8 +177,11 @@ static struct vt_format vt_formats[] = {
         .planes = 1,
         .gl = {
             //330
-            { GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB },
+#if USE_LEGACY_OPENGL
             { GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB }
+#else
+            { GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB }
+#endif
         }
     },
 #endif

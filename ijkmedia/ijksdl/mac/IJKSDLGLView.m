@@ -31,6 +31,7 @@
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #import <AVFoundation/AVFoundation.h>
+#import "renderer_pixfmt.h"
 
 typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     IJKSDLGLViewApplicationUnknownState = 0,
@@ -105,7 +106,9 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         NSOpenGLPFANoRecovery,
         NSOpenGLPFADoubleBuffer,
         NSOpenGLPFADepthSize, 24,
+#if ! USE_LEGACY_OPENGL
         NSOpenGLPFAOpenGLProfile,NSOpenGLProfileVersion3_2Core,
+#endif
 //        NSOpenGLPFAAllowOfflineRenderers, 1,
         0
     };
@@ -153,8 +156,11 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
-        
-        _renderer = IJK_GLES2_Renderer_create(overlay,0);
+        int openglVer = 0;
+    #if USE_LEGACY_OPENGL
+        openglVer = 120;
+    #endif
+        _renderer = IJK_GLES2_Renderer_create(overlay,openglVer);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
