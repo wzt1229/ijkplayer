@@ -325,6 +325,17 @@ int IJK_GLES2_Renderer_NeedSwapForZAutoRotate(IJK_GLES2_Renderer *renderer)
     return abs(renderer->auto_z_rotate_degrees) / 90 % 2 == 1 ? 1 : 0;
 }
 
+int IJK_GLES2_Renderer_isZRotate90oddMultiple(IJK_GLES2_Renderer *renderer)
+{
+    int total = 0;
+    if (renderer->rotate_type == 3) {
+        total += renderer->rotate_degrees;
+    }
+    
+    total += renderer->auto_z_rotate_degrees;
+    return abs(total) / 90 % 2 == 1 ? 1 : 0;
+}
+
 static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
 {
     switch (renderer->gravity) {
@@ -357,21 +368,13 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
         return;
     }
     
-    //沿着 Z 轴旋转 90 度倍数时需要将显示宽高交换后计算
-    if (renderer->rotate_type == 3 && (abs(renderer->rotate_degrees) / 90 % 2 == 1)) {
-        //注意，这里交换 frame_width、frame_height不行哦
-        float tmp = layer_width;
-        layer_width = layer_height;
-        layer_height = tmp;
-    }
-        
     //先处理视频尺寸比例调整
     if (renderer->frame_sar_num > 0 && renderer->frame_sar_den > 0) {
         frame_width = frame_width * renderer->frame_sar_num / renderer->frame_sar_den;
     }
 
     //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
-    if (IJK_GLES2_Renderer_NeedSwapForZAutoRotate(renderer)) {
+    if (IJK_GLES2_Renderer_isZRotate90oddMultiple(renderer)) {
         float tmp = layer_width;
         layer_width = layer_height;
         layer_height = tmp;
@@ -451,7 +454,6 @@ void IJK_GLES2_Renderer_updateSubtitleBottomMargin(IJK_GLES2_Renderer *renderer,
 {
     renderer->subtitle_bottom_margin = value;
 }
-
 
 void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degrees)
 {

@@ -24,11 +24,11 @@
  */
 
 #import "IJKSDLGLView.h"
-#include "ijksdl/ijksdl_timer.h"
+#import "ijksdl/ijksdl_timer.h"
 #import <CoreVideo/CVDisplayLink.h>
-#include "ijksdl/ijksdl_gles2.h"
+#import "ijksdl/ijksdl_gles2.h"
 #import <CoreVideo/CoreVideo.h>
-#include "ijksdl_vout_overlay_videotoolbox.h"
+#import "ijksdl_vout_overlay_videotoolbox.h"
 #import <AVFoundation/AVFoundation.h>
 #import "renderer_pixfmt.h"
 
@@ -83,8 +83,8 @@
     if (self) {
         _widthRatio = 1.0;
         [self setup];
-        self.subtitlePreference = (IJKSDLSubtitlePreference){45, 0xFFFFFF, 0.1};
-        self.rotatePreference   = (IJKSDLRotatePreference)  {IJKSDLRotateNone, 0.0};
+        self.subtitlePreference = (IJKSDLSubtitlePreference){25, 0xFFFFFF, 0.1};
+        self.rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         self.colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     }
     return self;
@@ -380,7 +380,7 @@
     if (self.currentVideoPic && _renderer) {
         CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * _widthRatio, CVPixelBufferGetHeight(self.currentVideoPic));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
-        if (IJK_GLES2_Renderer_NeedSwapForZAutoRotate(_renderer)) {
+        if (IJK_GLES2_Renderer_isZRotate90oddMultiple(_renderer)) {
             float pic_width = picSize.width;
             float pic_height = picSize.height;
             float tmp = pic_width;
@@ -388,6 +388,7 @@
             pic_height = tmp;
             picSize = CGSizeMake(pic_width, pic_height);
         }
+        
         if ([self prepareFBOIfNeed:picSize]) {
             if (self.currentVideoPic) {
                 // Bind the snapshot FBO and render the scene.

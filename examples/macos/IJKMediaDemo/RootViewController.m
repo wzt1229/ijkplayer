@@ -61,6 +61,7 @@
 @property (assign) BOOL useVideoToolBox;
 @property (assign) int useAsyncVTB;
 @property (copy) NSString *fcc;
+@property (assign) int snapshot;
 //for cocoa binding end
 
 @end
@@ -80,11 +81,11 @@
     self.ctrlView.layer.cornerRadius = 4;
     self.ctrlView.layer.masksToBounds = YES;
 
-    self.subtitleFontSize = 45;
+    self.subtitleFontSize = 25;
     self.subtitleMargin = 0.7;
     self.useVideoToolBox = YES;
     self.fcc = @"fcc-nv12";
-    
+    self.snapshot = 3;
     [self onReset:nil];
     
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
@@ -723,7 +724,7 @@
 
 - (IBAction)onCaptureShot:(id)sender
 {
-    CGImageRef img = [self.player.view snapshot:IJKSDLSnapshot_Effect_Subtitle_Origin];
+    CGImageRef img = [self.player.view snapshot:self.snapshot];
     if (img) {
         //,[self.playingUrl lastPathComponent]
         NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:@[@"ijkPro"]];
