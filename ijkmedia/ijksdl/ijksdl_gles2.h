@@ -26,8 +26,8 @@
     #include <TargetConditionals.h>
     #if TARGET_OS_OSX
         #include <OpenGL/OpenGL.h>
-        #include <OpenGL/gl.h>
-        #include <OpenGL/glext.h>
+        #include <OpenGL/gl3.h>
+        #include <OpenGL/gl3ext.h>
     #else
         #include <OpenGLES/ES2/gl.h>
         #include <OpenGLES/ES2/glext.h>

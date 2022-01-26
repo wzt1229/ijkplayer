@@ -22,10 +22,10 @@
  */
 
 #include "ijkplayer/ijkplayer.h"
-#import "IJKSDLGLView.h"
+#include "IJKSDLGLViewProtocol.h"
 
 // ref_count is 1 after open
 IjkMediaPlayer *ijkmp_ios_create(int (*msg_loop)(void*));
 
-void            ijkmp_ios_set_glview(IjkMediaPlayer *mp, IJKSDLGLView *glView);
+void            ijkmp_ios_set_glview(IjkMediaPlayer *mp, GLView<IJKSDLGLViewProtocol>* glView);
 bool            ijkmp_ios_is_videotoolbox_open(IjkMediaPlayer *mp);

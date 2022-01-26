@@ -109,7 +109,7 @@
     BOOL isSys = [self isSystemHotKey:keyCod keyMod:keyMod];
     NSLog(@"----cmd + . isSys:%d",isSys);
     
-    [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyDownMask handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
         if ([theEvent keyCode] == kVK_ANSI_Period && theEvent.modifierFlags & NSEventModifierFlagCommand){
             [self stopPlay:nil];
         }
@@ -762,8 +762,7 @@
         const char* str = sender.titleOfSelectedItem.UTF8String;
         sscanf(str, "%d:%d", &dar_num, &dar_den);
     }
-
-    [self.player.view onDARChange:dar_num den:dar_den];
+    self.player.view.darPreference = (IJKSDLDARPreference){dar_num,dar_den};
 }
 
 - (IBAction)onReset:(NSButton *)sender

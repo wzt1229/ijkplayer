@@ -23,14 +23,19 @@
 
 #ifndef IJKSDLGLViewProtocol_h
 #define IJKSDLGLViewProtocol_h
+#import <TargetConditionals.h>
 #if TARGET_OS_OSX
 #import <AppKit/AppKit.h>
 #import <CoreGraphics/CGImage.h>
 typedef NSFont UIFont;
 typedef NSColor UIColor;
+typedef NSOpenGLView GLView;
+typedef NSImage UIImage;
 #else
 #import <UIKit/UIKit.h>
+typedef UIView GLView;
 #endif
+
 
 typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeAspectFit,  // Uniform scale until one dimension fits
@@ -38,6 +43,7 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeFill        // Non-uniform scale. Both render dimensions will exactly match the visible bounds
 };
 
+typedef struct SDL_VoutOverlay SDL_VoutOverlay;
 typedef struct IJKOverlay IJKOverlay;
 struct IJKOverlay {
     int w;
@@ -95,9 +101,11 @@ typedef enum : NSUInteger {
 @protocol IJKSDLGLViewProtocol <NSObject>
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
+#if TARGET_OS_IOS
 @property(nonatomic, readonly) CGFloat  fps;
 @property(nonatomic) CGFloat  scaleFactor;
-@property(nonatomic) BOOL  isThirdGLView;
+#endif
+@property(nonatomic) BOOL isThirdGLView;
 // subtitle preference
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
 // rotate preference
@@ -106,19 +114,17 @@ typedef enum : NSUInteger {
 @property(nonatomic) IJKSDLColorConversionPreference colorPreference;
 // user defined display aspect ratio
 @property(nonatomic) IJKSDLDARPreference darPreference;
-// video size
-@property (assign) CGSize videoSize;
 
-- (void)onDARChange:(int)dar_num den:(int)dar_den;
+// private method for jik internal.
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
 
 #if !TARGET_OS_OSX
-- (void)display_pixels:(IJKOverlay *)overlay;
 - (UIImage *)snapshot;
 #else
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
 #endif
 
-@optional;
+@optional;//when isThirdGLView,will call display_pixels method.
 - (void)display_pixels:(IJKOverlay *)overlay;
 
 @end

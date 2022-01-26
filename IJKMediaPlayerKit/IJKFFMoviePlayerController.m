@@ -37,6 +37,7 @@
 #import "NSString+IJKMedia.h"
 #import "ijkioapplication.h"
 #include "string.h"
+#import "IJKSDLGLView.h"
 
 static const char *kIJKFFRequiredFFmpegVersion = "ff4.0--ijk0.8.8--20210426--001";
 
@@ -54,7 +55,7 @@ static const char *kIJKFFRequiredFFmpegVersion = "ff4.0--ijk0.8.8--20210426--001
 
 @implementation IJKFFMoviePlayerController {
     IjkMediaPlayer *_mediaPlayer;
-    IJKSDLGLView *_glView;
+    GLView<IJKSDLGLViewProtocol>* _glView;
     IJKFFMoviePlayerMessagePool *_msgPool;
     NSString *_urlString;
 
@@ -280,7 +281,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
 - (id)initWithMoreContent:(NSURL *)aUrl
               withOptions:(IJKFFOptions *)options
-               withGLView:(UIView<IJKSDLGLViewProtocol> *)glView
+               withGLView:(GLView<IJKSDLGLViewProtocol> *)glView
 {
     if (aUrl == nil)
         return nil;
@@ -295,7 +296,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
 - (id)initWithMoreContentString:(NSString *)aUrlString
                  withOptions:(IJKFFOptions *)options
-                  withGLView:(UIView <IJKSDLGLViewProtocol> *)glView
+                  withGLView:(GLView <IJKSDLGLViewProtocol> *)glView
 {
     if (aUrlString == nil || glView == nil)
         return nil;
@@ -336,7 +337,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
         self.shouldShowHudView = options.showHudView;
         glView.isThirdGLView = YES;
-        _view = _glView = (IJKSDLGLView *)glView;
+        _view = _glView = glView;
 #if TARGET_OS_IOS
         _hudViewController = [[IJKSDLHudViewController alloc] init];
         [_hudViewController setRect:_glView.frame];
@@ -779,20 +780,24 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
 - (UIImage *)thumbnailImageAtCurrentTime
 {
     if ([_view conformsToProtocol:@protocol(IJKSDLGLViewProtocol)]) {
-        id<IJKSDLGLViewProtocol> glView = (id<IJKSDLGLViewProtocol>)_view;
+        GLView<IJKSDLGLViewProtocol>* glView = (GLView<IJKSDLGLViewProtocol>*)_view;
         return [glView snapshot];
     }
 
     return nil;
 }
-#else
-#warning TODO mac hud
-#endif
 
 - (CGFloat)fpsAtOutput
 {
     return _glView.fps;
 }
+#else
+#warning TODO mac hud
+- (CGFloat)fpsAtOutput
+{
+    return 0.0;
+}
+#endif
 
 inline static NSString *formatedDurationMilli(int64_t duration) {
     if (duration >=  1000) {
@@ -1671,19 +1676,18 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
 -(void)setIsDanmakuMediaAirPlay:(BOOL)isDanmakuMediaAirPlay
 {
     _isDanmakuMediaAirPlay = isDanmakuMediaAirPlay;
+
+#if TARGET_OS_IOS
     if (_isDanmakuMediaAirPlay) {
         _glView.scaleFactor = 1.0f;
-    }
-    else {
-#if TARGET_OS_IOS
+    } else {
+
         CGFloat scale = [[UIScreen mainScreen] scale];
-#else
-        CGFloat scale = [[NSScreen mainScreen] backingScaleFactor];
-#endif
         if (scale < 0.1f)
             scale = 1.0f;
         _glView.scaleFactor = scale;
     }
+#endif
      [[NSNotificationCenter defaultCenter] postNotificationName:IJKMPMoviePlayerIsAirPlayVideoActiveDidChangeNotification object:nil userInfo:nil];
 }
 

@@ -27,17 +27,10 @@
 #include "ijksdl/ijksdl_timer.h"
 #import <CoreVideo/CVDisplayLink.h>
 #include "ijksdl/ijksdl_gles2.h"
-#import <OpenGL/gl.h>
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #import <AVFoundation/AVFoundation.h>
 #import "renderer_pixfmt.h"
-
-typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
-    IJKSDLGLViewApplicationUnknownState = 0,
-    IJKSDLGLViewApplicationForegroundState = 1,
-    IJKSDLGLViewApplicationBackgroundState = 2
-};
 
 @interface IJKSDLGLView()
 
@@ -55,13 +48,19 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     CGSize _FBOTextureSize;
     GLuint _FBO;
     GLuint _ColorTexture;
-    float widthRatio;
+    float _widthRatio;
 }
 
-@synthesize isThirdGLView              = _isThirdGLView;
-@synthesize scaleFactor                = _scaleFactor;
-@synthesize fps                        = _fps;
-@synthesize darPreference              = _darPreference;
+@synthesize scalingMode = _scalingMode;
+@synthesize isThirdGLView = _isThirdGLView;
+// subtitle preference
+@synthesize subtitlePreference = _subtitlePreference;
+// rotate preference
+@synthesize rotatePreference = _rotatePreference;
+// color conversion perference
+@synthesize colorPreference = _colorPreference;
+// user defined display aspect ratio
+@synthesize darPreference = _darPreference;
 
 - (void)dealloc
 {
@@ -82,7 +81,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 {
     self = [super initWithFrame:frame];
     if (self) {
-        widthRatio = 1.0;
+        _widthRatio = 1.0;
         [self setup];
         self.subtitlePreference = (IJKSDLSubtitlePreference){45, 0xFFFFFF, 0.1};
         self.rotatePreference   = (IJKSDLRotatePreference)  {IJKSDLRotateNone, 0.0};
@@ -136,7 +135,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         return _renderer != nil;
     
     if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-        widthRatio = 1.0 * overlay->sar_num / overlay->sar_den;
+        _widthRatio = 1.0 * overlay->sar_num / overlay->sar_den;
     }
     
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
@@ -322,11 +321,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     // todo
 }
 
-- (void)display_pixels:(IJKOverlay *)overlay
-{
-    
-}
-
 #pragma mark - for snapshot
 
 - (void)destroyFBO
@@ -384,7 +378,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     [[self openGLContext] makeCurrentContext];
     CGLLockContext([[self openGLContext] CGLContextObj]);
     if (self.currentVideoPic && _renderer) {
-        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * widthRatio, CVPixelBufferGetHeight(self.currentVideoPic));
+        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * _widthRatio, CVPixelBufferGetHeight(self.currentVideoPic));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
         if (IJK_GLES2_Renderer_NeedSwapForZAutoRotate(_renderer)) {
             float pic_width = picSize.width;

@@ -23,37 +23,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#import <TargetConditionals.h>
-#if TARGET_OS_OSX
-#import <AppKit/AppKit.h>
-typedef NSOpenGLView GLView;
-typedef NSImage UIImage;
-#else
-#import <UIKit/UIKit.h>
-typedef UIView GLView;
-#endif
-#import <CoreVideo/CVPixelBuffer.h>
 #import "IJKSDLGLViewProtocol.h"
-#include "ijksdl/ijksdl_vout.h"
 
 @interface IJKSDLGLView : GLView <IJKSDLGLViewProtocol>
-
-@property(nonatomic) IJKMPMovieScalingMode scalingMode;
-// video size
-@property (assign) CGSize videoSize;
-
-- (id)initWithFrame:(CGRect)frame;
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
-// subtitle preference
-@property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
-// rotate preference
-@property(nonatomic) IJKSDLRotatePreference rotatePreference;
-// color conversion perference
-@property(nonatomic) IJKSDLColorConversionPreference colorPreference;
-
-- (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
-#if !TARGET_OS_OSX
-- (void)setShouldLockWhileBeingMovedToWindow:(BOOL)shouldLockWhiteBeingMovedToWindow __attribute__((deprecated("unused")));
-#endif
 
 @end

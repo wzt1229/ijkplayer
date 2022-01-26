@@ -26,7 +26,7 @@
 #include <assert.h>
 #include "ijksdl/ijksdl_vout.h"
 #include "ijksdl/ijksdl_vout_internal.h"
-#include "ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.h"
+#include "ijksdl_vout_overlay_ffmpeg.h"
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #import "IJKSDLGLView.h"
 #import "MRTextureString.h"
@@ -36,7 +36,7 @@ typedef struct SDL_VoutSurface_Opaque {
 } SDL_VoutSurface_Opaque;
 
 struct SDL_Vout_Opaque {
-    IJKSDLGLView *gl_view;
+    GLView<IJKSDLGLViewProtocol> *gl_view;
     CVPixelBufferRef subtitle;
 };
 
@@ -83,7 +83,7 @@ static void vout_free_l(SDL_Vout *vout)
 static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
-    IJKSDLGLView *gl_view = opaque->gl_view;
+    GLView<IJKSDLGLViewProtocol>* gl_view = opaque->gl_view;
 
     if (!gl_view) {
         ALOGE("vout_display_overlay_l: NULL gl_view\n");
@@ -108,13 +108,18 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         ijk_overlay.format = overlay->format;
         ijk_overlay.planes = overlay->planes;
         ijk_overlay.pitches = overlay->pitches;
-        ijk_overlay.pixels = overlay->pixels;
         ijk_overlay.sar_num = overlay->sar_num;
         ijk_overlay.sar_den = overlay->sar_den;
 #ifdef __APPLE__
         if (ijk_overlay.format == SDL_FCC__VTB) {
             ijk_overlay.pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
+        } else if (ijk_overlay.format == SDL_FCC__FFVTB) {
+            ijk_overlay.pixel_buffer = SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
+        } else {
+            ijk_overlay.pixels = overlay->pixels;
         }
+#else
+        ijk_overlay.pixels = overlay->pixels;
 #endif
         if ([gl_view respondsToSelector:@selector(display_pixels:)]) {
             [gl_view display_pixels:&ijk_overlay];
@@ -202,7 +207,7 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2()
     return vout;
 }
 
-static void SDL_VoutIos_SetGLView_l(SDL_Vout *vout, IJKSDLGLView *view)
+static void SDL_VoutIos_SetGLView_l(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>* view)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
 
@@ -218,7 +223,7 @@ static void SDL_VoutIos_SetGLView_l(SDL_Vout *vout, IJKSDLGLView *view)
         opaque->gl_view = [view retain];
 }
 
-void SDL_VoutIos_SetGLView(SDL_Vout *vout, IJKSDLGLView *view)
+void SDL_VoutIos_SetGLView(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>* view)
 {
     SDL_LockMutex(vout->mutex);
     SDL_VoutIos_SetGLView_l(vout, view);
