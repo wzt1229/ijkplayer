@@ -75,6 +75,10 @@
     }
     
     [self destroyFBO];
+    
+    if (_renderer) {
+        IJK_GLES2_Renderer_freeP(&_renderer);
+    }
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -351,7 +355,7 @@
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     // Allocate a texture image to which you can render to. Pass `NULL` for the data parameter
     // becuase you don't need to load image data. You generate the image by rendering to the texture.

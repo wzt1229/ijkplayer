@@ -318,6 +318,14 @@ static void ijkio_manager_parse_cache_info(IjkIOApplicationContext *app_ctx, cha
                 cur_entry = calloc(1, sizeof(IjkCacheEntry));
                 cur_node  = ijk_av_tree_node_alloc();
                 if (!cur_entry || !cur_node) {
+                    if (cur_node) {
+                        ijk_av_tree_destroy(cur_node);
+                        cur_node = NULL;
+                    }
+                    if (cur_entry) {
+                        free(cur_entry);
+                        cur_entry= NULL;
+                    }
                     break;
                 }
 

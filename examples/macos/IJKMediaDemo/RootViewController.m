@@ -168,6 +168,7 @@
                 keyMod:(NSUInteger)keyMod {
     CFArrayRef systemHotKeys = NULL;
     if (CopySymbolicHotKeys(&systemHotKeys)) {
+        CFRelease(systemHotKeys);
         return YES;
     }
 

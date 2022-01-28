@@ -120,36 +120,45 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
 {
     assert(fragment_shader_source);
     
-    IJK_GLES2_Renderer *renderer = (IJK_GLES2_Renderer *)calloc(1, sizeof(IJK_GLES2_Renderer));
-    if (!renderer)
-        goto fail;
+    IJK_GLES2_Renderer *renderer = NULL;
+    GLuint vertex_shader = 0;
+    GLuint fragment_shader = 0;
+    GLuint program = 0;
+    
     char vsh_buffer[1024] = { '\0' };
     IJK_GLES2_getVertexShader_default(vsh_buffer,openglVer);
     
     ALOGI("vertex shader source:\n%s\n",vsh_buffer);
     ALOGI("fragment shader source:\n%s\n",fragment_shader_source);
     
-    renderer->vertex_shader = IJK_GLES2_loadShader(GL_VERTEX_SHADER, vsh_buffer);
-    if (!renderer->vertex_shader)
+    vertex_shader = IJK_GLES2_loadShader(GL_VERTEX_SHADER, vsh_buffer);
+    if (!vertex_shader)
         goto fail;
     
-    renderer->fragment_shader = IJK_GLES2_loadShader(GL_FRAGMENT_SHADER, fragment_shader_source);
-    if (!renderer->fragment_shader)
+    fragment_shader = IJK_GLES2_loadShader(GL_FRAGMENT_SHADER, fragment_shader_source);
+    if (!fragment_shader)
         goto fail;
 
-    renderer->program = glCreateProgram();                          IJK_GLES2_checkError("glCreateProgram");
-    if (!renderer->program)
+    program = glCreateProgram(); IJK_GLES2_checkError("glCreateProgram");
+    if (!program)
         goto fail;
 
-    glAttachShader(renderer->program, renderer->vertex_shader);     IJK_GLES2_checkError("glAttachShader(vertex)");
-    glAttachShader(renderer->program, renderer->fragment_shader);   IJK_GLES2_checkError("glAttachShader(fragment)");
-    glLinkProgram(renderer->program);                               IJK_GLES2_checkError("glLinkProgram");
+    glAttachShader(program, vertex_shader);     IJK_GLES2_checkError("glAttachShader(vertex)");
+    glAttachShader(program, fragment_shader);   IJK_GLES2_checkError("glAttachShader(fragment)");
+    glLinkProgram(program);                     IJK_GLES2_checkError("glLinkProgram");
     GLint link_status = GL_FALSE;
-    glGetProgramiv(renderer->program, GL_LINK_STATUS, &link_status);
+    glGetProgramiv(program, GL_LINK_STATUS, &link_status);
     if (!link_status)
         goto fail;
 
-
+    renderer = (IJK_GLES2_Renderer *)calloc(1, sizeof(IJK_GLES2_Renderer));
+    if (!renderer)
+        goto fail;
+    
+    renderer->vertex_shader = vertex_shader;
+    renderer->fragment_shader = fragment_shader;
+    renderer->program = program;
+    
     renderer->av4_position = glGetAttribLocation(renderer->program, "av4_Position");                IJK_GLES2_checkError_TRACE("glGetAttribLocation(av4_Position)");
     renderer->av2_texcoord = glGetAttribLocation(renderer->program, "av2_Texcoord");                IJK_GLES2_checkError_TRACE("glGetAttribLocation(av2_Texcoord)");
     renderer->um4_mvp      = glGetUniformLocation(renderer->program, "um4_ModelViewProjection");    IJK_GLES2_checkError_TRACE("glGetUniformLocation(um4_ModelViewProjection)");
@@ -164,6 +173,14 @@ fail:
         IJK_GLES2_printProgramInfo(renderer->program);
 
     IJK_GLES2_Renderer_free(renderer);
+    
+    if (vertex_shader)
+        glDeleteShader(vertex_shader);
+    if (fragment_shader)
+        glDeleteShader(fragment_shader);
+    if (program)
+        glDeleteProgram(program);
+    
     return NULL;
 }
 
@@ -594,10 +611,9 @@ GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutO
         return GL_FALSE;
 
     GLsizei visible_width  = renderer->frame_width;
-    GLsizei visible_height = renderer->frame_height;
     if (overlay) {
-        visible_width  = overlay->w;
-        visible_height = overlay->h;
+        GLsizei visible_height = overlay->h;
+                visible_width  = overlay->w;
         if (renderer->frame_width   != visible_width    ||
             renderer->frame_height  != visible_height   ||
             renderer->frame_sar_num != overlay->sar_num ||

@@ -107,6 +107,7 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
                                       vout->ff_format, SWS_BILINEAR, NULL, NULL, NULL);
         
         if (convert->sws_ctx == NULL) {
+            free(convert);
             ALOGE("sws_getCachedContext failed");
             return -3;
         }
@@ -115,8 +116,10 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
         
         int frame_bytes = av_image_get_buffer_size(vout->ff_format, inFrame->width, inFrame->height, 1);
         AVBufferRef *frame_buffer_ref = av_buffer_alloc(frame_bytes);
-        if (!frame_buffer_ref)
+        if (!frame_buffer_ref) {
+            free(convert);
             return -2;
+        }
         
         av_frame_copy_props(convert->frame, inFrame);
         convert->frame->format  = vout->ff_format;
