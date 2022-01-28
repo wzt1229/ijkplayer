@@ -71,8 +71,6 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、Lame、X264、Fdk-aac、l
 
 从 Github 克隆代码可能很慢，所以最好在内网做一套仓库镜像，这样团队协作时，其他人就能很快的克隆代码了，时间不应浪费在这里。
 
-
-
 ## Init Lib Repo
 
 脚本参数比较灵活，可根据需要搭配使用
@@ -141,3 +139,16 @@ cd macos
 # 将 macos x86_64 架构下的所有库的产物复制到 universal
 ./compile-any.sh lipo all x86_64
 ```
+
+编译 ios 平台跟 macos 是一样的流程，只需要 cd 到 ios 目录操作即可。
+
+## Use Your Mirror
+
+如果 github 上的仓库克隆较慢，或者需要使用私有仓库的话，可在执行编译脚本前声明对应的环境变量即可！
+
+| 名称 | 默认仓库 | 使用镜像 |
+|---|---|---|
+| FFmpeg | https://github.com/bilibili/FFmpeg.git | export GIT_FFMPEG_UPSTREAM=git@xx:yy/ffmpeg.git |
+| libYUV | https://github.com/lemenkov/libyuv.git | export GIT_FDK_UPSTREAM=git@xx:yy/libyuv.git
+| OpenSSL | https://github.com/openssl/openssl.git | export GIT_OPUS_UPSTREAM=git@xx:yy/openssl.git |
+| Opus | https://gitlab.xiph.org/xiph/opus.git | export GIT_OPUS_UPSTREAM=git@xx:yy/opusfile.git  |
