@@ -27,7 +27,6 @@ TODO: Add long description of the pod here.
   s.source           = { :git => 'https://github.com/debugly/ijkplayer', :tag => s.version.to_s }
 
   s.osx.deployment_target = '10.11'
-  s.ios.deployment_target = '9.0'
 
   s.osx.pod_target_xcconfig = {
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',
@@ -35,17 +34,6 @@ TODO: Add long description of the pod here.
       '$(inherited)',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ffmpeg/include',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/libyuv/include',
-      '${PODS_TARGET_SRCROOT}/ijkmedia'
-    ]
-  }
-
-  s.ios.pod_target_xcconfig = {
-    'SUPPORTS_MACCATALYST' => 'NO',
-    'ALWAYS_SEARCH_USER_PATHS' => 'YES',
-    'HEADER_SEARCH_PATHS' => [
-      '$(inherited)',
-      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
-      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/libyuv/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ]
   }
@@ -73,9 +61,6 @@ TODO: Add long description of the pod here.
       'IJKMediaPlayerKit/IJKSDLGLViewProtocol.h'
     ss.osx.public_header_files = 'IJKMediaPlayerKit/IJKMediaPlayerKit.h'
     ss.osx.exclude_files = 'IJKMediaPlayerKit/IJKMediaPlayeriOSKit.h'
-
-    ss.ios.public_header_files = 'IJKMediaPlayerKit/IJKMediaPlayeriOSKit.h'
-    ss.ios.exclude_files = 'IJKMediaPlayerKit/IJKMediaPlayerKit.h'
   end
 
   s.subspec 'ijkmedia' do |ss|
@@ -101,6 +86,7 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijksdl/apple/ijksdl_vout_ios_gles2.*',
 
     ss.osx.exclude_files = 
+      'ijkmedia/ijksdl/ijksdl_egl.*',
       'ijkmedia/ijksdl/ios/*.*',
       'ijkmedia/ijksdl/gles2/fsh/rgb.fsh.c',
       'ijkmedia/ijksdl/gles2/fsh/yuv420p.fsh.c',
@@ -136,7 +122,6 @@ TODO: Add long description of the pod here.
   end
   
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
-  s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
   s.osx.frameworks = 'AudioUnit', 'Cocoa', 'OpenGL', 'GLKit'

@@ -1,13 +1,13 @@
 PODS:
-  - IJKMediaPlayeriOSKit (0.8.8):
-    - IJKMediaPlayeriOSKit/ijkmedia (= 0.8.8)
-    - IJKMediaPlayeriOSKit/IJKMediaPlayerKit (= 0.8.8)
-    - IJKMediaPlayeriOSKit/no-arc (= 0.8.8)
-    - IJKMediaPlayeriOSKit/w (= 0.8.8)
-  - IJKMediaPlayeriOSKit/ijkmedia (0.8.8)
-  - IJKMediaPlayeriOSKit/IJKMediaPlayerKit (0.8.8)
-  - IJKMediaPlayeriOSKit/no-arc (0.8.8)
-  - IJKMediaPlayeriOSKit/w (0.8.8)
+  - IJKMediaPlayeriOSKit (0.9.0.4):
+    - IJKMediaPlayeriOSKit/ijkmedia (= 0.9.0.4)
+    - IJKMediaPlayeriOSKit/IJKMediaPlayerKit (= 0.9.0.4)
+    - IJKMediaPlayeriOSKit/no-arc (= 0.9.0.4)
+    - IJKMediaPlayeriOSKit/w (= 0.9.0.4)
+  - IJKMediaPlayeriOSKit/ijkmedia (0.9.0.4)
+  - IJKMediaPlayeriOSKit/IJKMediaPlayerKit (0.9.0.4)
+  - IJKMediaPlayeriOSKit/no-arc (0.9.0.4)
+  - IJKMediaPlayeriOSKit/w (0.9.0.4)
 
 DEPENDENCIES:
   - IJKMediaPlayeriOSKit (from `../../`)
@@ -17,7 +17,7 @@ EXTERNAL SOURCES:
     :path: "../../"
 
 SPEC CHECKSUMS:
-  IJKMediaPlayeriOSKit: a9d6bb64b97f0a7592c0683829d42bb503b030a9
+  IJKMediaPlayeriOSKit: eea29aa30b473a37d2cb7ba4a5e54c9ce80f9d0d
 
 PODFILE CHECKSUM: 8b0a23f57d1c59f71f25eb4dc3f506e1dd41a246
 

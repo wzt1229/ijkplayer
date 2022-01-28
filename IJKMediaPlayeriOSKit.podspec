@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'IJKMediaPlayeriOSKit'
-  s.version          = '0.8.8'
+  s.version          = '0.9.0.4'
   s.summary          = 'IJKMediaPlayeriOSKit for iOS.'
   
 # This description is used to generate tags and improve search results.
@@ -37,7 +37,8 @@ TODO: Add long description of the pod here.
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',
     'HEADER_SEARCH_PATHS' => [
       '$(inherited)',
-      '${PODS_TARGET_SRCROOT}/ios/build/universal/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/libyuv/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ]
   }
@@ -79,6 +80,7 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
       'ijkmedia/ijkplayer/android/**/*.*',
       'ijkmedia/ijksdl/android/**/*.*',
+      'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}',
 
       # -w
       'ijkmedia/ijkplayer/ijkavutil/ijkdict.*',
@@ -88,16 +90,8 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijksdl/apple/ijksdl_aout_ios_audiounit.*',
       'ijkmedia/ijksdl/apple/ijksdl_vout_ios_gles2.*',
 
-    # 支持 macos 后，会将以下文件从 iOS 工程里排除！！
-    # ss.osx.exclude_files = 
-      # 'ijkmedia/ijksdl/ios/*.*',
-      # 'ijkmedia/ijksdl/gles2/fsh/ios/*.*',
-      # 'ijkmedia/ijksdl/gles2/vsh/ios/*.*',
-      # 'ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c'
-    
     ss.ios.exclude_files = 
       'ijkmedia/ijksdl/mac/*.*',
-      'ijkmedia/ijksdl/gles2/renderer_ uyvy.c',
       'ijkmedia/ijksdl/gles2/fsh/mac/*.*',
       'ijkmedia/ijksdl/gles2/vsh/mac/*.*'
 
@@ -119,7 +113,8 @@ TODO: Add long description of the pod here.
     ss.compiler_flags = '-w'
   end
   
-  s.vendored_libraries = 'ios/build/universal/lib/*.a'
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
-  s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
+  s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'
+  s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox', 'AudioUnit'
+  
 end
