@@ -34,19 +34,7 @@ static const char g_shader_rect_bgrx_1[] = IJK_GLES_STRING(
     uniform vec2 textureDimension0;
     
     uniform int isSubtitle;
-
-    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
-        //C 是对比度值，B 是亮度值，S 是饱和度
-        float B = rgbAdjustment.x;
-        float S = rgbAdjustment.y;
-        float C = rgbAdjustment.z;
-
-        rgb = (rgb - 0.5) * C + 0.5;
-        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
-        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
-        return intensity + S * (rgb - intensity);
-    }
-                                                      
+                                         
     void main()
     {
         if (isSubtitle == 1) {
@@ -73,19 +61,7 @@ static const char g_shader_rect_rgbx_1[] = IJK_GLES_STRING(
     uniform vec2 textureDimension0;
     
     uniform int isSubtitle;
-
-    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
-        //C 是对比度值，B 是亮度值，S 是饱和度
-        float B = rgbAdjustment.x;
-        float S = rgbAdjustment.y;
-        float C = rgbAdjustment.z;
-
-        rgb = (rgb - 0.5) * C + 0.5;
-        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
-        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
-        return intensity + S * (rgb - intensity);
-    }
-                                                      
+                                            
     void main()
     {
         if (isSubtitle == 1) {
@@ -112,19 +88,7 @@ static const char g_shader_rect_xrgb_1[] = IJK_GLES_STRING(
     uniform vec2 textureDimension0;
     
     uniform int isSubtitle;
-
-    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
-        //C 是对比度值，B 是亮度值，S 是饱和度
-        float B = rgbAdjustment.x;
-        float S = rgbAdjustment.y;
-        float C = rgbAdjustment.z;
-
-        rgb = (rgb - 0.5) * C + 0.5;
-        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
-        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
-        return intensity + S * (rgb - intensity);
-    }
-                                                      
+                                                 
     void main()
     {
         if (isSubtitle == 1) {
@@ -158,19 +122,7 @@ static const char g_shader_rect_2[] = IJK_GLES_STRING(
     
     uniform int isSubtitle;
     uniform int isFullRange;
-
-    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
-        //C 是对比度值，B 是亮度值，S 是饱和度
-        float B = rgbAdjustment.x;
-        float S = rgbAdjustment.y;
-        float C = rgbAdjustment.z;
-
-        rgb = (rgb - 0.5) * C + 0.5;
-        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
-        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
-        return intensity + S * (rgb - intensity);
-    }
-                                                      
+                                         
     void main()
     {
         if (isSubtitle == 1) {
@@ -214,18 +166,6 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
                                                    
     uniform int isSubtitle;
     uniform int isFullRange;
-
-    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
-        //C 是对比度值，B 是亮度值，S 是饱和度
-        float B = rgbAdjustment.x;
-        float S = rgbAdjustment.y;
-        float C = rgbAdjustment.z;
-
-        rgb = (rgb - 0.5) * C + 0.5;
-        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
-        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
-        return intensity + S * (rgb - intensity);
-    }
                                                       
     void main()
     {
@@ -271,18 +211,6 @@ static const char g_shader_rect_uyvy_1[] = IJK_GLES_STRING(
     const vec3 B_cf = vec3(1.164383,  2.017232,  0.000000);
     const vec3 offset = vec3(-0.0625, -0.5, -0.5);
                                                            
-    vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
-        //C 是对比度值，B 是亮度值，S 是饱和度
-        float B = rgbAdjustment.x;
-        float S = rgbAdjustment.y;
-        float C = rgbAdjustment.z;
-
-        rgb = (rgb - 0.5) * C + 0.5;
-        rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
-        vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
-        return intensity + S * (rgb - intensity);
-    }
-                                                      
     void main()
     {
         if (isSubtitle == 1) {
@@ -318,6 +246,21 @@ void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
     } else {
         strcat(out, "#define fragColor gl_FragColor\n");
     }
+    strcat(out, "\n");
+    strcat(out, IJK_GLES_STRING(
+                vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
+                    //C 是对比度值，B 是亮度值，S 是饱和度
+                    float B = rgbAdjustment.x;
+                    float S = rgbAdjustment.y;
+                    float C = rgbAdjustment.z;
+
+                    rgb = (rgb - 0.5) * C + 0.5;
+                    rgb = rgb + (0.75 * B - 0.5) / 2.5 - 0.1;
+                    vec3 intensity = vec3(dot(rgb, vec3(0.299, 0.587, 0.114)));
+                    return intensity + S * (rgb - intensity);
+                }
+                                ));
+    strcat(out, "\n");
     
     const char * buffer;
     //for rgbx
