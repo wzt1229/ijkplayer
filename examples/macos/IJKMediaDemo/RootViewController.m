@@ -84,7 +84,7 @@
     self.subtitleFontSize = 25;
     self.subtitleMargin = 0.7;
     self.useVideoToolBox = YES;
-    self.fcc = @"fcc-nv12";
+    self.fcc = @"fcc-_es2";
     self.snapshot = 3;
     [self onReset:nil];
     
@@ -298,7 +298,7 @@
 //    [options setPlayerOptionValue:@"fcc-uyvy"        forKey:@"overlay-format"];
 //    [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
 //    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
-
+    
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:self.useVideoToolBox forKey:@"videotoolbox"];
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
