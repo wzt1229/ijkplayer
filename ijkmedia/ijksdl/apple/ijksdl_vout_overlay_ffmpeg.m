@@ -477,9 +477,11 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
     switch (overlay_format) {
         case SDL_FCC__GLES2: {
             switch (frame_format) {
+#if TARGET_OS_IOS
                 case AV_PIX_FMT_YUV444P10LE:
                     overlay_format = SDL_FCC_I444P10LE;
                     break;
+#endif
                 case AV_PIX_FMT_YUV420P:
                 case AV_PIX_FMT_YUVJ420P:
                 default:
@@ -493,9 +495,6 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
             break;
         }
     }
-
-    SDLTRACE("SDL_VoutFFmpeg_CreateOverlay(w=%d, h=%d, fmt=%.4s(0x%x, dp=%p)\n",
-        width, height, (const char*) &overlay_format, overlay_format, display);
 
     SDL_VoutOverlay *overlay = SDL_VoutOverlay_CreateInternal(sizeof(SDL_VoutOverlay_Opaque));
     if (!overlay) {
@@ -547,6 +546,7 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
             opaque->planes = 3;
             break;
         }
+#if ! TARGET_OS_OSX
         case SDL_FCC_I444P10LE: {
             ff_format = AV_PIX_FMT_YUV444P10LE;
             // FIXME: need runtime config
@@ -564,6 +564,7 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
             opaque->planes = 3;
             break;
         }
+#endif
         case SDL_FCC_NV12: {
             ff_format = AV_PIX_FMT_NV12;
             buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
@@ -600,11 +601,24 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
             opaque->planes = 1;
             break;
         }
+#if ! USE_FF_VTB
         default:
-            ALOGE("SDL_VoutFFmpeg_CreateOverlay(...): unknown format %.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
+            ALOGE("SDL_VoutFFmpeg_CreateOverlay(convert %.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
             goto fail;
+#endif
     }
-    
+
+#if USE_FF_VTB
+    if (ff_format != AV_PIX_FMT_NONE) {
+        SDLTRACE("SDL_VoutFFmpeg_CreateOverlay(w=%d, h=%d, fmt=%.4s, dp=%p)\n",
+            width, height, (const char*) &overlay_format, display);
+    } else {
+        ALOGW("SDL_VoutFFmpeg_CreateOverlay(force convert fmt=%.4s to NV12, dp=%p)\n", (const char*) &overlay_format, display);
+        ff_format = AV_PIX_FMT_NV12;
+        buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
+        opaque->planes = 2;
+    }
+#endif
     //record ff_format
     overlay->ff_format = ff_format;
 #if ! USE_FF_VTB

@@ -45,9 +45,13 @@ void SDL_VoutFree(SDL_Vout *vout)
 
     _SDL_Image_Converter *convert = vout->image_converter;
     if (NULL != convert) {
-        sws_freeContext(convert->sws_ctx);
-        av_frame_free(&convert->frame);
-        av_buffer_unref(&convert->frame_buffer);
+        if (convert->sws_ctx) {
+            sws_freeContext(convert->sws_ctx);
+        }
+        if (convert->frame) {
+            av_frame_free(&convert->frame);
+            av_buffer_unref(&convert->frame_buffer);
+        }
         vout->image_converter = NULL;
     }
     
@@ -102,16 +106,6 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
         convert = malloc(sizeof(_SDL_Image_Converter));
         bzero(convert, sizeof(_SDL_Image_Converter));
         
-        convert->sws_ctx = sws_getCachedContext(convert->sws_ctx, inFrame->width, inFrame->height,
-                                      inFrame->format, inFrame->width, inFrame->height,
-                                      vout->ff_format, SWS_BILINEAR, NULL, NULL, NULL);
-        
-        if (convert->sws_ctx == NULL) {
-            free(convert);
-            ALOGE("sws_getCachedContext failed");
-            return -3;
-        }
-        
         convert->frame = av_frame_alloc();
         
         int frame_bytes = av_image_get_buffer_size(vout->ff_format, inFrame->width, inFrame->height, 1);
@@ -138,6 +132,17 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
     
     //libyuv转换失败？
     if (r) {
+        if (convert->sws_ctx == NULL) {
+            convert->sws_ctx = sws_getCachedContext(convert->sws_ctx, inFrame->width, inFrame->height,
+                                      inFrame->format, inFrame->width, inFrame->height,
+                                      vout->ff_format, SWS_BILINEAR, NULL, NULL, NULL);
+        }
+        
+        if (convert->sws_ctx == NULL) {
+            ALOGE("sws_getCachedContext failed");
+            return -3;
+        }
+        
         sws_scale(convert->sws_ctx, (const uint8_t**) inFrame->data, inFrame->linesize,
                   0, inFrame->height, convert->frame->data, convert->frame->linesize);
         r = 0;

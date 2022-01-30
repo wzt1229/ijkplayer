@@ -876,6 +876,9 @@
                                                 <menuItem title="fcc-0rgb" tag="7" id="tcY-P5-BRd">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
+                                                <menuItem title="fcc-rv16" tag="8" id="WUN-74-gCN">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
                                             </items>
                                         </menu>
                                     </popUpButtonCell>

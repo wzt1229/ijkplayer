@@ -1058,8 +1058,11 @@ static int vtbformat_init(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar, 
         pixelFormatType = kCVPixelFormatType_422YpCbCr8;
     } else if (overlay_format == SDL_FCC_I420) {
         pixelFormatType = kCVPixelFormatType_420YpCbCr8Planar;
+    } else if (overlay_format == SDL_FCC_NV12 || overlay_format == SDL_FCC__GLES2) {
+        pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
     } else {
         pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
+        ALOGW("VTB will force output NV12 for %.4s\n", (const char *)&overlay_format);
     }
 #else
     pixelFormatType = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;

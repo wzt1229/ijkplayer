@@ -123,6 +123,11 @@
     [self showCtrlView];
 }
 
+- (void)baseView:(SHBaseView *)baseView mouseMoved:(NSEvent *)event
+{
+    [self showCtrlView];
+}
+
 - (void)baseView:(SHBaseView *)baseView mouseExited:(NSEvent *)event
 {
     [self hideCtrlView];
@@ -130,6 +135,12 @@
 
 - (void)switchCtrlView:(BOOL)wantShow
 {
+    float constant = wantShow ? 0 : - self.ctrlView.bounds.size.height;
+    
+    if (self.ctrlViewBottomCons.constant == constant) {
+        return;
+    }
+    
     if (self.isCtrlViewAnimating) {
         return;
     }
@@ -289,7 +300,6 @@
     //    [options setPlayerOptionIntValue:50*1024*1024      forKey:@"max-buffer-size"];
     [options setPlayerOptionIntValue:30     forKey:@"max-fps"];
     [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
-    [options setPlayerOptionIntValue:0      forKey:@"videotoolbox-async"];
     
 //    [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
 //    [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
