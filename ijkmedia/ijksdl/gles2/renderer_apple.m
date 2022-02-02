@@ -27,6 +27,13 @@
 #if __OBJC__
 #import <OpenGLES/ES3/gl.h>
 #import <OpenGLES/EAGL.h>
+//https://github.com/lechium/iOS14Headers/blob/c0b7e9f0049c6b2571358584eed67c841140624f/System/Library/Frameworks/OpenGLES.framework/EAGLContext.h
+@interface EAGLContext ()
+- (BOOL)texImageIOSurface:(IOSurfaceRef)arg1 target:(unsigned long long)arg2 internalFormat:(unsigned long long)arg3 width:(unsigned)arg4 height:(unsigned)arg5 format:(unsigned long long)arg6 type:(unsigned long long)arg7 plane:(unsigned)arg8 invert:(BOOL)arg9;
+//begin ios 11
+- (BOOL)texImageIOSurface:(IOSurfaceRef)arg1 target:(unsigned long long)arg2 internalFormat:(unsigned long long)arg3 width:(unsigned)arg4 height:(unsigned)arg5 format:(unsigned long long)arg6 type:(unsigned long long)arg7 plane:(unsigned)arg8;
+@end
+
 #endif
 #endif
 
@@ -34,16 +41,6 @@
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #include "ijksdl_vout_overlay_ffmpeg.h"
 #include "renderer_pixfmt.h"
-
-#define NV12_RENDER_FAST_UPLOAD 2
-#define NV12_RENDER_IO_SURFACE  4
-
-#if TARGET_OS_OSX
-//osx use NV12_RENDER_FAST_UPLOAD failed: -6683
-#define NV12_RENDER_TYPE NV12_RENDER_IO_SURFACE
-#else
-#define NV12_RENDER_TYPE NV12_RENDER_FAST_UPLOAD
-#endif
 
 #if TARGET_OS_OSX
 #define GL_TEXTURE_TARGET GL_TEXTURE_RECTANGLE
@@ -59,15 +56,14 @@ typedef struct _Frame_Size
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
-    OpenGLTextureCacheRef cv_texture_cache;
-    OpenGLTextureRef      nv12_texture[3];
     CFTypeRef             color_attachments;
-    GLint                 textureDimension[3];
     GLint                 isSubtitle;
     GLint                 isFullRange;
-    Frame_Size            frameSize[3];
-    Frame_Size            subTextureSize;
     int samples;
+#if TARGET_OS_OSX
+    GLint                 textureDimension[3];
+    Frame_Size            frameSize[3];
+#endif
 } IJK_GLES2_Renderer_Opaque;
 
 static GLboolean use(IJK_GLES2_Renderer *renderer)
@@ -76,15 +72,11 @@ static GLboolean use(IJK_GLES2_Renderer *renderer)
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     //glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
-
-#if NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
     IJK_GLES2_Renderer_Opaque * opaque = renderer->opaque;
     assert(opaque->samples);
     
     if (0 == renderer->plane_textures[0])
         glGenTextures(opaque->samples, renderer->plane_textures);
-#endif
-    
     return GL_TRUE;
 }
 
@@ -100,90 +92,8 @@ static GLsizei getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *ove
     }
 }
 
-#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
-static GLvoid clean_textures(IJK_GLES2_Renderer *renderer)
-{
-    if (!renderer || !renderer->opaque)
-        return;
-
-    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-
-    for (int i = 0; i < 2; ++i) {
-        if (opaque->nv12_texture[i]) {
-            CFRelease(opaque->nv12_texture[i]);
-            opaque->nv12_texture[i] = nil;
-        }
-    }
-    
-    // Periodic texture cache flush every frame
-    if (opaque->cv_texture_cache)
-        OpenGLTextureCacheFlush(opaque->cv_texture_cache, 0);
-}
-
-static GLboolean upload_texture_use_Cache(IJK_GLES2_Renderer_Opaque *opaque, CVPixelBufferRef pixel_buffer, IJK_GLES2_Renderer *renderer)
-{
-    if (!opaque->cv_texture_cache) {
-        ALOGE("nil textureCache\n");
-        return GL_FALSE;
-    }
-    
-    clean_textures(renderer);
-    
-    GLenum gl_target = GL_TEXTURE_TARGET;
-    const int planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
-    for (int i = 0; i < planes; i++) {
-        //设置采样器位置，保证了每个uniform采样器对应着正确的纹理单元
-        glUniform1i(renderer->us2_sampler[i], i);
-        glActiveTexture(GL_TEXTURE0 + i);
-#if TARGET_OS_OSX
-        CVReturn err = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, opaque->cv_texture_cache, pixel_buffer, NULL, &opaque->nv12_texture[i]);
-#else
-        
-        GLsizei frame_width  = (GLsizei)CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
-        GLsizei frame_height = (GLsizei)CVPixelBufferGetHeightOfPlane(pixel_buffer, i);
-
-        int format = i == 0 ? OpenGL_RED_EXT : OpenGL_RG_EXT;
-        
-        CVReturn err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                     opaque->cv_texture_cache,
-                                                     pixel_buffer,
-                                                     NULL,
-                                                     gl_target,
-                                                     format,
-                                                     frame_width,
-                                                     frame_height,
-                                                     format,
-                                                     GL_UNSIGNED_BYTE,
-                                                     i,
-                                                     &opaque->nv12_texture[i]);
-        
-#endif
-        if (err != kCVReturnSuccess) {
-            ALOGE("Error at CVOpenGLTextureCacheCreateTextureFromImage %d\n", err);
-            return GL_FALSE;
-        }
-
-        glBindTexture(OpenGLTextureGetTarget(opaque->nv12_texture[i]), OpenGLTextureGetName(opaque->nv12_texture[i]));
-        
-        glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-    return GL_TRUE;
-}
-#endif
-
-#if NV12_RENDER_TYPE == NV12_RENDER_IO_SURFACE
 static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
 {
-    IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
-    
-    if (!surface) {
-        printf("CVPixelBuffer has no IOSurface\n");
-        return GL_FALSE;
-    }
-    
     uint32_t cvpixfmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
     struct vt_format *f = vt_get_gl_format(cvpixfmt);
     if (!f) {
@@ -197,9 +107,32 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
     
     GLenum gl_target = GL_TEXTURE_TARGET;
     
+    IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
+    
+    if (!surface) {
+        printf("CVPixelBuffer has no IOSurface\n");
+        return GL_FALSE;
+    }
+    
     for (int i = 0; i < f->planes; i++) {
-        GLfloat w = (GLfloat)IOSurfaceGetWidthOfPlane(surface, i);
-        GLfloat h = (GLfloat)IOSurfaceGetHeightOfPlane(surface, i);
+        GLfloat w = (GLfloat)CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
+        GLfloat h = (GLfloat)CVPixelBufferGetHeightOfPlane(pixel_buffer, i);
+
+        //设置采样器位置，保证了每个uniform采样器对应着正确的纹理单元
+        glUniform1i(renderer->us2_sampler[i], i);
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(gl_target, renderer->plane_textures[i]);
+        struct vt_gl_plane_format plane_format = f->gl[i];
+#if TARGET_OS_IOS
+        if (![[EAGLContext currentContext] texImageIOSurface:surface target:gl_target internalFormat:plane_format.gl_internal_format width:w height:h format:plane_format.gl_format type:plane_format.gl_type plane:i invert:NO]) {
+            ALOGE("creating IOSurface texture for plane %d failed.\n",i);
+            return GL_FALSE;
+        }
+//        
+//        //(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
+//        glTexImage2D(gl_target, 0, plane_format.gl_internal_format, w, h, 0, plane_format.gl_format, plane_format.gl_type, CVPixelBufferGetBaseAddressOfPlane(pixel_buffer,i));
+        
+#else
         Frame_Size size = renderer->opaque->frameSize[i];
         if (size.w != w || size.h != h) {
             glUniform2f(renderer->opaque->textureDimension[i], w, h);
@@ -207,11 +140,7 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
             size.h = h;
             renderer->opaque->frameSize[i] = size;
         }
-        //设置采样器位置，保证了每个uniform采样器对应着正确的纹理单元
-        glUniform1i(renderer->us2_sampler[i], i);
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(gl_target, renderer->plane_textures[i]);
-        struct vt_gl_plane_format plane_format = f->gl[i];
+        
         CGLError err = CGLTexImageIOSurface2D(CGLGetCurrentContext(),
                                               gl_target,
                                               plane_format.gl_internal_format,
@@ -221,12 +150,13 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
                                               plane_format.gl_type,
                                               surface,
                                               i);
-
         if (err != kCGLNoError) {
             ALOGE("creating IOSurface texture for plane %d failed: %s\n",
-                   0, CGLErrorString(err));
+                   i, CGLErrorString(err));
             return GL_FALSE;
-        } else {
+        }
+#endif
+        {
             glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -235,7 +165,6 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
     }
     return GL_TRUE;
 }
-#endif
 
 static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
 {
@@ -271,13 +200,8 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
             glUniform1i(renderer->opaque->isFullRange, GL_TRUE);
         }
     }
-
-#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
-    upload_texture_use_Cache(opaque, pixel_buffer, renderer);
-#else
+    
     upload_texture_use_IOSurface(pixel_buffer, renderer);
-#endif
-    CVPixelBufferRelease(pixel_buffer);
     return GL_TRUE;
 }
 
@@ -286,15 +210,14 @@ static CVPixelBufferRef getCVPixelBufferRef(SDL_VoutOverlay *overlay)
     switch (overlay->format) {
         case SDL_FCC__VTB:
             return SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
-        case SDL_FCC__FFVTB:
 #if USE_FF_VTB
+        case SDL_FCC__FFVTB:
             return SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
 #endif
         default:
             return NULL;
     }
 }
-
 
 static void * getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
@@ -309,13 +232,7 @@ static GLvoid destroy(IJK_GLES2_Renderer *renderer)
         return;
     
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
-    clean_textures(renderer);
-    if (opaque->cv_texture_cache) {
-        CFRelease(opaque->cv_texture_cache);
-        opaque->cv_texture_cache = nil;
-    }
-#endif
+
     if (opaque->color_attachments != nil) {
         CFRelease(opaque->color_attachments);
         opaque->color_attachments = nil;
@@ -324,103 +241,11 @@ static GLvoid destroy(IJK_GLES2_Renderer *renderer)
     renderer->opaque = nil;
 }
 
-#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
-static GLboolean create_gltexture(IJK_GLES2_Renderer *renderer)
-{
-    OpenGLTextureCacheRef ref;
-#if TARGET_OS_OSX
-    CGLContextObj cglContext = CGLGetCurrentContext();
-    CGLPixelFormatObj cglPixelFormat = CGLGetPixelFormat(CGLGetCurrentContext());
-    CVReturn err = CVOpenGLTextureCacheCreate(kCFAllocatorDefault, NULL, cglContext, cglPixelFormat, NULL, &ref);
-#else
-    EAGLContext *context = [EAGLContext currentContext];
-    CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, context, NULL, &ref);
-#endif
-    if (err || ref == nil) {
-        ALOGE("Error at CVOpenGLESTextureCacheCreate %d\n", err);
-        return GL_FALSE;;
-    }
-    
-    renderer->opaque->cv_texture_cache = ref;
-    return GL_TRUE;
-}
-#endif
-
-
-#if TARGET_OS_OSX
-
 static GLvoid useSubtitle(IJK_GLES2_Renderer *renderer,GLboolean subtitle)
 {
     glUniform1i(renderer->opaque->isSubtitle, (GLint)subtitle);
 }
 
-/**
- On macOS, create an OpenGL texture and retrieve an OpenGL texture name using the following steps, and as annotated in the code listings below:
- */
-OpenGLTextureRef createGLTexture(IJK_GLES2_Renderer_Opaque* opaque, CVPixelBufferRef pixelBuff)
-{
-    assert(opaque->cv_texture_cache);
-    
-    if (opaque->cv_texture_cache) {
-        OpenGLTextureCacheFlush(opaque->cv_texture_cache, 0);
-    }
-
-    CVOpenGLTextureRef texture = NULL;
-    // 2. Create a CVPixelBuffer-backed OpenGL texture image from the texture cache.
-    CVReturn cvret = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                                opaque->cv_texture_cache,
-                                                       pixelBuff,
-                                                       nil,
-                                                       &texture);
-    
-    assert(cvret == kCVReturnSuccess);
-    return texture;
-}
-
-#else // if!(TARGET_IOS || TARGET_TVOS)
-
-/**
- On iOS, create an OpenGL ES texture from the CoreVideo pixel buffer using the following steps, and as annotated in the code listings below:
- */
-OpenGLTextureRef createGLTexture(IJK_GLES2_Renderer_Opaque* opaque, CVPixelBufferRef pixelBuff)
-{
-    assert(opaque->cv_texture_cache);
-    
-    if (opaque->cv_texture_cache) {
-        OpenGLTextureCacheFlush(opaque->cv_texture_cache, 0);
-    }
-    
-    GLsizei width  = (GLsizei)CVPixelBufferGetWidth(pixelBuff);
-    GLsizei height = (GLsizei)CVPixelBufferGetHeight(pixelBuff);
-    
-#if TARGET_OS_SIMULATOR
-    GLint target = GL_BGRA;
-#elif TARGET_OS_IOS
-    GLint target = GL_RGBA;
-#endif
-    OpenGLTextureRef texture = NULL;
-    // 2. Create a CVPixelBuffer-backed OpenGL ES texture image from the texture cache.
-    CVReturn cvret = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                                  opaque->cv_texture_cache,
-                                                         pixelBuff,
-                                                         NULL,
-                                                         GL_TEXTURE_2D,
-                                                         target,
-                                                         width,
-                                                         height,
-                                                         GL_BGRA,
-                                                         GL_UNSIGNED_BYTE,
-                                                         0,
-                                                         &texture);
-    
-    assert(cvret == kCVReturnSuccess);
-    
-    return texture;
-}
-
-#endif // !(TARGET_IOS || TARGET_TVOS)
-
-#if TARGET_OS_OSX
 static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
 {
     if (!subtitle) {
@@ -434,39 +259,34 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
     
     CVPixelBufferRef cvPixelRef = (CVPixelBufferRef)subtitle;
     CVPixelBufferRetain(cvPixelRef);
-    
-    opaque->subTextureSize.w = (int)ceil(CVPixelBufferGetWidth(cvPixelRef));
-    opaque->subTextureSize.h = (int)ceil(CVPixelBufferGetHeight(cvPixelRef));
-    
+        
     GLboolean ok = upload_texture_use_IOSurface(cvPixelRef, renderer);
     CVPixelBufferRelease(cvPixelRef);
     
     return ok;
 }
-#endif
 
 IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,IJK_SHADER_TYPE type,int openglVer)
 {
-#if TARGET_OS_OSX
     assert(overlay->format == SDL_FCC__VTB || overlay->format == SDL_FCC__FFVTB);
     char shader_buffer[2048] = { '\0' };
+    
     IJK_GL_getAppleCommonFragmentShader(type,shader_buffer,openglVer);
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(shader_buffer,openglVer);
-#else
-    IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(IJK_GL_getFragmentShader_yuv420sp());
-#endif
-    
+
     if (!renderer)
         goto fail;
     
     const int samples = IJK_Sample_Count_For_Shader(type);
+    assert(samples);
     
     for (int i = 0; i < samples; i++) {
         char name[20] = "us2_Sampler";
         name[strlen(name)] = (char)i + '0';
         renderer->us2_sampler[i] = glGetUniformLocation(renderer->program, name); IJK_GLES2_checkError_TRACE("glGetUniformLocation(us2_Sampler)");
     }
-
+    
+    //yuv to rgb
     if (samples > 1) {
         renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_ColorConversionMatrix)");
     }
@@ -478,10 +298,8 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,I
     renderer->func_uploadTexture  = upload_Texture;
     renderer->func_getVideoImage  = getVideoImage;
     renderer->func_destroy        = destroy;
-#if TARGET_OS_OSX
     renderer->func_useSubtitle    = useSubtitle;
     renderer->func_uploadSubtitle = uploadSubtitle;
-#endif
     renderer->opaque = calloc(1, sizeof(IJK_GLES2_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;
@@ -490,11 +308,15 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,I
     renderer->opaque->isSubtitle  = -1;
     renderer->opaque->isFullRange = -1;
     
-#if NV12_RENDER_TYPE == NV12_RENDER_FAST_UPLOAD
-    if (!create_gltexture(renderer)) {
-        goto fail;
+    if (samples > 1) {
+        GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
+        assert(isFullRange >= 0);
+        renderer->opaque->isFullRange = isFullRange;
     }
-#endif
+    
+    GLint isSubtitle = glGetUniformLocation(renderer->program, "isSubtitle");
+    assert(isSubtitle >= 0);
+    renderer->opaque->isSubtitle = isSubtitle;
     
 #if TARGET_OS_OSX
     if (overlay->format == SDL_FCC__VTB || overlay->format == SDL_FCC__FFVTB) {
@@ -507,16 +329,6 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(SDL_VoutOverlay *overlay,I
             renderer->opaque->textureDimension[i] = textureDimension;
         }
     }
-
-    if (samples > 1) {
-        GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
-        assert(isFullRange >= 0);
-        renderer->opaque->isFullRange = isFullRange;
-    }
-    
-    GLint isSubtitle = glGetUniformLocation(renderer->program, "isSubtitle");
-    assert(isSubtitle >= 0);
-    renderer->opaque->isSubtitle = isSubtitle;
 #endif
     
     return renderer;

@@ -23,7 +23,11 @@
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #include <CoreVideo/CoreVideo.h>
+#if TARGET_OS_OSX
 #include <OpenGL/gl3.h>
+#else
+#import <OpenGLES/ES3/gl.h>
+#endif
 #endif
 #include "math_util.h"
 
@@ -226,12 +230,25 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
     if (openglVer == 0) {
         const char *version_string = (const char *) glGetString(GL_VERSION);
         int major = 0, minor = 0;
+#if TARGET_OS_OSX
         if (sscanf(version_string, "%d.%d", &major, &minor) == 2) {
             openglVer = major * 100 + minor * 10;
         } else {
             //use legacy opengl?
-            openglVer = 210;
+            openglVer = 120;
         }
+#else
+        if (sscanf(version_string, "OpenGL ES %d.%d", &major, &minor) == 2) {
+            if (major == 2) {
+                openglVer = 100;
+            } else if (major == 3) {
+                openglVer = 300;
+            }
+        } else {
+            //use legacy opengl?
+            openglVer = 100;
+        }
+#endif
     }
     
     IJK_GLES2_Renderer *renderer = NULL;
@@ -579,7 +596,9 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
 
     ijk_matrix proj_matrix = IJK_GLES2_defaultOrtho();
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, (GLfloat*)(&proj_matrix.e));                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
-
+    renderer->rgb_adjustment[0] = 1.0;
+    renderer->rgb_adjustment[1] = 1.0;
+    renderer->rgb_adjustment[2] = 1.0;
     IJK_GLES2_Renderer_TexCoords_reset(renderer);
     IJK_GLES2_Renderer_Vertices_reset(renderer);
     IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);

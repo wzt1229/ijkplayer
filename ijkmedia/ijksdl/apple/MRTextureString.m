@@ -182,18 +182,25 @@
 
 #pragma mark String
 
+- (CGSize)size
+{
+    //on retina screen auto return 2x size.
+    CGSize frameSize = [self.attributedString size]; // current string size
+    return CGSizeMake(ceilf(frameSize.width), ceilf(frameSize.height));
+}
+
 - (void)setAttributedString:(NSAttributedString *)attributedString
 {
     if (_attributedString != attributedString) {
-        
-        if (![[attributedString attributeKeys] containsObject:NSParagraphStyleAttributeName]) {
+        NSRange fullRange = NSMakeRange(0, [attributedString.string length]);
+        if (![attributedString attribute:NSParagraphStyleAttributeName atIndex:0 effectiveRange:&fullRange]) {
             NSMutableParagraphStyle *pghStyle = [[NSMutableParagraphStyle alloc] init];
             pghStyle.alignment = NSTextAlignmentCenter;
             pghStyle.lineSpacing = 10;
             //pghStyle.lineBreakMode = NSLineBreakByTruncatingTail;
             
             NSMutableAttributedString * myAttributedString = [[NSMutableAttributedString alloc] initWithAttributedString:attributedString];
-            [myAttributedString addAttribute:NSParagraphStyleAttributeName value:pghStyle range:NSMakeRange(0, [attributedString.string length])];
+            [myAttributedString addAttribute:NSParagraphStyleAttributeName value:pghStyle range:fullRange];
             _attributedString = myAttributedString;
         } else {
             _attributedString = attributedString;
@@ -249,13 +256,6 @@
     [self.attributedString drawWithRect:rect options:NSStringDrawingUsesLineFragmentOrigin context:ctx];
 //    不能左右居中
 //    [self.attributedString drawAtPoint:NSMakePoint(self.edgeInsets.left + originPoint.x, self.edgeInsets.top + originPoint.y)];
-}
-
-- (CGSize)size
-{
-    //on retina screen auto return 2x size.
-    CGSize frameSize = [self.attributedString size]; // current string size
-    return CGSizeMake(ceilf(frameSize.width), ceilf(frameSize.height));
 }
 
 - (NSImage *)image

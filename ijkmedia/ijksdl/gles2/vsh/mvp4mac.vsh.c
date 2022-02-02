@@ -26,6 +26,10 @@ void IJK_GLES2_getVertexShader_default(char *out,int ver)
     *out = '\0';
     
     sprintf(out, "#version %d\n",ver);
+
+#if TARGET_OS_IOS
+    strcat(out,"precision highp float;\n");
+#endif
     
     if (ver >= 330) {
         strcat(out, IJK_GLES_STRING(

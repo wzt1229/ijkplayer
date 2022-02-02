@@ -21,9 +21,59 @@
 
 #include "ijksdl/gles2/internal.h"
 
-//macOS use sampler2DRect,need texture dimensions
+//only macOS use sampler2DRect,need texture dimensions
 
+//for 420sp
+static const char apple_nv12_shader[] = IJK_GLES_STRING(
+    varying vec2 vv2_Texcoord;
+    uniform mat3 um3_ColorConversion;
+    uniform vec3 um3_rgbAdjustment;
+    
+    uniform sampler2DRect us2_Sampler0;
+    uniform sampler2DRect us2_Sampler1;
 #if TARGET_OS_OSX
+    uniform vec2 textureDimension0;
+    uniform vec2 textureDimension1;
+#endif
+    uniform int isSubtitle;
+    uniform int isFullRange;
+                                         
+    void main()
+    {
+        if (isSubtitle == 1) {
+#if TARGET_OS_OSX
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+#else
+            fragColor = texture2DRect(us2_Sampler0, vv2_Texcoord);
+#endif
+        } else {
+#if TARGET_OS_OSX
+            vec3 yuv;
+            vec3 rgb;
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
+            
+            yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
+            yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).rg - vec2(0.5, 0.5);
+#else
+            mediump vec3 yuv;
+            lowp vec3 rgb;
+            yuv.x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
+            yuv.yz = texture2DRect(us2_Sampler1, vv2_Texcoord).rg - vec2(0.5, 0.5);
+#endif
+            if (isFullRange == 1) {
+                yuv.x = yuv.x - (16.0 / 255.0);
+            }
+            
+            rgb = um3_ColorConversion * yuv;
+            
+            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
+
+            fragColor = vec4(rgb, 1.0);
+        }
+    }
+);
 
 //for bgrx texture
 static const char g_shader_rect_bgrx_1[] = IJK_GLES_STRING(
@@ -101,48 +151,6 @@ static const char g_shader_rect_xrgb_1[] = IJK_GLES_STRING(
             //bgra -> argb
             //argb -> bgra
             rgb = texture2DRect(us2_Sampler0, recTexCoord0).gra;
-            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-
-            fragColor = vec4(rgb, 1.0);
-        }
-    }
-);
-
-//for 420sp
-static const char g_shader_rect_2[] = IJK_GLES_STRING(
-    varying vec2 vv2_Texcoord;
-    uniform mat3 um3_ColorConversion;
-    uniform vec3 um3_rgbAdjustment;
-    
-    uniform sampler2DRect us2_Sampler0;
-    uniform sampler2DRect us2_Sampler1;
-    
-    uniform vec2 textureDimension0;
-    uniform vec2 textureDimension1;
-    
-    uniform int isSubtitle;
-    uniform int isFullRange;
-                                         
-    void main()
-    {
-        if (isSubtitle == 1) {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
-        } else {
-            vec3 yuv;
-            vec3 rgb;
-            
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
-            
-            yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
-            if (isFullRange == 1) {
-                yuv.x = yuv.x - (16.0 / 255.0);
-            }
-            yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).rg - vec2(0.5, 0.5);
-            
-            rgb = um3_ColorConversion * yuv;
-            
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
             fragColor = vec4(rgb, 1.0);
@@ -239,6 +247,13 @@ void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
 {
     *out = '\0';
     sprintf(out, "#version %d\n",ver);
+#if TARGET_OS_IOS
+    strcat(out, "#define texture2DRect texture2D\n");
+    strcat(out, "#define sampler2DRect sampler2D\n");
+    strcat(out, "#define fragColor gl_FragColor\n");
+    strcat(out,"precision highp float;\n");
+    strcat(out,"precision lowp sampler2D;\n");
+#else
     if (ver >= 330) {
         strcat(out, "#define varying in\n");
         strcat(out, "#define texture2DRect texture\n");
@@ -246,6 +261,7 @@ void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
     } else {
         strcat(out, "#define fragColor gl_FragColor\n");
     }
+#endif
     strcat(out, "\n");
     strcat(out, IJK_GLES_STRING(
                 vec3 rgb_adjust(vec3 rgb,vec3 rgbAdjustment) {
@@ -277,7 +293,7 @@ void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
             break;
         case YUV_2P_SHADER:
         {
-            buffer = g_shader_rect_2;
+            buffer = apple_nv12_shader;
         }
             break;
         case YUV_3P_SHADER:
@@ -304,31 +320,3 @@ void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
     
     strcat(out, buffer);
 }
-#else
-
-static const char g_shader[] = IJK_GLES_STRING(
-    precision highp float;
-    varying   highp vec2 vv2_Texcoord;
-    uniform         mat3 um3_ColorConversion;
-    uniform   lowp  sampler2D us2_SamplerX;
-    uniform   lowp  sampler2D us2_SamplerY;
-
-    void main()
-    {
-        mediump vec3 yuv;
-        lowp    vec3 rgb;
-
-        yuv.x  = (texture2D(us2_SamplerX,  vv2_Texcoord).r  - (16.0 / 255.0));
-        yuv.yz = (texture2D(us2_SamplerY,  vv2_Texcoord).rg - vec2(0.5, 0.5));
-        rgb = um3_ColorConversion * yuv;
-        fragColor = vec4(rgb, 1);
-    }
-);
-
-const char *IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type)
-{
-#warning todo
-    return "";
-}
-
-#endif

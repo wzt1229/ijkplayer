@@ -37,6 +37,9 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 @interface IJKSDLGLView()
 @property(atomic,strong) NSRecursiveLock *glActiveLock;
 @property(atomic) BOOL glActivePaused;
+@property(atomic) CVPixelBufferRef currentVideoPic;
+@property(atomic) CVPixelBufferRef currentSubtitle;
+
 @end
 
 @implementation IJKSDLGLView {
@@ -68,6 +71,14 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 @synthesize isThirdGLView              = _isThirdGLView;
 @synthesize scaleFactor                = _scaleFactor;
 @synthesize fps                        = _fps;
+// subtitle preference
+@synthesize subtitlePreference = _subtitlePreference;
+// rotate preference
+@synthesize rotatePreference = _rotatePreference;
+// color conversion perference
+@synthesize colorPreference = _colorPreference;
+// user defined display aspect ratio
+@synthesize darPreference = _darPreference;
 
 + (Class) layerClass
 {
@@ -82,8 +93,13 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         _shouldLockWhileBeingMovedToWindow = YES;
         self.glActiveLock = [[NSRecursiveLock alloc] init];
         _registeredNotifications = [[NSMutableArray alloc] init];
+        
+        self.subtitlePreference = (IJKSDLSubtitlePreference){25, 0xFFFFFF, 0.1};
+        self.rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
+        self.colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
+        
         [self registerApplicationObservers];
-
+        
         _didSetupGL = NO;
         if ([self isApplicationActive] == YES)
             [self setupGLOnce];
@@ -171,7 +187,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
     EAGLContext *prevContext = [EAGLContext currentContext];
     [EAGLContext setCurrentContext:_context];
-
     _didSetupGL = NO;
     if ([self setupEAGLContext:_context]) {
         NSLog(@"OK setup GL\n");
@@ -238,6 +253,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         _renderbuffer = 0;
     }
 
+    if (self.currentVideoPic) {
+        CVPixelBufferRelease(self.currentVideoPic);
+        self.currentVideoPic = NULL;
+    }
+    
+    if (self.currentSubtitle) {
+        CVPixelBufferRelease(self.currentSubtitle);
+        self.currentSubtitle = NULL;
+    }
+    
     glFinish();
 
     [EAGLContext setCurrentContext:prevContext];
@@ -292,7 +317,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
 
-        _renderer = IJK_GLES2_Renderer_create(overlay);
+        _renderer = IJK_GLES2_Renderer_create(overlay, 0);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
 
@@ -355,6 +380,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     [self unlockGLActive];
 }
 
+- (void)updateRenderSettings
+{
+    IJK_GLES2_Renderer_updateRotate(_renderer, self.rotatePreference.type, self.rotatePreference.degrees);
+    IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, self.subtitlePreference.bottomMargin);
+
+    IJK_GLES2_Renderer_updateColorConversion(_renderer, self.colorPreference.brightness, self.colorPreference.saturation,self.colorPreference.contrast);
+    
+    IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.num, self.darPreference.den);
+}
+
 // NOTE: overlay could be NULl
 - (void)displayInternal:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
 {
@@ -383,8 +418,42 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
     glViewport(0, 0, _backingWidth, _backingHeight);
 
-    if (!IJK_GLES2_Renderer_renderOverlay(_renderer, overlay))
-        ALOGE("[EGL] IJK_GLES2_render failed\n");
+    //for video
+
+    if (self.currentVideoPic) {
+        CVPixelBufferRelease(self.currentVideoPic);
+        self.currentVideoPic = NULL;
+    }
+    
+    CVPixelBufferRef videoPic = (CVPixelBufferRef)IJK_GLES2_Renderer_getVideoImage(_renderer, overlay);
+    if (videoPic) {
+        
+        [self updateRenderSettings];
+        if (!IJK_GLES2_Renderer_updateVetex(_renderer, overlay))
+            ALOGE("[GL] Renderer_updateVetex failed\n");
+        
+        self.currentVideoPic = CVPixelBufferRetain(videoPic);
+        
+        if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)videoPic))
+            ALOGE("[GL] Renderer_updateVetex failed\n");
+        
+        IJK_GLES2_Renderer_drawArrays();
+    }
+    
+    //for subtitle
+    if (self.currentSubtitle) {
+        CVPixelBufferRelease(self.currentSubtitle);
+        self.currentSubtitle = NULL;
+    }
+    
+    if (subtitle) {
+        self.currentSubtitle = CVPixelBufferRetain(subtitle);
+        
+        IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(subtitle), CVPixelBufferGetHeight(subtitle));
+        if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)subtitle))
+            ALOGE("[GL] GLES2 Render Subtitle failed\n");
+        IJK_GLES2_Renderer_drawArrays();
+    }
 
     glBindRenderbuffer(GL_RENDERBUFFER, _renderbuffer);
     [_context presentRenderbuffer:GL_RENDERBUFFER];

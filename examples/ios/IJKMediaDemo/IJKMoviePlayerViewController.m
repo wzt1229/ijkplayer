@@ -74,11 +74,11 @@
 //    [[UIApplication sharedApplication] setStatusBarOrientation:UIInterfaceOrientationLandscapeLeft animated:NO];
 
 #ifdef DEBUG
-    [IJKFFMoviePlayerController setLogReport:YES];
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
+    //[IJKFFMoviePlayerController setLogReport:YES];
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
 #else
     [IJKFFMoviePlayerController setLogReport:NO];
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
 #endif
 
     [IJKFFMoviePlayerController checkIfFFmpegVersionMatch:YES];
@@ -88,11 +88,8 @@
     
     BOOL isVideoToolBox = YES;
     if (isVideoToolBox) {
-//        [options setPlayerOptionValue:@"fcc-vtb-RGB24"         forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-vtb-ARGB"          forKey:@"overlay-format"];
-//        [options setPlayerOptionValue:@"fcc-vtb-BGRA"          forKey:@"overlay-format"];
         //default is NV12 for videotoolbox
-        [options setPlayerOptionValue:@"fcc-vtb-NV12"          forKey:@"overlay-format"];
+        [options setPlayerOptionValue:@"fcc-nv12"          forKey:@"overlay-format"];
         [options setPlayerOptionIntValue:1      forKey:@"videotoolbox"];
         [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
     } else {

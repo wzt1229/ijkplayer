@@ -35,26 +35,8 @@
     self.title = @"M3U8";
 
     NSMutableArray *sampleList = [[NSMutableArray alloc] init];
-
-    NSString *str =@"ffconcat version 1.0";
     
-    NSArray *urls = @[@"http://27.209.180.18/sohu/p2p/TGwgoEHUTGPUTCsRaf-MSk-8Sm59xLvmsfMwJCs-sSxN49rA/fhXdmQTJ?key=3yQMcAar-gluGEHRF81nQSJulGN6BFEhUBElQg..&q=bj0yJmE8mhiamA&rs=1&hash=NQ7EI4JQSWIXC2PAWT3WMT25CETKYX6Q&size=38154214&plat=ifox_mac&ch=tv&catcode=101100;101104;101107&uid=12B84742-2781-4C08-85D8-9C6EB21B03E9",
-      @"http://27.209.180.10/sohu/p2p/TGwgoExyTGQUTGhqtwxiS5Y5JSv8-CsTj5xUXSkFsAHN49rA/2MpD9PPE?key=ZgUITZn2FhP_a8IavIF_-chfZNxss-7VqMylNw..&q=bj0yJmE8mhiamA&rs=1&hash=V4KXOKN5CRJHOUOAZUUZWVHFTY6IEMFF&size=38203424&plat=ifox_mac&ch=tv&catcode=101100;101104;101107&uid=12B84742-2781-4C08-85D8-9C6EB21B03E9",
-      @"http://27.209.180.20/sohu/p2p/TGQgoGrgo6oGTm1YxSqhXAXak5HiaWhgqvhDsCXNaLQN49rA/XAACIwGV?key=Pi9V35dCRYQ-M5ER8cVseXiCGrbA7bNizJhE9A..&q=bj0yJmE8mhiamA&rs=1&hash=LSGJPPFGX3YTCEG3MY4NRQZPSSAIJ74F&size=38177980&plat=ifox_mac&ch=tv&catcode=101100;101104;101107&uid=12B84742-2781-4C08-85D8-9C6EB21B03E9",
-      @"http://27.209.180.14/sohu/p2p/TGogo6wATGwyqKVl05rGqS2ijwkWSCulqam6JauqawXoTlmyqr/f8P35O9x?key=8X6MTOLFxpwd7tJOIGIMvUXoDgbGELbAKAKLxQ..&q=bj0yJmE8mhiamA&rs=1&hash=G3ZP2BQUDB4AVJJPJA57GCQYQZLE4KP4&size=38143053&plat=ifox_mac&ch=tv&catcode=101100;101104;101107&uid=12B84742-2781-4C08-85D8-9C6EB21B03E9"
-                      ];
-    
-    for (NSString *url in urls) {
-        
-        str = [NSString stringWithFormat:@"%@\nhttp %@\nduration %.0f",str,url,300.0];
-        
-    }
-    
-    NSLog(@"分片视频数据：%@",str);
-    
-    [sampleList addObject:@[@"多段mp4",
-                            @"http://localhost:8080/ffmpeg-test/test.ffcat"]];
-    
+    [sampleList addObject:@[@"ad",@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
     
     [sampleList addObject:@[@"las url",
     @"{\"version\":\"1.0.0\",\"adaptationSet\":[{\"duration\":1000,\"id\":1,\"representation\":[{\"id\":1,\"codec\":\"avc1.64001e,mp4a.40.5\",\"url\":\"http://las-tech.org.cn/kwai/las-test_ld500d.flv\",\"backupUrl\":[],\"host\":\"las-tech.org.cn\",\"maxBitrate\":700,\"width\":640,\"height\":360,\"frameRate\":25,\"qualityType\":\"SMOOTH\",\"qualityTypeName\":\"流畅\",\"hidden\":false,\"disabledFromAdaptive\":false,\"defaultSelected\":false},{\"id\":2,\"codec\":\"avc1.64001f,mp4a.40.5\",\"url\":\"http://las-tech.org.cn/kwai/las-test_sd1000d.flv\",\"backupUrl\":[],\"host\":\"las-tech.org.cn\",\"maxBitrate\":1300,\"width\":960,\"height\":540,\"frameRate\":25,\"qualityType\":\"STANDARD\",\"qualityTypeName\":\"标清\",\"hidden\":false,\"disabledFromAdaptive\":false,\"defaultSelected\":false},{\"id\":3,\"codec\":\"avc1.64001f,mp4a.40.5\",\"url\":\"http://las-tech.org.cn/kwai/las-test.flv\",\"backupUrl\":[],\"host\":\"las-tech.org.cn\",\"maxBitrate\":2300,\"width\":1280,\"height\":720,\"frameRate\":30,\"qualityType\":\"HIGH\",\"qualityTypeName\":\"高清\",\"hidden\":false,\"disabledFromAdaptive\":false,\"defaultSelected\":true}]}]}"]]; 
