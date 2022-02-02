@@ -512,8 +512,8 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
     overlay->is_private   = 1;
 #else
     overlay->format       = overlay_format;
-#endif
     overlay->pixels       = opaque->pixels;
+#endif
     overlay->pitches      = opaque->pitches;
     overlay->w            = width;
     overlay->h            = height;

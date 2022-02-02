@@ -41,10 +41,12 @@ struct SDL_VoutOverlay {
     Uint32 ff_format;/**< FFmpeg AV_PIXEL_FORMAT ; when format is SDL_FCC__VTB the value is CVPixelFormatType*/
 #if USE_FF_VTB
     Uint32 cv_format;/**< when format is SDL_FCC__FFVTB the value is CVPixelFormatType*/
+#else
+    Uint8 **pixels; /**< Read-write */
 #endif
     int planes; /**< Read-only */
     Uint16 *pitches; /**< in bytes, Read-only */
-    Uint8 **pixels; /**< Read-write */
+    
     int is_private;
     int sar_num;
     int sar_den;

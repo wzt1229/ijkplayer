@@ -116,7 +116,9 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         } else if (ijk_overlay.format == SDL_FCC__FFVTB) {
             ijk_overlay.pixel_buffer = SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
         } else {
+#if ! USE_FF_VTB
             ijk_overlay.pixels = overlay->pixels;
+#endif
         }
 #else
         ijk_overlay.pixels = overlay->pixels;
