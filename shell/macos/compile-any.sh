@@ -19,6 +19,7 @@
 CMD=$1
 LIBS=$2
 ARCH=$3
+OPT=$4
 
 set -e
 
@@ -49,7 +50,7 @@ if [[ ! -z "$CMD" ]]; then
     do
         echo "===[$CMD $lib]===================="
         prepare_compile_env "$lib"
-        ./do-compile/any.sh "$CMD" "$ARCH"
+        ./do-compile/any.sh "$CMD" "$ARCH" "$OPT"
 
         if [[ $? -eq 0 ]];then
             echo "🎉  Congrats"

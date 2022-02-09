@@ -32,7 +32,7 @@ env_assert "XC_BUILD_SOURCE"
 env_assert "XC_BUILD_PREFIX"
 env_assert "XC_DEPLOYMENT_TARGET"
 
-echo "ARGV:$*"
+echo "FF_BUILD_OPT:$1"
 echo "===check env end==="
 
 FF_BUILD_OPT=$1
@@ -81,7 +81,7 @@ FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS -mmacosx-version-min=$XC_DEPLOYMENT_TARGET"
 FFMPEG_LDFLAGS="$FFMPEG_C_FLAGS"
 FFMPEG_DEP_LIBS=
 
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] check OpenSSL"
 
 # https://ffmpeg.org/doxygen/4.1/md_LICENSE.html
@@ -90,10 +90,10 @@ echo "[*] check OpenSSL"
 #--------------------
 # with openssl
 # use pkg-config fix ff4.0--ijk0.8.8--20210426--001 use openssl 1_1_1m occur can't find openssl error.
-if [[ -f "${XC_PRODUCT_ROOT}/openssl-$XC_ARCH/output/lib/pkgconfig/openssl.pc" ]]; then
+if [[ -f "${XC_PRODUCT_ROOT}/openssl-$XC_ARCH/lib/pkgconfig/openssl.pc" ]]; then
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-nonfree --enable-openssl"
    
-    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/openssl-$XC_ARCH/output/lib/pkgconfig"
+    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/openssl-$XC_ARCH/lib/pkgconfig"
    
     echo "[*] --enable-openssl"
 else
@@ -101,16 +101,16 @@ else
 fi
 echo "----------------------"
 
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] check x264"
 
 #--------------------
 # with x264
-if [[ -f "${XC_PRODUCT_ROOT}/x264-$XC_ARCH/output/lib/pkgconfig/x264.pc" ]]; then
+if [[ -f "${XC_PRODUCT_ROOT}/x264-$XC_ARCH/lib/pkgconfig/x264.pc" ]]; then
     # libx264 is gpl and --enable-gpl is not specified.
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-gpl --enable-libx264"
     
-    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/x264-$XC_ARCH/output/lib/pkgconfig"
+    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/x264-$XC_ARCH/lib/pkgconfig"
 
     echo "[*] --enable-libx264"
 else
@@ -118,16 +118,16 @@ else
 fi
 echo "----------------------"
 
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] check fdk-aac"
 
 #--------------------
 # with fdk-aac
-if [[ -f "${XC_PRODUCT_ROOT}/fdk-aac-$XC_ARCH/output/lib/pkgconfig/fdk-aac.pc" ]]; then
+if [[ -f "${XC_PRODUCT_ROOT}/fdk-aac-$XC_ARCH/lib/pkgconfig/fdk-aac.pc" ]]; then
     # libx264 is gpl and --enable-gpl is not specified.
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-nonfree --enable-libfdk-aac"
     
-    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/fdk-aac-$XC_ARCH/output/lib/pkgconfig"
+    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/fdk-aac-$XC_ARCH/lib/pkgconfig"
 
     echo "[*] --enable-libfdk-aac"
 else
@@ -135,17 +135,17 @@ else
 fi
 echo "----------------------"
 
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] check mp3lame"
 
 #--------------------
 # with lame
-if [[ -f "${XC_PRODUCT_ROOT}/lame-$XC_ARCH/output/lib/libmp3lame.a" ]]; then
+if [[ -f "${XC_PRODUCT_ROOT}/lame-$XC_ARCH/lib/libmp3lame.a" ]]; then
     # libmp3lame is gpl and --enable-gpl is not specified.
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-gpl --enable-libmp3lame"
     
-    FDKAAC_C_FLAGS="-I${XC_PRODUCT_ROOT}/lame-$XC_ARCH/output/include"
-    FDKAAC_LD_FLAGS="-L${XC_PRODUCT_ROOT}/lame-$XC_ARCH/output/lib -lmp3lame"
+    FDKAAC_C_FLAGS="-I${XC_PRODUCT_ROOT}/lame-$XC_ARCH/include"
+    FDKAAC_LD_FLAGS="-L${XC_PRODUCT_ROOT}/lame-$XC_ARCH/lib -lmp3lame"
 
     FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS $FDKAAC_C_FLAGS"
     FFMPEG_DEP_LIBS="$FFMPEG_DEP_LIBS $FDKAAC_LD_FLAGS"
@@ -155,16 +155,16 @@ else
 fi
 echo "----------------------"
 
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] check opus"
 
 #--------------------
 # with opus
-if [[ -f "${XC_PRODUCT_ROOT}/opus-$XC_ARCH/output/lib/pkgconfig/opus.pc" ]]; then
+if [[ -f "${XC_PRODUCT_ROOT}/opus-$XC_ARCH/lib/pkgconfig/opus.pc" ]]; then
     
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libopus"
     
-    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/opus-$XC_ARCH/output/lib/pkgconfig"
+    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/opus-$XC_ARCH/lib/pkgconfig"
 
     echo "[*] --enable-libopus"
 else
@@ -181,7 +181,7 @@ FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-ffmpeg --enable-ffprobe"
 CC="$XCRUN_CC -arch $XC_ARCH"
 
 #--------------------
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] configure"
 echo "----------------------"
 
@@ -214,7 +214,7 @@ else
 fi
 
 #--------------------
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] compile $LIB_NAME"
 echo "--------------------"
 

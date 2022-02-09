@@ -44,7 +44,7 @@ echo
 
 cd "$XC_BUILD_SOURCE"
 
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] configurate $LIB_NAME"
 echo "--------------------"
 
@@ -52,7 +52,7 @@ echo "--------------------"
 make -f linux.mk clean
 
 #--------------------
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] compile libyuv"
 echo "--------------------"
 

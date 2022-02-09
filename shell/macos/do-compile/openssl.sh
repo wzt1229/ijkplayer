@@ -53,7 +53,7 @@ export CFLAG="-arch $XC_ARCH -mmacosx-version-min=$XC_DEPLOYMENT_TARGET -isysroo
 export CXXFLAG="$CFLAG"
 
 #--------------------
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] configurate $LIB_NAME"
 echo "--------------------"
 
@@ -72,7 +72,7 @@ else
 fi
 
 #--------------------
-echo "\n--------------------"
+echo "----------------------"
 echo "[*] compile $LIB_NAME"
 echo "--------------------"
 set +e
