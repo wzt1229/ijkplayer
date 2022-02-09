@@ -27,51 +27,51 @@ env_assert "XC_BUILD_PREFIX"
 env_assert "XC_BUILD_NAME"
 env_assert "XC_DEPLOYMENT_TARGET"
 env_assert "XCRUN_SDK_PATH"
-env_assert "XC_OTHER_CFLAGS"
+env_assert "XCRUN_CC"
 echo "ARGV:$*"
 echo "===check env end==="
 
 # prepare build config
-CFG_FLAGS="--prefix=$XC_BUILD_PREFIX"
-CFG_FLAGS="$CFG_FLAGS --disable-doc --disable-dependency-tracking --disable-shared --enable-silent-rules --disable-extra-programs"
+OPUS_CFG_FLAGS="--prefix=$XC_BUILD_PREFIX --disable-doc --disable-dependency-tracking --disable-shared --enable-silent-rules --disable-extra-programs --silent"
+CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS"
 
-CFLAG="-arch $XC_ARCH -mmacosx-version-min=$XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS"
-CC="$XCRUN_CC -arch $XC_ARCH"
-
-# cross;
-if [[ $(uname -m) != "$XC_ARCH" ]];then
-    echo "[*] cross compile, on $(uname -m) compile $XC_ARCH."
-    HOST="--host=$XC_ARCH-apple-darwin"
-    CFLAG="$CFLAG -isysroot $XCRUN_SDK_PATH"
-    CFG_FLAGS="$CFG_FLAGS --with-sysroot=$XCRUN_SDK_PATH"
+# for cross compile
+if [[ $(uname -m) != "$XC_ARCH" || "$XC_FORCE_CROSS" ]];then
+    echo "[*] cross compile, on $(uname -m) compile $XC_PLAT $XC_ARCH."
+    # https://www.gnu.org/software/automake/manual/html_node/Cross_002dCompilation.html
+    CFLAGS="$CFLAGS -isysroot $XCRUN_SDK_PATH"
+    OPUS_CFG_FLAGS="$OPUS_CFG_FLAGS --host=$XC_ARCH-apple-darwin --with-sysroot=$XCRUN_SDK_PATH"
 fi
 
-#--------------------
 echo "----------------------"
 echo "[*] configurate $LIB_NAME"
-echo "--------------------"
+echo "----------------------"
 
 cd $XC_BUILD_SOURCE
 
-echo "auto generate configure"
+if [[ -f 'configure' ]]; then
+   echo "reuse configure"
+else
+   echo "auto generate configure"
+   ./autogen.sh 1>/dev/null
+fi
 
-./autogen.sh >/dev/null
 
 echo 
-echo "CC: $CC"
-echo "CFLAG: $CFLAG"
-echo "CFG: $CFG_FLAGS"
+echo "CC: $XCRUN_CC"
+echo "OPUS_CFG_FLAGS: $OPUS_CFG_FLAGS"
+echo "CFLAGS: $CFLAGS"
 echo 
 
-./configure $CFG_FLAGS \
-   $HOST \
-   CC="$CC" \
+./configure $OPUS_CFG_FLAGS \
+   CC="$XCRUN_CC" \
    CFLAGS="$CFLAGS" \
-   LDFLAGS="$CFLAGS"
+   LDFLAGS="$CFLAGS" \
+   1>/dev/null
 
-#--------------------
+#----------------------
 echo "----------------------"
 echo "[*] compile $LIB_NAME"
-echo "--------------------"
+echo "----------------------"
 
-make install -j8 /dev/null
+make install -j8 1>/dev/null

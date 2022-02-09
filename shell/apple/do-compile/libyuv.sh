@@ -27,18 +27,19 @@ env_assert "XC_BUILD_NAME"
 env_assert "XC_DEPLOYMENT_TARGET"
 env_assert "XCRUN_SDK_PATH"
 env_assert "XC_BUILD_PREFIX"
-env_assert "XC_OTHER_CFLAGS"
 echo "ARGV:$*"
 echo "===check env end==="
 
-CFLAGS="-arch $XC_ARCH -mmacosx-version-min=$XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS -fomit-frame-pointer -Iinclude/"
-# cross;
-if [[ $(uname -m) != "$XC_ARCH" ]];then
-    echo "[*] cross compile, on $(uname -m) compile $XC_ARCH."
+CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS -fomit-frame-pointer -Iinclude/"
+
+# for cross compile
+if [[ $(uname -m) != "$XC_ARCH" || "$XC_FORCE_CROSS" ]];then
+    echo "[*] cross compile, on $(uname -m) compile $XC_PLAT $XC_ARCH."
+    # https://www.gnu.org/software/automake/manual/html_node/Cross_002dCompilation.html
     CFLAGS="$CFLAGS -isysroot $XCRUN_SDK_PATH"
 fi
 
-echo 
+echo "CC: $XCRUN_CC"
 echo "CXX: $XCRUN_CXX"
 echo "CFLAGS: $CFLAGS"
 echo 
@@ -47,17 +48,16 @@ cd "$XC_BUILD_SOURCE"
 
 echo "----------------------"
 echo "[*] configurate $LIB_NAME"
-echo "--------------------"
+echo "----------------------"
 
+make -f linux.mk clean >/dev/null
 
-make -f linux.mk clean
-
-#--------------------
+#----------------------
 echo "----------------------"
 echo "[*] compile libyuv"
-echo "--------------------"
+echo "----------------------"
 
-make -f linux.mk CC="$XCRUN_CC" CXX="$XCRUN_CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" >/dev/null
+make -f linux.mk CC="$XCRUN_CC" CXX="$XCRUN_CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" 1>/dev/null
 
 mkdir -p "${XC_BUILD_PREFIX}/lib"
 cp libyuv.a "${XC_BUILD_PREFIX}/lib"
