@@ -3499,6 +3499,7 @@ static int read_thread(void *arg)
     if (err < 0) {
         print_error(is->filename, err);
         ret = -1;
+        av_log(NULL, AV_LOG_ERROR, "open input failed:%d\n", err);
         goto fail;
     }
     ffp_notify_msg1(ffp, FFP_MSG_OPEN_INPUT);
@@ -4301,8 +4302,6 @@ void ffp_global_init()
 {
     if (g_ffmpeg_global_inited)
         return;
-
-    ALOGD("ijkmediaplayer version : %s", ijkmp_version());
 #if CONFIG_AVDEVICE
     avdevice_register_all();
 #endif
@@ -4399,9 +4398,6 @@ static const char *ijk_version_info()
 
 FFPlayer *ffp_create()
 {
-    av_log(NULL, AV_LOG_INFO, "av_version_info: %s\n", av_version_info());
-    av_log(NULL, AV_LOG_INFO, "ijk_version_info: %s\n", ijk_version_info());
-
     FFPlayer* ffp = (FFPlayer*) av_mallocz(sizeof(FFPlayer));
     if (!ffp)
         return NULL;
