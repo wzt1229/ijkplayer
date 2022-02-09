@@ -55,7 +55,8 @@ function init_env () {
     #common xcode configuration
     export XC_TAGET_OS="darwin"
     export DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
-
+    export XC_OTHER_CFLAGS='-fembed-bitcode -Os'
+    
     # macosx
     export XCRUN_SDK=`echo $XCRUN_PLATFORM | tr '[:upper:]' '[:lower:]'`
     # xcrun -sdk macosx clang 

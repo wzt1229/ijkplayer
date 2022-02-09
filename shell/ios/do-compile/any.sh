@@ -153,6 +153,7 @@ function main() {
         do
             init_env $arch
             do_compile $arch "$opt"
+            echo
         done
 
         do_lipo_all "$MY_TARGET"

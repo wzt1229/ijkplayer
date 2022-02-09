@@ -31,6 +31,7 @@ env_assert "XC_BUILD_PREFIX"
 env_assert "XC_BUILD_NAME"
 env_assert "XC_DEPLOYMENT_TARGET"
 env_assert "XCRUN_SDK_PATH"
+env_assert "XC_OTHER_CFLAGS"
 echo "ARGV:$*"
 echo "===check env end==="
 
@@ -46,9 +47,7 @@ else
     exit 1
 fi
 
-export CC="$XCRUN_CC"
-export CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET -isysroot $XCRUN_SDK_PATH"
-export CXXFLAG="$CFLAGS"
+CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET -isysroot $XCRUN_SDK_PATH $XC_OTHER_CFLAGS"
 
 echo "[*] cross compile, on $(uname -m) compile $XC_ARCH."
 #----------------------
@@ -61,11 +60,14 @@ if [ -f "./Makefile" ]; then
     echo 'reuse configure'
 else
     echo 
-    echo "CC: $CC"
+    echo "CC: $XCRUN_CC"
     echo "CFLAGS: $CFLAGS"
     echo "Openssl CFG: $OPENSSL_CFG_FLAGS"
     echo 
     ./Configure \
+        CC="$XCRUN_CC" \
+        CFLAGS="$CFLAGS" \
+        CXXFLAG="$CFLAGS" \
         $OPENSSL_CFG_FLAGS
     make clean 1>/dev/null
 fi

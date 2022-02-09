@@ -27,10 +27,11 @@ env_assert "XC_BUILD_NAME"
 env_assert "XC_DEPLOYMENT_TARGET"
 env_assert "XCRUN_SDK_PATH"
 env_assert "XC_BUILD_PREFIX"
+env_assert "XC_OTHER_CFLAGS"
 echo "ARGV:$*"
 echo "===check env end==="
 
-CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET -Os -fomit-frame-pointer -Iinclude/"
+CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS -fomit-frame-pointer -Iinclude/"
 
 # cross always;
 echo "[*] cross compile, on $(uname -m) compile $XC_ARCH."

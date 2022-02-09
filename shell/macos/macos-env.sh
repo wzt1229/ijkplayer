@@ -60,7 +60,7 @@ export XCRUN_PLATFORM='MacOSX'
 export XC_DEPLOYMENT_TARGET='10.11'
 export MACOSX_DEPLOYMENT_TARGET=$XC_DEPLOYMENT_TARGET
 export DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
-
+export XC_OTHER_CFLAGS='-Os'
 # macosx
 export XCRUN_SDK=`echo $XCRUN_PLATFORM | tr '[:upper:]' '[:lower:]'`
 # xcrun -sdk macosx clang 

@@ -31,7 +31,7 @@ env_assert "XC_BUILD_NAME"
 env_assert "XC_BUILD_SOURCE"
 env_assert "XC_BUILD_PREFIX"
 env_assert "XC_DEPLOYMENT_TARGET"
-
+env_assert "XC_OTHER_CFLAGS"
 echo "FF_BUILD_OPT:$1"
 echo "===check env end==="
 
@@ -76,7 +76,7 @@ fi
 # FFMPEG_C_FLAGS
 FFMPEG_C_FLAGS=
 FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS -fno-stack-check -arch $XC_ARCH"
-FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS -mmacosx-version-min=$XC_DEPLOYMENT_TARGET"
+FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS -mmacosx-version-min=$XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS"
 
 FFMPEG_LDFLAGS="$FFMPEG_C_FLAGS"
 FFMPEG_DEP_LIBS=

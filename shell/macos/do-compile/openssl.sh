@@ -31,6 +31,7 @@ env_assert "XC_BUILD_PREFIX"
 env_assert "XC_BUILD_NAME"
 env_assert "XC_DEPLOYMENT_TARGET"
 env_assert "XCRUN_SDK_PATH"
+env_assert "XC_OTHER_CFLAGS"
 echo "ARGV:$*"
 echo "===check env end==="
 
@@ -49,7 +50,7 @@ fi
 OPENSSL_CFG_FLAGS="$OPENSSL_CFG_FLAGS no-shared no-hw no-engine no-asm"
 
 export CC="$XCRUN_CC"
-export CFLAG="-arch $XC_ARCH -mmacosx-version-min=$XC_DEPLOYMENT_TARGET -isysroot $XCRUN_SDK_PATH"
+export CFLAG="-arch $XC_ARCH -mmacosx-version-min=$XC_DEPLOYMENT_TARGET -isysroot $XCRUN_SDK_PATH $XC_OTHER_CFLAGS"
 export CXXFLAG="$CFLAG"
 
 #--------------------
@@ -67,8 +68,11 @@ else
     echo "CFG: $OPENSSL_CFG_FLAGS"
     echo 
     ./Configure \
+        CC="$XCRUN_CC" \
+        CFLAGS="$CFLAGS" \
+        CXXFLAG="$CFLAGS" \
         $OPENSSL_CFG_FLAGS
-    make clean
+    make clean 1>/dev/null
 fi
 
 #--------------------
@@ -76,5 +80,5 @@ echo "----------------------"
 echo "[*] compile $LIB_NAME"
 echo "--------------------"
 set +e
-make
+make 1>/dev/null
 make install_sw

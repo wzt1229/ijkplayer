@@ -27,14 +27,15 @@ env_assert "XC_BUILD_PREFIX"
 env_assert "XC_BUILD_NAME"
 env_assert "XC_DEPLOYMENT_TARGET"
 env_assert "XCRUN_SDK_PATH"
+env_assert "XC_OTHER_CFLAGS"
 echo "ARGV:$*"
 echo "===check env end==="
 
 # prepare build config
 CFG_FLAGS="--prefix=$XC_BUILD_PREFIX"
-CFG_FLAGS="$CFG_FLAGS --disable-doc --disable-dependency-tracking --disable-shared"
+CFG_FLAGS="$CFG_FLAGS --disable-doc --disable-dependency-tracking --disable-shared --enable-silent-rules --disable-extra-programs"
 
-CFLAG="-arch $XC_ARCH -mmacosx-version-min=$XC_DEPLOYMENT_TARGET"
+CFLAG="-arch $XC_ARCH -mmacosx-version-min=$XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS"
 CC="$XCRUN_CC -arch $XC_ARCH"
 
 # cross;

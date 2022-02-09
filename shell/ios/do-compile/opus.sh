@@ -27,6 +27,7 @@ env_assert "XC_BUILD_PREFIX"
 env_assert "XC_BUILD_NAME"
 env_assert "XC_DEPLOYMENT_TARGET"
 env_assert "XCRUN_SDK_PATH"
+env_assert "XC_OTHER_CFLAGS"
 echo "ARGV:$*"
 echo "===check env end==="
 
@@ -34,11 +35,11 @@ echo "===check env end==="
 echo "[*] cross compile, on $(uname -m) compile $XC_ARCH."
 
 # prepare build config
-OPUS_CFG_FLAGS="--prefix=$XC_BUILD_PREFIX --disable-doc --disable-dependency-tracking --disable-shared"
+OPUS_CFG_FLAGS="--prefix=$XC_BUILD_PREFIX --disable-doc --disable-dependency-tracking --disable-shared --enable-silent-rules --disable-extra-programs"
 
 CC="$XCRUN_CC"
 HOST="--host=$XC_ARCH-apple-darwin"
-CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET  -isysroot $XCRUN_SDK_PATH"
+CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET -isysroot $XCRUN_SDK_PATH $XC_OTHER_CFLAGS"
 
 OPUS_CFG_FLAGS="$OPUS_CFG_FLAGS --with-sysroot=$XCRUN_SDK_PATH"
 
