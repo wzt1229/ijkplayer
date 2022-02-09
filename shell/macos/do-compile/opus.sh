@@ -54,7 +54,7 @@ cd $XC_BUILD_SOURCE
 
 echo "auto generate configure"
 
-./autogen.sh
+./autogen.sh >/dev/null
 
 echo 
 echo "CC: $CC"
@@ -73,4 +73,4 @@ echo "----------------------"
 echo "[*] compile $LIB_NAME"
 echo "--------------------"
 
-make install -j4
+make install -j8 /dev/null

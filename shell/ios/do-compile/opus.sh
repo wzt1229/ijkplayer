@@ -70,4 +70,4 @@ echo "----------------------"
 echo "[*] compile $LIB_NAME"
 echo "----------------------"
 
-make install -j4 1>/dev/null
+make install -j8 1>/dev/null

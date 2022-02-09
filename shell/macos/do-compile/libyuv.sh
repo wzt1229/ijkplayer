@@ -56,7 +56,7 @@ echo "----------------------"
 echo "[*] compile libyuv"
 echo "--------------------"
 
-make -f linux.mk CXX="$XCRUN_CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS"
+make -f linux.mk CXX="$XCRUN_CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" >/dev/null
 
 mkdir -p "${XC_BUILD_PREFIX}/lib"
 cp libyuv.a "${XC_BUILD_PREFIX}/lib"

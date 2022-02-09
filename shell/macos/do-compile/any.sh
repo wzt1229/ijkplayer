@@ -120,7 +120,7 @@ function do_clean()
 {
     export_arch_env $1
     cd $XC_BUILD_SOURCE && git clean -xdf && cd - >/dev/null
-    rm -rf $XC_BUILD_PREFIX
+    rm -rf $XC_BUILD_PREFIX >/dev/null
 }
 
 function main() {

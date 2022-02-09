@@ -210,7 +210,7 @@ else
         --extra-cflags="$FFMPEG_C_FLAGS" \
         --extra-cxxflags="$FFMPEG_C_FLAGS" \
         --extra-ldflags="$FFMPEG_LDFLAGS $FFMPEG_DEP_LIBS"
-    make clean
+    make clean 1>/dev/null
 fi
 
 #--------------------
@@ -219,6 +219,6 @@ echo "[*] compile $LIB_NAME"
 echo "--------------------"
 
 cp config.* $XC_BUILD_PREFIX
-make install -j8
+make install -j8 1>/dev/null
 mkdir -p $XC_BUILD_PREFIX/include/libffmpeg
 cp -f config.h $XC_BUILD_PREFIX/include/libffmpeg/config.h
