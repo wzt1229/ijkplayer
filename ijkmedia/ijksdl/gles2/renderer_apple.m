@@ -202,6 +202,8 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
     }
     
     upload_texture_use_IOSurface(pixel_buffer, renderer);
+    
+    CVPixelBufferRelease(pixel_buffer);
     return GL_TRUE;
 }
 
@@ -259,7 +261,6 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
     
     CVPixelBufferRef cvPixelRef = (CVPixelBufferRef)subtitle;
     CVPixelBufferRetain(cvPixelRef);
-        
     GLboolean ok = upload_texture_use_IOSurface(cvPixelRef, renderer);
     CVPixelBufferRelease(cvPixelRef);
     
