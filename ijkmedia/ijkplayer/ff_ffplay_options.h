@@ -212,9 +212,10 @@ static const AVOption ffp_context_options[] = {
         OPTION_OFFSET(ijkmeta_delay_init),      OPTION_INT(0, 0, 1) },
     { "render-wait-start",          "render wait start",
         OPTION_OFFSET(render_wait_start),      OPTION_INT(0, 0, 1) },
+#if ! IJK_IO_OFF
     { "is-manifest",          "is manifest string",
       OPTION_OFFSET(is_manifest),      OPTION_INT(0, 0, 1) },
-
+#endif
     { NULL }
 };
 

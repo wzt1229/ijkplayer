@@ -35,7 +35,9 @@
 #import "IJKMediaModule.h"
 #import "IJKNotificationManager.h"
 #import "NSString+IJKMedia.h"
+#if ! IJK_IO_OFF
 #import "ijkioapplication.h"
+#endif
 #include "string.h"
 #import "IJKSDLGLView.h"
 
@@ -73,8 +75,10 @@ static const char *kIJKFFRequiredFFmpegVersion = "ff4.0--ijk0.8.8--20210426--001
     BOOL _isVideoToolboxOpen;
     BOOL _playingBeforeInterruption;
 
+#if ! IJK_IO_OFF
     AVAppAsyncStatistic _asyncStat;
     IjkIOAppCacheStatistic _cacheStat;
+#endif
     NSTimer *_hudTimer;
 #if TARGET_OS_IOS
     IJKNotificationManager *_notificationManager;
@@ -181,8 +185,9 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 - (void)_initWithOptions:(IJKFFOptions *)options glView:(GLView <IJKSDLGLViewProtocol> *)glView
 {
     ijkmp_global_init();
+#if ! IJK_IO_OFF
     ijkmp_global_set_inject_callback(ijkff_inject_callback);
-
+#endif
     [IJKFFMoviePlayerController checkIfFFmpegVersionMatch:NO];
 
     if (options == nil)
@@ -194,8 +199,10 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     // init fields
     _scalingMode = IJKMPMovieScalingModeAspectFit;
     _shouldAutoplay = YES;
+#if ! IJK_IO_OFF
     memset(&_asyncStat, 0, sizeof(_asyncStat));
     memset(&_cacheStat, 0, sizeof(_cacheStat));
+#endif
     _monitor = [[IJKFFMonitor alloc] init];
 
     // init player
@@ -205,8 +212,10 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     weakHolder.object = self;
 
     ijkmp_set_weak_thiz(_mediaPlayer, (__bridge_retained void *) self);
+#if ! IJK_IO_OFF
     ijkmp_set_inject_opaque(_mediaPlayer, (__bridge_retained void *) weakHolder);
     ijkmp_set_ijkio_inject_opaque(_mediaPlayer, (__bridge_retained void *)weakHolder);
+#endif
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "start-on-prepared", _shouldAutoplay ? 1 : 0);
 
     _view = _glView = glView;
@@ -489,8 +498,8 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     if (0 == strcmp(actualVersion, expectVersion)) {
         return YES;
     } else {
-        NSString *message = [NSString stringWithFormat:@"actual: %s\n expect: %s\n", actualVersion, expectVersion];
-        NSLog(@"\n!!!!!!!!!!\n%@\n!!!!!!!!!!\n", message);
+        NSString *message = [NSString stringWithFormat:@"actual: %s\nexpect: %s\n", actualVersion, expectVersion];
+        NSLog(@"\n!!!!!!!!!!\n%@!!!!!!!!!!\n", message);
 #if TARGET_OS_IOS
         if (showAlert) {
             UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Unexpected FFmpeg version"
@@ -565,9 +574,11 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     _liveOpenDelegate       = nil;
     _nativeInvokeDelegate   = nil;
 
+#if ! IJK_IO_OFF
     __unused id weakPlayer = (__bridge_transfer IJKFFMoviePlayerController*)ijkmp_set_weak_thiz(_mediaPlayer, NULL);
     __unused id weakHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_inject_opaque(_mediaPlayer, NULL);
     __unused id weakijkHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_ijkio_inject_opaque(_mediaPlayer, NULL);
+#endif
     ijkmp_dec_ref_p(&_mediaPlayer);
 
     [self didShutdown];
@@ -666,7 +677,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
         return 0.0f;
 
     NSTimeInterval demux_cache = ((NSTimeInterval)ijkmp_get_playable_duration(_mediaPlayer)) / 1000;
-
+#if ! IJK_IO_OFF
     int64_t buf_forwards = _asyncStat.buf_forwards;
     int64_t bit_rate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
 
@@ -674,7 +685,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
         NSTimeInterval io_cache = ((float)buf_forwards) * 8 / bit_rate;
         demux_cache += io_cache;
     }
-
+#endif
     return demux_cache;
 }
 
@@ -829,6 +840,7 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     [self setHudValue:[NSString stringWithFormat:@"%.3f %.3f", avdelay, -avdiff] forKey:@"delay"];
 
     int64_t bitRate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
+#if ! IJK_IO_OFF
     [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
                          formatedSize(_cacheStat.cache_file_forwards),
                           formatedDurationBytesAndBitrate(_cacheStat.cache_file_forwards, bitRate)] forKey:@"cache-forwards"];
@@ -843,6 +855,7 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
                           formatedSize(_asyncStat.buf_forwards),
                           formatedDurationBytesAndBitrate(_asyncStat.buf_forwards, bitRate)]
                   forKey:@"async-forward"];
+#endif
 
     int64_t tcpSpeed = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
     [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
@@ -1352,6 +1365,8 @@ static int media_player_msg_loop(void* arg)
     }
 }
 
+#if ! IJK_IO_OFF
+
 #pragma mark av_format_control_message
 
 static int onInjectIOControl(IJKFFMoviePlayerController *mpc, id<IJKMediaUrlOpenDelegate> delegate, int type, void *data, size_t data_size)
@@ -1579,6 +1594,7 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
     }
 }
 
+#endif
 #pragma mark Airplay
 
 -(BOOL)allowsMediaAirPlay

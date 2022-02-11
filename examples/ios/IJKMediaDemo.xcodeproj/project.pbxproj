@@ -235,7 +235,7 @@
 				ORGANIZATIONNAME = bilibili;
 				TargetAttributes = {
 					E6903EFB17EAF70200CFD954 = {
-						DevelopmentTeam = KCE7BVJLX3;
+						DevelopmentTeam = 96C96H28CU;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -428,13 +428,13 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = KCE7BVJLX3;
+				DEVELOPMENT_TEAM = 96C96H28CU;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "IJKMediaDemo/IJKMediaDemo-Prefix.pch";
 				INFOPLIST_FILE = "IJKMediaDemo/IJKMediaDemo-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = tv.danmaku.IJKMediaDemo.xql;
+				PRODUCT_BUNDLE_IDENTIFIER = tv.danmaku.IJKMediaDemo.xql2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -452,13 +452,13 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = KCE7BVJLX3;
+				DEVELOPMENT_TEAM = 96C96H28CU;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "IJKMediaDemo/IJKMediaDemo-Prefix.pch";
 				INFOPLIST_FILE = "IJKMediaDemo/IJKMediaDemo-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = tv.danmaku.IJKMediaDemo.xql;
+				PRODUCT_BUNDLE_IDENTIFIER = tv.danmaku.IJKMediaDemo.xql2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";

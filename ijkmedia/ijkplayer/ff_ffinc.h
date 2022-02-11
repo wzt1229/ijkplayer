@@ -32,7 +32,9 @@
 #include "libavformat/avformat.h"
 #include "libavcodec/avfft.h"
 #include "libswscale/swscale.h"
+#if ! IJK_IO_OFF
 #include "libavutil/application.h"
+#endif
 #include "libavutil/base64.h"
 #include "libavutil/error.h"
 #include "libavutil/opt.h"

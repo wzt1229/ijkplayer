@@ -729,9 +729,10 @@ typedef struct FFPlayer {
     FFStatistic         stat;
     FFDemuxCacheControl dcc;
 
+#if ! IJK_IO_OFF
     AVApplicationContext *app_ctx;
     IjkIOManagerContext *ijkio_manager_ctx;
-
+#endif
     int enable_accurate_seek;
     int accurate_seek_timeout;
     int mediacodec_sync;
@@ -743,7 +744,9 @@ typedef struct FFPlayer {
     char *mediacodec_default_name;
     int ijkmeta_delay_init;
     int render_wait_start;
+#if ! IJK_IO_OFF
     int is_manifest;
+#endif
     LasPlayerStatistic las_player_statistic;
 } FFPlayer;
 
@@ -857,8 +860,9 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->mediacodec_default_name        = NULL; // option
     ffp->ijkmeta_delay_init             = 0; // option
     ffp->render_wait_start              = 0;
+#if ! IJK_IO_OFF
     ffp->is_manifest                    = 0;
-
+#endif
     ijkmeta_reset(ffp->meta);
 
     SDL_SpeedSamplerReset(&ffp->vfps_sampler);
@@ -871,10 +875,10 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->pf_playback_rate_changed       = 0;
     ffp->pf_playback_volume             = 1.0f;
     ffp->pf_playback_volume_changed     = 0;
-
+#if ! IJK_IO_OFF
     av_application_closep(&ffp->app_ctx);
     ijkio_manager_destroyp(&ffp->ijkio_manager_ctx);
-
+#endif
     msg_queue_flush(&ffp->msg_queue);
 
     ffp->inject_opaque = NULL;
