@@ -855,12 +855,12 @@ int videotoolbox_sync_decode_frame(Ijk_VideoToolBox_Opaque* context)
         }
 
         if (!d->packet_pending || d->queue->serial != d->pkt_serial) {
+            int old_serial;
             do {
                 if (d->queue->nb_packets == 0)
                     SDL_CondSignal(d->empty_queue_cond);
                 ffp_video_statistic_l(ffp);
-                
-                int old_serial = d->pkt_serial;
+                old_serial = d->pkt_serial;
                 if (ffp_packet_queue_get_or_buffering(ffp, d->queue, d->pkt, &d->pkt_serial, &d->finished) < 0)
                     return -1;
                 if (old_serial != d->pkt_serial) {
@@ -871,17 +871,17 @@ int videotoolbox_sync_decode_frame(Ijk_VideoToolBox_Opaque* context)
                     ALOGI("flushed last keyframe pts %lld \n",d->pkt->pts);
                     d->next_pts = d->start_pts;
                     d->next_pts_tb = d->start_pts_tb;
+                    av_packet_unref(d->pkt);
                 }
-                if (d->queue->serial == d->pkt_serial)
-                    break;
-                av_packet_unref(d->pkt);
-            } while (1);
+            } while (old_serial != d->pkt_serial || d->queue->serial != d->pkt_serial);
             d->packet_pending = 1;
         }
 
         ret = decode_video(context, d->avctx, d->pkt, &got_frame);
+        
         if (ret < 0) {
             d->packet_pending = 0;
+            av_packet_unref(d->pkt);
         } else {
             d->pkt->pts = AV_NOPTS_VALUE;
             if (d->pkt->data) {
@@ -891,10 +891,12 @@ int videotoolbox_sync_decode_frame(Ijk_VideoToolBox_Opaque* context)
                 d->pkt->size -= ret;
                 if (d->pkt->size <= 0)
                     d->packet_pending = 0;
+                    av_packet_unref(d->pkt);
             } else {
                 if (!got_frame) {
                     d->packet_pending = 0;
                     d->finished = d->pkt_serial;
+                    av_packet_unref(d->pkt);
                 }
             }
         }
