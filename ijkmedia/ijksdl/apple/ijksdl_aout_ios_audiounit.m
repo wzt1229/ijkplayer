@@ -34,7 +34,7 @@
 #define SDL_IOS_AUDIO_MAX_CALLBACKS_PER_SEC 15
 
 struct SDL_Aout_Opaque {
-    IJKSDLAudioQueueController *aoutController;
+    __strong IJKSDLAudioQueueController *aoutController;
 };
 
 static int aout_open_audio(SDL_Aout *aout, const SDL_AudioSpec *desired, SDL_AudioSpec *obtained)
@@ -119,7 +119,6 @@ static void aout_free_l(SDL_Aout *aout)
 
     SDL_Aout_Opaque *opaque = aout->opaque;
     if (opaque) {
-        [opaque->aoutController release];
         opaque->aoutController = nil;
     }
 

@@ -77,15 +77,7 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
       'ijkmedia/ijkplayer/android/**/*.*',
       'ijkmedia/ijksdl/android/**/*.*',
-      'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}',
-
-      # -w
-      'ijkmedia/ijkplayer/ijkavutil/ijkdict.*',
-      'ijkmedia/ijkplayer/ijkavutil/ijkfifo.*',
-      'ijkmedia/ijkplayer/ijkavutil/ijkstl.*',
-      # -fno-objc-arc
-      'ijkmedia/ijksdl/apple/ijksdl_aout_ios_audiounit.*',
-      'ijkmedia/ijksdl/apple/ijksdl_vout_ios_gles2.*',
+      'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}'
 
     ss.osx.exclude_files = 
       'ijkmedia/ijksdl/ijksdl_egl.*',
@@ -107,22 +99,6 @@ TODO: Add long description of the pod here.
 
   end
 
-  s.subspec 'no-arc' do |ss|
-    ss.source_files = 
-      'ijkmedia/ijksdl/apple/ijksdl_aout_ios_audiounit.*',
-      'ijkmedia/ijksdl/apple/ijksdl_vout_ios_gles2.*'
-    ss.project_header_files = 'ijkmedia/ijksdl/apple/*.{h}'
-    ss.compiler_flags = '-fno-objc-arc'
-  end
-
-  s.subspec 'w' do |ss|
-    ss.source_files = 'ijkmedia/ijkplayer/ijkavutil/ijkdict.*',
-      'ijkmedia/ijkplayer/ijkavutil/ijkfifo.*',
-      'ijkmedia/ijkplayer/ijkavutil/ijkstl.*'
-    ss.project_header_files = 'ijkmedia/ijkplayer/ijkavutil/*.{h}'
-    ss.compiler_flags = '-w'
-  end
-  
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'

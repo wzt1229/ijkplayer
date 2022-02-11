@@ -36,7 +36,7 @@ typedef struct SDL_VoutSurface_Opaque {
 } SDL_VoutSurface_Opaque;
 
 struct SDL_Vout_Opaque {
-    GLView<IJKSDLGLViewProtocol> *gl_view;
+    __strong GLView<IJKSDLGLViewProtocol> *gl_view;
     CVPixelBufferRef subtitle;
 };
 
@@ -67,7 +67,6 @@ static void vout_free_l(SDL_Vout *vout)
     if (opaque) {
         if (opaque->gl_view) {
             // TODO: post to MainThread?
-            [opaque->gl_view release];
             opaque->gl_view = nil;
         }
         
@@ -184,11 +183,7 @@ static void vout_update_subtitle(SDL_Vout *vout, const char *text)
         float inset = subtitleFont.pointSize / 2.0;
         textureString.edgeInsets = NSEdgeInsetsMake(inset, inset, inset, inset);
         textureString.cRadius = inset / 2.0;
-        
-        [aStr release];
-        [attributes release];
         opaque->subtitle = [textureString createPixelBuffer];
-        [textureString release];
     }
 }
 
@@ -217,12 +212,11 @@ static void SDL_VoutIos_SetGLView_l(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>
         return;
 
     if (opaque->gl_view) {
-        [opaque->gl_view release];
         opaque->gl_view = nil;
     }
 
     if (view)
-        opaque->gl_view = [view retain];
+        opaque->gl_view = view;
 }
 
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>* view)
