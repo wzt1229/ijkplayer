@@ -64,9 +64,16 @@
 @property (assign) int snapshot;
 //for cocoa binding end
 
+@property (weak) id eventMonitor;
+
 @end
 
 @implementation RootViewController
+
+- (void)dealloc
+{
+    [NSEvent removeMonitor:self.eventMonitor];
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -105,12 +112,7 @@
         baseView.needTracking = YES;
     }
      
-    NSUInteger keyCod = kVK_ANSI_Period;
-    NSUInteger keyMod = cmdKey;
-    BOOL isSys = [self isSystemHotKey:keyCod keyMod:keyMod];
-    NSLog(@"----cmd + . isSys:%d",isSys);
-    
-    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
+    self.eventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
         if ([theEvent keyCode] == kVK_ANSI_Period && theEvent.modifierFlags & NSEventModifierFlagCommand){
             [self stopPlay:nil];
         }
@@ -173,45 +175,6 @@
 {
     BOOL isShowing = self.ctrlView.frame.origin.y >= 0;
     [self switchCtrlView:!isShowing];
-}
-
-- (BOOL)isSystemHotKey:(NSUInteger)keyCode
-                keyMod:(NSUInteger)keyMod {
-    CFArrayRef systemHotKeys = NULL;
-    if (CopySymbolicHotKeys(&systemHotKeys)) {
-        CFRelease(systemHotKeys);
-        return YES;
-    }
-
-    CFIndex size = CFArrayGetCount(systemHotKeys);
-    for (CFIndex i=0; i<size; ++i) {
-        CFDictionaryRef hotKeyDict = (CFDictionaryRef)CFArrayGetValueAtIndex(
-            systemHotKeys, i);
-        if (!hotKeyDict ||
-            (CFGetTypeID(hotKeyDict) != CFDictionaryGetTypeID())) {
-            continue;
-        }
-
-        if (kCFBooleanTrue != (CFBooleanRef)CFDictionaryGetValue(
-            hotKeyDict, kHISymbolicHotKeyEnabled)) {
-            continue;
-        }
-
-        CFNumberRef keyCodeRef = (CFNumberRef)CFDictionaryGetValue(
-            hotKeyDict, kHISymbolicHotKeyCode);
-        NSInteger hotKeyCode = 0;
-        CFNumberGetValue(keyCodeRef, kCFNumberLongType, &hotKeyCode);
-
-        CFNumberRef keyModRef = (CFNumberRef)CFDictionaryGetValue(
-            hotKeyDict, kHISymbolicHotKeyModifiers);
-        NSInteger hotKeyMod = 0;
-        CFNumberGetValue(keyModRef, kCFNumberLongType, &hotKeyMod);
-        if (keyCode == hotKeyCode && keyMod == hotKeyMod) {
-            return YES;
-        }
-    }
-
-    return NO;
 }
 
 - (void)keyDown:(NSEvent *)event

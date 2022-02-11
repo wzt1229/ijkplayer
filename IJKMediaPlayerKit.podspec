@@ -60,7 +60,9 @@ TODO: Add long description of the pod here.
       'IJKMediaPlayerKit/IJKKVOController.h',
       'IJKMediaPlayerKit/IJKSDLGLViewProtocol.h'
     ss.osx.public_header_files = 'IJKMediaPlayerKit/IJKMediaPlayerKit.h'
-    ss.osx.exclude_files = 'IJKMediaPlayerKit/IJKMediaPlayeriOSKit.h'
+    ss.osx.exclude_files = 
+      'IJKMediaPlayerKit/IJKMediaPlayeriOSKit.h',
+      'IJKMediaPlayerKit/IJKAudioKit.*'
   end
 
   s.subspec 'ijkmedia' do |ss|
