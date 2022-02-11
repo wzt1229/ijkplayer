@@ -72,6 +72,7 @@
 
 struct AVFormatContext;
 struct FFPlayer;
+struct VideoState;
 typedef struct IjkMediaMeta IjkMediaMeta;
 
 IjkMediaMeta *ijkmeta_create(void);
@@ -87,7 +88,7 @@ void ijkmeta_set_int64_l(IjkMediaMeta *meta, const char *name, int64_t value);
 void ijkmeta_set_string_l(IjkMediaMeta *meta, const char *name, const char *value);
 void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, struct AVFormatContext *ic);
 
-void ijkmeta_set_ex_subtitle_context_l(struct FFPlayer *ffp);
+void ijkmeta_set_ex_subtitle_context_l(IjkMediaMeta *meta, struct AVFormatContext *ic, struct VideoState *is);
 
 // must be freed with free();
 const char   *ijkmeta_get_string_l(IjkMediaMeta *meta, const char *name);
