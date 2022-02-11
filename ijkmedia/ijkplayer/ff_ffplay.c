@@ -5593,12 +5593,52 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
                 file_name);
         return  -5;
     } else  {
-        ijkmeta_set_ex_subtitle_context_l(ffp);
+        ijkmeta_set_ex_subtitle_context_l(ffp->meta, ffp->is->subtitle_ex->ic, ffp->is);
         is->load_sub_ex = 1;
         
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     }
     
+    return 0;
+}
+
+            
+int ffp_load_external_subtitle(FFPlayer *ffp, const char *file_name)
+{
+    /* there is a length limit in avformat */
+    if (strlen(file_name) + 1 > 1024) {
+        av_log(ffp, AV_LOG_ERROR, "%s too long path\n", __func__);
+        return -1;
+    }
+    
+    VideoState* is = ffp->is;
+    
+    for (int i = 0; i < is->ex_sub_index; i++) {
+        char* next = is->ex_sub_url[i];
+        if (0 == av_strncasecmp(next, file_name, 1024))
+            return 1;
+    }
+    
+    //recycle，release mem if the url array has been used
+    char* next = is->ex_sub_url[is->ex_sub_index % MAX_EX_SUBTITLE_NUM];
+    if (next) {
+        av_free(next);
+    }
+    is->ex_sub_url[is->ex_sub_index++ % MAX_EX_SUBTITLE_NUM] = av_strdup(file_name);
+    
+    int err = 0;
+    
+    AVFormatContext* ic = avformat_alloc_context();
+    err = avformat_open_input(&ic, file_name, NULL, NULL);
+    if (err < 0) {
+        print_error(file_name, err);
+        avformat_close_input(&ic);
+        return -2;
+    }
+    
+    ijkmeta_set_ex_subtitle_context_l(ffp->meta, ic, is);
+    
+    ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     return 0;
 }
 

@@ -221,4 +221,6 @@ void            ijkmp_invalidate_subtitle_effect(IjkMediaPlayer *mp);
 void            ijkmp_set_subtitle_extra_delay(IjkMediaPlayer *mp,const float delay);
 float           ijkmp_get_subtitle_extra_delay(IjkMediaPlayer *mp);
 int             ijkmp_set_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
+/*only load ex-subtitle, not use*/
+int             ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 #endif

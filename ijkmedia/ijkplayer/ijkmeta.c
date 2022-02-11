@@ -294,17 +294,12 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         ijkmeta_destroy_p(&stream_meta);
 }
 
-void ijkmeta_set_ex_subtitle_context_l(struct FFPlayer *ffp)
+void ijkmeta_set_ex_subtitle_context_l(IjkMediaMeta *meta, struct AVFormatContext *ic, struct VideoState *is)
 {
-    if (!ffp->is->subtitle_ex)
-        return;
-    
-    AVFormatContext* ic = ffp->is->subtitle_ex->ic;
-    IjkMediaMeta* meta = ffp->meta;
-    if (!meta || !ic)
+    if (!meta || !ic || !is)
         return;
 
-    int stream_idx = (ffp->is->ex_sub_index - 1) % MAX_EX_SUBTITLE_NUM + ffp->is->ic->nb_streams;
+    int stream_idx = (is->ex_sub_index - 1) % MAX_EX_SUBTITLE_NUM + is->ic->nb_streams;
     ijkmeta_set_int64_l(meta, IJKM_KEY_TIMEDTEXT_STREAM, stream_idx);
     
     IjkMediaMeta *stream_meta = NULL;
@@ -337,11 +332,11 @@ void ijkmeta_set_ex_subtitle_context_l(struct FFPlayer *ffp)
             ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, t->value);
         } else {
             char title[64];
-            snprintf(title, 64, "Track%d", ffp->is->ex_sub_index);
+            snprintf(title, 64, "Track%d", is->ex_sub_index);
             ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title);
         }
        
-        int stream_idx = (ffp->is->ex_sub_index - 1) % MAX_EX_SUBTITLE_NUM + ffp->is->ic->nb_streams;
+        int stream_idx = (is->ex_sub_index - 1) % MAX_EX_SUBTITLE_NUM + is->ic->nb_streams;
         ijkmeta_set_int64_l(stream_meta, IJKM_KEY_STREAM_IDX, stream_idx);
 
         ijkmeta_append_child_l(meta, stream_meta);
