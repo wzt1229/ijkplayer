@@ -86,6 +86,8 @@ else
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-ffmpeg --enable-ffprobe"
 fi
 
+FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --pkg-config-flags=--static"
+
 FFMPEG_LDFLAGS="$FFMPEG_C_FLAGS"
 FFMPEG_DEP_LIBS=
 
@@ -132,7 +134,7 @@ echo "[*] check fdk-aac"
 #----------------------
 # with fdk-aac
 if [[ -f "${XC_PRODUCT_ROOT}/fdk-aac-$XC_ARCH/lib/pkgconfig/fdk-aac.pc" ]]; then
-    # libx264 is gpl and --enable-gpl is not specified.
+
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-nonfree --enable-libfdk-aac"
     
     export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/fdk-aac-$XC_ARCH/lib/pkgconfig"
@@ -170,11 +172,11 @@ echo "[*] check opus"
 # with opus
 if [[ -f "${XC_PRODUCT_ROOT}/opus-$XC_ARCH/lib/pkgconfig/opus.pc" ]]; then
     
-    FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libopus"
+    FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libopus --enable-decoder=opus"
     
     export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/opus-$XC_ARCH/lib/pkgconfig"
 
-    echo "[*] --enable-libopus"
+    echo "[*] --enable-libopus --enable-decoder=opus"
 else
     echo "[*] --disable-libopus"
 fi
