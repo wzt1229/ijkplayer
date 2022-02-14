@@ -889,9 +889,10 @@ int videotoolbox_sync_decode_frame(Ijk_VideoToolBox_Opaque* context)
                     ret = d->pkt->size;
                 d->pkt->data += ret;
                 d->pkt->size -= ret;
-                if (d->pkt->size <= 0)
+                if (d->pkt->size <= 0) {
                     d->packet_pending = 0;
                     av_packet_unref(d->pkt);
+                }
             } else {
                 if (!got_frame) {
                     d->packet_pending = 0;

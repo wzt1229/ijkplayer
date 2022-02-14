@@ -111,8 +111,10 @@
         baseView.delegate = self;
         baseView.needTracking = YES;
     }
-     
+    
+    __weakSelf__
     self.eventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
+        __strongSelf__
         if ([theEvent keyCode] == kVK_ANSI_Period && theEvent.modifierFlags & NSEventModifierFlagCommand){
             [self stopPlay:nil];
         }
