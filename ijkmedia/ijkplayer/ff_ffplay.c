@@ -330,7 +330,7 @@ static int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, S
     d->queue = queue;
     d->empty_queue_cond = empty_queue_cond;
     d->start_pts = AV_NOPTS_VALUE;
-    d->pkt_serial = -1;
+    d->pkt_serial = 1;
     d->first_frame_decoded_time = SDL_GetTickHR();
     d->first_frame_decoded = 0;
 
