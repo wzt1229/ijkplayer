@@ -3788,6 +3788,8 @@ static int read_thread(void *arg)
 //      of the seek_pos/seek_rel variables
 
             ffp_toggle_buffering(ffp, 1);
+            //fix after seek audio queue not flush cause wrong sound.
+            SDL_AoutFlushAudio(ffp->aout);
             ffp_notify_msg3(ffp, FFP_MSG_BUFFERING_UPDATE, 0, 0);
             ret = avformat_seek_file(is->ic, -1, seek_min, seek_target, seek_max, is->seek_flags);
             if (ret < 0) {
