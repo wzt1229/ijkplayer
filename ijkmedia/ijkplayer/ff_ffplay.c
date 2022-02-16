@@ -1150,7 +1150,8 @@ static void stream_close(FFPlayer *ffp)
         stream_component_close(ffp, is->video_stream);
     if (is->subtitle_stream >= 0)
         stream_component_close(ffp, is->subtitle_stream);
-
+  
+    avformat_close_input(&is->ic);
     if (is->subtitle_ex) {
         external_subtitle_close(ffp);
     }
