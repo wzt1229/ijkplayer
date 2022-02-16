@@ -755,12 +755,14 @@ inline static NSString *formatedDurationMilli(int64_t duration) {
     }
 }
 
+#if ! IJK_IO_OFF
 inline static NSString *formatedDurationBytesAndBitrate(int64_t bytes, int64_t bitRate) {
     if (bitRate <= 0) {
         return @"inf";
     }
     return formatedDurationMilli(((float)bytes) * 8 * 1000 / bitRate);
 }
+#endif
 
 inline static NSString *formatedSize(int64_t bytes) {
     if (bytes >= 100 * 1024) {
@@ -839,8 +841,8 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     float avdiff  = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_AVDIFF, .0f);
     [self setHudValue:[NSString stringWithFormat:@"%.3f %.3f", avdelay, -avdiff] forKey:@"delay"];
 
-    int64_t bitRate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
 #if ! IJK_IO_OFF
+    int64_t bitRate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
     [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
                          formatedSize(_cacheStat.cache_file_forwards),
                           formatedDurationBytesAndBitrate(_cacheStat.cache_file_forwards, bitRate)] forKey:@"cache-forwards"];
