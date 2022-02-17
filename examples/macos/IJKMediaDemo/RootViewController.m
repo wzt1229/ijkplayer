@@ -8,12 +8,13 @@
 
 #import "RootViewController.h"
 #import "MRDragView.h"
-#import "MRUtil.h"
+#import "MRUtil+SystemPanel.h"
 #import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
 #import <Carbon/Carbon.h>
 #import "NSFileManager+Sandbox.h"
 #import "SHBaseView.h"
 #import <Quartz/Quartz.h>
+#import "MRGlobalNotification.h"
 
 #ifndef __MRWS__
 #define __MRWS__
@@ -124,6 +125,19 @@
         }
         return theEvent;
     }];
+    
+    OBSERVER_NOTIFICATION(self, _playExplorerMovies:,kPlayExplorerMovieNotificationName_G, nil);
+}
+
+- (void)_playExplorerMovies:(NSNotification *)notifi
+{
+    NSDictionary *info = notifi.userInfo;
+    NSArray *movies = info[@"obj"];
+    
+    if ([movies count] > 0) {
+        // 开始播放
+        [self appendToPlayList:movies];
+    }
 }
 
 - (void)baseView:(SHBaseView *)baseView mouseEntered:(NSEvent *)event
@@ -185,7 +199,9 @@
 
 - (void)keyDown:(NSEvent *)event
 {
-    if ([event keyCode] == kVK_RightArrow && event.modifierFlags & NSEventModifierFlagCommand) {
+    if ([event keyCode] == kVK_LeftArrow && event.modifierFlags & NSEventModifierFlagCommand) {
+        [self playPrevious:nil];
+    } else if ([event keyCode] == kVK_RightArrow && event.modifierFlags & NSEventModifierFlagCommand) {
         [self playNext:nil];
     } else if ([event keyCode] == kVK_ANSI_B && event.modifierFlags & NSEventModifierFlagCommand) {
         
@@ -284,7 +300,7 @@
     [options setPlayerOptionIntValue:3840 forKey:@"videotoolbox-max-frame-width"];
     
     [self stopPlay:nil];
-    
+    [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
     CGRect rect = self.view.frame;
     rect.origin = CGPointZero;
@@ -420,6 +436,37 @@
     return t;
 }
 
+- (void)appendToPlayList:(NSArray *)bookmarkArr
+{
+    NSMutableArray *videos = [NSMutableArray array];
+    NSMutableArray *subtitles = [NSMutableArray array];
+    
+    for (NSDictionary *dic in bookmarkArr) {
+        NSURL *url = dic[@"url"];
+        
+        if ([self existTaskForUrl:url]) {
+            continue;
+        }
+        if ([dic[@"type"] intValue] == 0) {
+            [videos addObject:url];
+        } else if ([dic[@"type"] intValue] == 1) {
+            [subtitles addObject:url];
+        } else {
+            NSAssert(NO, @"没有处理的文件:%@",url);
+        }
+    }
+    
+    //拖进来新的视频时，清理老的视频列表
+    if ([videos count] > 0) {
+        [self.playList addObjectsFromArray:videos];
+        [self playFirstIfNeed];
+    }
+    
+    for (NSURL *url in subtitles) {
+        [self.player loadSubtitleFile:[url path]];
+    }
+}
+
 - (void)handleDragFileList:(nonnull NSArray<NSURL *> *)fileUrls
 {
     NSMutableArray *bookmarkArr = [NSMutableArray array];
@@ -444,37 +491,9 @@
             }
         }
     }
-    
-    NSMutableArray *videos = [NSMutableArray array];
-    NSMutableArray *subtitles = [NSMutableArray array];
-    
-    for (NSDictionary *dic in bookmarkArr) {
-        NSURL *url = dic[@"url"];
-        
-        if ([self existTaskForUrl:url]) {
-            continue;
-        }
-        
-        NSString *pathExtension = [[url pathExtension] lowercaseString];
-        if ([[MRUtil videoType] containsObject:pathExtension] || [[MRUtil audioType] containsObject:pathExtension]) {
-            [videos addObject:url];
-        } else if ([MRUtil subtitleType]) {
-            [subtitles addObject:url];
-        } else {
-            NSAssert(NO, @"没有处理的文件:%@",url);
-        }
-    }
-    
-    //拖进来新的视频时，清理老的视频列表
-    if ([videos count] > 0) {
-        [self.playList removeAllObjects];
-        self.playList = videos;
-        [self playFirstIfNeed];
-    }
-    
-    for (NSURL *url in subtitles) {
-        [self.player loadSubtitleFile:[url path]];
-    }
+    //拖拽播放时清空原先的列表
+    [self.playList removeAllObjects];
+    [self appendToPlayList:bookmarkArr];
 }
 
 - (NSDragOperation)acceptDragOperation:(NSArray<NSURL *> *)list
@@ -514,7 +533,7 @@
     }
 }
 
-#pragma mark 播放控制
+#pragma mark - 播放控制
 
 - (IBAction)onPlay:(NSButton *)sender
 {
@@ -557,6 +576,25 @@
         [self.playCtrlBtn setTitle:@"Pause"];
         [self.player play];
     }
+}
+
+- (void)playPrevious:(NSButton *)sender
+{
+    if ([self.playList count] == 0) {
+        return;
+    }
+    
+    NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
+    if (idx == NSNotFound) {
+        idx = 0;
+    } else if (idx <= 0) {
+        idx = [self.playList count] - 1;
+    } else {
+        idx --;
+    }
+    
+    NSURL *url = self.playList[idx];
+    [self playURL:url];
 }
 
 - (IBAction)playNext:(NSButton *)sender

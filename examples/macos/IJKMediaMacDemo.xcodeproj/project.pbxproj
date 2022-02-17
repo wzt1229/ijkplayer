@@ -12,6 +12,8 @@
 		C969BBB027BBA4E1008BC2AD /* 5003509-693880-5.webvtt in Resources */ = {isa = PBXBuildFile; fileRef = C969BBAC27BBA4E1008BC2AD /* 5003509-693880-5.webvtt */; };
 		C969BBB127BBA4E1008BC2AD /* 5003509-693880-4.webvtt in Resources */ = {isa = PBXBuildFile; fileRef = C969BBAD27BBA4E1008BC2AD /* 5003509-693880-4.webvtt */; };
 		C969BBB227BBA4E1008BC2AD /* 5003509-693880-3.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = C969BBAE27BBA4E1008BC2AD /* 5003509-693880-3.m3u8 */; };
+		C969BE4B27BDCD27008BC2AD /* MRGlobalNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = C969BE4927BDCD27008BC2AD /* MRGlobalNotification.m */; };
+		C969BE4E27BDD34E008BC2AD /* MRUtil+SystemPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = C969BE4C27BDD34E008BC2AD /* MRUtil+SystemPanel.m */; };
 		DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9625A43A1300F01E2F /* MRUtil.m */; };
 		DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9C25A43A1300F01E2F /* MRDragView.m */; };
 		DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */; };
@@ -50,6 +52,10 @@
 		C969BBAC27BBA4E1008BC2AD /* 5003509-693880-5.webvtt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "5003509-693880-5.webvtt"; sourceTree = "<group>"; };
 		C969BBAD27BBA4E1008BC2AD /* 5003509-693880-4.webvtt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "5003509-693880-4.webvtt"; sourceTree = "<group>"; };
 		C969BBAE27BBA4E1008BC2AD /* 5003509-693880-3.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "5003509-693880-3.m3u8"; sourceTree = "<group>"; };
+		C969BE4927BDCD27008BC2AD /* MRGlobalNotification.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MRGlobalNotification.m; sourceTree = "<group>"; };
+		C969BE4A27BDCD27008BC2AD /* MRGlobalNotification.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRGlobalNotification.h; sourceTree = "<group>"; };
+		C969BE4C27BDD34E008BC2AD /* MRUtil+SystemPanel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "MRUtil+SystemPanel.m"; sourceTree = "<group>"; };
+		C969BE4D27BDD34E008BC2AD /* MRUtil+SystemPanel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MRUtil+SystemPanel.h"; sourceTree = "<group>"; };
 		DD050F9525A43A1300F01E2F /* MRUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRUtil.h; sourceTree = "<group>"; };
 		DD050F9625A43A1300F01E2F /* MRUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRUtil.m; sourceTree = "<group>"; };
 		DD050F9B25A43A1300F01E2F /* MRDragView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRDragView.h; sourceTree = "<group>"; };
@@ -124,6 +130,10 @@
 		DD050F9425A43A1300F01E2F /* MRUtil */ = {
 			isa = PBXGroup;
 			children = (
+				C969BE4D27BDD34E008BC2AD /* MRUtil+SystemPanel.h */,
+				C969BE4C27BDD34E008BC2AD /* MRUtil+SystemPanel.m */,
+				C969BE4A27BDCD27008BC2AD /* MRGlobalNotification.h */,
+				C969BE4927BDCD27008BC2AD /* MRGlobalNotification.m */,
 				DDE9FC6E273BD3CF00481560 /* NSFileManager+Sandbox.h */,
 				DDE9FC6F273BD3CF00481560 /* NSFileManager+Sandbox.m */,
 				DD050F9525A43A1300F01E2F /* MRUtil.h */,
@@ -345,9 +355,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C969BE4B27BDCD27008BC2AD /* MRGlobalNotification.m in Sources */,
 				DDB7827B2757266900382094 /* SHBaseView.m in Sources */,
 				DD9B139522C23A7A002D1D79 /* main.m in Sources */,
 				DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */,
+				C969BE4E27BDD34E008BC2AD /* MRUtil+SystemPanel.m in Sources */,
 				DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */,
 				DDE9FC70273BD3CF00481560 /* NSFileManager+Sandbox.m in Sources */,
 				DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */,
