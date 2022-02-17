@@ -632,9 +632,10 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
     overlay_fill(overlay, opaque->managed_frame, opaque->planes);
 #endif
     return overlay;
-
+#if ! USE_FF_VTB
 fail:
     func_free_l(overlay);
+#endif
     return NULL;
 }
 #endif//__clang_analyzer__
