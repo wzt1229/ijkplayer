@@ -99,7 +99,6 @@
     NSArray *bundleNameArr = @[@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
     
     for (NSString *fileName in bundleNameArr) {
-        
         NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
         [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
     }
