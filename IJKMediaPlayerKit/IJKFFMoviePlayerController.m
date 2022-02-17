@@ -363,12 +363,20 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 //    ijkmp_set_external_subtitle(_mediaPlayer, "/Users/sohu/Downloads/FreeGuySub.ass");
 }
 
-- (void)loadSubtitleFile:(NSString *)url
+- (void)loadThenActiveSubtitleFile:(NSString *)url
 {
     if (!_mediaPlayer)
         return;
     
     ijkmp_set_external_subtitle(_mediaPlayer, [url UTF8String]);
+}
+
+- (void)loadSubtitleFileOnly:(NSString *)url
+{
+    if (!_mediaPlayer)
+        return;
+    
+    ijkmp_load_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
 - (void)setHudUrl:(NSString *)urlString
