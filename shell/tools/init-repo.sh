@@ -33,14 +33,18 @@ macOS_ARCHS="x86_64 arm64"
 
 function pull_common() {
     echo "== pull $REPO_DIR base =="
-    git -C $GIT_LOCAL_REPO reset --hard 
+    if [[ -d $GIT_LOCAL_REPO ]]; then
+        git -C $GIT_LOCAL_REPO reset --hard
+    fi
     sh $TOOLS/pull-repo-base.sh $GIT_UPSTREAM $GIT_LOCAL_REPO
 }
 
 function pull_fork() {
     local dir="build/src/$1/$REPO_DIR-$2"
     echo "== pull $REPO_DIR fork to $dir =="
-    git -C $dir reset --hard 
+    if [[ -d $dir ]]; then
+        git -C $dir reset --hard
+    fi
     sh $TOOLS/pull-repo-ref.sh $GIT_UPSTREAM $dir $GIT_LOCAL_REPO
     cd $dir
     git checkout ${GIT_COMMIT} -B localBranch
