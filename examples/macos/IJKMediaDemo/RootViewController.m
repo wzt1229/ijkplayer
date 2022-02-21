@@ -39,6 +39,8 @@
 @property (assign) BOOL isCtrlViewAnimating;
 
 @property (strong) IJKFFMoviePlayerController * player;
+@property (strong) IJKKVOController * kvoCtrl;
+
 @property (weak) IBOutlet NSTextField *playedTimeLb;
 @property (nonatomic, strong) NSMutableArray *playList;
 @property (copy) NSURL *playingUrl;
@@ -198,71 +200,123 @@
 
 - (void)keyDown:(NSEvent *)event
 {
-    if ([event keyCode] == kVK_LeftArrow && event.modifierFlags & NSEventModifierFlagCommand) {
-        [self playPrevious:nil];
-    } else if ([event keyCode] == kVK_RightArrow && event.modifierFlags & NSEventModifierFlagCommand) {
-        [self playNext:nil];
-    } else if ([event keyCode] == kVK_ANSI_B && event.modifierFlags & NSEventModifierFlagCommand) {
-        
-        [self toggleCtrlViewShow];
-        
-    } else if ([event keyCode] == kVK_ANSI_R && event.modifierFlags & NSEventModifierFlagCommand) {
-        
-        IJKSDLRotatePreference preference = self.player.view.rotatePreference;
-        
-        if (preference.type == IJKSDLRotateNone) {
-            preference.type = IJKSDLRotateZ;
-        }
-        
-        if (event.modifierFlags & NSEventModifierFlagOption) {
-            
-            preference.type --;
-            
-            if (preference.type <= IJKSDLRotateNone) {
-                preference.type = IJKSDLRotateZ;
+    if (event.modifierFlags & NSEventModifierFlagCommand) {
+        switch ([event keyCode]) {
+            case kVK_LeftArrow:
+            {
+                [self playPrevious:nil];
             }
+                break;
+            case kVK_RightArrow:
+            {
+                [self playNext:nil];
+            }
+                break;
+            case kVK_ANSI_B:
+            {
+                [self toggleCtrlViewShow];
+            }
+                break;
+            case kVK_ANSI_R:
+            {
+                IJKSDLRotatePreference preference = self.player.view.rotatePreference;
+                
+                if (preference.type == IJKSDLRotateNone) {
+                    preference.type = IJKSDLRotateZ;
+                }
+                
+                if (event.modifierFlags & NSEventModifierFlagOption) {
+                    
+                    preference.type --;
+                    
+                    if (preference.type <= IJKSDLRotateNone) {
+                        preference.type = IJKSDLRotateZ;
+                    }
+                }
+                
+                if (event.modifierFlags & NSEventModifierFlagShift) {
+                    preference.degrees --;
+                } else {
+                    preference.degrees ++;
+                }
+                
+                if (preference.degrees >= 360) {
+                    preference.degrees = 0;
+                }
+                self.player.view.rotatePreference = preference;
+                
+                NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
+            }
+                break;
+            case kVK_ANSI_S:
+            {
+                [self onCaptureShot:nil];
+            }
+                break;
+            case kVK_ANSI_Period:
+            {
+                [self stopPlay:nil];
+            }
+                break;
+            default:
+            {
+                NSLog(@"0x%X",[event keyCode]);
+            }
+                break;
         }
-        
-        if (event.modifierFlags & NSEventModifierFlagShift) {
-            preference.degrees --;
-        } else {
-            preference.degrees ++;
+    } else if (event.modifierFlags & NSEventModifierFlagControl) {
+        switch ([event keyCode]) {
+            case kVK_ANSI_H:
+            {
+                [self exchangeVideoDecoder];
+            }
+                break;
         }
-        
-        if (preference.degrees >= 360) {
-            preference.degrees = 0;
-        }
-        self.player.view.rotatePreference = preference;
-        
-        NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
-    } else if ([event keyCode] == kVK_RightArrow) {
-        [self fastForward:nil];
-    } else if ([event keyCode] == kVK_LeftArrow) {
-        [self fastRewind:nil];
-    } else if ([event keyCode] == kVK_DownArrow) {
-        float volume = self.player.playbackVolume;
-        volume -= 0.1;
-        if (volume < 0) {
-            volume = .0f;
-        }
-        self.player.playbackVolume = volume;
-        NSLog(@"volume:%0.1f",volume);
-    } else if ([event keyCode] == kVK_UpArrow) {
-        float volume = self.player.playbackVolume;
-        volume += 0.1;
-        if (volume > 1) {
-            volume = 1.0f;
-        }
-        self.player.playbackVolume = volume;
-        NSLog(@"volume:%0.1f",volume);
-    } else if ([event keyCode] == kVK_Space) {
-        [self pauseOrPlay:nil];
-    } else if ([event keyCode] == kVK_ANSI_S && event.modifierFlags & NSEventModifierFlagCommand) {
-        [self onCaptureShot:nil];
-    } else if ([event keyCode] == kVK_ANSI_Period && event.modifierFlags & NSEventModifierFlagCommand) {
-        [self stopPlay:nil];
     } else {
-        NSLog(@"0x%X",[event keyCode]);
+        switch ([event keyCode]) {
+            case kVK_RightArrow:
+            {
+                [self fastForward:nil];
+            }
+                break;
+            case kVK_LeftArrow:
+            {
+                [self fastRewind:nil];
+            }
+                break;
+            case kVK_DownArrow:
+            {
+                float volume = self.player.playbackVolume;
+                volume -= 0.1;
+                if (volume < 0) {
+                    volume = .0f;
+                }
+                self.player.playbackVolume = volume;
+                NSLog(@"volume:%0.1f",volume);
+            }
+                break;
+            case kVK_UpArrow:
+            {
+                float volume = self.player.playbackVolume;
+                volume += 0.1;
+                if (volume > 1) {
+                    volume = 1.0f;
+                }
+                self.player.playbackVolume = volume;
+                NSLog(@"volume:%0.1f",volume);
+            }
+                break;
+            case kVK_Space:
+            {
+                [self pauseOrPlay:nil];
+            }
+                break;
+            default:
+            {
+                NSLog(@"0x%X",[event keyCode]);
+            }
+                break;
+        }
     }
 }
 
@@ -407,6 +461,17 @@
     }
     
     [self.player prepareToPlay];
+    self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
+    [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
+{
+    if (object == self.player.monitor) {
+        if ([keyPath isEqualToString:@"vdecoder"]) {
+            NSLog(@"current video decoder:%@",change[NSKeyValueChangeNewKey]);
+        }
+    }
 }
 
 - (void)onTick:(NSTimer *)sender
@@ -822,6 +887,22 @@
     NSString *title = sender.selectedItem.title;
     NSString *fcc = [@"fcc-" stringByAppendingString:title];
     self.fcc = fcc;
+}
+
+- (void)exchangeVideoDecoder
+{
+    int r = [self.player exchangeVideoDecoder];
+    if (r == 1) {
+        NSLog(@"exchang decoder begin");
+    } else if (r == -1) {
+        NSLog(@"exchanging decoder");
+    } else if (r == -2) {
+        NSLog(@"can't exchange decoder,try later");
+    } else if (r == -3) {
+        NSLog(@"no more decoder can exchange.");
+    } else if (r == -4) {
+        NSLog(@"exchange decoder faild.");
+    }
 }
 
 @end

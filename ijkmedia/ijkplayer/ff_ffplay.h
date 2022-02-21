@@ -118,12 +118,13 @@ void      ffp_set_property_int64(FFPlayer *ffp, int id, int64_t value);
 
 // must be freed with free();
 struct IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp);
-void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay);
-float ffp_get_subtitle_extra_delay(FFPlayer *ffp);
+void      ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay);
+float     ffp_get_subtitle_extra_delay(FFPlayer *ffp);
 
 void      subtitle_invalidate_uploaded(FFPlayer *ffp);
 int       ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name);
 /*only load ex-subtitle*/
 int       ffp_load_external_subtitle(FFPlayer *ffp, const char *file_name);
+int       ffp_exchange_video_decoder(FFPlayer *ffp);
 
 #endif

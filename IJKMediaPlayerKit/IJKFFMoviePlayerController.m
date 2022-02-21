@@ -1102,6 +1102,24 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
     }
 }
 
+- (void)updateMonitor4VideoDecoder:(int64_t)vdec
+{
+    switch (vdec) {
+        case FFP_PROPV_DECODER_VIDEOTOOLBOX:
+            _monitor.vdecoder = @"VideoToolbox";
+            break;
+        case FFP_PROPV_DECODER_AVCODEC:
+            _monitor.vdecoder = [NSString stringWithFormat:@"avcodec %d.%d.%d",
+                                 LIBAVCODEC_VERSION_MAJOR,
+                                 LIBAVCODEC_VERSION_MINOR,
+                                 LIBAVCODEC_VERSION_MICRO];
+            break;
+        default:
+            _monitor.vdecoder = @"Unknown";
+            break;
+    }
+}
+
 - (void)postEvent: (IJKFFMoviePlayerMessage *)msg
 {
     if (!msg)
@@ -1135,21 +1153,9 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         }
         case FFP_MSG_PREPARED: {
             _monitor.prepareDuration = (int64_t)SDL_GetTickHR() - _monitor.prepareStartTick;
-            int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
-            switch (vdec) {
-                case FFP_PROPV_DECODER_VIDEOTOOLBOX:
-                    _monitor.vdecoder = @"VideoToolbox";
-                    break;
-                case FFP_PROPV_DECODER_AVCODEC:
-                    _monitor.vdecoder = [NSString stringWithFormat:@"avcodec %d.%d.%d",
-                                         LIBAVCODEC_VERSION_MAJOR,
-                                         LIBAVCODEC_VERSION_MINOR,
-                                         LIBAVCODEC_VERSION_MICRO];
-                    break;
-                default:
-                    _monitor.vdecoder = @"Unknown";
-                    break;
-            }
+            //prepared not send,beacuse FFP_MSG_VIDEO_DECODER_OPEN event already send
+            //int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
+            //[self updateMonitor4VideoDecoder:vdec];
 
             IjkMediaMeta *rawMeta = ijkmp_get_meta_l(_mediaPlayer);
             [self traverseIJKMetaData:rawMeta];
@@ -1253,6 +1259,9 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         }
         case FFP_MSG_VIDEO_DECODER_OPEN: {
             _isVideoToolboxOpen = avmsg->arg1;
+            int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
+            [self updateMonitor4VideoDecoder:vdec];
+            
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerVideoDecoderOpenNotification
              object:self];
@@ -1831,6 +1840,11 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
 - (float)currentSubtitleExtraDelay
 {
     return ijkmp_get_subtitle_extra_delay(_mediaPlayer);
+}
+
+- (int)exchangeVideoDecoder
+{
+    return jkmp_exchange_video_decoder(_mediaPlayer);
 }
 
 @end
