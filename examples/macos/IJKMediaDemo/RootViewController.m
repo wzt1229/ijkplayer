@@ -462,7 +462,7 @@
     }
     
     for (NSURL *url in subtitles) {
-        [self.player loadSubtitleFile:[url path]];
+        [self.player loadThenActiveSubtitleFile:[url path]];
     }
 }
 
