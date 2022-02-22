@@ -790,9 +790,10 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         return;
 
     int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
+    int64_t vdec2 = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_ANOTHER_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
     float   vdps = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VIDEO_DECODE_FRAMES_PER_SECOND, .0f);
     float   vfps = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VIDEO_OUTPUT_FRAMES_PER_SECOND, .0f);
-
+    
     switch (vdec) {
         case FFP_PROPV_DECODER_VIDEOTOOLBOX:
             [self setHudValue:@"VideoToolbox" forKey:@"vdec"];
@@ -809,6 +810,22 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
             break;
     }
 
+    switch (vdec2) {
+        case FFP_PROPV_DECODER_VIDEOTOOLBOX:
+            [self setHudValue:@"VideoToolbox" forKey:@"vdec-swithing"];
+            break;
+        case FFP_PROPV_DECODER_AVCODEC:
+            [self setHudValue:[NSString stringWithFormat:@"avcodec %d.%d.%d",
+                                  LIBAVCODEC_VERSION_MAJOR,
+                                  LIBAVCODEC_VERSION_MINOR,
+                                  LIBAVCODEC_VERSION_MICRO]
+                          forKey:@"vdec-swithing"];
+            break;
+        default:
+            [self setHudValue:@"N/A" forKey:@"vdec-swithing"];
+            break;
+    }
+    
     [self setHudValue:[NSString stringWithFormat:@"%.2f / %.2f", vdps, vfps] forKey:@"fps"];
 
     int64_t vcacheb = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_CACHED_BYTES, 0);
