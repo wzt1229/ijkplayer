@@ -5495,19 +5495,24 @@ int64_t ffp_get_property_int64(FFPlayer *ffp, int id, int64_t default_value)
         case FFP_PROP_INT64_VIDEO_DECODER:
             if (!ffp)
                 return default_value;
-            if (ffp->node_vdec)
+            if (ffp->node_vdec && ffp->node_vdec->is_using) {
                 return ffp->node_vdec->vdec_type;
-            if (ffp->node_vdec_2)
+            } else if (ffp->node_vdec_2 && ffp->node_vdec_2->is_using) {
                 return ffp->node_vdec_2->vdec_type;
+            } else {
+                return default_value;
+            }
         case FFP_PROP_INT64_ANOTHER_VIDEO_DECODER:
             if (!ffp || !ffp->is_switching_vdec_node)
                 return default_value;
-            if (ffp->node_vdec->is_using) {
+            if (ffp->node_vdec && ffp->node_vdec->is_using) {
                 if (ffp->node_vdec_2) {
                     return ffp->node_vdec_2->vdec_type;
                 }
-            } else if (ffp->node_vdec_2->is_using) {
-                return ffp->node_vdec->vdec_type;
+            } else if (ffp->node_vdec_2 && ffp->node_vdec_2->is_using) {
+                if (ffp->node_vdec) {
+                    return ffp->node_vdec->vdec_type;
+                }
             }
             return default_value;
         case FFP_PROP_INT64_AUDIO_DECODER:

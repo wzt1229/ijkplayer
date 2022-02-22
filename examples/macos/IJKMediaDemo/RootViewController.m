@@ -258,6 +258,11 @@
                 [self stopPlay:nil];
             }
                 break;
+            case kVK_ANSI_I:
+            {
+                self.player.shouldShowHudView = !self.player.shouldShowHudView;
+            }
+                break;
             default:
             {
                 NSLog(@"0x%X",[event keyCode]);
