@@ -5276,6 +5276,27 @@ static void _ijkmeta_set_stream(FFPlayer* ffp, int type, int stream)
     }
 }
 
+static int ffp_subtitle_ex_init(FFPlayer *ffp)
+{
+    VideoState* is = ffp->is;
+    
+    is->subtitle_ex = av_mallocz(sizeof(SubtitleExState));
+    
+    /* start video display */
+    if (frame_queue_init(&is->subtitle_ex->subpq, &is->subtitle_ex->subtitleq, SUBPICTURE_QUEUE_SIZE, 0) < 0)
+        return -2;
+
+    if (packet_queue_init(&is->subtitle_ex->subtitleq) < 0)
+        return -3;
+    
+    is->subtitle_ex->mutex = SDL_CreateMutex();
+    if (NULL == is->subtitle_ex->mutex) {
+        return -4;
+    }
+
+    return 0;
+}
+
 int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
 {
     VideoState        *is = ffp->is;
@@ -5352,7 +5373,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             }
             break;
         case AVMEDIA_TYPE_NB + 1:
-            if (selected && stream == is->subtitle_ex->sub_st_idx) {
+            if (selected && is->subtitle_ex && stream == is->subtitle_ex->sub_st_idx) {
                 return 1;
             }
             
@@ -5364,6 +5385,8 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             if (is->subtitle_ex) {
                 external_subtitle_close(ffp);
                 closed = 1;
+            } else if (0 != ffp_subtitle_ex_init(ffp)) {
+                return -1;
             }
             
             if (selected) {
@@ -5584,18 +5607,9 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
     if (is->subtitle_ex) {
         external_subtitle_close(ffp);
     } else {
-        is->subtitle_ex = av_mallocz(sizeof(SubtitleExState));
-    
-        /* start video display */
-        if (frame_queue_init(&is->subtitle_ex->subpq, &is->subtitle_ex->subtitleq, SUBPICTURE_QUEUE_SIZE, 0) < 0)
-            return -2;
-
-        if (packet_queue_init(&is->subtitle_ex->subtitleq) < 0)
-            return -3;
-        
-        is->subtitle_ex->mutex = SDL_CreateMutex();
-        if (NULL == is->subtitle_ex->mutex) {
-            return -4;
+        int ret = ffp_subtitle_ex_init(ffp);
+        if (0 != ret) {
+            return ret;
         }
     }
     
@@ -5612,7 +5626,7 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
                 file_name);
         return  -5;
     } else  {
-        ijkmeta_set_ex_subtitle_context_l(ffp->meta, ffp->is->subtitle_ex->ic, ffp->is);
+        ijkmeta_set_ex_subtitle_context_l(ffp->meta, ffp->is->subtitle_ex->ic, ffp->is, 1);
         is->load_sub_ex = 1;
         
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
@@ -5655,7 +5669,7 @@ int ffp_load_external_subtitle(FFPlayer *ffp, const char *file_name)
         return -2;
     }
     
-    ijkmeta_set_ex_subtitle_context_l(ffp->meta, ic, is);
+    ijkmeta_set_ex_subtitle_context_l(ffp->meta, ic, is, 0);
     
     ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     return 0;
