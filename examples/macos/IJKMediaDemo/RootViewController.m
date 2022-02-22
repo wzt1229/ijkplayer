@@ -351,6 +351,7 @@
     [options setPlayerOptionIntValue:self.useVideoToolBox forKey:@"videotoolbox"];
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
     [options setPlayerOptionIntValue:3840 forKey:@"videotoolbox-max-frame-width"];
+    [options setShowHudView:YES];
     
     [self stopPlay:nil];
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
