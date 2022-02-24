@@ -68,10 +68,10 @@
 - (void)layout
 {
     CGRect frameRect = self.bounds;
-    CGFloat padding = 15;
+    CGFloat padding = 6;
     
     CGFloat minX = padding;
-    CGFloat maxX = CGRectGetWidth(frameRect) - 2;
+    CGFloat maxX = CGRectGetWidth(frameRect) - padding;
     CGFloat height = CGRectGetHeight(frameRect);
     
     {

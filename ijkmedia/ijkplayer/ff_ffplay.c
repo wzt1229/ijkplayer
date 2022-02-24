@@ -4630,8 +4630,9 @@ void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque)
 
     av_application_closep(&ffp->app_ctx);
     av_application_open(&ffp->app_ctx, ffp);
-    ffp_set_option_int(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkapplication", (int64_t)(intptr_t)ffp->app_ctx);
-
+    ffp_set_option_intptr(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkapplication", (intptr_t)ffp->app_ctx);
+    //can't use int, av_dict_strtoptr is NULL in libavformat/http.c
+    //ffp_set_option_int(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkapplication", (int64_t)(intptr_t)ffp->app_ctx);
     ffp->app_ctx->func_on_app_event = app_func_event;
     return prev_weak_thiz;
 }
@@ -4655,6 +4656,15 @@ void ffp_set_option_int(FFPlayer *ffp, int opt_category, const char *name, int64
     av_dict_set_int(dict, name, value, 0);
 }
 
+void ffp_set_option_intptr(FFPlayer *ffp, int opt_category, const char *name, uintptr_t value)
+{
+    if (!ffp)
+        return;
+
+    AVDictionary **dict = ffp_get_opt_dict(ffp, opt_category);
+    av_dict_set_intptr(dict, name, value, 0);
+}
+            
 void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
 {
 #warning TODO REVIEW
