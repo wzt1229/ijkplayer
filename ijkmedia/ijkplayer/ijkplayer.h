@@ -224,4 +224,6 @@ float           ijkmp_get_subtitle_extra_delay(IjkMediaPlayer *mp);
 int             ijkmp_set_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 /*only load ex-subtitle, not use*/
 int             ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
+/*force exchange decoder*/
+int jkmp_exchange_video_decoder(IjkMediaPlayer *mp);
 #endif

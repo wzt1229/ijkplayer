@@ -148,6 +148,8 @@ static unsigned sws_flags = SWS_BICUBIC;
 
 #define MAX_EX_SUBTITLE_NUM 32
 
+#define IJK_EXCHANGE_DECODER_FLAG -1000
+
 typedef struct GetImgInfo {
     char *img_path;
     int64_t start_time;
@@ -272,6 +274,7 @@ typedef struct Decoder {
     SDL_Profiler decode_profiler;
     Uint64 first_frame_decoded_time;
     int    first_frame_decoded;
+    int    is_switching;
 } Decoder;
 
 typedef struct SubtitleExState{
@@ -515,8 +518,6 @@ typedef struct FFTrackCacheStatistic
 
 typedef struct FFStatistic
 {
-    int64_t vdec_type;
-
     float vfps;
     float vdps;
     float avdelay;
@@ -661,6 +662,9 @@ typedef struct FFPlayer {
     SDL_Vout *vout;
     struct IJKFF_Pipeline *pipeline;
     struct IJKFF_Pipenode *node_vdec;
+    //store the next decode
+    struct IJKFF_Pipenode *node_vdec_2;
+    int is_switching_vdec_node;
     int sar_num;
     int sar_den;
 
@@ -809,6 +813,8 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->vout                   = NULL; /* reset outside */
     ffp->pipeline               = NULL;
     ffp->node_vdec              = NULL;
+    ffp->node_vdec_2            = NULL;
+    ffp->is_switching_vdec_node = 0;
     ffp->sar_num                = 0;
     ffp->sar_den                = 0;
 

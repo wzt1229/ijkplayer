@@ -530,70 +530,85 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
     int ret = AVERROR(EAGAIN);
 
     for (;;) {
-        if (d->queue->serial == d->pkt_serial) {
-            do {
-                if (d->queue->abort_request)
-                    return -1;
+        
+        if (d->is_switching && d->avctx->codec_type == AVMEDIA_TYPE_VIDEO && d->pkt->flags == AV_PKT_FLAG_KEY) {
+            //just use this pkt.
+            d->packet_pending = 0;
+            avcodec_flush_buffers(d->avctx);
+            d->is_switching = 0;
+        } else {
 
-                switch (d->avctx->codec_type) {
-                    case AVMEDIA_TYPE_VIDEO:
-                        ret = avcodec_receive_frame(d->avctx, frame);
-                        if (ret >= 0) {
-                            ffp->stat.vdps = SDL_SpeedSamplerAdd(&ffp->vdps_sampler, FFP_SHOW_VDPS_AVCODEC, "vdps[avcodec]");
-                            if (ffp->decoder_reorder_pts == -1) {
-                                frame->pts = frame->best_effort_timestamp;
-                            } else if (!ffp->decoder_reorder_pts) {
-                                frame->pts = frame->pkt_dts;
-                            }
-                        }
-                        break;
-                    case AVMEDIA_TYPE_AUDIO:
-                        ret = avcodec_receive_frame(d->avctx, frame);
-                        if (ret >= 0) {
-                            AVRational tb = (AVRational){1, frame->sample_rate};
-                            if (frame->pts != AV_NOPTS_VALUE)
-                                frame->pts = av_rescale_q(frame->pts, d->avctx->pkt_timebase, tb);
-                            else if (d->next_pts != AV_NOPTS_VALUE)
-                                frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
-                            if (frame->pts != AV_NOPTS_VALUE) {
-                                d->next_pts = frame->pts + frame->nb_samples;
-                                d->next_pts_tb = tb;
-                            }
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                if (ret == AVERROR_EOF) {
-                    d->finished = d->pkt_serial;
-                    avcodec_flush_buffers(d->avctx);
-                    return 0;
-                }
-                if (ret >= 0)
-                    return 1;
-            } while (ret != AVERROR(EAGAIN));
-        }
+            if (d->queue->serial == d->pkt_serial) {
+                do {
+                    if (d->queue->abort_request)
+                        return -1;
 
-        do {
-            if (d->queue->nb_packets == 0)
-                SDL_CondSignal(d->empty_queue_cond);
-            if (d->packet_pending) {
-                d->packet_pending = 0;
-            } else {
-                int old_serial = d->pkt_serial;
-                if (packet_queue_get_or_buffering(ffp, d->queue, d->pkt, &d->pkt_serial, &d->finished) < 0)
-                    return -1;
-                if (old_serial != d->pkt_serial) {
-                    avcodec_flush_buffers(d->avctx);
-                    d->finished = 0;
-                    d->next_pts = d->start_pts;
-                    d->next_pts_tb = d->start_pts_tb;
-                }
+                    switch (d->avctx->codec_type) {
+                        case AVMEDIA_TYPE_VIDEO:
+                            ret = avcodec_receive_frame(d->avctx, frame);
+                            if (ret >= 0) {
+                                ffp->stat.vdps = SDL_SpeedSamplerAdd(&ffp->vdps_sampler, FFP_SHOW_VDPS_AVCODEC, "vdps[avcodec]");
+                                if (ffp->decoder_reorder_pts == -1) {
+                                    frame->pts = frame->best_effort_timestamp;
+                                } else if (!ffp->decoder_reorder_pts) {
+                                    frame->pts = frame->pkt_dts;
+                                }
+                            }
+                            break;
+                        case AVMEDIA_TYPE_AUDIO:
+                            ret = avcodec_receive_frame(d->avctx, frame);
+                            if (ret >= 0) {
+                                AVRational tb = (AVRational){1, frame->sample_rate};
+                                if (frame->pts != AV_NOPTS_VALUE)
+                                    frame->pts = av_rescale_q(frame->pts, d->avctx->pkt_timebase, tb);
+                                else if (d->next_pts != AV_NOPTS_VALUE)
+                                    frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
+                                if (frame->pts != AV_NOPTS_VALUE) {
+                                    d->next_pts = frame->pts + frame->nb_samples;
+                                    d->next_pts_tb = tb;
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    if (ret == AVERROR_EOF) {
+                        d->finished = d->pkt_serial;
+                        avcodec_flush_buffers(d->avctx);
+                        return 0;
+                    }
+                    if (ret >= 0)
+                        return 1;
+                } while (ret != AVERROR(EAGAIN));
             }
-            if (d->queue->serial == d->pkt_serial)
-                break;
-            av_packet_unref(d->pkt);
-        } while (1);
+            
+            do {
+                if (d->queue->nb_packets == 0)
+                    SDL_CondSignal(d->empty_queue_cond);
+                if (d->packet_pending) {
+                    d->packet_pending = 0;
+                } else {
+                    int old_serial = d->pkt_serial;
+                    if (packet_queue_get_or_buffering(ffp, d->queue, d->pkt, &d->pkt_serial, &d->finished) < 0)
+                        return -1;
+                    if (old_serial != d->pkt_serial) {
+                        avcodec_flush_buffers(d->avctx);
+                        d->finished = 0;
+                        d->next_pts = d->start_pts;
+                        d->next_pts_tb = d->start_pts_tb;
+                    }
+                }
+                if (d->queue->serial == d->pkt_serial)
+                    break;
+                av_packet_unref(d->pkt);
+            } while (1);
+            
+            //need switch video decoder
+            if (d->avctx->codec_type == AVMEDIA_TYPE_VIDEO && d->pkt->flags == AV_PKT_FLAG_KEY && ffp->is_switching_vdec_node) {
+                    d->is_switching = 1;
+                    return IJK_EXCHANGE_DECODER_FLAG;
+            }
+        }
 
         if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
             int got_frame = 0;
@@ -1898,7 +1913,7 @@ static int get_video_frame(FFPlayer *ffp, AVFrame *frame)
 
     ffp_video_statistic_l(ffp);
     if ((got_picture = decoder_decode_frame(ffp, &is->viddec, frame, NULL)) < 0)
-        return -1;
+        return got_picture;
 
     if (got_picture) {
         double dpts = NAN;
@@ -2536,17 +2551,51 @@ static int ffplay_video_thread(void *arg)
 #endif
     av_log(NULL, AV_LOG_INFO, "convert image convert_frame_count = %d\n", convert_frame_count);
     av_frame_free(&frame);
-    return 0;
+    return ret;
 }
 
 static int video_thread(void *arg)
 {
     FFPlayer *ffp = (FFPlayer *)arg;
     int       ret = 0;
-
-    if (ffp->node_vdec) {
-        ret = ffpipenode_run_sync(ffp->node_vdec);
-    }
+    do {
+        
+        struct IJKFF_Pipenode **node = NULL;
+        struct IJKFF_Pipenode *node_next = NULL;
+        
+        if (ffp->node_vdec && ffp->node_vdec->is_using) {
+            node = &ffp->node_vdec;
+            if (ffp->node_vdec_2) {
+                node_next = ffp->node_vdec_2;
+            }
+        } else if (ffp->node_vdec_2 && ffp->node_vdec_2->is_using) {
+            node = &ffp->node_vdec_2;
+            if (ffp->node_vdec) {
+                node_next = ffp->node_vdec;
+            }
+        }
+        
+        SDL_LockMutex(ffp->is->play_mutex);
+        int switching = ffp->is_switching_vdec_node;
+        SDL_UnlockMutex(ffp->is->play_mutex);
+        
+        if (switching && node_next) {
+            ffpipenode_free_p(node);
+            node_next->is_using = 1;
+            
+            SDL_LockMutex(ffp->is->play_mutex);
+            ffp->is_switching_vdec_node = 0;
+            SDL_UnlockMutex(ffp->is->play_mutex);
+            
+            ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, node_next->vdec_type == FFP_PROPV_DECODER_VIDEOTOOLBOX);
+            ret = ffpipenode_run_sync(node_next);
+        } else {
+            (*node)->is_using = 1;
+            ret = ffpipenode_run_sync(*node);
+        }
+        
+    } while (ret == IJK_EXCHANGE_DECODER_FLAG);
+    
     return ret;
 }
 
@@ -4438,6 +4487,7 @@ void ffp_destroy(FFPlayer *ffp)
     SDL_VoutFreeP(&ffp->vout);
     SDL_AoutFreeP(&ffp->aout);
     ffpipenode_free_p(&ffp->node_vdec);
+    ffpipenode_free_p(&ffp->node_vdec_2);
     ffpipeline_free_p(&ffp->pipeline);
     ijkmeta_destroy_p(&ffp->meta);
 #if ! IJK_IO_OFF
@@ -4580,8 +4630,9 @@ void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque)
 
     av_application_closep(&ffp->app_ctx);
     av_application_open(&ffp->app_ctx, ffp);
-    ffp_set_option_int(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkapplication", (int64_t)(intptr_t)ffp->app_ctx);
-
+    ffp_set_option_intptr(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkapplication", (intptr_t)ffp->app_ctx);
+    //can't use int, av_dict_strtoptr is NULL in libavformat/http.c
+    //ffp_set_option_int(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkapplication", (int64_t)(intptr_t)ffp->app_ctx);
     ffp->app_ctx->func_on_app_event = app_func_event;
     return prev_weak_thiz;
 }
@@ -4605,6 +4656,15 @@ void ffp_set_option_int(FFPlayer *ffp, int opt_category, const char *name, int64
     av_dict_set_int(dict, name, value, 0);
 }
 
+void ffp_set_option_intptr(FFPlayer *ffp, int opt_category, const char *name, uintptr_t value)
+{
+    if (!ffp)
+        return;
+
+    AVDictionary **dict = ffp_get_opt_dict(ffp, opt_category);
+    av_dict_set_intptr(dict, name, value, 0);
+}
+            
 void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
 {
 #warning TODO REVIEW
@@ -5468,7 +5528,26 @@ int64_t ffp_get_property_int64(FFPlayer *ffp, int id, int64_t default_value)
         case FFP_PROP_INT64_VIDEO_DECODER:
             if (!ffp)
                 return default_value;
-            return ffp->stat.vdec_type;
+            if (ffp->node_vdec && ffp->node_vdec->is_using) {
+                return ffp->node_vdec->vdec_type;
+            } else if (ffp->node_vdec_2 && ffp->node_vdec_2->is_using) {
+                return ffp->node_vdec_2->vdec_type;
+            } else {
+                return default_value;
+            }
+        case FFP_PROP_INT64_ANOTHER_VIDEO_DECODER:
+            if (!ffp || !ffp->is_switching_vdec_node)
+                return default_value;
+            if (ffp->node_vdec && ffp->node_vdec->is_using) {
+                if (ffp->node_vdec_2) {
+                    return ffp->node_vdec_2->vdec_type;
+                }
+            } else if (ffp->node_vdec_2 && ffp->node_vdec_2->is_using) {
+                if (ffp->node_vdec) {
+                    return ffp->node_vdec->vdec_type;
+                }
+            }
+            return default_value;
         case FFP_PROP_INT64_AUDIO_DECODER:
             return FFP_PROPV_DECODER_AVCODEC;
 
@@ -5675,3 +5754,41 @@ int ffp_load_external_subtitle(FFPlayer *ffp, const char *file_name)
     return 0;
 }
 
+int ffp_exchange_video_decoder(FFPlayer *ffp)
+{
+    if (!ffp || !ffp->is) {
+        return -5;
+    }
+    SDL_LockMutex(ffp->is->play_mutex);
+    int switching = ffp->is_switching_vdec_node;
+    SDL_UnlockMutex(ffp->is->play_mutex);
+            
+    if (switching) {
+        return -1;
+    } else if (!ffp->node_vdec && !ffp->node_vdec_2) {
+        return -2;
+    } else if (ffpipeline_has_another_video_decoder(ffp->pipeline, ffp) <= 0) {
+        return -3;
+    } else {
+        IJKFF_Pipenode* node = ffpipeline_open_another_video_decoder(ffp->pipeline, ffp);
+        if (node) {
+            if (ffp->node_vdec && ffp->node_vdec->is_using) {
+                ffp->node_vdec_2 = node;
+                SDL_LockMutex(ffp->is->play_mutex);
+                ffp->is_switching_vdec_node = 1;
+                SDL_UnlockMutex(ffp->is->play_mutex);
+            } else if (ffp->node_vdec_2 && ffp->node_vdec_2->is_using) {
+                ffp->node_vdec = node;
+                SDL_LockMutex(ffp->is->play_mutex);
+                ffp->is_switching_vdec_node = 1;
+                SDL_UnlockMutex(ffp->is->play_mutex);
+            } else {
+                ffpipenode_free_p(&node);
+                return -4;
+            }
+            return 1;
+        } else {
+            return -4;
+        }
+    }
+}
