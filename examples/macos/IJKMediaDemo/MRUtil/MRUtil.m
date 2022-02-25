@@ -18,7 +18,8 @@
     return @[
         @"mp3",
         @"m4a",
-        @"aac"
+        @"aac",
+        @"ogg"
         ];
 }
 

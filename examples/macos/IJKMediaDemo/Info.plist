@@ -193,6 +193,10 @@
 				<string>dv</string>
 				<string>divx</string>
 				<string>vob</string>
+				<string>mxf</string>
+				<string>wtv</string>
+				<string>wsf</string>
+				<string>ogv</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>VIDEO.icns</string>

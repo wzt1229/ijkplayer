@@ -597,6 +597,8 @@
     }
 }
 
+#pragma mark - 拖拽
+
 - (void)handleDragFileList:(nonnull NSArray<NSURL *> *)fileUrls
 {
     NSMutableArray *bookmarkArr = [NSMutableArray array];
