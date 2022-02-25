@@ -30,7 +30,7 @@
     NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:mask backing:NSBackingStoreBuffered defer:YES];
     window.contentViewController = [[RootViewController alloc] init];
     window.movableByWindowBackground = YES;
-    //window.titlebarAppearsTransparent = YES;
+    window.titlebarAppearsTransparent = YES;
     
     self.windowCtrl = [[WindowController alloc] init];
     self.windowCtrl.window = window;
@@ -88,6 +88,12 @@
         [dic setObject:bookmarkArr forKey:@"obj"];
         POST_NOTIFICATION(kPlayExplorerMovieNotificationName_G, self, dic);
     }
+}
+
+- (IBAction)showPreferencesPanel:(id)sender
+{
+    NSStoryboard *sb = [NSStoryboard storyboardWithName:@"Setting" bundle:nil];
+    [self.windowCtrl.window.contentViewController presentViewControllerAsModalWindow:[sb instantiateInitialController]];
 }
 
 - (void)application:(NSApplication *)sender openFiles:(NSArray<NSString *> *)filenames

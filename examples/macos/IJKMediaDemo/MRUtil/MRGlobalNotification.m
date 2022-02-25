@@ -1,6 +1,6 @@
 //
 //  MRGlobalNotification.m
-//  SHVideoPlayer
+//  IJKMediaDemo
 //
 //  Created by Matt Reach on 2019/3/14.
 //  Copyright © 2019 IJK Mac. All rights reserved.
