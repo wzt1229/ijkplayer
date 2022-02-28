@@ -43,7 +43,7 @@
 
 @property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
 @property (weak) IBOutlet NSPopUpButton *audioPopUpBtn;
-
+@property (weak) IBOutlet NSPopUpButton *videoPopUpBtn;
 @property (weak) NSTrackingArea *trackingArea;
 
 //for cocoa binding begin
@@ -468,6 +468,10 @@
         NSString *currentAudio = @"选择音轨";
         [self.audioPopUpBtn addItemWithTitle:currentAudio];
         
+        [self.videoPopUpBtn removeAllItems];
+        NSString *currentVideo = @"选择视轨";
+        [self.videoPopUpBtn addItemWithTitle:currentVideo];
+        
         for (NSDictionary *stream in dic[kk_IJKM_KEY_STREAMS]) {
             NSString *type = stream[k_IJKM_KEY_TYPE];
             int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
@@ -497,10 +501,24 @@
                     currentAudio = title;
                 }
                 [self.audioPopUpBtn addItemWithTitle:title];
+            } else if ([type isEqualToString:k_IJKM_VAL_TYPE__VIDEO]) {
+                NSString *title = stream[k_IJKM_KEY_TITLE];
+                if (title.length == 0) {
+                    title = stream[k_IJKM_KEY_LANGUAGE];
+                }
+                if (title.length == 0) {
+                    title = @"未知";
+                }
+                title = [NSString stringWithFormat:@"%@-%d",title,streamIdx];
+                if ([dic[k_IJKM_VAL_TYPE__VIDEO] intValue] == streamIdx) {
+                    currentVideo = title;
+                }
+                [self.videoPopUpBtn addItemWithTitle:title];
             }
         }
         [self.subtitlePopUpBtn selectItemWithTitle:currentTitle];
         [self.audioPopUpBtn selectItemWithTitle:currentAudio];
+        [self.videoPopUpBtn selectItemWithTitle:currentVideo];
     }
 }
 
@@ -946,12 +964,25 @@
 {
     NSString *title = sender.selectedItem.title;
     NSArray *items = [title componentsSeparatedByString:@"-"];
-    if ([items count] == 2) {
+    if (sender.indexOfSelectedItem == [items count] - 1) {
+        [self.player closeCurrentStream:k_IJKM_VAL_TYPE__AUDIO];
+    } else {
         int idx = [[items lastObject] intValue];
         NSLog(@"SelectAudioTrack:%d",idx);
         [self.player exchangeSelectedStream:idx];
+    }
+}
+
+- (IBAction)onSelectVideoTrack:(NSPopUpButton*)sender
+{
+    NSString *title = sender.selectedItem.title;
+    NSArray *items = [title componentsSeparatedByString:@"-"];
+    if (sender.indexOfSelectedItem == [items count] - 1) {
+        [self.player closeCurrentStream:k_IJKM_VAL_TYPE__VIDEO];
     } else {
-        [self.player closeCurrentStream:k_IJKM_VAL_TYPE__AUDIO];
+        int idx = [[items lastObject] intValue];
+        NSLog(@"SelectVideoTrack:%d",idx);
+        [self.player exchangeSelectedStream:idx];
     }
 }
 
