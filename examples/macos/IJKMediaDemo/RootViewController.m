@@ -658,10 +658,7 @@
 - (void)playFirstIfNeed
 {
     if (!self.playingUrl) {
-        NSURL *url = [self.playList firstObject];
-        if (url) {
-            [self playURL:url];
-        }
+        [self pauseOrPlay:nil];
     }
 }
 
@@ -669,6 +666,14 @@
 
 - (IBAction)pauseOrPlay:(NSButton *)sender
 {
+    if (!sender) {
+        if (self.playCtrlBtn.state == NSControlStateValueOff) {
+            self.playCtrlBtn.state = NSControlStateValueOn;
+        } else {
+            self.playCtrlBtn.state = NSControlStateValueOff;
+        }
+    }
+    
     if (self.playingUrl) {
         if (self.playCtrlBtn.state == NSControlStateValueOff) {
             [self.player pause];
