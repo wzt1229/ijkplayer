@@ -37,11 +37,7 @@
     [window center];
     [self.windowCtrl showWindow:nil];
     BOOL match = [IJKFFMoviePlayerController checkIfFFmpegVersionMatch:YES];
-    
     NSLog(@"==FFmpegVersionMatch:%d",match);
-    
-    [IJKFFMoviePlayerController setLogReport:YES];
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag

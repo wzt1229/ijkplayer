@@ -227,25 +227,12 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     
     // init hud
     _hudCtrl = [IJKSDLHudControl new];
-    
-    [self setHudValue:nil forKey:@"scheme"];
-    [self setHudValue:nil forKey:@"host"];
-    [self setHudValue:nil forKey:@"path"];
-    [self setHudValue:nil forKey:@"ip"];
-    [self setHudValue:nil forKey:@"tcp-info"];
-    [self setHudValue:nil forKey:@"http"];
-    [self setHudValue:nil forKey:@"tcp-spd"];
-    [self setHudValue:nil forKey:@"t-prepared"];
-    [self setHudValue:nil forKey:@"t-render"];
-    [self setHudValue:nil forKey:@"t-preroll"];
-    [self setHudValue:nil forKey:@"t-http-open"];
-    [self setHudValue:nil forKey:@"t-http-seek"];
-    
+
     self.shouldShowHudView = options.showHudView;
 #ifdef DEBUG
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
 #else
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_SILENT];
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
 #endif
 
     [options applyTo:_mediaPlayer];
@@ -346,7 +333,21 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         return;
 
     [self setScreenOn:_keepScreenOnWhilePlaying];
-
+    if (![_urlString hasPrefix:@"/"]) {
+        [self setHudValue:nil forKey:@"scheme"];
+        [self setHudValue:nil forKey:@"host"];
+        [self setHudValue:nil forKey:@"path"];
+        [self setHudValue:nil forKey:@"ip"];
+        [self setHudValue:nil forKey:@"tcp-info"];
+        [self setHudValue:nil forKey:@"http"];
+        [self setHudValue:nil forKey:@"tcp-spd"];
+        [self setHudValue:nil forKey:@"t-prepared"];
+        [self setHudValue:nil forKey:@"t-render"];
+        [self setHudValue:nil forKey:@"t-preroll"];
+        [self setHudValue:nil forKey:@"t-http-open"];
+        [self setHudValue:nil forKey:@"t-http-seek"];
+    }
+    
     ijkmp_set_data_source(_mediaPlayer, [_urlString UTF8String]);
     ijkmp_set_option(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", "0"); // for concat demuxer
 
@@ -857,39 +858,40 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     float avdiff  = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_AVDIFF, .0f);
     [self setHudValue:[NSString stringWithFormat:@"%.3f %.3f", avdelay, -avdiff] forKey:@"delay"];
 
+    if (self.monitor.httpUrl) {
 #if ! IJK_IO_OFF
-    int64_t bitRate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
-    [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
-                         formatedSize(_cacheStat.cache_file_forwards),
-                          formatedDurationBytesAndBitrate(_cacheStat.cache_file_forwards, bitRate)] forKey:@"cache-forwards"];
-    [self setHudValue:formatedSize(_cacheStat.cache_physical_pos) forKey:@"cache-physical-pos"];
-    [self setHudValue:formatedSize(_cacheStat.cache_file_pos) forKey:@"cache-file-pos"];
-    [self setHudValue:formatedSize(_cacheStat.cache_count_bytes) forKey:@"cache-bytes"];
-    [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
-                          formatedSize(_asyncStat.buf_backwards),
-                          formatedDurationBytesAndBitrate(_asyncStat.buf_backwards, bitRate)]
-                  forKey:@"async-backward"];
-    [self setHudValue:[NSString stringWithFormat:@"+%@, %@",
-                          formatedSize(_asyncStat.buf_forwards),
-                          formatedDurationBytesAndBitrate(_asyncStat.buf_forwards, bitRate)]
-                  forKey:@"async-forward"];
+        int64_t bitRate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
+        [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
+                             formatedSize(_cacheStat.cache_file_forwards),
+                              formatedDurationBytesAndBitrate(_cacheStat.cache_file_forwards, bitRate)] forKey:@"cache-forwards"];
+        [self setHudValue:formatedSize(_cacheStat.cache_physical_pos) forKey:@"cache-physical-pos"];
+        [self setHudValue:formatedSize(_cacheStat.cache_file_pos) forKey:@"cache-file-pos"];
+        [self setHudValue:formatedSize(_cacheStat.cache_count_bytes) forKey:@"cache-bytes"];
+        [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
+                              formatedSize(_asyncStat.buf_backwards),
+                              formatedDurationBytesAndBitrate(_asyncStat.buf_backwards, bitRate)]
+                      forKey:@"async-backward"];
+        [self setHudValue:[NSString stringWithFormat:@"+%@, %@",
+                              formatedSize(_asyncStat.buf_forwards),
+                              formatedDurationBytesAndBitrate(_asyncStat.buf_forwards, bitRate)]
+                      forKey:@"async-forward"];
 #endif
-
-    int64_t tcpSpeed = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
-    [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
-                  forKey:@"tcp-spd"];
-
-    [self setHudValue:formatedDurationMilli(_monitor.prepareDuration) forKey:@"t-prepared"];
-    [self setHudValue:formatedDurationMilli(_monitor.firstVideoFrameLatency) forKey:@"t-render"];
-    [self setHudValue:formatedDurationMilli(_monitor.lastPrerollDuration) forKey:@"t-preroll"];
-    [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
-                          formatedDurationMilli(_monitor.lastHttpOpenDuration),
-                          _monitor.httpOpenCount]
-                  forKey:@"t-http-open"];
-    [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
-                          formatedDurationMilli(_monitor.lastHttpSeekDuration),
-                          _monitor.httpSeekCount]
-                  forKey:@"t-http-seek"];
+        int64_t tcpSpeed = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
+        [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
+                   forKey:@"tcp-spd"];
+        
+        [self setHudValue:formatedDurationMilli(_monitor.prepareDuration) forKey:@"t-prepared"];
+        [self setHudValue:formatedDurationMilli(_monitor.firstVideoFrameLatency) forKey:@"t-render"];
+        [self setHudValue:formatedDurationMilli(_monitor.lastPrerollDuration) forKey:@"t-preroll"];
+        [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
+                           formatedDurationMilli(_monitor.lastHttpOpenDuration),
+                           _monitor.httpOpenCount]
+                   forKey:@"t-http-open"];
+        [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
+                           formatedDurationMilli(_monitor.lastHttpSeekDuration),
+                           _monitor.httpSeekCount]
+                   forKey:@"t-http-seek"];
+    }
 }
 
 - (void)startHudTimer
