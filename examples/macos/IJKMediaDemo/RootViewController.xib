@@ -259,8 +259,8 @@
                         </userDefinedRuntimeAttribute>
                     </userDefinedRuntimeAttributes>
                 </customView>
-                <customView misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2yP-HX-Sd0">
-                    <rect key="frame" x="0.0" y="0.0" width="578" height="274"/>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="2yP-HX-Sd0">
+                    <rect key="frame" x="-241" y="-400" width="1060" height="274"/>
                     <subviews>
                         <visualEffectView blendingMode="withinWindow" material="mediumLight" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="DNQ-ai-PSU">
                             <rect key="frame" x="0.0" y="0.0" width="1060" height="274"/>
@@ -969,7 +969,7 @@
                 <constraint firstAttribute="bottom" secondItem="XTw-oZ-D8f" secondAttribute="bottom" constant="64" id="HDX-SI-hmm"/>
                 <constraint firstAttribute="bottom" secondItem="bFq-6V-0jf" secondAttribute="bottom" id="IbN-cK-7HX"/>
                 <constraint firstItem="2yP-HX-Sd0" firstAttribute="centerX" secondItem="lpW-6Y-TED" secondAttribute="centerX" id="OO1-Wd-nPj"/>
-                <constraint firstAttribute="bottom" secondItem="2yP-HX-Sd0" secondAttribute="bottom" id="RPo-R2-o5y"/>
+                <constraint firstAttribute="bottom" secondItem="2yP-HX-Sd0" secondAttribute="bottom" constant="-400" id="RPo-R2-o5y"/>
                 <constraint firstItem="XTw-oZ-D8f" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="lpW-6Y-TED" secondAttribute="leading" constant="64" id="TmE-HH-Y3p"/>
                 <constraint firstItem="bFq-6V-0jf" firstAttribute="top" secondItem="lpW-6Y-TED" secondAttribute="top" id="VXG-V8-Itt"/>
                 <constraint firstItem="bFq-6V-0jf" firstAttribute="leading" secondItem="lpW-6Y-TED" secondAttribute="leading" id="fmz-1U-OP6"/>

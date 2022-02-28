@@ -117,7 +117,8 @@ typedef enum : NSUInteger {
 
 // private method for jik internal.
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
-
+// refresh current video picture and subtitle (when player paused change video pic preference, you can invoke this method)
+- (void)setNeedsRefreshCurrentPic;
 #if !TARGET_OS_OSX
 - (UIImage *)snapshot;
 #else

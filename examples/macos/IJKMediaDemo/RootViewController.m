@@ -811,7 +811,12 @@
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.color = bgrValue;
     self.player.view.subtitlePreference = p;
-    [self.player invalidateSubtitleEffect];
+    if (self.player.isPlaying) {
+        [self.player invalidateSubtitleEffect];
+    } else {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
+    
 }
 
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
@@ -819,7 +824,11 @@
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.fontSize = sender.intValue;
     self.player.view.subtitlePreference = p;
-    [self.player invalidateSubtitleEffect];
+    if (self.player.isPlaying) {
+        [self.player invalidateSubtitleEffect];
+    } else {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
 }
 
 - (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
@@ -846,7 +855,11 @@
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.bottomMargin = sender.floatValue;
     self.player.view.subtitlePreference = p;
-    [self.player invalidateSubtitleEffect];
+    if (self.player.isPlaying) {
+        [self.player invalidateSubtitleEffect];
+    } else {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
 }
 
 #pragma mark 画面设置
@@ -863,6 +876,10 @@
     } else if (item.tag == 3) {
         //aspect fit
         [self.player setScalingMode:IJKMPMovieScalingModeAspectFit];
+    }
+    
+    if (!self.player.isPlaying) {
+        [self.player.view setNeedsRefreshCurrentPic];
     }
 }
 
@@ -893,7 +910,9 @@
     }
     
     self.player.view.rotatePreference = preference;
-    
+    if (!self.player.isPlaying) {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
     NSLog(@"rotate:%@ %d",@[@"None",@"X",@"Y",@"Z"][preference.type],(int)preference.degrees);
 }
 
@@ -925,6 +944,9 @@
     colorPreference.saturation = self.saturation;//S
     colorPreference.contrast = self.contrast;//C
     self.player.view.colorPreference = colorPreference;
+    if (!self.player.isPlaying) {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
 }
 
 - (IBAction)onChangeDAR:(NSPopUpButton *)sender
@@ -939,6 +961,9 @@
         sscanf(str, "%d:%d", &dar_num, &dar_den);
     }
     self.player.view.darPreference = (IJKSDLDARPreference){dar_num,dar_den};
+    if (!self.player.isPlaying) {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
 }
 
 - (IBAction)onReset:(NSButton *)sender

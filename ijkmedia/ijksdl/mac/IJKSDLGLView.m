@@ -199,15 +199,6 @@
     }
 }
 
-- (void)onDARChange:(int)dar_num den:(int)dar_den
-{
-    IJKSDLDARPreference preference;
-    preference.num = dar_num;
-    preference.den = dar_den;
-    
-    self.darPreference = preference;
-}
-
 - (void)resetViewPort
 {
     NSRect viewRectPixels = [self convertRectToBacking:[self bounds]];
@@ -232,6 +223,43 @@
     IJK_GLES2_Renderer_updateColorConversion(_renderer, self.colorPreference.brightness, self.colorPreference.saturation,self.colorPreference.contrast);
     
     IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.num, self.darPreference.den);
+}
+
+- (void)setNeedsRefreshCurrentPic
+{
+    if (self.currentVideoPic) {
+        [[self openGLContext] makeCurrentContext];
+        CGLLockContext([[self openGLContext] CGLContextObj]);
+        // Bind the FBO to screen.
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, _backingWidth, _backingHeight);
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        if (_renderer) {
+            //for video
+            [self updateRenderSettings];
+            if (!IJK_GLES2_Renderer_updateVetex(_renderer, NULL))
+                ALOGE("[GL] Renderer_updateVetex failed\n");
+            
+            if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)self.currentVideoPic))
+                ALOGE("[GL] Renderer_updateVetex failed\n");
+            
+            IJK_GLES2_Renderer_drawArrays();
+            
+            //for subtitle
+            if (self.currentSubtitle) {
+                IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(self.currentSubtitle), CVPixelBufferGetHeight(self.currentSubtitle));
+                if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
+                    ALOGE("[GL] GLES2 Render Subtitle failed\n");
+                IJK_GLES2_Renderer_drawArrays();
+            }
+        } else {
+            ALOGW("IJKSDLGLView: not ready.\n");
+        }
+       
+        CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+        CGLUnlockContext([[self openGLContext] CGLContextObj]);
+    }
 }
 
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
