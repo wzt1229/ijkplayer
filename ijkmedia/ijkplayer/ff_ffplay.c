@@ -932,29 +932,6 @@ static void update_subtitle_text(FFPlayer *ffp,const char *str)
     ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)str, (int)strlen(str) + 1);
 }
 
-void subtitle_invalidate_uploaded(FFPlayer *ffp)
-{
-    VideoState *is = ffp->is;
-    if (is->subtitle_st) {
-        if (frame_queue_nb_remaining(&is->subpq) > 0) {
-            Frame *sp = frame_queue_peek(&is->subpq);
-            if (sp->uploaded) {
-                sp->uploaded = 0;
-            }
-        }
-    } else if (is->subtitle_ex) {
-        SubtitleExState * ex = is->subtitle_ex;
-        if (ex->subtitle_st) {
-            if (frame_queue_nb_remaining(&ex->subpq) > 0) {
-                Frame *sp = frame_queue_peek(&ex->subpq);
-                if (sp->uploaded) {
-                    sp->uploaded = 0;
-                }
-            }
-        }
-    }
-}
-
 static void video_image_display2(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
@@ -1879,7 +1856,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         
         if (ffp->autorotate) {
             //fill video ratate degrees
-            vp->bmp->auto_z_rotate_degrees = - ffp_get_video_rotate_degrees(ffp);
+            vp->bmp->auto_z_rotate_degrees = - ffp->vout->z_rotate_degrees;
         }
         /* update the bitmap content */
         SDL_VoutUnlockYUVOverlay(vp->bmp);
@@ -3763,16 +3740,10 @@ static int read_thread(void *arg)
         AVCodecParameters *codecpar = is->video_st->codecpar;
         ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, codecpar->width, codecpar->height);
         ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codecpar->sample_aspect_ratio.num, codecpar->sample_aspect_ratio.den);
-        //以1080尺寸为标准，定义出字幕字体默认大小为45pt
-        if (codecpar->width > 0) {
-            int degrees = ffp_get_video_rotate_degrees(ffp);
-            if (degrees / 90 % 2 == 1) {
-                ffp->vout->subtitle_ratio = codecpar->height / 800.0;
-            } else {
-                ffp->vout->subtitle_ratio = codecpar->width / 800.0;
-            }
-            
-        }
+        //recode video z rotate degrees
+        int deg = ffp_get_video_rotate_degrees(ffp);
+        ffp->vout->z_rotate_degrees = deg;
+        ffp_notify_msg2(ffp, FFP_MSG_VIDEO_Z_ROTATE_DEGREE, deg);
     }
     ffp->prepared = true;
     ffp_notify_msg1(ffp, FFP_MSG_PREPARED);

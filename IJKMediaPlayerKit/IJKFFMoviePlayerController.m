@@ -65,7 +65,7 @@ static const char *kIJKFFRequiredFFmpegVersion = "ff4.0--ijk0.8.8--20210426--001
     NSInteger _videoHeight;
     NSInteger _sampleAspectRatioNumerator;
     NSInteger _sampleAspectRatioDenominator;
-
+    NSInteger _videoZRotateDegrees;
     BOOL      _seeking;
     NSInteger _bufferingTime;
     NSInteger _bufferingPosition;
@@ -584,13 +584,6 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     [self didShutdown];
 }
 
-- (void)invalidateSubtitleEffect
-{
-    if (_mediaPlayer) {
-        ijkmp_invalidate_subtitle_effect(_mediaPlayer);
-    }
-}
-
 - (void)didShutdown
 {
 }
@@ -711,7 +704,12 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     }
 }
 
-- (void)setScalingMode: (IJKMPMovieScalingMode) aScalingMode
+- (NSInteger)videoZRotateDegrees
+{
+    return _videoZRotateDegrees;
+}
+
+- (void)setScalingMode:(IJKMPMovieScalingMode) aScalingMode
 {
     IJKMPMovieScalingMode newScalingMode = aScalingMode;
     self.view.scalingMode = aScalingMode;
@@ -1219,7 +1217,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                 _videoWidth = avmsg->arg1;
             if (avmsg->arg2 > 0)
                 _videoHeight = avmsg->arg2;
-            NSLog(@"video size:(%ld,%ld)",(long)_videoWidth,(long)_videoHeight);
             [self changeNaturalSize];
             break;
         case FFP_MSG_SAR_CHANGED:
@@ -1358,6 +1355,9 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             _isAudioSync = 0;
             break;
         }
+        case FFP_MSG_VIDEO_Z_ROTATE_DEGREE:
+            _videoZRotateDegrees = avmsg->arg1;
+            break;
         default:
             // NSLog(@"unknown FFP_MSG_xxx(%d)\n", avmsg->what);
             break;

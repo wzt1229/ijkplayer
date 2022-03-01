@@ -31,11 +31,13 @@
 #import "ijksdl_vout_overlay_videotoolbox.h"
 #import <AVFoundation/AVFoundation.h>
 #import "renderer_pixfmt.h"
+#import "MRTextureString.h"
 
 @interface IJKSDLGLView()
 
 @property(atomic) CVPixelBufferRef currentVideoPic;
 @property(atomic) CVPixelBufferRef currentSubtitle;
+@property(atomic) NSString *subtitle;
 
 @end
 
@@ -227,17 +229,17 @@
 
 - (void)setNeedsRefreshCurrentPic
 {
-    if (self.currentVideoPic) {
-        [[self openGLContext] makeCurrentContext];
-        CGLLockContext([[self openGLContext] CGLContextObj]);
-        // Bind the FBO to screen.
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, _backingWidth, _backingHeight);
-        glClear(GL_COLOR_BUFFER_BIT);
-        
-        if (_renderer) {
-            //for video
-            [self updateRenderSettings];
+    [[self openGLContext] makeCurrentContext];
+    CGLLockContext([[self openGLContext] CGLContextObj]);
+    // Bind the FBO to screen.
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, _backingWidth, _backingHeight);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    if (_renderer) {
+        //for video
+        [self updateRenderSettings];
+        if (self.currentVideoPic) {
             if (!IJK_GLES2_Renderer_updateVetex(_renderer, NULL))
                 ALOGE("[GL] Renderer_updateVetex failed\n");
             
@@ -245,28 +247,81 @@
                 ALOGE("[GL] Renderer_updateVetex failed\n");
             
             IJK_GLES2_Renderer_drawArrays();
-            
-            //for subtitle
-            if (self.currentSubtitle) {
-                IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(self.currentSubtitle), CVPixelBufferGetHeight(self.currentSubtitle));
-                if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
-                    ALOGE("[GL] GLES2 Render Subtitle failed\n");
-                IJK_GLES2_Renderer_drawArrays();
-            }
-        } else {
-            ALOGW("IJKSDLGLView: not ready.\n");
         }
-       
-        CGLFlushDrawable([[self openGLContext] CGLContextObj]);
-        CGLUnlockContext([[self openGLContext] CGLContextObj]);
+        
+        //for subtitle
+        [self _generateSubtitlePixel:self.subtitle];
+        
+        if (self.currentSubtitle) {
+            IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(self.currentSubtitle), CVPixelBufferGetHeight(self.currentSubtitle));
+            if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
+                ALOGE("[GL] GLES2 Render Subtitle failed\n");
+            IJK_GLES2_Renderer_drawArrays();
+        }
+    } else {
+        ALOGW("IJKSDLGLView: not ready.\n");
     }
+   
+    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+    CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle
+- (void)_generateSubtitlePixel:(NSString *)subtitle
+{
+    if (subtitle.length == 0) {
+        return;
+    }
+    
+    IJKSDLSubtitlePreference sp = self.subtitlePreference;
+        
+    int fontSize = sp.fontSize;
+    int32_t bgrValue = sp.color;
+//TODO
+    float ratio = 1.0;//vout->subtitle_ratio;
+    
+    //字幕默认配置
+    NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
+    
+    UIFont *subtitleFont = [UIFont systemFontOfSize:fontSize * ratio];
+    [attributes setObject:subtitleFont forKey:NSFontAttributeName];
+    
+    NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
+    
+    [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
+    
+    MRTextureString *textureString = [[MRTextureString alloc] initWithString:subtitle withAttributes:attributes withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
+    
+    float inset = subtitleFont.pointSize / 2.0;
+    textureString.edgeInsets = NSEdgeInsetsMake(inset, inset, inset, inset);
+    textureString.cRadius = inset / 2.0;
+    
+    if (self.currentSubtitle) {
+        CVPixelBufferRelease(self.currentSubtitle);
+        self.currentSubtitle = NULL;
+    }
+    
+    self.currentSubtitle = [textureString createPixelBuffer];
+}
+
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(const char *)text
 {
     if (!overlay) {
         ALOGW("IJKSDLGLView: overlay is nil\n");
         return;
+    }
+    
+    if (text && strlen(text) > 0) {
+        NSString *subStr = [[NSString alloc] initWithUTF8String:text];
+        if (![subStr isEqualToString:self.subtitle]) {
+            [self _generateSubtitlePixel:subStr];
+            self.subtitle = subStr;
+        }
+    } else {
+        if (self.currentSubtitle) {
+            CVPixelBufferRelease(self.currentSubtitle);
+            self.currentSubtitle = NULL;
+        }
+        self.subtitle = nil;
     }
     
     [[self openGLContext] makeCurrentContext];
@@ -277,8 +332,8 @@
     glClear(GL_COLOR_BUFFER_BIT);
     
     if ([self setupRenderer:overlay] && _renderer) {
+        
         //for video
-
         if (self.currentVideoPic) {
             CVPixelBufferRelease(self.currentVideoPic);
             self.currentVideoPic = NULL;
@@ -291,29 +346,21 @@
             if (!IJK_GLES2_Renderer_updateVetex(_renderer, overlay))
                 ALOGE("[GL] Renderer_updateVetex failed\n");
             
-            self.currentVideoPic = CVPixelBufferRetain(videoPic);
-            
             if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)videoPic))
                 ALOGE("[GL] Renderer_updateVetex failed\n");
             
             IJK_GLES2_Renderer_drawArrays();
+            
+            self.currentVideoPic = CVPixelBufferRetain(videoPic);
         }
         
         //for subtitle
         if (self.currentSubtitle) {
-            CVPixelBufferRelease(self.currentSubtitle);
-            self.currentSubtitle = NULL;
-        }
-        
-        if (subtitle) {
-            self.currentSubtitle = CVPixelBufferRetain(subtitle);
-            
-            IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(subtitle), CVPixelBufferGetHeight(subtitle));
-            if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)subtitle))
+            IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(self.currentSubtitle), CVPixelBufferGetHeight(self.currentSubtitle));
+            if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
                 ALOGE("[GL] GLES2 Render Subtitle failed\n");
             IJK_GLES2_Renderer_drawArrays();
         }
-        
     } else {
         ALOGW("IJKSDLGLView: not ready.\n");
     }

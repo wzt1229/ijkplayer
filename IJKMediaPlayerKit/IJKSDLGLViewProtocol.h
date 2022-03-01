@@ -116,7 +116,7 @@ typedef enum : NSUInteger {
 @property(nonatomic) IJKSDLDARPreference darPreference;
 
 // private method for jik internal.
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(CVPixelBufferRef)subtitle;
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(const char *)subtitle;
 // refresh current video picture and subtitle (when player paused change video pic preference, you can invoke this method)
 - (void)setNeedsRefreshCurrentPic;
 #if !TARGET_OS_OSX

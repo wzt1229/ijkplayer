@@ -798,14 +798,6 @@ int ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block)
     return -1;
 }
 
-void ijkmp_invalidate_subtitle_effect(IjkMediaPlayer *mp)
-{
-    assert(mp);
-    pthread_mutex_lock(&mp->mutex);
-    subtitle_invalidate_uploaded(mp->ffplayer);
-    pthread_mutex_unlock(&mp->mutex);
-}
-
 void ijkmp_set_subtitle_extra_delay(IjkMediaPlayer* mp, const float delay)
 {
     assert(mp);

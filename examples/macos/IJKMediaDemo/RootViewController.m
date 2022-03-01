@@ -811,12 +811,7 @@
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.color = bgrValue;
     self.player.view.subtitlePreference = p;
-    if (self.player.isPlaying) {
-        [self.player invalidateSubtitleEffect];
-    } else {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
-    
+    [self.player.view setNeedsRefreshCurrentPic];
 }
 
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
@@ -824,11 +819,7 @@
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.fontSize = sender.intValue;
     self.player.view.subtitlePreference = p;
-    if (self.player.isPlaying) {
-        [self.player invalidateSubtitleEffect];
-    } else {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+    [self.player.view setNeedsRefreshCurrentPic];
 }
 
 - (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
@@ -855,11 +846,7 @@
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.bottomMargin = sender.floatValue;
     self.player.view.subtitlePreference = p;
-    if (self.player.isPlaying) {
-        [self.player invalidateSubtitleEffect];
-    } else {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+    [self.player.view setNeedsRefreshCurrentPic];
 }
 
 #pragma mark 画面设置
