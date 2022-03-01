@@ -151,6 +151,8 @@ IJK_EXTERN NSString* const IJKMPMoviePlayerIsAirPlayVideoActiveDidChangeNotifica
 // These notifications are posted when the associated movie property becomes available.
 IJK_EXTERN NSString* const IJKMPMovieNaturalSizeAvailableNotification;
 
+//video's z rotate degrees
+IJK_EXTERN NSString* const IJKMPMovieZRotateAvailableNotification;
 // -----------------------------------------------------------------------------
 //  Extend Notifications
 

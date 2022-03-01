@@ -32,12 +32,15 @@
 #import <AVFoundation/AVFoundation.h>
 #import "renderer_pixfmt.h"
 #import "MRTextureString.h"
+#import "IJKMediaPlayback.h"
 
 @interface IJKSDLGLView()
 
 @property(atomic) CVPixelBufferRef currentVideoPic;
 @property(atomic) CVPixelBufferRef currentSubtitle;
 @property(atomic) NSString *subtitle;
+@property(atomic) CGSize videoNaturalSize;
+@property(atomic) int videoDegrees;
 
 @end
 
@@ -81,6 +84,8 @@
     if (_renderer) {
         IJK_GLES2_Renderer_freeP(&_renderer);
     }
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -133,6 +138,28 @@
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
     [self setWantsBestResolutionOpenGLSurface:YES];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(videoNaturalSizeChanged:)
+                                                 name:IJKMPMovieNaturalSizeAvailableNotification object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(videoZRotateChanged:)
+                                                 name:IJKMPMovieZRotateAvailableNotification object:nil];
+}
+
+- (void)videoNaturalSizeChanged:(NSNotification *)notifi
+{
+    NSString *sizeStr = notifi.userInfo[@"size"];
+    CGSize size = NSSizeFromString(sizeStr);
+    self.videoNaturalSize = size;
+}
+
+- (void)videoZRotateChanged:(NSNotification *)notifi
+{
+    NSNumber *num = notifi.userInfo[@"degrees"];
+    int degrees = [num intValue];
+    self.videoDegrees = degrees;
 }
 
 - (BOOL)setupRenderer:(SDL_VoutOverlay *)overlay
@@ -276,9 +303,16 @@
         
     int fontSize = sp.fontSize;
     int32_t bgrValue = sp.color;
-//TODO
-    float ratio = 1.0;//vout->subtitle_ratio;
-    
+    //以800为标准，定义出字幕字体默认大小为25pt
+    float ratio = 1.0;
+    if (!CGSizeEqualToSize(self.videoNaturalSize, CGSizeZero)) {
+        int degrees = self.videoDegrees;
+        if (degrees / 90 % 2 == 1) {
+            ratio = self.videoNaturalSize.height / 800.0;
+        } else {
+            ratio = self.videoNaturalSize.width / 800.0;
+        }
+    }
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
     
