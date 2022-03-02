@@ -102,7 +102,6 @@ typedef enum : NSUInteger {
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
 #if TARGET_OS_IOS
-@property(nonatomic, readonly) CGFloat  fps;
 @property(nonatomic) CGFloat  scaleFactor;
 #endif
 @property(nonatomic) BOOL isThirdGLView;

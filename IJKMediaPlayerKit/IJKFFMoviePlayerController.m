@@ -696,11 +696,16 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
         self->_naturalSize = CGSizeMake(_videoWidth, _videoHeight);
     }
     [self didChangeValueForKey:@"naturalSize"];
-
     if (self->_naturalSize.width > 0 && self->_naturalSize.height > 0) {
+#if TARGET_OS_IOS
+        [[NSNotificationCenter defaultCenter]
+         postNotificationName:IJKMPMovieNaturalSizeAvailableNotification
+         object:self userInfo:@{@"size":NSStringFromCGSize(self->_naturalSize)}];
+#else
         [[NSNotificationCenter defaultCenter]
          postNotificationName:IJKMPMovieNaturalSizeAvailableNotification
          object:self userInfo:@{@"size":NSStringFromSize(self->_naturalSize)}];
+#endif
     }
 }
 
@@ -732,18 +737,12 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
 
     return nil;
 }
+#endif
 
 - (CGFloat)fpsAtOutput
 {
-    return _glView.fps;
+    return _mediaPlayer ? ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VIDEO_OUTPUT_FRAMES_PER_SECOND, .0f) : .0f;
 }
-#else
-#warning TODO mac fps
-- (CGFloat)fpsAtOutput
-{
-    return 0.0;
-}
-#endif
 
 inline static NSString *formatedDurationMilli(int64_t duration) {
     if (duration >=  1000) {
