@@ -5586,6 +5586,8 @@ int64_t ffp_get_property_int64(FFPlayer *ffp, int id, int64_t default_value)
             if (!ffp)
                 return default_value;
             return ffp->stat.logical_file_size;
+        case FFP_PROP_FLOAT_DROP_FRAME_COUNT:
+            return ffp ? ffp->stat.drop_frame_count : default_value;
         default:
             return default_value;
     }

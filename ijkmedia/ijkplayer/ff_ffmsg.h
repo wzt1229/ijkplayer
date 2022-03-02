@@ -68,6 +68,7 @@
 //video clock - master clock
 #define FFP_PROP_FLOAT_VMDIFF                           10005
 #define FFP_PROP_FLOAT_DROP_FRAME_RATE                  10007
+#define FFP_PROP_FLOAT_DROP_FRAME_COUNT                 10008
 
 #define FFP_PROP_INT64_SELECTED_VIDEO_STREAM            20001
 #define FFP_PROP_INT64_SELECTED_AUDIO_STREAM            20002
