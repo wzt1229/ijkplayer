@@ -1426,7 +1426,7 @@ static double compute_target_delay(FFPlayer *ffp, double delay, VideoState *is)
 
     if (ffp) {
         ffp->stat.avdelay = delay;
-        ffp->stat.avdiff  = diff;
+        ffp->stat.vmdiff  = diff;
     }
 #ifdef FFP_SHOW_AUDIO_DELAY
     av_log(NULL, AV_LOG_TRACE, "video: delay=%0.3f A-V=%f\n",
@@ -5456,8 +5456,8 @@ float ffp_get_property_float(FFPlayer *ffp, int id, float default_value)
             return ffp ? ffp->pf_playback_rate : default_value;
         case FFP_PROP_FLOAT_AVDELAY:
             return ffp ? ffp->stat.avdelay : default_value;
-        case FFP_PROP_FLOAT_AVDIFF:
-            return ffp ? ffp->stat.avdiff : default_value;
+        case FFP_PROP_FLOAT_VMDIFF:
+            return ffp ? ffp->stat.vmdiff : default_value;
         case FFP_PROP_FLOAT_PLAYBACK_VOLUME:
             return ffp ? ffp->pf_playback_volume : default_value;
         case FFP_PROP_FLOAT_DROP_FRAME_RATE:

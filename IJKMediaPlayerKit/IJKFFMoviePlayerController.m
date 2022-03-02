@@ -853,8 +853,8 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
                   forKey:@"a-cache"];
 
     float avdelay = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_AVDELAY, .0f);
-    float avdiff  = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_AVDIFF, .0f);
-    [self setHudValue:[NSString stringWithFormat:@"%.3f %.3f", avdelay, -avdiff] forKey:@"delay"];
+    float vmdiff  = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VMDIFF, .0f);
+    [self setHudValue:[NSString stringWithFormat:@"%.3f %.3f", avdelay, -vmdiff] forKey:@"delay-diff"];
 
     if (self.monitor.httpUrl) {
 #if ! IJK_IO_OFF

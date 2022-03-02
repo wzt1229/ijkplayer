@@ -65,7 +65,8 @@
 #define FFP_PROP_FLOAT_PLAYBACK_RATE                    10003
 #define FFP_PROP_FLOAT_PLAYBACK_VOLUME                  10006
 #define FFP_PROP_FLOAT_AVDELAY                          10004
-#define FFP_PROP_FLOAT_AVDIFF                           10005
+//video clock - master clock
+#define FFP_PROP_FLOAT_VMDIFF                           10005
 #define FFP_PROP_FLOAT_DROP_FRAME_RATE                  10007
 
 #define FFP_PROP_INT64_SELECTED_VIDEO_STREAM            20001
