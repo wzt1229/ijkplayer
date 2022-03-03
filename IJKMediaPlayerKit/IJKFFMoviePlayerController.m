@@ -836,7 +836,9 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     float vfps = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VIDEO_OUTPUT_FRAMES_PER_SECOND, .0f);
     
     [self setHudValue:[NSString stringWithFormat:@"%.2f / %.2f", vdps, vfps] forKey:@"fps(d/o)"];
-
+    int pic_remaining = jkmp_get_video_frame_cache_remaining(_mediaPlayer);
+    [self setHudValue:[NSString stringWithFormat:@"%d", pic_remaining] forKey:@"p-cache"];
+    
     int64_t vcacheb = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_CACHED_BYTES, 0);
     int64_t acacheb = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_AUDIO_CACHED_BYTES, 0);
     int64_t vcached = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_CACHED_DURATION, 0);

@@ -225,4 +225,6 @@ int             ijkmp_set_external_subtitle(IjkMediaPlayer* mp, const char* file
 int             ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 /*force exchange decoder*/
 int jkmp_exchange_video_decoder(IjkMediaPlayer *mp);
+/* get video frame queue chache remaining count*/
+int jkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp);
 #endif

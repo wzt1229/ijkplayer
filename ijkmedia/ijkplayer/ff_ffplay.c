@@ -5765,3 +5765,11 @@ int ffp_exchange_video_decoder(FFPlayer *ffp)
         }
     }
 }
+
+int ffp_get_video_frame_cache_remaining(FFPlayer *ffp)
+{
+    if (!ffp || !ffp->is) {
+        return 0;
+    }
+    return frame_queue_nb_remaining(&ffp->is->pictq);
+}
