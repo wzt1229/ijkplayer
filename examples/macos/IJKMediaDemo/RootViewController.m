@@ -974,11 +974,11 @@
 
 - (IBAction)onSelectAudioTrack:(NSPopUpButton*)sender
 {
-    NSString *title = sender.selectedItem.title;
-    NSArray *items = [title componentsSeparatedByString:@"-"];
-    if (sender.indexOfSelectedItem == [items count] - 1) {
+    if (sender.indexOfSelectedItem == 0) {
         [self.player closeCurrentStream:k_IJKM_VAL_TYPE__AUDIO];
     } else {
+        NSString *title = sender.selectedItem.title;
+        NSArray *items = [title componentsSeparatedByString:@"-"];
         int idx = [[items lastObject] intValue];
         NSLog(@"SelectAudioTrack:%d",idx);
         [self.player exchangeSelectedStream:idx];

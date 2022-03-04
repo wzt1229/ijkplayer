@@ -5382,6 +5382,9 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 closed = 1;
             }
             if (selected) {
+                //keep play rate and volume.
+                ffp->pf_playback_rate_changed = 1;
+                ffp->pf_playback_volume_changed = 1;
                 opened = stream_component_open(ffp, stream) == 0;
             }
             break;
