@@ -548,7 +548,9 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     [self unregisterApplicationObservers];
 #endif
     [self setScreenOn:NO];
-
+    //release glview in main thread.
+    _view = _glView = nil;
+    ijkmp_ios_set_glview(_mediaPlayer, nil);
     [self performSelectorInBackground:@selector(shutdownWaitStop:) withObject:self];
 }
 
