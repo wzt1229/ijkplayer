@@ -411,8 +411,6 @@
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:self.useVideoToolBox forKey:@"videotoolbox"];
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
-    [options setPlayerOptionIntValue:3840 forKey:@"videotoolbox-max-frame-width"];
-    [options setShowHudView:NO];
     
     [self stopPlay:nil];
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
@@ -987,11 +985,11 @@
 
 - (IBAction)onSelectVideoTrack:(NSPopUpButton*)sender
 {
-    NSString *title = sender.selectedItem.title;
-    NSArray *items = [title componentsSeparatedByString:@"-"];
-    if (sender.indexOfSelectedItem == [items count] - 1) {
+    if (sender.indexOfSelectedItem == 0) {
         [self.player closeCurrentStream:k_IJKM_VAL_TYPE__VIDEO];
     } else {
+        NSString *title = sender.selectedItem.title;
+        NSArray *items = [title componentsSeparatedByString:@"-"];
         int idx = [[items lastObject] intValue];
         NSLog(@"SelectVideoTrack:%d",idx);
         [self.player exchangeSelectedStream:idx];
