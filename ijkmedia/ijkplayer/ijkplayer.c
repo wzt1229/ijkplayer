@@ -840,8 +840,6 @@ int jkmp_exchange_video_decoder(IjkMediaPlayer *mp)
 int jkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp)
 {
     assert(mp);
-    MPTRACE("ffp_get_video_frame_cache_remaining\n");
     int retval = ffp_get_video_frame_cache_remaining(mp->ffplayer);
-    MPTRACE("ffp_get_video_frame_cache_remaining()=%d\n", retval);
     return retval;
 }
