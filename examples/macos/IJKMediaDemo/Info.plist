@@ -149,6 +149,7 @@
 				<string>mpg</string>
 				<string>mpeg</string>
 				<string>mpe</string>
+				<string>m2v</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>MPEG.icns</string>
@@ -197,6 +198,7 @@
 				<string>wtv</string>
 				<string>wsf</string>
 				<string>ogv</string>
+				<string>png</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>VIDEO.icns</string>
