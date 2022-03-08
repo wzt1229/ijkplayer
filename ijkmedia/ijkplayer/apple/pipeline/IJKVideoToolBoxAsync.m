@@ -425,9 +425,12 @@ static void VTDecoderCallback(void *decompressionOutputRefCon,
             ctx->new_seg_flag = false;
         }
 
+        //some hevc cfr video not smooth,because droped fps to 14 from 24.
+        /*
         if (ctx->m_sort_queue && newFrame->pic.pts < ctx->m_sort_queue->pic.pts) {
             goto failed;
         }
+        */
 
         // FIXME: duplicated code
         {
