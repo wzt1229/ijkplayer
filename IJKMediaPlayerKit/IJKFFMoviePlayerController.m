@@ -411,7 +411,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         return;
 
     [self setScreenOn:NO];
-
     [self stopHudTimer];
     ijkmp_stop(_mediaPlayer);
 }
@@ -542,12 +541,11 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
 {
     if (!_mediaPlayer)
         return;
-
-    [self stopHudTimer];
 #if TARGET_OS_IOS
     [self unregisterApplicationObservers];
 #endif
     [self setScreenOn:NO];
+    [self stopHudTimer];
     //release glview in main thread.
     _view = _glView = nil;
     ijkmp_ios_set_glview(_mediaPlayer, nil);

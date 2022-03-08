@@ -715,7 +715,7 @@
 {
     if (self.player) {
         [self.player.view removeFromSuperview];
-        [self.player stop];
+        [self.player pause];
         [self.player shutdown];
         self.player = nil;
     }
