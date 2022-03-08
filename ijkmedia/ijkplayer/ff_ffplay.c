@@ -1423,6 +1423,10 @@ static double compute_target_delay(FFPlayer *ffp, double delay, VideoState *is)
                 delay = 2 * delay;
         }
     }
+    //for only video stream movie,using playbackRate speed play.
+    else if (fabsf(ffp->pf_playback_rate) > 0.00001){
+        delay = delay / ffp->pf_playback_rate;
+    }
 
     if (ffp) {
         ffp->stat.avdelay = delay;
