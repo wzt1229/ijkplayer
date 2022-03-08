@@ -936,16 +936,13 @@
 
 - (IBAction)onChangeDAR:(NSPopUpButton *)sender
 {
-    int dar_num = 1;
+    int dar_num = 0;
     int dar_den = 1;
-    if ([sender.titleOfSelectedItem isEqual:@"还原"]) {
-        dar_num = dar_den = 0;
-    }
-    else {
+    if (![sender.titleOfSelectedItem isEqual:@"还原"]) {
         const char* str = sender.titleOfSelectedItem.UTF8String;
         sscanf(str, "%d:%d", &dar_num, &dar_den);
     }
-    self.player.view.darPreference = (IJKSDLDARPreference){dar_num,dar_den};
+    self.player.view.darPreference = (IJKSDLDARPreference){1.0 * dar_num/dar_den};
     if (!self.player.isPlaying) {
         [self.player.view setNeedsRefreshCurrentPic];
     }

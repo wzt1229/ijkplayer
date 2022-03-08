@@ -87,15 +87,14 @@ struct _IJKSDLColorConversionPreference {
 
 typedef struct _IJKSDLDARPreference IJKSDLDARPreference;
 struct _IJKSDLDARPreference {
-    int num; //width
-    int den; //height
+    float ratio; //ratio is width / height;
 };
 
 typedef enum : NSUInteger {
-    IJKSDLSnapshot_Origin, //视频原始画面，不带任何特效和字幕等；
-    IJKSDLSnapshot_Screen, //尺寸和当前屏幕一样
-    IJKSDLSnapshot_Effect_Origin,//带特效的，尺寸和原始画面一样
-    IJKSDLSnapshot_Effect_Subtitle_Origin ////带特效和字幕的尺寸和原始画面一样
+    IJKSDLSnapshot_Origin, //keep original video size,without subtitle and video effect
+    IJKSDLSnapshot_Screen, //current glview's picture as you see
+    IJKSDLSnapshot_Effect_Origin,//keep original video size,with subtitle,without video effect
+    IJKSDLSnapshot_Effect_Subtitle_Origin //keep original video size,with subtitle and video effect
 } IJKSDLSnapshotType;
 
 @protocol IJKSDLGLViewProtocol <NSObject>
@@ -105,6 +104,10 @@ typedef enum : NSUInteger {
 @property(nonatomic) CGFloat  scaleFactor;
 #endif
 @property(nonatomic) BOOL isThirdGLView;
+/*
+ if you update these preference blow, when player paused,
+ you can call -[setNeedsRefreshCurrentPic] method let current picture refresh right now.
+ */
 // subtitle preference
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
 // rotate preference
@@ -113,11 +116,12 @@ typedef enum : NSUInteger {
 @property(nonatomic) IJKSDLColorConversionPreference colorPreference;
 // user defined display aspect ratio
 @property(nonatomic) IJKSDLDARPreference darPreference;
+// refresh current video picture and subtitle (when player paused change video pic preference, you can invoke this method)
+- (void)setNeedsRefreshCurrentPic;
 
 // private method for jik internal.
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(const char *)subtitle;
-// refresh current video picture and subtitle (when player paused change video pic preference, you can invoke this method)
-- (void)setNeedsRefreshCurrentPic;
+
 #if !TARGET_OS_OSX
 - (UIImage *)snapshot;
 #else

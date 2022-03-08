@@ -53,7 +53,7 @@
     CGSize _FBOTextureSize;
     GLuint _FBO;
     GLuint _ColorTexture;
-    float _widthRatio;
+    float _videoSar;
 }
 
 @synthesize scalingMode = _scalingMode;
@@ -92,11 +92,12 @@
 {
     self = [super initWithFrame:frame];
     if (self) {
-        _widthRatio = 1.0;
+        _videoSar = 1.0;
         [self setup];
         self.subtitlePreference = (IJKSDLSubtitlePreference){25, 0xFFFFFF, 0.1};
         self.rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         self.colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
+        self.darPreference      = (IJKSDLDARPreference){0.0};
     }
     return self;
 }
@@ -168,7 +169,7 @@
         return _renderer != nil;
     
     if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-        _widthRatio = 1.0 * overlay->sar_num / overlay->sar_den;
+        _videoSar = 1.0 * overlay->sar_num / overlay->sar_den;
     }
     
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
@@ -251,7 +252,7 @@
 
     IJK_GLES2_Renderer_updateColorConversion(_renderer, self.colorPreference.brightness, self.colorPreference.saturation,self.colorPreference.contrast);
     
-    IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.num, self.darPreference.den);
+    IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, self.darPreference.ratio);
 }
 
 - (void)setNeedsRefreshCurrentPic
@@ -491,7 +492,7 @@
     [[self openGLContext] makeCurrentContext];
     CGLLockContext([[self openGLContext] CGLContextObj]);
     if (self.currentVideoPic && _renderer) {
-        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * _widthRatio, CVPixelBufferGetHeight(self.currentVideoPic));
+        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * _videoSar, CVPixelBufferGetHeight(self.currentVideoPic));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
         if (IJK_GLES2_Renderer_isZRotate90oddMultiple(_renderer)) {
             float pic_width = picSize.width;
@@ -499,6 +500,19 @@
             float tmp = pic_width;
             pic_width = pic_height;
             pic_height = tmp;
+            picSize = CGSizeMake(pic_width, pic_height);
+        }
+        
+        //保持用户定义宽高比
+        if (self.darPreference.ratio > 0) {
+            float pic_width = picSize.width;
+            float pic_height = picSize.height;
+           
+            if (pic_width / pic_height > self.darPreference.ratio) {
+                pic_height = pic_width * 1.0 / self.darPreference.ratio;
+            } else {
+                pic_width = pic_height * self.darPreference.ratio;
+            }
             picSize = CGSizeMake(pic_width, pic_height);
         }
         
