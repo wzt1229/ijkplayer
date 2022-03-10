@@ -431,10 +431,17 @@
     
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackDidFinishNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerDidFinish:) name:IJKMPMoviePlayerPlaybackDidFinishNotification object:self.player];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMovieNoCodecFoundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerCouldNotFindCodec:) name:IJKMPMovieNoCodecFoundNotification object:self.player];
     
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
+}
+
+- (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
+{
+    NSLog(@"找不到解码器，联系开发小帅锅：%@",notifi.userInfo);
 }
 
 - (void)ijkPlayerDidFinish:(NSNotification *)notifi

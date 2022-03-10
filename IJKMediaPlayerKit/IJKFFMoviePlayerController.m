@@ -1373,7 +1373,11 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                          postNotificationName:IJKMPMovieZRotateAvailableNotification
                          object:self userInfo:@{@"degrees":@(_videoZRotateDegrees)}];
             }
-            
+            break;
+        case FFP_MSG_NO_CODEC_FOUND:
+            [[NSNotificationCenter defaultCenter]
+                     postNotificationName:IJKMPMovieNoCodecFoundNotification
+             object:self userInfo:@{@"codecId":@(avmsg->arg1)}];
             break;
         default:
             // NSLog(@"unknown FFP_MSG_xxx(%d)\n", avmsg->what);
