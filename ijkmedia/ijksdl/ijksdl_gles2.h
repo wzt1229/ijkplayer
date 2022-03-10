@@ -81,8 +81,10 @@ GLboolean IJK_GLES2_Renderer_resetVao(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_drawArrays(void);
 
 void* IJK_GLES2_Renderer_getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+void IJK_GLES2_Renderer_beginDrawSubtitle(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_updateSubtitleVetex(IJK_GLES2_Renderer *renderer, float width, float height);
 GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer, void *texture);
+void IJK_GLES2_Renderer_endDrawSubtitle(IJK_GLES2_Renderer *renderer);
 
 #define IJK_GLES2_GRAVITY_MIN                   (0)
 #define IJK_GLES2_GRAVITY_RESIZE                (0) // Stretch to fill layer bounds.

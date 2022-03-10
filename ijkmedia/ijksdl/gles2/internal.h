@@ -105,6 +105,8 @@ typedef struct IJK_GLES2_Renderer
 
     GLfloat vertices[8];
     int     vertices_changed;
+    int     mvp_changed;
+    int     drawingSubtitle;
     /// 顶点对象
     GLuint vbo;
     GLuint vao;
