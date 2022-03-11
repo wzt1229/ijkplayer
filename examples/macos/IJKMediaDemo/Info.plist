@@ -199,6 +199,10 @@
 				<string>wsf</string>
 				<string>ogv</string>
 				<string>png</string>
+				<string>h264</string>
+				<string>hevc</string>
+				<string>h265</string>
+				<string>avc</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>VIDEO.icns</string>
