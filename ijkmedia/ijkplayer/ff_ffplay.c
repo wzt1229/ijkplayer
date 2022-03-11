@@ -3683,7 +3683,7 @@ static int read_thread(void *arg)
 #endif
 
     /* open the streams */
-    ret = 0;
+    ret = -1;
     if (st_index[AVMEDIA_TYPE_AUDIO] >= 0) {
         ret = stream_component_open(ffp, st_index[AVMEDIA_TYPE_AUDIO]);
     }
