@@ -858,6 +858,9 @@
                                                 <menuItem title="Async" tag="1" id="ZKQ-YD-svF">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
+                                                <menuItem title="FF" tag="2" id="141-PT-Bf2">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
                                             </items>
                                         </menu>
                                         <connections>

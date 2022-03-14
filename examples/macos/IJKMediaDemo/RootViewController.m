@@ -90,6 +90,7 @@
     self.subtitleMargin = 0.7;
     self.useVideoToolBox = YES;
     self.fcc = @"fcc-_es2";
+    self.useAsyncVTB = 2;
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
