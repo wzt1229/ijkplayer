@@ -125,6 +125,12 @@
         __strongSelf__
         self.player.currentPlaybackTime = progress;
     }];
+    
+#ifdef DEBUG
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
+#else
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
+#endif
 }
 
 - (void)prepareRightMenu
@@ -190,6 +196,7 @@
     NSArray *movies = info[@"obj"];
     
     if ([movies count] > 0) {
+        [self.playList removeAllObjects];
         // 开始播放
         [self appendToPlayList:movies];
     }
@@ -609,7 +616,6 @@
         }
     }
     
-    //拖进来新的视频时，清理老的视频列表
     if ([videos count] > 0) {
         [self.playList addObjectsFromArray:videos];
         [self playFirstIfNeed];

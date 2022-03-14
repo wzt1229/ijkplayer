@@ -229,11 +229,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     _hudCtrl = [IJKSDLHudControl new];
 
     self.shouldShowHudView = options.showHudView;
-#ifdef DEBUG
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
-#else
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
-#endif
 
     [options applyTo:_mediaPlayer];
     _pauseInBackground = NO;
