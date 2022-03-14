@@ -828,7 +828,7 @@ int ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
     return retval;
 }
 
-int jkmp_exchange_video_decoder(IjkMediaPlayer *mp)
+int ijkmp_exchange_video_decoder(IjkMediaPlayer *mp)
 {
     assert(mp);
     MPTRACE("ffp_exchange_video_decoder\n");
@@ -837,7 +837,7 @@ int jkmp_exchange_video_decoder(IjkMediaPlayer *mp)
     return retval;
 }
 
-int jkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp)
+int ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp)
 {
     assert(mp);
     int retval = ffp_get_video_frame_cache_remaining(mp->ffplayer);
