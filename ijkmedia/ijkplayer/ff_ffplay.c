@@ -1673,11 +1673,12 @@ static void alloc_picture(FFPlayer *ffp, int frame_format)
     else
         sdl_format = SDL_PIXELFORMAT_ARGB8888;
 
-    if (realloc_texture(&vp->bmp, sdl_format, vp->width, vp->height, SDL_BLENDMODE_NONE, 0) < 0) {
+    if (realloc_texture(&vp->bmp, sdl_format, vp->width, vp->height, SDL_BLENDMODE_NONE, 0) < 0)
 #else
     /* RV16, RV32 contains only one plane */
-    if (!vp->bmp || (!vp->bmp->is_private && vp->bmp->pitches[0] < vp->width)) {
+    if (!vp->bmp || (!vp->bmp->is_private && vp->bmp->pitches[0] < vp->width))
 #endif
+    {
         /* SDL allocates a buffer smaller than requested if the video
          * overlay hardware is unable to support the requested size. */
         av_log(NULL, AV_LOG_FATAL,
@@ -2597,10 +2598,11 @@ static int subtitle_thread(void *arg)
 
         pts = 0;
 #ifdef FFP_MERGE
-        if (got_subtitle && sp->sub.format == 0) {
+        if (got_subtitle && sp->sub.format == 0)
 #else
-        if (got_subtitle) {
+        if (got_subtitle)
 #endif
+        {
             if (sp->sub.pts != AV_NOPTS_VALUE)
                 pts = sp->sub.pts / (double)AV_TIME_BASE;
             sp->pts = pts;
@@ -3914,7 +3916,7 @@ static int read_thread(void *arg)
         /* if the queue are full, no need to read more */
         if (ffp->infinite_buffer<1 && !is->seek_req &&
 #ifdef FFP_MERGE
-              (is->audioq.size + is->videoq.size + is->subtitleq.size > MAX_QUEUE_SIZE
+              (is->audioq.size + is->videoq.size + is->subtitleq.size > MAX_QUEUE_SIZE)
 #else
                (is->audioq.size + is->videoq.size + is->subtitleq.size  + (is->subtitle_ex? is->subtitle_ex->subtitleq.size :0) > ffp->dcc.max_buffer_size
 #endif
