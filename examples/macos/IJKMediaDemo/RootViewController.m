@@ -91,6 +91,7 @@
     self.useVideoToolBox = YES;
     self.fcc = @"fcc-_es2";
     self.useAsyncVTB = 2;
+    self.useVideoToolBox = NO;
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];

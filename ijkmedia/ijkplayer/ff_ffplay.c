@@ -526,6 +526,10 @@ fail0:
     return ret;
 }
 
+static AVBufferRef *hw_device_ctx = NULL;
+static enum AVPixelFormat hw_pix_fmt;
+
+
 static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     int ret = AVERROR(EAGAIN);
 
@@ -552,6 +556,15 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                                     frame->pts = frame->best_effort_timestamp;
                                 } else if (!ffp->decoder_reorder_pts) {
                                     frame->pts = frame->pkt_dts;
+                                }
+                                if (frame->format == hw_pix_fmt) {
+                                    /* retrieve data from GPU to CPU */
+                                    AVFrame *sw_frame = av_frame_alloc();
+                                    if ((ret = av_hwframe_transfer_data(sw_frame, frame, 0)) < 0) {
+                                        fprintf(stderr, "Error transferring the data to system memory\n");
+                                    }
+                                    av_frame_unref(frame);
+                                    av_frame_move_ref(frame, sw_frame);
                                 }
                             }
                             break;
@@ -3039,19 +3052,6 @@ static int audio_open(FFPlayer *opaque, int64_t wanted_channel_layout, int wante
     return spec.size;
 }
 
-static AVBufferRef *hw_device_ctx = NULL;
-static enum AVPixelFormat hw_pix_fmt;
-
-static int hw_decoder_init(AVCodecContext * ctx, const enum AVHWDeviceType type) {
-    int err = 0;
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0) {
-        fprintf(stderr, "Failed to create specified HW device.\n");
-        return err;
-    }
-    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx); //创建hw_device_ctx传给解码器上下文，必须在avcodec_open2之前并且之后不能修改
-    return err;
-}
-
 static enum AVPixelFormat get_hw_format(AVCodecContext *ctx,
                                         const enum AVPixelFormat *pix_fmts)
 {
@@ -3064,6 +3064,20 @@ static enum AVPixelFormat get_hw_format(AVCodecContext *ctx,
 
     fprintf(stderr, "Failed to get HW surface format.\n");
     return AV_PIX_FMT_NONE;
+}
+
+static int hw_decoder_init(AVCodecContext * ctx, const enum AVHWDeviceType type) {
+    int err = 0;
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0) {
+        fprintf(stderr, "Failed to create specified HW device.\n");
+        return err;
+    }
+    //将硬件支持的图像格式传给解码器的方法
+    ctx->get_format = get_hw_format;
+    av_opt_set_int(ctx, "refcounted_frames", 1, 0);
+    //创建hw_device_ctx传给解码器上下文，必须在avcodec_open2之前并且之后不能修改
+    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    return err;
 }
 
 
@@ -3130,6 +3144,28 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         av_dict_set(&opts, "threads", "auto", 0);
     if (stream_lowres)
         av_dict_set_int(&opts, "lowres", stream_lowres, 0);
+    
+    enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");;
+    for (int i = 0;; i++) {
+        const AVCodecHWConfig *config = avcodec_get_hw_config(codec, i);
+        if (!config) {
+            fprintf(stderr, "Decoder %s does not support device type %s.\n",
+                    codec->name, av_hwdevice_get_type_name(type));
+            break;
+        }
+        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
+            config->device_type == type) {
+            hw_pix_fmt = config->pix_fmt;
+            break;
+        }
+    }
+    
+    if (hw_decoder_init(avctx, type) < 0) {
+        ALOGW("not use videotoolbox!");
+    } else {
+        ALOGI("using videotoolbox decoder!");
+    }
+    
     if ((ret = avcodec_open2(avctx, codec, &opts)) < 0) {
         goto fail;
     }
@@ -3203,28 +3239,6 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     case AVMEDIA_TYPE_VIDEO:
         is->video_stream = stream_index;
         is->video_st = ic->streams[stream_index];
-        
-        enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");;
-        for (int i = 0;; i++) {
-                const AVCodecHWConfig *config = avcodec_get_hw_config(codec, i);
-                if (!config) {
-                    fprintf(stderr, "Decoder %s does not support device type %s.\n",
-                            codec->name, av_hwdevice_get_type_name(type));
-                    return -1;
-                }
-                if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
-                    config->device_type == type) {
-                    hw_pix_fmt = config->pix_fmt;
-                    break;
-                }
-            }
-            
-            avctx->get_format = get_hw_format;   //将硬件支持的图像格式传给解码器的方法
-            
-            av_opt_set_int(avctx, "refcounted_frames", 1, 0);
-            if (hw_decoder_init(avctx, type) < 0) {
-                return -1;
-            }
             
         if (ffp->async_init_decoder) {
             while (!is->initialized_decoder) {
