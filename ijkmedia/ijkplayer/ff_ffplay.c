@@ -1125,10 +1125,6 @@ static void external_subtitle_close(FFPlayer* ffp)
     decoder_abort(&is->subdec, &is->subpq);
     decoder_destroy(&is->subdec);
     
-    if (is->file_name) {
-        av_free(is->file_name);
-        is->file_name = NULL;
-    }
     is->subtitle_st = NULL;
     is->sub_st_idx  = -1;
     vs->load_sub_ex = 0;
@@ -1204,8 +1200,8 @@ static void stream_close(FFPlayer *ffp)
         av_freep(&ffp->get_img_info);
     }
     av_free(is->filename);
-    
-    for (int i = 0; i < MAX_EX_SUBTITLE_NUM; i++) {
+    int sub_max = IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET;
+    for (int i = 0; i < sub_max; i++) {
         if (is->ex_sub_url[i]) {
             av_free(is->ex_sub_url[i]);
             is->ex_sub_url[i] = NULL;
@@ -3439,7 +3435,7 @@ static int external_subtitle_thread(void *arg)
     return 0;
 }
      
-static int external_subtitle_open(FFPlayer* ffp)
+static int external_subtitle_open(FFPlayer* ffp,const char *file_name)
 {
     int err = 0;
     int ret = 0;
@@ -3448,16 +3444,16 @@ static int external_subtitle_open(FFPlayer* ffp)
     SDL_LockMutex(ss->mutex);
     AVCodecContext* avctx = NULL;
     AVFormatContext* ic = avformat_alloc_context();
-    err = avformat_open_input(&ic, ss->file_name, NULL, NULL);
+    err = avformat_open_input(&ic, file_name, NULL, NULL);
     if (err < 0) {
-        print_error(ss->file_name, err);
+        print_error(file_name, err);
         ret = -1;
         goto fail;
     }
     
     err = avformat_find_stream_info(ic, NULL);
     if (err < 0) {
-        print_error(ss->file_name, err);
+        print_error(file_name, err);
         ret = -2;
         goto fail;
     }
@@ -3471,28 +3467,33 @@ static int external_subtitle_open(FFPlayer* ffp)
         }
     }
     
+    if (!ss->subtitle_st) {
+        ret = -3;
+        goto fail;
+    }
+    
     AVCodec* codec = avcodec_find_decoder(ss->subtitle_st->codecpar->codec_id);
     if (!codec) {
-        ret = -3;
+        ret = -4;
         goto fail;
     }
     
     avctx = avcodec_alloc_context3(NULL);
     if (!avctx) {
-        ret = -4;
+        ret = -5;
         goto fail;
     }
 
     err = avcodec_parameters_to_context(avctx, ss->subtitle_st->codecpar);
     if (err < 0) {
-        print_error(ss->file_name, err);
-        ret = -5;
+        print_error(file_name, err);
+        ret = -6;
         goto fail;
     }
     
     if ((err = avcodec_open2(avctx, codec, NULL)) < 0) {
-        print_error(ss->file_name, err);
-        ret = -6;
+        print_error(file_name, err);
+        ret = -7;
         goto fail;
     }
     
@@ -3871,8 +3872,8 @@ static int read_thread(void *arg)
             ret = avformat_seek_file(is->subtitle_ex->ic, -1, INT64_MIN, seek_time, INT64_MAX, 0);
             
             if (ret < 0) {
-                av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %lld\n",
-                        is->subtitle_ex->file_name, cp);
+                av_log(NULL, AV_LOG_WARNING, "%d: could not seek to position %lld\n",
+                        is->subtitle_ex->sub_st_idx, cp);
             }
             is->subtitle_ex->eof = 0;
         }
@@ -5415,11 +5416,11 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
     if (!ic)
         return -1;
 
-    if (stream < 0 || stream >= ic->nb_streams + MAX_EX_SUBTITLE_NUM) {
+    if (stream < 0 || stream >= IJK_EX_SUBTITLE_STREAM_MAX) {
         av_log(ffp, AV_LOG_ERROR, "invalid stream index %d >= stream number (%d)\n", stream, ic->nb_streams);
         return -1;
-    } else if (stream >= ic->nb_streams && stream < ic->nb_streams + MAX_EX_SUBTITLE_NUM) {
-        int arr_idx = (stream - ic->nb_streams) % MAX_EX_SUBTITLE_NUM;
+    } else if (stream >= IJK_EX_SUBTITLE_STREAM_OFFSET && stream < IJK_EX_SUBTITLE_STREAM_MAX) {
+        int arr_idx = (stream - IJK_EX_SUBTITLE_STREAM_OFFSET) % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
         if (NULL == is->ex_sub_url[arr_idx]) {
             av_log(ffp, AV_LOG_ERROR, "invalid stream index %d is NULL\n", stream);
             return -1;
@@ -5500,10 +5501,8 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             }
             
             if (selected) {
-                int arr_idx = (stream - ic->nb_streams) % MAX_EX_SUBTITLE_NUM;
-
-                is->subtitle_ex->file_name = strdup(is->ex_sub_url[arr_idx]);
-                opened = external_subtitle_open(ffp) == 0;
+                int arr_idx = (stream - IJK_EX_SUBTITLE_STREAM_OFFSET) % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
+                opened = external_subtitle_open(ffp,is->ex_sub_url[arr_idx]) == 0;
                 if (opened) {
                     //for file seek pos
                     is->load_sub_ex = 1;
@@ -5729,7 +5728,7 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
     
     VideoState* is = ffp->is;
     
-    for (int i = 0; i < is->ex_sub_index; i++) {
+    for (int i = 0; i < is->ex_sub_next; i++) {
         char* next = is->ex_sub_url[i];
         if (0 == av_strncasecmp(next, file_name, 1024))
             return 1;
@@ -5743,20 +5742,21 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
             return ret;
         }
     }
-    
-    is->subtitle_ex->file_name = av_strdup(file_name);
-    //recycle，release mem if the url array has been used
-    char* next = is->ex_sub_url[is->ex_sub_index % MAX_EX_SUBTITLE_NUM];
-    if (next) {
-        av_free(next);
-    }
-    is->ex_sub_url[is->ex_sub_index++ % MAX_EX_SUBTITLE_NUM] = av_strdup(file_name);
 
-    if (external_subtitle_open(ffp) < 0) {
+    if (external_subtitle_open(ffp,file_name) < 0) {
         av_log(NULL, AV_LOG_WARNING, "%s: could not open external subtitle\n",
                 file_name);
-        return  -5;
+        return -5;
     } else  {
+        //recycle，release mem if the url array has been used
+        int idx = is->ex_sub_next % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
+        char* current = is->ex_sub_url[idx];
+        if (current) {
+            av_free(current);
+        }
+        is->ex_sub_url[idx] = av_strdup(file_name);
+        is->ex_sub_next++;
+        
         ijkmeta_set_ex_subtitle_context_l(ffp->meta, ffp->is->subtitle_ex->ic, ffp->is, 1);
         is->load_sub_ex = 1;
         
@@ -5777,29 +5777,29 @@ int ffp_load_external_subtitle(FFPlayer *ffp, const char *file_name)
     
     VideoState* is = ffp->is;
     
-    for (int i = 0; i < is->ex_sub_index; i++) {
+    for (int i = 0; i < is->ex_sub_next; i++) {
         char* next = is->ex_sub_url[i];
         if (0 == av_strncasecmp(next, file_name, 1024))
             return 1;
     }
     
-    //recycle，release mem if the url array has been used
-    char* next = is->ex_sub_url[is->ex_sub_index % MAX_EX_SUBTITLE_NUM];
-    if (next) {
-        av_free(next);
-    }
-    is->ex_sub_url[is->ex_sub_index++ % MAX_EX_SUBTITLE_NUM] = av_strdup(file_name);
-    
-    int err = 0;
-    
+    //if open failed not add to ex_sub_url.
     AVFormatContext* ic = avformat_alloc_context();
-    err = avformat_open_input(&ic, file_name, NULL, NULL);
+    int err = avformat_open_input(&ic, file_name, NULL, NULL);
     if (err < 0) {
         print_error(file_name, err);
         avformat_close_input(&ic);
         return -2;
     }
     
+    //recycle，release mem if the url array has been used
+    int idx = is->ex_sub_next % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
+    char* current = is->ex_sub_url[idx];
+    if (current) {
+        av_free(current);
+    }
+    is->ex_sub_url[idx] = av_strdup(file_name);
+    is->ex_sub_next++;
     ijkmeta_set_ex_subtitle_context_l(ffp->meta, ic, is, 0);
     
     ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
