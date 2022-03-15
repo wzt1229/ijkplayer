@@ -42,6 +42,7 @@ struct SDL_Vout_Opaque {
 static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int frame_format, SDL_Vout *vout)
 {
     switch (frame_format) {
+        case AV_PIX_FMT_VIDEOTOOLBOX:
         case IJK_AV_PIX_FMT__VIDEO_TOOLBOX:
             return SDL_VoutVideoToolBox_CreateOverlay(width, height, vout);
         default:
