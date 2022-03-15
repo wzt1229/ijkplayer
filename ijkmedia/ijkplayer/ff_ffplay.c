@@ -3536,6 +3536,7 @@ static int read_thread(void *arg)
         print_error(is->filename, err);
         ret = -1;
         av_log(NULL, AV_LOG_ERROR, "open input failed:%d\n", err);
+        last_error = err;
         goto fail;
     }
     ffp_notify_msg1(ffp, FFP_MSG_OPEN_INPUT);
