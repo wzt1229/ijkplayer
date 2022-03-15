@@ -125,11 +125,11 @@
     
     [self.playerSlider onDraggedIndicator:^(double progress, MRProgressSlider * _Nonnull indicator, BOOL isEndDrag) {
         __strongSelf__
-        self.player.currentPlaybackTime = progress;
+        [self seekTo:progress];
     }];
     
 #ifdef DEBUG
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
 #else
     [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
 #endif
@@ -490,12 +490,18 @@
             NSString *type = stream[k_IJKM_KEY_TYPE];
             int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
             if ([type isEqualToString:k_IJKM_VAL_TYPE__SUBTITLE]) {
-                NSString *title = stream[k_IJKM_KEY_TITLE];
-                if (title.length == 0) {
-                    title = stream[k_IJKM_KEY_LANGUAGE];
-                }
-                if (title.length == 0) {
-                    title = @"未知";
+                NSString *url = stream[k_IJKM_KEY_EX_SUBTITLE_URL];
+                NSString *title = nil;
+                if (url) {
+                    title = [[url lastPathComponent] stringByDeletingPathExtension];
+                } else {
+                    title = stream[k_IJKM_KEY_TITLE];
+                    if (title.length == 0) {
+                        title = stream[k_IJKM_KEY_LANGUAGE];
+                    }
+                    if (title.length == 0) {
+                        title = @"未知";
+                    }
                 }
                 title = [NSString stringWithFormat:@"%@-%d",title,streamIdx];
                 if ([dic[k_IJKM_VAL_TYPE__SUBTITLE] intValue] == streamIdx) {
@@ -623,8 +629,13 @@
         [self playFirstIfNeed];
     }
     
+    NSURL *lastUrl = [subtitles lastObject];
+    [subtitles removeLastObject];
     for (NSURL *url in subtitles) {
-        [self.player loadThenActiveSubtitleFile:[url path]];
+        [self.player loadSubtitleFileOnly:[url path]];
+    }
+    if (lastUrl) {
+        [self.player loadThenActiveSubtitleFile:[lastUrl path]];
     }
 }
 
@@ -780,24 +791,31 @@
     [self playURL:url];
 }
 
+- (void)seekTo:(float)cp
+{
+    if (cp < 0) {
+        cp = 0;
+    }
+    if (self.player.monitor.duration > 0) {
+        if (cp >= self.player.monitor.duration) {
+            cp = self.player.monitor.duration - 5;
+        }
+        self.player.currentPlaybackTime = cp;
+    }
+}
+
 - (IBAction)fastRewind:(NSButton *)sender
 {
     float cp = self.player.currentPlaybackTime;
     cp -= 50;
-    if (cp < 0) {
-        cp = 0;
-    }
-    self.player.currentPlaybackTime = cp;
+    [self seekTo:cp];
 }
 
 - (IBAction)fastForward:(NSButton *)sender
 {
     float cp = self.player.currentPlaybackTime;
     cp += 50;
-    if (cp < 0) {
-        cp = 0;
-    }
-    self.player.currentPlaybackTime = cp;
+    [self seekTo:cp];
 }
 
 - (IBAction)onVolumeChange:(NSSlider *)sender
