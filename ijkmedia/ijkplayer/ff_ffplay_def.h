@@ -145,9 +145,6 @@ static unsigned sws_flags = SWS_BICUBIC;
 #define SD_IMAGE 1  // 320*180
 #define LD_IMAGE 0  // 160*90
 #define MAX_DEVIATION 1200000   // 1200ms
-
-#define MAX_EX_SUBTITLE_NUM 32
-
 #define IJK_EXCHANGE_DECODER_FLAG -1000
 
 typedef struct GetImgInfo {
@@ -289,7 +286,6 @@ typedef struct SubtitleExState{
     PacketQueue subtitleq;
     int eof;
     
-    char* file_name;
     SDL_mutex* mutex;
 } SubtitleExState;
 
@@ -443,8 +439,8 @@ typedef struct VideoState {
     int seek_buffering;
     float subtitle_extra_delay;//(s)
     SubtitleExState* subtitle_ex;
-    char* ex_sub_url[MAX_EX_SUBTITLE_NUM];
-    int   ex_sub_index;
+    char* ex_sub_url[IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET];
+    int   ex_sub_next;
 } VideoState;
 
 /* options specified by the user */
