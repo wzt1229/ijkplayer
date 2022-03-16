@@ -5665,9 +5665,9 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
     
     VideoState* is = ffp->is;
     
-    for (int i = 0; i < is->ex_sub_next; i++) {
+    for (int i = 0; i < IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET; i++) {
         char* next = is->ex_sub_url[i];
-        if (0 == av_strncasecmp(next, file_name, 1024))
+        if (next && (0 == av_strncasecmp(next, file_name, 1024)))
             return 1;
     }
     
