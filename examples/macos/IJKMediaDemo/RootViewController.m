@@ -56,7 +56,7 @@
 @property (assign) float saturation;
 @property (assign) float contrast;
 
-@property (assign) BOOL useVideoToolBox;
+@property (assign) int useVideoToolBox;
 @property (assign) int useAsyncVTB;
 @property (copy) NSString *fcc;
 @property (assign) int snapshot;
@@ -88,10 +88,9 @@
 
     self.subtitleFontSize = 25;
     self.subtitleMargin = 0.7;
-    self.useVideoToolBox = YES;
     self.fcc = @"fcc-_es2";
     self.useAsyncVTB = 0;
-    self.useVideoToolBox = NO;
+    self.useVideoToolBox = 2;
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
@@ -402,7 +401,7 @@
 {
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     //视频帧处理不过来的时候丢弃一些帧达到同步的效果
-    //    [options setPlayerOptionIntValue:2 forKey:@"framedrop"];
+    [options setPlayerOptionIntValue:1 forKey:@"framedrop"];
     [options setPlayerOptionIntValue:16      forKey:@"video-pictq-size"];
     //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
     //    [options setPlayerOptionIntValue:50*1024*1024      forKey:@"max-buffer-size"];

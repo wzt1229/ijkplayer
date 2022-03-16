@@ -785,6 +785,28 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     }
 }
 
+- (NSString *)coderNameWithVdecType:(int)vdec
+{
+    switch (vdec) {
+        case FFP_PROPV_DECODER_VIDEOTOOLBOX:
+            return @"VideoToolbox";
+        case FFP_PROPV_DECODER_VIDEOTOOLBOX_ASYNC:
+            return @"VideoToolbox-Async";
+        case FFP_PROPV_DECODER_AVCODEC:
+            return [NSString stringWithFormat:@"avcodec %d.%d.%d",
+                                 LIBAVCODEC_VERSION_MAJOR,
+                                 LIBAVCODEC_VERSION_MINOR,
+                                 LIBAVCODEC_VERSION_MICRO];
+        case FFP_PROPV_DECODER_AVCODEC_HW:
+            return [NSString stringWithFormat:@"avcodec-hw %d.%d.%d",
+                                 LIBAVCODEC_VERSION_MAJOR,
+                                 LIBAVCODEC_VERSION_MINOR,
+                                 LIBAVCODEC_VERSION_MICRO];
+        default:
+            return @"N/A";
+    }
+}
+
 - (void)refreshHudView
 {
     if (_mediaPlayer == nil)
@@ -792,38 +814,10 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
 
     int64_t vdec  = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
     int64_t vdec2 = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_ANOTHER_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
+    _monitor.vdecoder = [self coderNameWithVdecType:(int)vdec];
+    [self setHudValue:_monitor.vdecoder forKey:@"vdec"];
     
-    switch (vdec) {
-        case FFP_PROPV_DECODER_VIDEOTOOLBOX:
-            [self setHudValue:@"VideoToolbox" forKey:@"vdec"];
-            break;
-        case FFP_PROPV_DECODER_AVCODEC:
-            [self setHudValue:[NSString stringWithFormat:@"avcodec %d.%d.%d",
-                                  LIBAVCODEC_VERSION_MAJOR,
-                                  LIBAVCODEC_VERSION_MINOR,
-                                  LIBAVCODEC_VERSION_MICRO]
-                          forKey:@"vdec"];
-            break;
-        default:
-            [self setHudValue:@"N/A" forKey:@"vdec"];
-            break;
-    }
-
-    switch (vdec2) {
-        case FFP_PROPV_DECODER_VIDEOTOOLBOX:
-            [self setHudValue:@"VideoToolbox" forKey:@"vdec-swithing"];
-            break;
-        case FFP_PROPV_DECODER_AVCODEC:
-            [self setHudValue:[NSString stringWithFormat:@"avcodec %d.%d.%d",
-                                  LIBAVCODEC_VERSION_MAJOR,
-                                  LIBAVCODEC_VERSION_MINOR,
-                                  LIBAVCODEC_VERSION_MICRO]
-                          forKey:@"vdec-swithing"];
-            break;
-        default:
-            [self setHudValue:@"N/A" forKey:@"vdec-swithing"];
-            break;
-    }
+    [self setHudValue:[self coderNameWithVdecType:(int)vdec2] forKey:@"vdec-swithing"];
     
     [self setHudValue:[NSString stringWithFormat:@"%d / %.2f", [self dropFrameCount], [self dropFrameRate]] forKey:@"drop-frame(c/r)"];
     
@@ -1133,20 +1127,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
 
 - (void)updateMonitor4VideoDecoder:(int64_t)vdec
 {
-    switch (vdec) {
-        case FFP_PROPV_DECODER_VIDEOTOOLBOX:
-            _monitor.vdecoder = @"VideoToolbox";
-            break;
-        case FFP_PROPV_DECODER_AVCODEC:
-            _monitor.vdecoder = [NSString stringWithFormat:@"avcodec %d.%d.%d",
-                                 LIBAVCODEC_VERSION_MAJOR,
-                                 LIBAVCODEC_VERSION_MINOR,
-                                 LIBAVCODEC_VERSION_MICRO];
-            break;
-        default:
-            _monitor.vdecoder = @"Unknown";
-            break;
-    }
+    _monitor.vdecoder = [self coderNameWithVdecType:(int)vdec];
 }
 
 - (void)postEvent: (IJKFFMoviePlayerMessage *)msg
@@ -1286,7 +1267,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_VIDEO_DECODER_OPEN: {
-            _isVideoToolboxOpen = avmsg->arg1;
+            _isVideoToolboxOpen = avmsg->arg1 > 0;
             int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
             [self updateMonitor4VideoDecoder:vdec];
             

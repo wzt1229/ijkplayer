@@ -79,6 +79,8 @@
 #define     FFP_PROPV_DECODER_AVCODEC                   1
 #define     FFP_PROPV_DECODER_MEDIACODEC                2
 #define     FFP_PROPV_DECODER_VIDEOTOOLBOX              3
+#define     FFP_PROPV_DECODER_AVCODEC_HW                4
+#define     FFP_PROPV_DECODER_VIDEOTOOLBOX_ASYNC        5
 #define FFP_PROP_INT64_VIDEO_CACHED_DURATION            20005
 #define FFP_PROP_INT64_AUDIO_CACHED_DURATION            20006
 #define FFP_PROP_INT64_VIDEO_CACHED_BYTES               20007

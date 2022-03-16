@@ -2588,7 +2588,7 @@ static int video_thread(void *arg)
             ffp->is_switching_vdec_node = 0;
             SDL_UnlockMutex(ffp->is->play_mutex);
             
-            ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, node_next->vdec_type == FFP_PROPV_DECODER_VIDEOTOOLBOX);
+            ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, node_next->vdec_type);
             ret = ffpipenode_run_sync(node_next);
         } else {
             (*node)->is_using = 1;
@@ -3161,7 +3161,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     if (stream_lowres)
         av_dict_set_int(&opts, "lowres", stream_lowres, 0);
     
-    if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+    if (ffp->videotoolbox == 2 && avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
         enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");;
         for (int i = 0;; i++) {
             const AVCodecHWConfig *config = avcodec_get_hw_config(codec, i);
