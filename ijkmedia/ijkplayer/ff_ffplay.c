@@ -3797,22 +3797,26 @@ static int read_thread(void *arg)
             continue;
         }
 #endif
-        if (is->load_sub_ex && is->subtitle_ex->ic) {
-            is->load_sub_ex = 0;
-            
-            if (is->subtitle_stream >= 0)
-                stream_component_close(ffp, is->subtitle_stream);
-            
-            int64_t cp = ffp_get_current_position_l(ffp);
-            int64_t seek_time = milliseconds_to_fftime(cp);
-            
-            ret = avformat_seek_file(is->subtitle_ex->ic, -1, INT64_MIN, seek_time, INT64_MAX, 0);
-            
-            if (ret < 0) {
-                av_log(NULL, AV_LOG_WARNING, "%d: could not seek to position %lld\n",
-                        is->subtitle_ex->sub_st_idx, cp);
+        if (is->subtitle_ex && is->load_sub_ex && is->subtitle_ex->mutex) {
+            SDL_LockMutex(is->subtitle_ex->mutex);
+            if (is->subtitle_ex->ic) {
+                is->load_sub_ex = 0;
+                
+                if (is->subtitle_stream >= 0)
+                    stream_component_close(ffp, is->subtitle_stream);
+                
+                int64_t cp = ffp_get_current_position_l(ffp);
+                int64_t seek_time = milliseconds_to_fftime(cp);
+                
+                ret = avformat_seek_file(is->subtitle_ex->ic, -1, INT64_MIN, seek_time, INT64_MAX, 0);
+                
+                if (ret < 0) {
+                    av_log(NULL, AV_LOG_WARNING, "%d: could not seek to position %lld\n",
+                            is->subtitle_ex->sub_st_idx, cp);
+                }
+                is->subtitle_ex->eof = 0;
             }
-            is->subtitle_ex->eof = 0;
+            SDL_UnlockMutex(is->subtitle_ex->mutex);
         }
         
         if (is->seek_req) {
@@ -3852,18 +3856,22 @@ static int read_thread(void *arg)
                 is->latest_seek_load_start_at = av_gettime();
             }
             
-            if (is->subtitle_ex && is->subtitle_ex->ic) {
-                int ret = -1;
-                ret = avformat_seek_file(is->subtitle_ex->ic, -1, seek_min, seek_target, seek_max, 0);
-                if (ret < 0) {
-                    av_log(NULL, AV_LOG_ERROR,
-                           "%s: external subtitle error while seeking\n", is->subtitle_ex->ic->url);
-                } else {
-                    if (is->subtitle_ex->sub_st_idx >= 0) {
-                        packet_queue_flush(&is->subtitle_ex->subtitleq);
-                        is->subtitle_ex->eof = 0;
+            if (is->subtitle_ex && is->subtitle_ex->mutex) {
+                SDL_LockMutex(is->subtitle_ex->mutex);
+                if (is->subtitle_ex->ic) {
+                    int ret = -1;
+                    ret = avformat_seek_file(is->subtitle_ex->ic, -1, seek_min, seek_target, seek_max, 0);
+                    if (ret < 0) {
+                        av_log(NULL, AV_LOG_ERROR,
+                               "%s: external subtitle error while seeking\n", is->subtitle_ex->ic->url);
+                    } else {
+                        if (is->subtitle_ex->sub_st_idx >= 0) {
+                            packet_queue_flush(&is->subtitle_ex->subtitleq);
+                            is->subtitle_ex->eof = 0;
+                        }
                     }
                 }
+                SDL_UnlockMutex(is->subtitle_ex->mutex);
             }
             
             ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
@@ -3973,18 +3981,22 @@ static int read_thread(void *arg)
         }
             
             
-        if (is->subtitle_ex && is->subtitle_ex->ic && !is->subtitle_ex->eof) {
-            ex_subpkt->flags = 0;
-            int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
-            
-            if (ret2 >= 0 && ex_subpkt->stream_index == is->subtitle_ex->sub_st_idx){
-                packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
-            } else {
-                if (ret2 == AVERROR_EOF) {
-                    packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, ex_subpkt, is->subtitle_ex->sub_st_idx);
-                    is->subtitle_ex->eof = 1;
+        if (is->subtitle_ex && is->subtitle_ex->mutex) {
+            SDL_LockMutex(is->subtitle_ex->mutex);
+            if (is->subtitle_ex->ic && !is->subtitle_ex->eof) {
+                ex_subpkt->flags = 0;
+                int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
+                
+                if (ret2 >= 0 && ex_subpkt->stream_index == is->subtitle_ex->sub_st_idx){
+                    packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
+                } else {
+                    if (ret2 == AVERROR_EOF) {
+                        packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, ex_subpkt, is->subtitle_ex->sub_st_idx);
+                        is->subtitle_ex->eof = 1;
+                    }
                 }
             }
+            SDL_UnlockMutex(is->subtitle_ex->mutex);
         }
         
         pkt->flags = 0;
@@ -4117,8 +4129,11 @@ static int read_thread(void *arg)
     
     av_packet_free(&pkt);
     av_packet_free(&ex_subpkt);
-    if (is->subtitle_ex && is->subtitle_ex->ic) {
-        avformat_close_input(&is->subtitle_ex->ic);
+    if (is->subtitle_ex && is->subtitle_ex->mutex) {
+        SDL_LockMutex(is->subtitle_ex->mutex);
+        if (is->subtitle_ex->ic)
+            avformat_close_input(&is->subtitle_ex->ic);
+        SDL_UnlockMutex(is->subtitle_ex->mutex);
     }
             
     if (!ffp->prepared || !is->abort_request) {
