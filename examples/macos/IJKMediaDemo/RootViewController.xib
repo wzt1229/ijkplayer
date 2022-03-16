@@ -52,7 +52,7 @@
                                                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="volume.3.fill" catalog="system" id="Nw6-Sd-YYo"/>
                                                 </imageView>
                                                 <slider verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YIg-F3-SGM">
-                                                    <rect key="frame" x="38" y="17" width="113" height="17"/>
+                                                    <rect key="frame" x="38" y="17" width="112" height="17"/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" relation="lessThanOrEqual" constant="100" id="MTx-J2-dqV"/>
                                                     </constraints>
@@ -65,7 +65,7 @@
                                             </beginningViews>
                                             <middleViews>
                                                 <button autoresizesSubviews="NO" verticalHuggingPriority="750" id="NhA-62-HOW">
-                                                    <rect key="frame" x="157" y="16" width="20" height="22"/>
+                                                    <rect key="frame" x="156" y="16" width="20" height="22"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="oQA-KX-kjJ">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -77,7 +77,7 @@
                                                     </connections>
                                                 </button>
                                                 <button autoresizesSubviews="NO" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2GU-ij-QZ8">
-                                                    <rect key="frame" x="185" y="17.5" width="25.5" height="16"/>
+                                                    <rect key="frame" x="184" y="17.5" width="25.5" height="16"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="53C-q0-j4F">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                         <font key="font" metaFont="system"/>
@@ -88,7 +88,7 @@
                                                     </connections>
                                                 </button>
                                                 <button autoresizesSubviews="NO" wantsLayer="YES" verticalHuggingPriority="750" id="fwp-z5-Mp8">
-                                                    <rect key="frame" x="218" y="17" width="15.5" height="17.5"/>
+                                                    <rect key="frame" x="217" y="17" width="15.5" height="17.5"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="xKg-q9-biq">
                                                         <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
@@ -101,7 +101,7 @@
                                                     </connections>
                                                 </button>
                                                 <button autoresizesSubviews="NO" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5td-L9-OOG">
-                                                    <rect key="frame" x="241" y="17.5" width="25.5" height="16"/>
+                                                    <rect key="frame" x="240" y="17.5" width="25.5" height="16"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="H9K-6I-UPP">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                         <font key="font" metaFont="system"/>
@@ -112,7 +112,7 @@
                                                     </connections>
                                                 </button>
                                                 <button autoresizesSubviews="NO" verticalHuggingPriority="750" id="XrA-8Q-1bZ">
-                                                    <rect key="frame" x="274" y="16" width="20" height="22"/>
+                                                    <rect key="frame" x="273" y="16" width="20" height="22"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="AfC-ka-MmV">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -856,9 +856,6 @@
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
                                                 <menuItem title="Async" tag="1" id="ZKQ-YD-svF">
-                                                    <modifierMask key="keyEquivalentModifierMask"/>
-                                                </menuItem>
-                                                <menuItem title="FF" tag="2" id="141-PT-Bf2">
                                                     <modifierMask key="keyEquivalentModifierMask"/>
                                                 </menuItem>
                                             </items>
