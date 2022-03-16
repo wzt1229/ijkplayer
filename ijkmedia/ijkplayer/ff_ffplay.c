@@ -526,6 +526,10 @@ fail0:
     return ret;
 }
 
+static AVBufferRef *hw_device_ctx = NULL;
+static enum AVPixelFormat hw_pix_fmt;
+
+
 static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     int ret = AVERROR(EAGAIN);
 
@@ -553,6 +557,15 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                                 } else if (!ffp->decoder_reorder_pts) {
                                     frame->pts = frame->pkt_dts;
                                 }
+//                                if (frame->format == hw_pix_fmt) {
+//                                    /* retrieve data from GPU to CPU */
+//                                    AVFrame *sw_frame = av_frame_alloc();
+//                                    if ((ret = av_hwframe_transfer_data(sw_frame, frame, 0)) < 0) {
+//                                        fprintf(stderr, "Error transferring the data to system memory\n");
+//                                    }
+//                                    av_frame_unref(frame);
+//                                    av_frame_move_ref(frame, sw_frame);
+//                                }
                             }
                             break;
                         case AVMEDIA_TYPE_AUDIO:
@@ -1840,15 +1853,25 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         ffp->vout->ff_format = vp->bmp->ff_format;
         const AVFrame *outFrame = src_frame;
         
+        int need_convert = 1;
+        
         #if USE_FF_VTB
         //硬解不需要转格式
-        if (src_frame->format != IJK_AV_PIX_FMT__VIDEO_TOOLBOX) {
+        if (src_frame->format == IJK_AV_PIX_FMT__VIDEO_TOOLBOX) {
+            need_convert = 0;
+        }
+        #endif
+        //硬解加速解码也不需要转格式
+        if (src_frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+            need_convert = 0;
+        }
+        
+        if (need_convert) {
             if (SDL_VoutConvertFrame(ffp->vout, src_frame, &outFrame)) {
                 //convert failed.
                 return -1;
             }
         }
-        #endif
         // FIXME: set swscale options
         if (SDL_VoutFillFrameYUVOverlay(vp->bmp, outFrame) < 0) {
             av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
@@ -2565,7 +2588,7 @@ static int video_thread(void *arg)
             ffp->is_switching_vdec_node = 0;
             SDL_UnlockMutex(ffp->is->play_mutex);
             
-            ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, node_next->vdec_type == FFP_PROPV_DECODER_VIDEOTOOLBOX);
+            ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, node_next->vdec_type);
             ret = ffpipenode_run_sync(node_next);
         } else {
             (*node)->is_using = 1;
@@ -3035,6 +3058,45 @@ static int audio_open(FFPlayer *opaque, int64_t wanted_channel_layout, int wante
     return spec.size;
 }
 
+#ifdef __APPLE__
+static enum AVPixelFormat get_hw_format(AVCodecContext *ctx,
+                                        const enum AVPixelFormat *pix_fmts)
+{
+    const enum AVPixelFormat *p;
+
+    for (p = pix_fmts; *p != -1; p++) {
+        if (*p == hw_pix_fmt)
+            return *p;
+    }
+    
+    for (p = pix_fmts; *p != -1; p++) {
+        if (*p == AV_PIX_FMT_NV12)
+            return *p;
+    }
+    
+    for (p = pix_fmts; *p != -1; p++) {
+        if (*p == AV_PIX_FMT_YUV420P)
+            return *p;
+    }
+    
+    return AV_PIX_FMT_NONE;
+}
+
+static int hw_decoder_init(AVCodecContext * ctx, const enum AVHWDeviceType type) {
+    int err = 0;
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0) {
+        fprintf(stderr, "Failed to create specified HW device.\n");
+        return err;
+    }
+    //将硬件支持的图像格式传给解码器的方法
+    ctx->get_format = get_hw_format;
+    av_opt_set_int(ctx, "refcounted_frames", 1, 0);
+    //创建hw_device_ctx传给解码器上下文，必须在avcodec_open2之前并且之后不能修改
+    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    return err;
+}
+#endif
+
 /* open a given stream. Return 0 if OK */
 static int stream_component_open(FFPlayer *ffp, int stream_index)
 {
@@ -3098,6 +3160,30 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         av_dict_set(&opts, "threads", "auto", 0);
     if (stream_lowres)
         av_dict_set_int(&opts, "lowres", stream_lowres, 0);
+    
+    if (ffp->videotoolbox == 2 && avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+        enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");;
+        for (int i = 0;; i++) {
+            const AVCodecHWConfig *config = avcodec_get_hw_config(codec, i);
+            if (!config) {
+                fprintf(stderr, "Decoder %s does not support device type %s.\n",
+                        codec->name, av_hwdevice_get_type_name(type));
+                break;
+            }
+            if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
+                config->device_type == type) {
+                hw_pix_fmt = config->pix_fmt;
+                break;
+            }
+        }
+        
+        if (hw_decoder_init(avctx, type) < 0) {
+            ALOGW("not use videotoolbox!\n");
+        } else {
+            ALOGI("using videotoolbox decoder!\n");
+        }
+    }
+    
     if ((ret = avcodec_open2(avctx, codec, &opts)) < 0) {
         goto fail;
     }

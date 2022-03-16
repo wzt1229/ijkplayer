@@ -30,7 +30,7 @@
     NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:mask backing:NSBackingStoreBuffered defer:YES];
     window.contentViewController = [[RootViewController alloc] init];
     window.movableByWindowBackground = YES;
-    window.titlebarAppearsTransparent = YES;
+    window.titlebarAppearsTransparent = NO;
     
     self.windowCtrl = [[WindowController alloc] init];
     self.windowCtrl.window = window;

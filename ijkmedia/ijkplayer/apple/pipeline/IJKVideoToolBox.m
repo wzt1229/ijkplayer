@@ -25,7 +25,6 @@
 #include "ijksdl/ijksdl_inc_internal.h"
 #include "IJKVideoToolBoxAsync.h"
 #include "IJKVideoToolBoxSync.h"
-#include "IJKVideoToolBoxFF.h"
 
 inline static Ijk_VideoToolBox *Ijk_VideoToolbox_CreateInternal(int type, FFPlayer* ffp, AVCodecContext* ic)
 {
@@ -36,14 +35,10 @@ inline static Ijk_VideoToolBox *Ijk_VideoToolbox_CreateInternal(int type, FFPlay
         vtb->opaque = videotoolbox_async_create(ffp, ic);
         vtb->decode_frame = videotoolbox_async_decode_frame;
         vtb->free = videotoolbox_async_free;
-    } else if (type == 0){
+    } else {
         vtb->opaque = videotoolbox_sync_create(ffp, ic);
         vtb->decode_frame = videotoolbox_sync_decode_frame;
         vtb->free = videotoolbox_sync_free;
-    } else {
-        vtb->opaque = videotoolbox_ff_create(ffp, ic);
-        vtb->decode_frame = videotoolbox_ff_decode_frame;
-        vtb->free = videotoolbox_ff_free;
     }
 
     if (!vtb->opaque) {
@@ -59,8 +54,4 @@ Ijk_VideoToolBox *Ijk_VideoToolbox_Async_Create(FFPlayer* ffp, AVCodecContext* i
 
 Ijk_VideoToolBox *Ijk_VideoToolbox_Sync_Create(FFPlayer* ffp, AVCodecContext* ic) {
     return Ijk_VideoToolbox_CreateInternal(0, ffp, ic);
-}
-
-Ijk_VideoToolBox *Ijk_VideoToolbox_FF_Create(FFPlayer* ffp, AVCodecContext* ic) {
-    return Ijk_VideoToolbox_CreateInternal(2, ffp, ic);
 }
