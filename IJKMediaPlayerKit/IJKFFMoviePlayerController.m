@@ -701,6 +701,9 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
          postNotificationName:IJKMPMovieNaturalSizeAvailableNotification
          object:self userInfo:@{@"size":NSStringFromSize(self->_naturalSize)}];
 #endif
+        if ([self.view respondsToSelector:@selector(videoNaturalSizeChanged:)]) {
+            [self.view videoNaturalSizeChanged:self->_naturalSize];
+        }
     }
 }
 
@@ -1342,6 +1345,11 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         case FFP_MSG_VIDEO_Z_ROTATE_DEGREE:
             if (_videoZRotateDegrees != avmsg->arg1) {
                 _videoZRotateDegrees = avmsg->arg1;
+                
+                if ([self.view respondsToSelector:@selector(videoZRotateDegrees:)]) {
+                    [self.view videoZRotateDegrees:_videoZRotateDegrees];
+                }
+                
                 [[NSNotificationCenter defaultCenter]
                          postNotificationName:IJKMPMovieZRotateAvailableNotification
                          object:self userInfo:@{@"degrees":@(_videoZRotateDegrees)}];

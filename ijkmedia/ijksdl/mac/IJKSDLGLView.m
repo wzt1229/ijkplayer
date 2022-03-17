@@ -40,7 +40,7 @@
 @property(atomic) CVPixelBufferRef currentSubtitle;
 @property(atomic) NSString *subtitle;
 @property(atomic) CGSize videoNaturalSize;
-@property(atomic) int videoDegrees;
+@property(atomic) NSInteger videoDegrees;
 
 @end
 
@@ -141,27 +141,15 @@
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
     [self setWantsBestResolutionOpenGLSurface:YES];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(videoNaturalSizeChanged:)
-                                                 name:IJKMPMovieNaturalSizeAvailableNotification object:nil];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(videoZRotateChanged:)
-                                                 name:IJKMPMovieZRotateAvailableNotification object:nil];
 }
 
-- (void)videoNaturalSizeChanged:(NSNotification *)notifi
+- (void)videoNaturalSizeChanged:(CGSize)size
 {
-    NSString *sizeStr = notifi.userInfo[@"size"];
-    CGSize size = NSSizeFromString(sizeStr);
     self.videoNaturalSize = size;
 }
 
-- (void)videoZRotateChanged:(NSNotification *)notifi
+- (void)videoZRotateDegrees:(NSInteger)degrees
 {
-    NSNumber *num = notifi.userInfo[@"degrees"];
-    int degrees = [num intValue];
     self.videoDegrees = degrees;
 }
 

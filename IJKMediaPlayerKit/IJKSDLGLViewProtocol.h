@@ -101,7 +101,7 @@ typedef enum : NSUInteger {
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
 #if TARGET_OS_IOS
-@property(nonatomic) CGFloat  scaleFactor;
+@property(nonatomic) CGFloat scaleFactor;
 #endif
 @property(nonatomic) BOOL isThirdGLView;
 /*
@@ -130,7 +130,10 @@ typedef enum : NSUInteger {
 
 @optional;//when isThirdGLView,will call display_pixels method.
 - (void)display_pixels:(IJKOverlay *)overlay;
-
+//when video size changed will call videoNaturalSizeChanged.
+- (void)videoNaturalSizeChanged:(CGSize)size;
+//when video z rotate degrees changed will call videoZRotateDegrees.
+- (void)videoZRotateDegrees:(NSInteger)degrees;
 @end
 
 #endif /* IJKSDLGLViewProtocol_h */
