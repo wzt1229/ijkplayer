@@ -526,9 +526,7 @@ fail0:
     return ret;
 }
 
-static AVBufferRef *hw_device_ctx = NULL;
-static enum AVPixelFormat hw_pix_fmt;
-
+static const AVCodecHWConfig *hw_config;
 
 static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     int ret = AVERROR(EAGAIN);
@@ -3065,7 +3063,7 @@ static enum AVPixelFormat get_hw_format(AVCodecContext *ctx,
     const enum AVPixelFormat *p;
 
     for (p = pix_fmts; *p != -1; p++) {
-        if (*p == hw_pix_fmt)
+        if (*p == hw_config->pix_fmt)
             return *p;
     }
     
@@ -3082,17 +3080,18 @@ static enum AVPixelFormat get_hw_format(AVCodecContext *ctx,
     return AV_PIX_FMT_NONE;
 }
 
-static int hw_decoder_init(AVCodecContext * ctx, const enum AVHWDeviceType type) {
+static int hw_decoder_init(AVCodecContext * ctx, const AVCodecHWConfig* config) {
     int err = 0;
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0) {
-        fprintf(stderr, "Failed to create specified HW device.\n");
+    AVBufferRef *hw_device_ctx = NULL;
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, config->device_type, NULL, NULL, 0)) < 0) {
+        ALOGE("create mac HW device failed for type: %d\n", config->device_type);
         return err;
     }
     //将硬件支持的图像格式传给解码器的方法
     ctx->get_format = get_hw_format;
     av_opt_set_int(ctx, "refcounted_frames", 1, 0);
     //创建hw_device_ctx传给解码器上下文，必须在avcodec_open2之前并且之后不能修改
-    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    ctx->hw_device_ctx = hw_device_ctx;
     return err;
 }
 #endif
@@ -3161,26 +3160,28 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     if (stream_lowres)
         av_dict_set_int(&opts, "lowres", stream_lowres, 0);
     
+    hw_config = NULL;
     if (ffp->videotoolbox == 2 && avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
-        enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");;
+        enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");
+        const AVCodecHWConfig *config = NULL;
         for (int i = 0;; i++) {
-            const AVCodecHWConfig *config = avcodec_get_hw_config(codec, i);
-            if (!config) {
-                fprintf(stderr, "Decoder %s does not support device type %s.\n",
+            const AVCodecHWConfig *node = avcodec_get_hw_config(codec, i);
+            if (!node) {
+                ALOGE("avdec %s does not support device type %s.\n",
                         codec->name, av_hwdevice_get_type_name(type));
                 break;
             }
-            if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
-                config->device_type == type) {
-                hw_pix_fmt = config->pix_fmt;
+            if (node->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX && node->device_type == type) {
+                config = node;
                 break;
             }
         }
         
-        if (hw_decoder_init(avctx, type) < 0) {
-            ALOGW("not use videotoolbox!\n");
+        if (config && hw_decoder_init(avctx, config) == 0) {
+            hw_config = config;
+            ALOGI("videotoolbox accel opened!\n");
         } else {
-            ALOGI("using videotoolbox decoder!\n");
+            ALOGW("can't use videotoolbox accel!\n");
         }
     }
     
