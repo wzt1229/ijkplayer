@@ -3075,21 +3075,31 @@ static int audio_open(FFPlayer *opaque, int64_t wanted_channel_layout, int wante
 static enum AVPixelFormat get_hw_format(AVCodecContext *ctx,
                                         const enum AVPixelFormat *pix_fmts)
 {
-    const enum AVPixelFormat *p;
-
-    for (p = pix_fmts; *p != -1; p++) {
-        if (hw_config && *p == hw_config->pix_fmt)
-            return *p;
+    if (hw_config) {
+        enum AVPixelFormat hw_pix_fmt = hw_config->pix_fmt;
+        for (const enum AVPixelFormat *p = pix_fmts; *p != -1; p++) {
+            if (*p == hw_pix_fmt)
+                return *p;
+        }
     }
-    
-    for (p = pix_fmts; *p != -1; p++) {
+
+    for (const enum AVPixelFormat *p = pix_fmts; *p != -1; p++) {
         if (*p == AV_PIX_FMT_NV12)
             return *p;
     }
-    
-    for (p = pix_fmts; *p != -1; p++) {
+
+    for (const enum AVPixelFormat *p = pix_fmts; *p != -1; p++) {
         if (*p == AV_PIX_FMT_YUV420P)
             return *p;
+    }
+
+    const enum AVPixelFormat supported_fmts[] = {AV_PIX_FMT_UYVY422,AV_PIX_FMT_RGB24,AV_PIX_FMT_ARGB,AV_PIX_FMT_0RGB,AV_PIX_FMT_BGRA,AV_PIX_FMT_BGR0};
+    
+    for (const enum AVPixelFormat *p = pix_fmts; *p != -1; p++) {
+        for (int i = 0; i < sizeof(supported_fmts) / sizeof(enum AVPixelFormat); i++) {
+            if (*p == supported_fmts[i])
+                return *p;
+        }
     }
     
     return AV_PIX_FMT_NONE;
