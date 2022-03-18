@@ -39,6 +39,7 @@
 @property(atomic) CVPixelBufferRef currentVideoPic;
 @property(atomic) CVPixelBufferRef currentSubtitle;
 @property(atomic) NSString *subtitle;
+@property(atomic) IJKSDLSubtitlePicture *subtitlePict;
 @property(atomic) CGSize videoNaturalSize;
 @property(atomic) NSInteger videoDegrees;
 
@@ -100,6 +101,7 @@
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
+        _subtitlePict       = NULL;
     }
     return self;
 }
@@ -245,7 +247,11 @@
         
         //for subtitle
         if (_subtitlePreferenceChanged) {
-            [self _generateSubtitlePixel:self.subtitle];
+            if (self.subtitle) {
+                [self _generateSubtitlePixel:self.subtitle];
+            } else if (self.subtitlePict != NULL) {
+                [self _generateSubtitlePixelFromPicture:self.subtitlePict];
+            }
         }
         
         if (self.currentSubtitle) {
@@ -310,7 +316,37 @@
     _subtitlePreferenceChanged = NO;
 }
 
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(const char *)text
+- (void)_generateSubtitlePixelFromPicture:(IJKSDLSubtitlePicture*)pict
+{
+    /// hadle 8bit color
+    if (pict->nb_colors == 256) {
+        CVPixelBufferRef pixelBuffer = NULL;
+    
+        NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
+                                 [NSNumber numberWithBool:YES], kCVPixelBufferOpenGLCompatibilityKey,
+                                 [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
+                                 [NSNumber numberWithBool:YES], kCVPixelBufferCGBitmapContextCompatibilityKey,
+                                 [NSDictionary dictionary],kCVPixelBufferIOSurfacePropertiesKey,
+                                 nil];
+        
+        CVReturn ret = CVPixelBufferCreateWithBytes(kCFAllocatorDefault, pict->w, pict->h, kCVPixelFormatType_32BGRA, pict->data, pict->w * 4, NULL, NULL, (__bridge CFDictionaryRef)options, &pixelBuffer);
+        
+        if (self.currentSubtitle) {
+            CVPixelBufferRelease(self.currentSubtitle);
+            self.currentSubtitle = NULL;
+        }
+        
+        if (kCVReturnSuccess == ret) {
+            self.currentSubtitle = pixelBuffer;
+        }
+    } else {
+        // TODO: some dvd sub will set nb_colors to 4, ignore it for now.
+    }
+    
+    _subtitlePreferenceChanged = NO;
+}
+
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(const char *)text subPict:(IJKSDLSubtitlePicture *)subPict
 {
     if (!overlay) {
         ALOGW("IJKSDLGLView: overlay is nil\n");
@@ -322,6 +358,11 @@
         if (_subtitlePreferenceChanged || ![subStr isEqualToString:self.subtitle]) {
             [self _generateSubtitlePixel:subStr];
             self.subtitle = subStr;
+        }
+    } else if (subPict != NULL) {
+        if (_subtitlePreferenceChanged || subPict != self.subtitlePict) {
+            [self _generateSubtitlePixelFromPicture:subPict];
+            self.subtitlePict = subPict;
         }
     } else {
         if (self.currentSubtitle) {

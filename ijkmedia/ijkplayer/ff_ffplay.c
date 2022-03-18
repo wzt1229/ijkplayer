@@ -943,6 +943,17 @@ static void update_subtitle_text(FFPlayer *ffp,const char *str)
     ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)str, (int)strlen(str) + 1);
 }
 
+static void update_subtitle_pict(FFPlayer *ffp, const AVSubtitleRect *rect)
+{
+    //update subtitle by bitmap, save into vout's opaque
+    if (ffp->vout->update_subtitle_picture) {
+        SDL_LockMutex(ffp->vout->mutex);
+        ffp->vout->update_subtitle_picture(ffp->vout, rect);
+        SDL_UnlockMutex(ffp->vout->mutex);
+    }
+    ffp_notify_msg1(ffp, FFP_MSG_TIMED_TEXT);
+}
+
 static void video_image_display2(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
@@ -966,6 +977,10 @@ static void video_image_display2(FFPlayer *ffp)
                                     update_subtitle_text(ffp, buffer);
                                     free(buffer);
                                 }
+                            } else if (sp->sub.rects[0]->type == SUBTITLE_BITMAP
+                                       && sp->sub.rects[0]->data[0]
+                                       && sp->sub.rects[0]->linesize[0]) {
+                                update_subtitle_pict(ffp, sp->sub.rects[0]);
                             } else {
                                 assert(0);
                             }
