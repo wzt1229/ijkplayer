@@ -2900,7 +2900,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
 {
     FFPlayer *ffp = opaque;
     VideoState *is = ffp->is;
-    int audio_size, len1;
+    int audio_size, rest_len, len_want = len;
     if (!ffp || !is) {
         memset(stream, 0, len);
         return;
@@ -2922,7 +2922,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
         ffp->pf_playback_volume_changed = 0;
         SDL_AoutSetPlaybackVolume(ffp->aout, ffp->pf_playback_volume);
     }
-
+    int gotFrame = 0;
     while (len > 0) {
         if (is->audio_buf_index >= is->audio_buf_size) {
            audio_size = audio_decode_frame(ffp);
@@ -2931,6 +2931,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
                is->audio_buf = NULL;
                is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
            } else {
+               gotFrame = 1;
                if (is->show_mode != SHOW_MODE_VIDEO)
                    update_sample_display(is, (int16_t *)is->audio_buf, audio_size);
                is->audio_buf_size = audio_size;
@@ -2943,31 +2944,43 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
             // stream += len;
             // len = 0;
             SDL_AoutFlushAudio(ffp->aout);
+            gotFrame = 0;
             break;
         }
-        len1 = is->audio_buf_size - is->audio_buf_index;
-        if (len1 > len)
-            len1 = len;
+        rest_len = is->audio_buf_size - is->audio_buf_index;
+        if (rest_len > len)
+            rest_len = len;
         if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME)
-            memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1);
+            memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, rest_len);
         else {
-            memset(stream, 0, len1);
+            memset(stream, 0, rest_len);
             if (!is->muted && is->audio_buf)
-                SDL_MixAudio(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, len1, is->audio_volume);
+                SDL_MixAudio(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, rest_len, is->audio_volume);
         }
-        len -= len1;
-        stream += len1;
-        is->audio_buf_index += len1;
+        len -= rest_len;
+        stream += rest_len;
+        is->audio_buf_index += rest_len;
     }
-    is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
     /* Let's assume the audio driver that is used by SDL has two periods. */
     if (!isnan(is->audio_clock)) {
-        set_clock_at(&is->audclk, is->audio_clock - (double)(is->audio_write_buf_size) / is->audio_tgt.bytes_per_sec - SDL_AoutGetLatencySeconds(ffp->aout), is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
+        double pts = 0.0;
+        if (!gotFrame && !isnan(is->audclk.pts)) {
+            //none audio frame,already used out. is->audio_clock is the lastest audio frame pts and audio_write_buf_size is audio_buf_size(512 = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size).
+            //use last pts and increase by audio callback eated bytes.
+            pts = is->audclk.pts + (double)(len_want) / is->audio_tgt.bytes_per_sec;
+        } else {
+            int audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
+            pts = is->audio_clock - (double)(audio_write_buf_size) / is->audio_tgt.bytes_per_sec - SDL_AoutGetLatencySeconds(ffp->aout);
+        }
+        set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
         sync_clock_to_slave(&is->extclk, &is->audclk);
-    }
-    if (!ffp->first_audio_frame_rendered) {
-        ffp->first_audio_frame_rendered = 1;
-        ffp_notify_msg1(ffp, FFP_MSG_AUDIO_RENDERING_START);
+        
+        if (gotFrame) {
+            if (!ffp->first_audio_frame_rendered) {
+                ffp->first_audio_frame_rendered = 1;
+                ffp_notify_msg1(ffp, FFP_MSG_AUDIO_RENDERING_START);
+            }
+        }
     }
 
     if (is->latest_audio_seek_load_serial == is->audio_clock_serial) {
@@ -4311,6 +4324,7 @@ static VideoState *stream_open(FFPlayer *ffp, const char *filename, AVInputForma
     init_clock(&is->audclk, &is->audioq.serial);
     init_clock(&is->extclk, &is->extclk.serial);
     is->audio_clock_serial = -1;
+    is->audio_clock = NAN;
     if (ffp->startup_volume < 0)
         av_log(NULL, AV_LOG_WARNING, "-volume=%d < 0, setting to 0\n", ffp->startup_volume);
     if (ffp->startup_volume > 100)
