@@ -97,7 +97,7 @@
     if (self) {
         _videoSar = 1.0;
         [self setup];
-        _subtitlePreference = (IJKSDLSubtitlePreference){25, 0xFFFFFF, 0.1};
+        _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
@@ -224,6 +224,22 @@
     [self resetViewPort];
 }
 
+- (void)doUploadSubtitle
+{
+    if (self.currentSubtitle) {
+        IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
+        float ratio = 1.0;
+        if (self.subtitlePict) {
+            ratio = self.subtitlePreference.ratio;
+        }
+        IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(self.currentSubtitle), ratio * CVPixelBufferGetHeight(self.currentSubtitle));
+        if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
+            ALOGE("[GL] GLES2 Render Subtitle failed\n");
+        IJK_GLES2_Renderer_drawArrays();
+        IJK_GLES2_Renderer_endDrawSubtitle(_renderer);
+    }
+}
+
 - (void)setNeedsRefreshCurrentPic
 {
     [[self openGLContext] makeCurrentContext];
@@ -254,14 +270,7 @@
             }
         }
         
-        if (self.currentSubtitle) {
-            IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-            IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(self.currentSubtitle), CVPixelBufferGetHeight(self.currentSubtitle));
-            if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
-                ALOGE("[GL] GLES2 Render Subtitle failed\n");
-            IJK_GLES2_Renderer_drawArrays();
-            IJK_GLES2_Renderer_endDrawSubtitle(_renderer);
-        }
+        [self doUploadSubtitle];
     } else {
         ALOGW("IJKSDLGLView: not ready.\n");
     }
@@ -278,22 +287,22 @@
     
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
         
-    int fontSize = sp.fontSize;
+    float ratio = sp.ratio;
     int32_t bgrValue = sp.color;
     //以800为标准，定义出字幕字体默认大小为25pt
-    float ratio = 1.0;
+    float scale = 1.0;
     if (!CGSizeEqualToSize(self.videoNaturalSize, CGSizeZero)) {
         NSInteger degrees = self.videoDegrees;
         if (degrees / 90 % 2 == 1) {
-            ratio = self.videoNaturalSize.height / 800.0;
+            scale = self.videoNaturalSize.height / 800.0;
         } else {
-            ratio = self.videoNaturalSize.width / 800.0;
+            scale = self.videoNaturalSize.width / 800.0;
         }
     }
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
     
-    UIFont *subtitleFont = [UIFont systemFontOfSize:fontSize * ratio];
+    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 25];
     [attributes setObject:subtitleFont forKey:NSFontAttributeName];
     
     NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
@@ -416,14 +425,7 @@
         }
         
         //for subtitle
-        if (self.currentSubtitle) {
-            IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-            IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(self.currentSubtitle), CVPixelBufferGetHeight(self.currentSubtitle));
-            if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
-                ALOGE("[GL] GLES2 Render Subtitle failed\n");
-            IJK_GLES2_Renderer_drawArrays();
-            IJK_GLES2_Renderer_endDrawSubtitle(_renderer);
-        }
+        [self doUploadSubtitle];
     } else {
         ALOGW("IJKSDLGLView: not ready.\n");
     }
@@ -562,13 +564,8 @@
                 IJK_GLES2_Renderer_drawArrays();
             }
             
-            if (self.currentSubtitle && containSub) {
-                IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-                IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, CVPixelBufferGetWidth(self.currentSubtitle), CVPixelBufferGetHeight(self.currentSubtitle));
-                if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
-                    ALOGE("[GL] GLES2 Render Subtitle failed\n");
-                IJK_GLES2_Renderer_drawArrays();
-                IJK_GLES2_Renderer_endDrawSubtitle(_renderer);
+            if (containSub) {
+                [self doUploadSubtitle];
             }
             
             img = [self _snapshotTheContextWithSize:picSize];
@@ -761,7 +758,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         }
     }
     
-    if (_subtitlePreference.fontSize != subtitlePreference.fontSize || _subtitlePreference.color != subtitlePreference.color) {
+    if (_subtitlePreference.ratio != subtitlePreference.ratio || _subtitlePreference.color != subtitlePreference.color) {
         _subtitlePreference = subtitlePreference;
         _subtitlePreferenceChanged = YES;
     }

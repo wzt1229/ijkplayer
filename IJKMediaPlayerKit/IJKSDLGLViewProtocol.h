@@ -59,7 +59,7 @@ struct IJKOverlay {
 
 typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
 struct _IJKSDLSubtitlePreference {
-    int fontSize;
+    float ratio;//scale
     int32_t color;
     float bottomMargin;//[0.0,1.0]
 };

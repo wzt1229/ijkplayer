@@ -48,7 +48,7 @@
 
 //for cocoa binding begin
 @property (assign) float volume;
-@property (assign) float subtitleFontSize;
+@property (assign) float subtitleFontRatio;
 @property (assign) float subtitleDelay;
 @property (assign) float subtitleMargin;
 
@@ -86,7 +86,7 @@
     self.moreView.layer.cornerRadius = 4;
     self.moreView.layer.masksToBounds = YES;
 
-    self.subtitleFontSize = 25;
+    self.subtitleFontRatio = 1.0;
     self.subtitleMargin = 0.7;
     self.fcc = @"fcc-_es2";
     self.useAsyncVTB = 0;
@@ -866,7 +866,7 @@
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
 {
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.fontSize = sender.intValue;
+    p.ratio = sender.floatValue;
     self.player.view.subtitlePreference = p;
     [self.player.view setNeedsRefreshCurrentPic];
 }
