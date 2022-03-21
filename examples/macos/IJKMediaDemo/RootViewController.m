@@ -873,14 +873,14 @@
 
 - (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
 {
-    NSString *title = sender.selectedItem.title;
-    NSArray *items = [title componentsSeparatedByString:@"-"];
-    if ([items count] == 2) {
-        int idx = [[items lastObject] intValue];
-        NSLog(@"SelectSubtitle:%d",idx);
-        [self.player exchangeSelectedStream:idx];
-    } else {
+    if (sender.indexOfSelectedItem == 0) {
         [self.player closeCurrentStream:k_IJKM_VAL_TYPE__SUBTITLE];
+    } else {
+        NSString *title = sender.selectedItem.title;
+        NSArray *items = [title componentsSeparatedByString:@"-"];
+        int idx = [[items lastObject] intValue];
+        NSLog(@"SelectSubtitleTrack:%d",idx);
+        [self.player exchangeSelectedStream:idx];
     }
 }
 
