@@ -119,7 +119,7 @@
     }];
     
     OBSERVER_NOTIFICATION(self, _playExplorerMovies:,kPlayExplorerMovieNotificationName_G, nil);
-    
+    OBSERVER_NOTIFICATION(self, _playNetMovies:,kPlayNetMovieNotificationName_G, nil);
     [self prepareRightMenu];
     
     [self.playerSlider onDraggedIndicator:^(double progress, MRProgressSlider * _Nonnull indicator, BOOL isEndDrag) {
@@ -203,6 +203,26 @@
     }
 }
 
+- (void)_playNetMovies:(NSNotification *)notifi
+{
+    NSDictionary *info = notifi.userInfo;
+    NSArray *links = info[@"links"];
+    NSMutableArray *videos = [NSMutableArray array];
+    
+    for (NSString *link in links) {
+        NSURL *url = [NSURL URLWithString:link];
+        [videos addObject:url];
+    }
+    
+    if ([videos count] > 0) {
+        // 开始播放
+        [self.playList removeAllObjects];
+        [self.playList addObjectsFromArray:videos];
+        [self stopPlay:nil];
+        [self playFirstIfNeed];
+    }
+}
+
 - (void)switchMoreView:(BOOL)wantShow
 {
     float constant = wantShow ? 0 : - self.moreView.bounds.size.height;
@@ -237,7 +257,6 @@
 
 - (void)baseView:(SHBaseView *)baseView mouseEntered:(NSEvent *)event
 {
-    
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
         context.duration = 0.35;
         self.playerCtrlPanel.animator.alphaValue = 1.0;

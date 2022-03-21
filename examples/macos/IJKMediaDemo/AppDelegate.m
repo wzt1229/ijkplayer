@@ -12,6 +12,7 @@
 #import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
 #import "MRGlobalNotification.h"
 #import "MRUtil+SystemPanel.h"
+#import "MRActionKit.h"
 
 @interface AppDelegate ()
 
@@ -20,6 +21,33 @@
 @end
 
 @implementation AppDelegate
+
+- (void)prepareActionProcessor
+{
+    MRActionProcessor *processor = [[MRActionProcessor alloc] initWithScheme:@"ijkplayer"];
+    
+    __weakSelf__
+    [processor registerHandler:^(MRActionItem *item) {
+        __strongSelf__
+        NSDictionary *params = [item queryMap];
+        NSString *link = params[@"links"];
+        if (link) {
+            link = [link stringByRemovingPercentEncoding];
+        }
+        NSArray *links = [link componentsSeparatedByString:@"|"];
+        NSMutableDictionary *dic = [NSMutableDictionary new];
+        [dic setObject:links forKey:@"links"];
+        POST_NOTIFICATION(kPlayNetMovieNotificationName_G, self, dic);
+        [NSApp activateIgnoringOtherApps:YES];
+    } forPath:@"/play"];
+    
+    [MRActionManager registerProcessor:processor];
+}
+
+- (void)applicationWillFinishLaunching:(NSNotification *)notification
+{
+    [self prepareActionProcessor];
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
@@ -103,7 +131,17 @@
 
 - (void)application:(NSApplication *)application openURLs:(NSArray<NSURL *> *)urls
 {
-    [self playOpenedURL:urls];
+    NSMutableArray *notActions = [NSMutableArray array];
+    for (NSURL *url in urls) {
+        NSError *err = nil;
+        if (![MRActionManager handleActionWithURL:[url absoluteString] error:&err]) {
+            [notActions addObject:url];
+        }
+    }
+    
+    if ([notActions count] > 0) {
+        [self playOpenedURL:notActions];
+    }
 }
 
 @end
