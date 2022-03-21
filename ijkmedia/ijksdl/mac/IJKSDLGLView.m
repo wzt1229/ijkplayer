@@ -283,7 +283,7 @@
     //以800为标准，定义出字幕字体默认大小为25pt
     float ratio = 1.0;
     if (!CGSizeEqualToSize(self.videoNaturalSize, CGSizeZero)) {
-        int degrees = self.videoDegrees;
+        NSInteger degrees = self.videoDegrees;
         if (degrees / 90 % 2 == 1) {
             ratio = self.videoNaturalSize.height / 800.0;
         } else {
@@ -333,10 +333,15 @@
         CVPixelBufferLockBaseAddress(pixelBuffer, 0);
         
         uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
-        int *dst_linesize = av_mallocz(sizeof(int)*4);
-        dst_linesize[0] = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
+        int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
         
-        av_image_copy(&baseAddress, dst_linesize, (const uint8_t **)pict->data, pict->linesize, AV_PIX_FMT_BGRA, pict->w, pict->h);
+        uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
+        int dst_linesizes[4] = {linesize,0,0,0};
+        
+        const uint8_t *src_data[4] = {pict->pixels,NULL,NULL,NULL};
+        const int src_linesizes[4] = {pict->linesize,0,0,0};
+        
+        av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict->w, pict->h);
         
         CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
                 

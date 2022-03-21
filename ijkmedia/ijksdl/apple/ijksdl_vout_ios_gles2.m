@@ -76,8 +76,8 @@ static void vout_free_l(SDL_Vout *vout)
         }
         
         if (opaque->subtitlePict) {
-            if (opaque->subtitlePict->data)
-                av_freep((void *)&opaque->subtitlePict->data);
+            if (opaque->subtitlePict->pixels)
+                av_freep((void *)&opaque->subtitlePict->pixels);
             av_freep((void *)&opaque->subtitlePict);
         }
     }
@@ -159,8 +159,8 @@ static void vout_update_subtitle(SDL_Vout *vout, const char *text)
     }
     
     if (opaque->subtitlePict) {
-        if (opaque->subtitlePict->data)
-            av_freep((void *)&opaque->subtitlePict->data);
+        if (opaque->subtitlePict->pixels)
+            av_freep((void *)&opaque->subtitlePict->pixels);
         av_freep((void *)&opaque->subtitlePict);
     }
     
@@ -171,13 +171,16 @@ static void vout_update_subtitle(SDL_Vout *vout, const char *text)
     opaque->subtitle = av_strdup(text);
 }
 
-static uint32_t* copy_pal8_to_bgra(const AVSubtitleRect* rect)
+static uint8_t* copy_pal8_to_bgra(const AVSubtitleRect* rect,int* out_size)
 {
-    size_t size = rect->w * rect->h * 4; /* times 4 because 4 bytes per pixel */
-    uint32_t colours[255];
+    int size = rect->w * rect->h * 4; /* times 4 because 4 bytes per pixel */
+    if (out_size) {
+        *out_size = rect->w * 4;
+    }
+    uint32_t colours[256];
     uint32_t *buff = NULL;
     
-    buff = av_malloc(size);
+    buff = av_malloc((size_t)size);
     if (buff == NULL) {
         ALOGE("Error allocating memory for subtitle bitmap.\n");
         return NULL;
@@ -203,7 +206,7 @@ static uint32_t* copy_pal8_to_bgra(const AVSubtitleRect* rect)
         }
     }
     
-    return buff;
+    return (uint8_t*)buff;
 }
 
 static void vout_copy_subtitle_picture(IJKSDLSubtitlePicture **dst, const AVSubtitleRect *rect)
@@ -217,9 +220,9 @@ static void vout_copy_subtitle_picture(IJKSDLSubtitlePicture **dst, const AVSubt
     /// the graphic subtitles' bitmap with pixel format AV_PIX_FMT_PAL8,
     /// https://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5
     /// need to be converted to BGRA32 before use
-    (*dst)->data[0] = (uint8_t*)copy_pal8_to_bgra(rect);
     /// PAL8 to BGRA32, bytes per line increased by multiplied 4
-    (*dst)->linesize[0] = rect->linesize[0] * 4;
+    (*dst)->pixels = copy_pal8_to_bgra(rect,&(*dst)->linesize);
+    
 }
 
 static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *rect)
@@ -234,17 +237,16 @@ static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *r
     }
     
     if (opaque->subtitlePict) {
-        for (int i = 0; i < 4; i++) {
-            if (opaque->subtitlePict->data[i])
-                av_freep((void *)&opaque->subtitlePict->data[i]);
-        }
+        if (opaque->subtitlePict->pixels)
+            av_freep((void *)&opaque->subtitlePict->pixels);
         av_freep((void *)&opaque->subtitlePict);
     }
     
     IJKSDLSubtitlePicture *pict = av_mallocz(sizeof(IJKSDLSubtitlePicture));
-    vout_copy_subtitle_picture(&pict, rect);
-    
-    opaque->subtitlePict = pict;
+    if (pict) {
+        vout_copy_subtitle_picture(&pict, rect);
+        opaque->subtitlePict = pict;
+    }
 }
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2()

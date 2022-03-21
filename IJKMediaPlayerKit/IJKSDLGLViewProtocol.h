@@ -104,8 +104,8 @@ struct _IJKSDLSubtitlePicture {
     int w;
     int h;
     int nb_colors;
-    uint8_t *data[4]; // data[0] - pixels with length w * h, in BGRA pixel format
-    int linesize[4];
+    uint8_t *pixels; //pixels with length w * h, in BGRA pixel format
+    int linesize;
 };
 
 @protocol IJKSDLGLViewProtocol <NSObject>
