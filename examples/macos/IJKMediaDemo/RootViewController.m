@@ -20,7 +20,10 @@
 #import "MRBaseView.h"
 
 @interface RootViewController ()<MRDragViewDelegate,SHBaseViewDelegate,NSMenuDelegate>
-
+{
+    FILE *my_stderr;
+    FILE *my_stdout;
+}
 @property (weak) IBOutlet NSView *moreView;
 @property (weak) IBOutlet NSLayoutConstraint *moreViewBottomCons;
 @property (assign) BOOL isMoreViewAnimating;
@@ -63,6 +66,10 @@
 //for cocoa binding end
 
 @property (weak) id eventMonitor;
+
+@property (assign) BOOL autoTest;
+//
+@property (assign) BOOL autoSeeked;
 
 @end
 
@@ -108,7 +115,7 @@
         baseView.delegate = self;
         baseView.needTracking = YES;
     }
-    
+
     __weakSelf__
     self.eventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
         __strongSelf__
@@ -128,7 +135,7 @@
     }];
     
 #ifdef DEBUG
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_ERROR];
 #else
     [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
 #endif
@@ -346,6 +353,13 @@
                 [self toggleHUD:nil];
             }
                 break;
+            case kVK_ANSI_L:
+            {
+                if (event.modifierFlags & NSEventModifierFlagShift) {
+                    [self loadNASPlayList];
+                }
+                self.autoTest = YES;
+            }
             default:
             {
                 NSLog(@"0x%X",[event keyCode]);
@@ -408,6 +422,36 @@
     }
 }
 
+- (void)loadNASPlayList
+{
+    NSString *fileName = @"nas_list.txt";
+    NSString *nas_file = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
+    NSString *nas_text = [[NSString alloc] initWithContentsOfFile:nas_file encoding:NSUTF8StringEncoding error:nil];
+    nas_text = [nas_text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *lines = [nas_text componentsSeparatedByString:@"\n"];
+    NSString *host = [lines firstObject];
+    [self.playList removeAllObjects];
+    NSString *lastVideo = @"4987";
+    NSURL *lastUrl = nil;
+    for (int i = 1; i < lines.count; i++) {
+        NSString *path = lines[i];
+        
+        NSString *urlStr = [host stringByAppendingPathComponent:path];
+        NSURL *url = [NSURL URLWithString:urlStr];
+        [self.playList addObject:url];
+        
+        if (!lastUrl && [path containsString:lastVideo]) {
+            lastUrl = url;
+        }
+    }
+    if (lastUrl) {
+        [self stopPlay:nil];
+        [self playURL:lastUrl];
+    } else {
+        [self playFirstIfNeed];
+    }
+}
+
 - (NSMutableArray *)playList
 {
     if (!_playList) {
@@ -438,6 +482,7 @@
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:self.useVideoToolBox forKey:@"videotoolbox"];
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
+    options.showHudView = YES;
     
     [self stopPlay:nil];
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
@@ -464,6 +509,7 @@
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
+    self.autoSeeked = NO;
 }
 
 - (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
@@ -478,7 +524,8 @@
         if (IJKMPMovieFinishReasonPlaybackError == reason) {
             int errCode = [notifi.userInfo[@"error"] intValue];
             NSLog(@"播放出错:%d",errCode);
-            [self.player stop];
+            //[self.player stop];
+            [self playNext:nil];
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
             NSLog(@"播放结束");
             [self playNext:nil];
@@ -488,6 +535,24 @@
 
 - (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
 {
+    if (my_stdout) {
+        fflush(my_stdout);
+        fclose(my_stdout);
+        my_stdout = NULL;
+    }
+    if (my_stderr) {
+        fflush(my_stderr);
+        fclose(my_stderr);
+        my_stderr = NULL;
+    }
+    NSString *dir = [self saveDir];
+    NSString *movieName = [[self.playingUrl absoluteString] lastPathComponent];
+    NSString *fileName = [NSString stringWithFormat:@"%@.txt",movieName];
+    NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+    
+    my_stdout = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);
+    my_stderr = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);
+    
     if (self.player.isPreparedToPlay) {
         
         NSDictionary *dic = self.player.monitor.mediaMeta;
@@ -595,7 +660,6 @@
 - (void)onTick:(NSTimer *)sender
 {
     if (self.player) {
-        
         long interval = (long)self.player.currentPlaybackTime;
         long duration = self.player.monitor.duration / 1000;
         self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
@@ -603,6 +667,17 @@
         self.playerSlider.currentValue = interval;
         self.playerSlider.minValue = 0;
         self.playerSlider.maxValue = duration;
+        
+        if (self.autoTest) {
+            //auto seek
+            if (interval > 10) {
+                if (!self.autoSeeked) {
+                    [self onCaptureShot:nil];
+                    [self seekTo:duration - 10];
+                    self.autoSeeked = YES;
+                }
+            }
+        }
     } else {
         self.playedTimeLb.stringValue = @"--:--";
         self.durationTimeLb.stringValue = @"--:--";
@@ -801,6 +876,10 @@
         idx = 0;
     } else if (idx >= [self.playList count] - 1) {
         idx = 0;
+        //when autotest not loop
+        if (self.autoTest) {
+            return;
+        }
     } else {
         idx ++;
     }
@@ -952,14 +1031,21 @@
     NSLog(@"rotate:%@ %d",@[@"None",@"X",@"Y",@"Z"][preference.type],(int)preference.degrees);
 }
 
+- (NSString *)saveDir
+{
+    NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:@[@"ijkPro"]];
+    return path;
+}
+
 - (IBAction)onCaptureShot:(id)sender
 {
     CGImageRef img = [self.player.view snapshot:self.snapshot];
     if (img) {
         //,[self.playingUrl lastPathComponent]
-        NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:@[@"ijkPro"]];
-        NSString *fileName = [NSString stringWithFormat:@"%ld.jpg",(long)CFAbsoluteTimeGetCurrent()];
-        NSString *filePath = [path stringByAppendingPathComponent:fileName];
+        NSString *dir = [self saveDir];
+        NSString *movieName = [[self.playingUrl absoluteString] lastPathComponent];
+        NSString *fileName = [NSString stringWithFormat:@"%@-%ld.jpg",movieName,(long)CFAbsoluteTimeGetCurrent()];
+        NSString *filePath = [dir stringByAppendingPathComponent:fileName];
         NSLog(@"截屏:%@",filePath);
         [MRUtil saveImageToFile:img path:filePath];
     }
