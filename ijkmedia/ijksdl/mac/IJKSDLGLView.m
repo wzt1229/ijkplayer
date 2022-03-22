@@ -231,6 +231,9 @@
         float ratio = 1.0;
         if (self.subtitlePict) {
             ratio = self.subtitlePreference.ratio;
+        } else {
+            //for text subtitle scale 0.5 when display.
+            ratio *= 0.5;
         }
         IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(self.currentSubtitle), ratio * CVPixelBufferGetHeight(self.currentSubtitle));
         if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
@@ -289,7 +292,7 @@
         
     float ratio = sp.ratio;
     int32_t bgrValue = sp.color;
-    //以800为标准，定义出字幕字体默认大小为25pt
+    //以800为标准，定义出字幕字体默认大小为50pt
     float scale = 1.0;
     if (!CGSizeEqualToSize(self.videoNaturalSize, CGSizeZero)) {
         NSInteger degrees = self.videoDegrees;
@@ -302,7 +305,7 @@
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
     
-    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 25];
+    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 50];
     [attributes setObject:subtitleFont forKey:NSFontAttributeName];
     
     NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
