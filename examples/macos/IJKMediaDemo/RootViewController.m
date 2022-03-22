@@ -135,7 +135,7 @@
     }];
     
 #ifdef DEBUG
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_ERROR];
+    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
 #else
     [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
 #endif
@@ -535,23 +535,25 @@
 
 - (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
 {
-    if (my_stdout) {
-        fflush(my_stdout);
-        fclose(my_stdout);
-        my_stdout = NULL;
+    if (self.autoTest) {
+        if (my_stdout) {
+            fflush(my_stdout);
+            fclose(my_stdout);
+            my_stdout = NULL;
+        }
+        if (my_stderr) {
+            fflush(my_stderr);
+            fclose(my_stderr);
+            my_stderr = NULL;
+        }
+        NSString *dir = [self saveDir];
+        NSString *movieName = [[self.playingUrl absoluteString] lastPathComponent];
+        NSString *fileName = [NSString stringWithFormat:@"%@.txt",movieName];
+        NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+        
+        my_stdout = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);
+        my_stderr = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);
     }
-    if (my_stderr) {
-        fflush(my_stderr);
-        fclose(my_stderr);
-        my_stderr = NULL;
-    }
-    NSString *dir = [self saveDir];
-    NSString *movieName = [[self.playingUrl absoluteString] lastPathComponent];
-    NSString *fileName = [NSString stringWithFormat:@"%@.txt",movieName];
-    NSString *filePath = [dir stringByAppendingPathComponent:fileName];
-    
-    my_stdout = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);
-    my_stderr = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);
     
     if (self.player.isPreparedToPlay) {
         
