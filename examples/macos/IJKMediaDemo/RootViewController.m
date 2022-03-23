@@ -353,13 +353,23 @@
                 [self toggleHUD:nil];
             }
                 break;
-            case kVK_ANSI_L:
+            case kVK_ANSI_0:
             {
-                if (event.modifierFlags & NSEventModifierFlagShift) {
-                    [self loadNASPlayList];
-                }
+                self.autoTest = NO;
+            }
+                break;
+            case kVK_ANSI_1:
+            {
+                [self loadNASPlayList:1];
                 self.autoTest = YES;
             }
+                break;
+            case kVK_ANSI_2:
+            {
+                [self loadNASPlayList:2];
+                self.autoTest = YES;
+            }
+                break;
             default:
             {
                 NSLog(@"0x%X",[event keyCode]);
@@ -422,25 +432,24 @@
     }
 }
 
-- (void)loadNASPlayList
+- (void)loadNASPlayList:(int)idx
 {
-    NSString *fileName = @"nas_list.txt";
+    NSString *fileName = [NSString stringWithFormat:@"nas_list_%d.txt",idx];
     NSString *nas_file = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
     NSString *nas_text = [[NSString alloc] initWithContentsOfFile:nas_file encoding:NSUTF8StringEncoding error:nil];
     nas_text = [nas_text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSArray *lines = [nas_text componentsSeparatedByString:@"\n"];
     NSString *host = [lines firstObject];
     [self.playList removeAllObjects];
-    NSString *lastVideo = @"4987";
+    NSString *lastVideo = nil;
     NSURL *lastUrl = nil;
     for (int i = 1; i < lines.count; i++) {
         NSString *path = lines[i];
-        
-        NSString *urlStr = [host stringByAppendingPathComponent:path];
+        NSString *urlStr = [host stringByAppendingString:path];
         NSURL *url = [NSURL URLWithString:urlStr];
         [self.playList addObject:url];
         
-        if (!lastUrl && [path containsString:lastVideo]) {
+        if (lastVideo && !lastUrl && [path containsString:lastVideo]) {
             lastUrl = url;
         }
     }
