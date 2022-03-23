@@ -474,7 +474,7 @@
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     //视频帧处理不过来的时候丢弃一些帧达到同步的效果
     [options setPlayerOptionIntValue:1 forKey:@"framedrop"];
-    [options setPlayerOptionIntValue:16      forKey:@"video-pictq-size"];
+    [options setPlayerOptionIntValue:6      forKey:@"video-pictq-size"];
     //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
     //    [options setPlayerOptionIntValue:50*1024*1024      forKey:@"max-buffer-size"];
     [options setPlayerOptionIntValue:30     forKey:@"max-fps"];
