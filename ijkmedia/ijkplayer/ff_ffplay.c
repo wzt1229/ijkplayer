@@ -526,7 +526,9 @@ fail0:
     return ret;
 }
 
+#ifdef __APPLE__
 static const AVCodecHWConfig *hw_config;
+#endif
 
 static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     int ret = AVERROR(EAGAIN);
@@ -3198,6 +3200,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     if (stream_lowres)
         av_dict_set_int(&opts, "lowres", stream_lowres, 0);
     
+#ifdef __APPLE__
     hw_config = NULL;
     if (ffp->videotoolbox == 2 && avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
         enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");
@@ -3222,7 +3225,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
             ALOGW("can't use videotoolbox accel!\n");
         }
     }
-    
+#endif
     if ((ret = avcodec_open2(avctx, codec, &opts)) < 0) {
         goto fail;
     }
