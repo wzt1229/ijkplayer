@@ -115,6 +115,8 @@ typedef enum IJKLogLevel {
 @property(nonatomic, readonly) CGFloat fpsAtOutput;
 @property(nonatomic) BOOL shouldShowHudView;
 
+- (NSDictionary *)allHudItem;
+
 - (void)setOptionValue:(NSString *)value
                 forKey:(NSString *)key
             ofCategory:(IJKFFOptionCategory)category;

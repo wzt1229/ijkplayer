@@ -109,6 +109,17 @@ typedef UITableView HudContentView;
     [self.tableView reloadData];
 }
 
+- (NSDictionary *)allHudItem
+{
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    for (HudViewCellData *data in self.hudDataArray) {
+        if (data.key && data.value) {
+            [dic setValue:data.value forKey:data.key];
+        }
+    }
+    return [dic copy];
+}
+
 #if TARGET_OS_OSX
 - (NSScrollView *)prepareContentView
 {

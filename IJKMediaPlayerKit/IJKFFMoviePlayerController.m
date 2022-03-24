@@ -366,20 +366,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_load_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
-- (void)setHudUrl:(NSString *)urlString
-{
-    if ([[NSThread currentThread] isMainThread]) {
-        NSURL *url = [NSURL URLWithString:urlString];
-        [self setHudValue:url.scheme forKey:@"scheme"];
-        [self setHudValue:url.host   forKey:@"host"];
-        [self setHudValue:url.path   forKey:@"path"];
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self setHudUrl:urlString];
-        });
-    }
-}
-
 - (void)play
 {
     if (!_mediaPlayer)
@@ -746,6 +732,38 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
 - (CGFloat)fpsAtOutput
 {
     return _mediaPlayer ? ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VIDEO_OUTPUT_FRAMES_PER_SECOND, .0f) : .0f;
+}
+
+#pragma mark IJKFFHudController
+
+- (NSDictionary *)allHudItem
+{
+    return [_hudCtrl allHudItem];
+}
+
+- (void)setHudValue:(NSString *)value forKey:(NSString *)key
+{
+    if ([[NSThread currentThread] isMainThread]) {
+        [_hudCtrl setHudValue:value forKey:key];
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setHudValue:value forKey:key];
+        });
+    }
+}
+
+- (void)setHudUrl:(NSString *)urlString
+{
+    if ([[NSThread currentThread] isMainThread]) {
+        NSURL *url = [NSURL URLWithString:urlString];
+        [self setHudValue:url.scheme forKey:@"scheme"];
+        [self setHudValue:url.host   forKey:@"host"];
+        [self setHudValue:url.path   forKey:@"path"];
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setHudUrl:urlString];
+        });
+    }
 }
 
 inline static NSString *formatedDurationMilli(int64_t duration) {
@@ -1829,19 +1847,6 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
     });
 }
 #endif
-
-#pragma mark IJKFFHudController
-
-- (void)setHudValue:(NSString *)value forKey:(NSString *)key
-{
-    if ([[NSThread currentThread] isMainThread]) {
-        [_hudCtrl setHudValue:value forKey:key];
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self setHudValue:value forKey:key];
-        });
-    }
-}
 
 - (void)exchangeSelectedStream:(int)streamIdx
 {

@@ -34,6 +34,7 @@ typedef NSView  UIView;
 
 - (UIView *)contentView;
 - (void)setHudValue:(NSString *)value forKey:(NSString *)key;
+- (NSDictionary *)allHudItem;
 
 @end
 
