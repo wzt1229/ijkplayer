@@ -527,8 +527,9 @@
     [options setPlayerOptionIntValue:self.useVideoToolBox forKey:@"videotoolbox"];
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
     options.showHudView = YES;
-    
+    [self.kvoCtrl safelyRemoveAllObservers];
     [self stopPlay:nil];
+    
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
     CGRect rect = self.view.frame;
@@ -550,6 +551,8 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMovieNoCodecFoundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerCouldNotFindCodec:) name:IJKMPMovieNoCodecFoundNotification object:self.player];
     
+    self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
+    [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
@@ -670,8 +673,6 @@
     }
     
     [self.player prepareToPlay];
-    self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
-    [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
