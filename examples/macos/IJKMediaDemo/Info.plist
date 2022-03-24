@@ -205,6 +205,7 @@
 				<string>hevc</string>
 				<string>h265</string>
 				<string>avc</string>
+				<string>xlist</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>VIDEO.icns</string>

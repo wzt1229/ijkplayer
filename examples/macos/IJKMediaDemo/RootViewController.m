@@ -18,6 +18,7 @@
 #import "AppDelegate.h"
 #import "MRProgressSlider.h"
 #import "MRBaseView.h"
+#import <IOKit/pwr_mgt/IOPMLib.h>
 
 @interface RootViewController ()<MRDragViewDelegate,SHBaseViewDelegate,NSMenuDelegate>
 {
@@ -71,6 +72,8 @@
 //
 @property (assign) BOOL autoSeeked;
 @property (assign) BOOL snapshot2;
+@property (assign) int tickCount;
+
 @end
 
 @implementation RootViewController
@@ -675,9 +678,27 @@
     }
 }
 
+static IOPMAssertionID g_displaySleepAssertionID;
+
+- (void)enableComputerSleep:(BOOL)enable
+{
+    if (!g_displaySleepAssertionID && !enable)
+    {
+        
+        IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
+                                    (__bridge CFStringRef)[[NSBundle mainBundle] bundleIdentifier],&g_displaySleepAssertionID);
+    }
+    else if (g_displaySleepAssertionID && enable)
+    {
+        IOPMAssertionRelease(g_displaySleepAssertionID);
+        g_displaySleepAssertionID = 0;
+    }
+}
+
 - (void)onTick:(NSTimer *)sender
 {
     if (self.player) {
+        self.tickCount ++;
         long interval = (long)self.player.currentPlaybackTime;
         long duration = self.player.monitor.duration / 1000;
         self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
@@ -706,11 +727,20 @@
                     }
                 }
             }
+            
+            if (self.tickCount / 60 > 2) {
+                NSLog(@"\nwtf? why played %ds\n",self.tickCount);
+                NSLog(@"\n-----------\n%@\n-----------\n",[self.player allHudItem]);
+                [self onCaptureShot:nil];
+                [self playNext:nil];
+            }
         }
+        [self enableComputerSleep:NO];
     } else {
         self.playedTimeLb.stringValue = @"--:--";
         self.durationTimeLb.stringValue = @"--:--";
         [sender invalidate];
+        [self enableComputerSleep:YES];
     }
 }
 
