@@ -379,6 +379,9 @@
         return;
     }
     
+    [[self openGLContext] makeCurrentContext];
+    CGLLockContext([[self openGLContext] CGLContextObj]);
+    
     if (text && strlen(text) > 0) {
         NSString *subStr = [[NSString alloc] initWithUTF8String:text];
         if (_subtitlePreferenceChanged || ![subStr isEqualToString:self.subtitle]) {
@@ -399,8 +402,6 @@
         self.subtitlePict = NULL;
     }
     
-    [[self openGLContext] makeCurrentContext];
-    CGLLockContext([[self openGLContext] CGLContextObj]);
     // Bind the FBO to screen.
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, _backingWidth, _backingHeight);
