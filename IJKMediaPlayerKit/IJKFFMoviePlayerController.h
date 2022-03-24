@@ -101,6 +101,7 @@ typedef enum IJKLogLevel {
 - (int)dropFrameCount;
 - (void)setPauseInBackground:(BOOL)pause;
 - (BOOL)isVideoToolboxOpen;
+- (BOOL)isUsingHardwareAccelerae;
 
 - (void)setHudValue:(NSString *)value forKey:(NSString *)key;
 
