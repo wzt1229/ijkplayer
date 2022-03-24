@@ -70,7 +70,7 @@
 @property (assign) BOOL autoTest;
 //
 @property (assign) BOOL autoSeeked;
-
+@property (assign) BOOL snapshot2;
 @end
 
 @implementation RootViewController
@@ -360,14 +360,14 @@
                 break;
             case kVK_ANSI_1:
             {
-                [self loadNASPlayList:1];
                 self.autoTest = YES;
+                [self loadNASPlayList:1];
             }
                 break;
             case kVK_ANSI_2:
             {
-                [self loadNASPlayList:2];
                 self.autoTest = YES;
+                [self loadNASPlayList:2];
             }
                 break;
             default:
@@ -471,14 +471,41 @@
 
 - (void)perpareIJKPlayer:(NSURL *)url
 {
+    if (self.autoTest) {
+        [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
+    }
+    
+    if (self.autoTest) {
+        if (my_stdout) {
+            fflush(my_stdout);
+            fclose(my_stdout);
+            my_stdout = NULL;
+        }
+        if (my_stderr) {
+            fflush(my_stderr);
+            fclose(my_stderr);
+            my_stderr = NULL;
+        }
+        NSString *dir = [self saveDir];
+        NSString *movieName = [[url absoluteString] lastPathComponent];
+        NSString *fileName = [NSString stringWithFormat:@"%@.txt",movieName];
+        NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+        
+        my_stdout = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);
+        my_stderr = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);
+    }
+    
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
     //视频帧处理不过来的时候丢弃一些帧达到同步的效果
     [options setPlayerOptionIntValue:1 forKey:@"framedrop"];
     [options setPlayerOptionIntValue:6      forKey:@"video-pictq-size"];
     //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
-    //    [options setPlayerOptionIntValue:50*1024*1024      forKey:@"max-buffer-size"];
     [options setPlayerOptionIntValue:30     forKey:@"max-fps"];
     [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
+    
+    if ([url isFileURL]) {
+        [options setPlayerOptionIntValue:5*1024*1024      forKey:@"max-buffer-size"];
+    }
     
 //    [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
 //    [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
@@ -544,26 +571,6 @@
 
 - (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
 {
-    if (self.autoTest) {
-        if (my_stdout) {
-            fflush(my_stdout);
-            fclose(my_stdout);
-            my_stdout = NULL;
-        }
-        if (my_stderr) {
-            fflush(my_stderr);
-            fclose(my_stderr);
-            my_stderr = NULL;
-        }
-        NSString *dir = [self saveDir];
-        NSString *movieName = [[self.playingUrl absoluteString] lastPathComponent];
-        NSString *fileName = [NSString stringWithFormat:@"%@.txt",movieName];
-        NSString *filePath = [dir stringByAppendingPathComponent:fileName];
-        
-        my_stdout = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);
-        my_stderr = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);
-    }
-    
     if (self.player.isPreparedToPlay) {
         
         NSDictionary *dic = self.player.monitor.mediaMeta;
@@ -681,11 +688,22 @@
         
         if (self.autoTest) {
             //auto seek
-            if (interval > 10) {
-                if (!self.autoSeeked) {
-                    [self onCaptureShot:nil];
-                    [self seekTo:duration - 10];
-                    self.autoSeeked = YES;
+            if (duration > 120) {
+                if (interval > 10) {
+                    if (!self.autoSeeked) {
+                        NSLog(@"\n-----------\n%@\n-----------\n",[self.player allHudItem]);
+                        [self onCaptureShot:nil];
+                        [self seekTo:duration - 10];
+                        self.autoSeeked = YES;
+                    }
+                    
+                    if (interval > duration - 5) {
+                        if (!self.snapshot2) {
+                            NSLog(@"\n-----------\n%@\n-----------\n",[self.player allHudItem]);
+                            [self onCaptureShot:nil];
+                            self.snapshot2 = YES;
+                        }
+                    }
                 }
             }
         }
