@@ -364,13 +364,13 @@
             case kVK_ANSI_1:
             {
                 self.autoTest = YES;
-                [self loadNASPlayList:1];
+                [self loadNASPlayListWithinBundle:1];
             }
                 break;
             case kVK_ANSI_2:
             {
                 self.autoTest = YES;
-                [self loadNASPlayList:2];
+                [self loadNASPlayListWithinBundle:2];
             }
                 break;
             default:
@@ -435,11 +435,16 @@
     }
 }
 
-- (void)loadNASPlayList:(int)idx
+- (void)loadNASPlayListWithinBundle:(int)idx
 {
     NSString *fileName = [NSString stringWithFormat:@"nas_list_%d.txt",idx];
     NSString *nas_file = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
-    NSString *nas_text = [[NSString alloc] initWithContentsOfFile:nas_file encoding:NSUTF8StringEncoding error:nil];
+    [self loadNASPlayList:[NSURL fileURLWithPath:nas_file]];
+}
+
+- (void)loadNASPlayList:(NSURL*)url
+{
+    NSString *nas_text = [[NSString alloc] initWithContentsOfFile:[url path] encoding:NSUTF8StringEncoding error:nil];
     nas_text = [nas_text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSArray *lines = [nas_text componentsSeparatedByString:@"\n"];
     NSString *host = [lines firstObject];
@@ -760,6 +765,16 @@ static IOPMAssertionID g_displaySleepAssertionID;
 {
     NSMutableArray *videos = [NSMutableArray array];
     NSMutableArray *subtitles = [NSMutableArray array];
+    
+    if (bookmarkArr.count == 1) {
+        NSDictionary *dic = bookmarkArr[0];
+        NSURL *url = dic[@"url"];
+        if ([[[url pathExtension] lowercaseString] isEqualToString:@"xlist"]) {
+            self.autoTest = YES;
+            [self loadNASPlayList:url];
+            return;
+        }
+    }
     
     for (NSDictionary *dic in bookmarkArr) {
         NSURL *url = dic[@"url"];
