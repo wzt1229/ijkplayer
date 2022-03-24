@@ -734,6 +734,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
             }
             
             if (self.tickCount / 60 > 2) {
+                self.tickCount = 0;
                 NSLog(@"\nwtf? why played %ds\n",self.tickCount);
                 NSLog(@"\n-----------\n%@\n-----------\n",[self.player allHudItem]);
                 [self onCaptureShot:nil];
