@@ -20,6 +20,8 @@
 #import "MRBaseView.h"
 #import <IOKit/pwr_mgt/IOPMLib.h>
 
+static NSString* lastPlayedKey = @"__lastPlayedKey";
+
 @interface RootViewController ()<MRDragViewDelegate,SHBaseViewDelegate,NSMenuDelegate>
 {
     FILE *my_stderr;
@@ -449,7 +451,7 @@
     NSArray *lines = [nas_text componentsSeparatedByString:@"\n"];
     NSString *host = [lines firstObject];
     [self.playList removeAllObjects];
-    NSString *lastVideo = nil;
+    NSString *lastVideo = [[NSUserDefaults standardUserDefaults] objectForKey:lastPlayedKey];
     NSURL *lastUrl = nil;
     for (int i = 1; i < lines.count; i++) {
         NSString *path = lines[i];
@@ -671,6 +673,8 @@
     if (!self.tickTimer) {
         self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
     }
+    
+    [[NSUserDefaults standardUserDefaults] setObject:title forKey:lastPlayedKey];
     
     [self.player prepareToPlay];
 }
