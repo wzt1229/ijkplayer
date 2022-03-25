@@ -82,6 +82,12 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)dealloc
 {
+    if (self.tickTimer) {
+        [self.tickTimer invalidate];
+        self.tickTimer = nil;
+        self.tickCount = 0;
+    }
+    
     [NSEvent removeMonitor:self.eventMonitor];
 }
 
@@ -482,10 +488,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 - (void)perpareIJKPlayer:(NSURL *)url
 {
     if (self.autoTest) {
+        
         [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
-    }
-    
-    if (self.autoTest) {
+        
         if (my_stdout) {
             fflush(my_stdout);
             fclose(my_stdout);
@@ -503,6 +508,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         
         my_stdout = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);
         my_stderr = freopen([filePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);
+        
+        self.autoSeeked = NO;
+        self.snapshot2 = NO;
     }
     
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
@@ -558,7 +566,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
-    self.autoSeeked = NO;
 }
 
 - (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
@@ -670,9 +677,13 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     p.bottomMargin = self.subtitleMargin;
     self.player.view.subtitlePreference = p;
     
-    if (!self.tickTimer) {
-        self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
+    if (self.tickTimer) {
+        [self.tickTimer invalidate];
+        self.tickTimer = nil;
+        self.tickCount = 0;
     }
+    
+    self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
     
     [[NSUserDefaults standardUserDefaults] setObject:title forKey:lastPlayedKey];
     
@@ -719,8 +730,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
         
         if (self.autoTest) {
             //auto seek
-            if (duration > 120) {
-                if (interval > 10) {
+            if (duration > 0) {
+                if (interval >= 10) {
                     if (!self.autoSeeked) {
                         NSLog(@"\n-----------\n%@\n-----------\n",[self.player allHudItem]);
                         [self onCaptureShot:nil];
@@ -738,8 +749,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
                 }
             }
             
-            if (self.tickCount / 60 > 2) {
-                self.tickCount = 0;
+            if (self.tickCount >= 60) {
                 NSLog(@"\nwtf? why played %ds\n",self.tickCount);
                 NSLog(@"\n-----------\n%@\n-----------\n",[self.player allHudItem]);
                 [self onCaptureShot:nil];
@@ -919,6 +929,12 @@ static IOPMAssertionID g_displaySleepAssertionID;
         self.player = nil;
     }
     
+    if (self.tickTimer) {
+        [self.tickTimer invalidate];
+        self.tickTimer = nil;
+        self.tickCount = 0;
+    }
+    
     if (self.playingUrl) {
         self.playingUrl = nil;
     }
@@ -952,7 +968,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
-    
+    //when autotest not loop
     if (self.autoTest && idx == self.playList.count - 1) {
         [self stopPlay:nil];
         self.autoTest = NO;
@@ -964,10 +980,6 @@ static IOPMAssertionID g_displaySleepAssertionID;
         idx = 0;
     } else if (idx >= [self.playList count] - 1) {
         idx = 0;
-        //when autotest not loop
-        if (self.autoTest) {
-            return;
-        }
     } else {
         idx ++;
     }
