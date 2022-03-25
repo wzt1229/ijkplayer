@@ -952,6 +952,14 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
+    
+    if (self.autoTest && idx == self.playList.count - 1) {
+        [self stopPlay:nil];
+        self.autoTest = NO;
+        [self.playList removeAllObjects];
+        return;
+    }
+    
     if (idx == NSNotFound) {
         idx = 0;
     } else if (idx >= [self.playList count] - 1) {
