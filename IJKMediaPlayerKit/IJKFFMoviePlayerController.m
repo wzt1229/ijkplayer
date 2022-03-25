@@ -532,7 +532,7 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     [self unregisterApplicationObservers];
 #endif
     [self setScreenOn:NO];
-    [self stopHudTimer];
+    [self destroyHud];
     //release glview in main thread.
     _view = _glView = nil;
     ijkmp_ios_set_glview(_mediaPlayer, nil);
@@ -958,6 +958,19 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self stopHudTimer];
+        });
+    }
+}
+
+- (void)destroyHud
+{
+    if ([[NSThread currentThread] isMainThread]) {
+        [_hudCtrl destroyContentView];
+        [_hudTimer invalidate];
+        _hudTimer = nil;
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self destroyHud];
         });
     }
 }

@@ -91,6 +91,12 @@ typedef UITableView HudContentView;
     return self.view;
 }
 
+- (void)destroyContentView
+{
+    [self.view removeFromSuperview];
+    self.view = nil;
+}
+
 - (void)setHudValue:(NSString *)value forKey:(NSString *)key
 {
     HudViewCellData *data = nil;
