@@ -580,7 +580,13 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         if (IJKMPMovieFinishReasonPlaybackError == reason) {
             int errCode = [notifi.userInfo[@"error"] intValue];
             NSLog(@"播放出错:%d",errCode);
-            //[self.player stop];
+            NSString *dir = [self saveDir];
+            NSString *fileName = [NSString stringWithFormat:@"a错误汇总.txt"];
+            NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+            FILE *pf = fopen([filePath UTF8String], "a+");
+            fprintf(pf, "%d:%s\n",errCode,[[self.playingUrl absoluteString]UTF8String]);
+            fflush(pf);
+            fclose(pf);
             [self playNext:nil];
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
             NSLog(@"播放结束");
@@ -667,8 +673,11 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 {
     [self perpareIJKPlayer:url];
     self.playingUrl = url;
-
+    
     NSString *title = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
+    
+    NSInteger idx = [self.playList indexOfObject:self.playingUrl];
+    title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],title];
     [self.view.window setTitle:title];
     
     [self onReset:nil];
