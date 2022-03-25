@@ -537,7 +537,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:self.useVideoToolBox forKey:@"videotoolbox"];
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
     options.showHudView = YES;
-    [self.kvoCtrl safelyRemoveAllObservers];
+    
     [self stopPlay:nil];
     
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
@@ -550,15 +550,13 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
     
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:nil];
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:self.player];
     
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self.player];
     
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackDidFinishNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerDidFinish:) name:IJKMPMoviePlayerPlaybackDidFinishNotification object:self.player];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMovieNoCodecFoundNotification object:nil];
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerCouldNotFindCodec:) name:IJKMPMovieNoCodecFoundNotification object:self.player];
     
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
@@ -931,6 +929,12 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)stopPlay:(NSButton *)sender
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackDidFinishNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMovieNoCodecFoundNotification object:nil];
+    
+    [self.kvoCtrl safelyRemoveAllObservers];
     if (self.player) {
         [self.player.view removeFromSuperview];
         [self.player pause];
