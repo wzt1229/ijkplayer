@@ -150,6 +150,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 #else
     [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
 #endif
+    
+    self.playedTimeLb.stringValue = @"--:--";
+    self.durationTimeLb.stringValue = @"--:--";
 }
 
 - (void)prepareRightMenu
@@ -487,6 +490,12 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)perpareIJKPlayer:(NSURL *)url
 {
+    if (self.playingUrl) {
+        [self stopPlay:nil];
+    }
+    
+    self.playingUrl = url;
+    
     if (self.autoTest) {
         
         [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
@@ -501,7 +510,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             fclose(my_stderr);
             my_stderr = NULL;
         }
-        NSString *dir = [self saveDir];
+        NSString *dir = [self dirForCurrentPlayingUrl];
         NSString *movieName = [[url absoluteString] lastPathComponent];
         NSString *fileName = [NSString stringWithFormat:@"%@.txt",movieName];
         NSString *filePath = [dir stringByAppendingPathComponent:fileName];
@@ -538,8 +547,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
     options.showHudView = YES;
     
-    [self stopPlay:nil];
-    
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
     CGRect rect = self.view.frame;
@@ -549,7 +556,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
-    
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:self.player];
     
@@ -578,7 +584,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         if (IJKMPMovieFinishReasonPlaybackError == reason) {
             int errCode = [notifi.userInfo[@"error"] intValue];
             NSLog(@"播放出错:%d",errCode);
-            NSString *dir = [self saveDir];
+            NSString *dir = [self saveDir:nil];
             NSString *fileName = [NSString stringWithFormat:@"a错误汇总.txt"];
             NSString *filePath = [dir stringByAppendingPathComponent:fileName];
             FILE *pf = fopen([filePath UTF8String], "a+");
@@ -670,12 +676,13 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 - (void)playURL:(NSURL *)url
 {
     [self perpareIJKPlayer:url];
-    self.playingUrl = url;
+    NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     
-    NSString *title = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
+    NSInteger idx = [self.playList indexOfObject:self.playingUrl] + 1;
     
-    NSInteger idx = [self.playList indexOfObject:self.playingUrl];
-    title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],title];
+    [[NSUserDefaults standardUserDefaults] setObject:videoName forKey:lastPlayedKey];
+    
+    NSString *title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],videoName];
     [self.view.window setTitle:title];
     
     [self onReset:nil];
@@ -691,8 +698,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     }
     
     self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
-    
-    [[NSUserDefaults standardUserDefaults] setObject:title forKey:lastPlayedKey];
     
     [self.player prepareToPlay];
 }
@@ -725,7 +730,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)onTick:(NSTimer *)sender
 {
-    if (self.player) {
+    if ([self.player isPlaying]) {
         self.tickCount ++;
         long interval = (long)self.player.currentPlaybackTime;
         long duration = self.player.monitor.duration / 1000;
@@ -764,11 +769,6 @@ static IOPMAssertionID g_displaySleepAssertionID;
             }
         }
         [self enableComputerSleep:NO];
-    } else {
-        self.playedTimeLb.stringValue = @"--:--";
-        self.durationTimeLb.stringValue = @"--:--";
-        [sender invalidate];
-        [self enableComputerSleep:YES];
     }
 }
 
@@ -908,6 +908,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     
     if (self.playingUrl) {
         if (self.playCtrlBtn.state == NSControlStateValueOff) {
+            [self enableComputerSleep:YES];
             [self.player pause];
         } else {
             [self.player play];
@@ -953,6 +954,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     [self.view.window setTitle:@""];
+    [self enableComputerSleep:YES];
 }
 
 - (IBAction)playPrevious:(NSButton *)sender
@@ -1144,18 +1146,28 @@ static IOPMAssertionID g_displaySleepAssertionID;
     NSLog(@"rotate:%@ %d",@[@"None",@"X",@"Y",@"Z"][preference.type],(int)preference.degrees);
 }
 
-- (NSString *)saveDir
+- (NSString *)saveDir:(NSString *)subDir
 {
-    NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:@[@"ijkPro"]];
+    NSArray *subDirs = nil;
+    if (self.autoTest) {
+        subDirs = subDir ? @[@"auto-test",subDir] : @[@"auto-test"];
+    } else {
+        subDirs = subDir ? @[@"ijkPro",subDir] : @[@"ijkPro"];
+    }
+    NSString * path = [NSFileManager mr_DirWithType:NSPicturesDirectory WithPathComponents:subDirs];
     return path;
+}
+
+- (NSString *)dirForCurrentPlayingUrl
+{
+    return [self saveDir:[[self.playingUrl path] stringByDeletingLastPathComponent]];
 }
 
 - (IBAction)onCaptureShot:(id)sender
 {
     CGImageRef img = [self.player.view snapshot:self.snapshot];
     if (img) {
-        //,[self.playingUrl lastPathComponent]
-        NSString *dir = [self saveDir];
+        NSString * dir = [self dirForCurrentPlayingUrl];
         NSString *movieName = [[self.playingUrl absoluteString] lastPathComponent];
         NSString *fileName = [NSString stringWithFormat:@"%@-%ld.jpg",movieName,(long)CFAbsoluteTimeGetCurrent()];
         NSString *filePath = [dir stringByAppendingPathComponent:fileName];
