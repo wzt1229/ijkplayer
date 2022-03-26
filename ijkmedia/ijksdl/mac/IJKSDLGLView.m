@@ -40,8 +40,9 @@
 @property(atomic) CVPixelBufferRef currentSubtitle;
 @property(atomic) NSString *subtitle;
 @property(atomic) IJKSDLSubtitlePicture *subtitlePict;
-@property(atomic) CGSize videoNaturalSize;
+@property(atomic) CGSize displaySize;
 @property(atomic) NSInteger videoDegrees;
+@property(atomic) float displayScale;
 
 @end
 
@@ -55,7 +56,6 @@
     GLuint _FBO;
     GLuint _ColorTexture;
     float _videoSar;
-    
     BOOL _subtitlePreferenceChanged;
 }
 
@@ -102,6 +102,7 @@
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
         _subtitlePict       = NULL;
+        _displayScale       = 1.0;
     }
     return self;
 }
@@ -143,11 +144,6 @@
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
     [self setWantsBestResolutionOpenGLSurface:YES];
-}
-
-- (void)videoNaturalSizeChanged:(CGSize)size
-{
-    self.videoNaturalSize = size;
 }
 
 - (void)videoZRotateDegrees:(NSInteger)degrees
@@ -210,9 +206,14 @@
 
 - (void)resetViewPort
 {
-    NSRect viewRectPixels = [self convertRectToBacking:[self bounds]];
+    NSRect viewBounds = [self bounds];
+    NSRect viewRectPixels = [self convertRectToBacking:viewBounds];
     _backingWidth  = viewRectPixels.size.width;
     _backingHeight = viewRectPixels.size.height;
+    
+    CGSize screenSize = [[NSScreen mainScreen]frame].size;
+    self.displayScale = FFMIN(1.0 * viewBounds.size.width / screenSize.width,1.0 * viewBounds.size.height / screenSize.height);
+    
     if (IJK_GLES2_Renderer_isValid(_renderer)) {
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
     }
@@ -232,9 +233,10 @@
         if (self.subtitlePict) {
             ratio = self.subtitlePreference.ratio;
         } else {
-            //for text subtitle scale 0.5 when display.
-            ratio *= 0.5;
+            //for text subtitle scale display_scale.
+            ratio *= self.displayScale;
         }
+        
         IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(self.currentSubtitle), ratio * CVPixelBufferGetHeight(self.currentSubtitle));
         if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
             ALOGE("[GL] GLES2 Render Subtitle failed\n");
@@ -292,20 +294,20 @@
         
     float ratio = sp.ratio;
     int32_t bgrValue = sp.color;
-    //以800为标准，定义出字幕字体默认大小为50pt
+    //以800为标准，定义出字幕字体默认大小为30pt
     float scale = 1.0;
-    if (!CGSizeEqualToSize(self.videoNaturalSize, CGSizeZero)) {
-        NSInteger degrees = self.videoDegrees;
-        if (degrees / 90 % 2 == 1) {
-            scale = self.videoNaturalSize.height / 800.0;
-        } else {
-            scale = self.videoNaturalSize.width / 800.0;
-        }
+    CGSize screenSize = [[NSScreen mainScreen]frame].size;
+    
+    NSInteger degrees = self.videoDegrees;
+    if (degrees / 90 % 2 == 1) {
+        scale = screenSize.height / 800.0;
+    } else {
+        scale = screenSize.width / 800.0;
     }
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
     
-    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 50];
+    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 30];
     [attributes setObject:subtitleFont forKey:NSFontAttributeName];
     
     NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];

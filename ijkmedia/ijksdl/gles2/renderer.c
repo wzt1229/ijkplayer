@@ -833,12 +833,6 @@ void IJK_GLES2_Renderer_updateSubtitleVetex(IJK_GLES2_Renderer *renderer, float 
     float ratioW = 1.0 * width / renderer->layer_width;
     float ratioH = 1.0 * height / renderer->layer_height;
     
-    //跟随视频缩放；画面放大，字幕也放大；画面缩小，字幕也缩小
-    float scale = FFMIN(1.0 * renderer->layer_width / renderer->frame_width,1.0 * renderer->layer_height / renderer->frame_height);
-    
-    ratioW *= scale;
-    ratioH *= scale;
-    
     float leftX  = 0 - ratioW;
     float rightX = 0 + ratioW;
     //距离底部0.1，实际是 (0.1 * layer_height)px; [-1,1]
