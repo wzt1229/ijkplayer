@@ -8,7 +8,6 @@ ios/openssl-*
 mac/ffmpeg-*
 mac/libass-*
 mac/libyuv-*
-extra
 .DS_Store
 ijkmedia/ijkyuv/
 ijkmedia/ijksoundtouch
