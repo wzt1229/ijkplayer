@@ -42,6 +42,7 @@
 #import "IJKSDLGLView.h"
 
 static const char *kIJKFFRequiredFFmpegVersion = "ff4.0--ijk0.8.8--20210426--001";
+static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
 // It means you didn't call shutdown if you found this object leaked.
 @interface IJKWeakHolder : NSObject
@@ -467,6 +468,50 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
     ijkmp_set_option_int(_mediaPlayer, getPlayerOption(category), [key UTF8String], value);
 }
 
+#ifdef __APPLE__
+void ffp_apple_log_extra_vprint(int level, const char *tag, const char *fmt, va_list ap)
+{
+    IJKLogLevel curr_lv = [IJKFFMoviePlayerController getLogLevel];
+    if (level < curr_lv) {
+        return;
+    }
+    
+    char new_fmt[1024];
+    sprintf(new_fmt, "[%s]%s", tag, fmt);
+    
+    if (_logHandler) {
+        NSString *tagStr = tag ? [[NSString alloc] initWithUTF8String:tag] : @"";
+        NSString *fmtStr = fmt ? [[NSString alloc] initWithUTF8String:fmt] : @"";
+        NSString *msgStr = [[NSString alloc] initWithFormat:fmtStr arguments: ap];
+        _logHandler(level, tagStr, msgStr);
+    } else {
+        vprintf(new_fmt, ap);
+    }
+}
+
+void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
+{
+    IJKLogLevel curr_lv = [IJKFFMoviePlayerController getLogLevel];
+    if (level < curr_lv) {
+        return;
+    }
+    
+    char new_fmt[1024];
+    sprintf(new_fmt, "[%s]%s", tag, fmt);
+    
+    va_list args;
+    va_start(args, fmt);
+    if (_logHandler) {
+        NSString *tagStr = tag ? [[NSString alloc] initWithUTF8String:tag] : @"";
+        NSString *fmtStr = fmt ? [[NSString alloc] initWithUTF8String:fmt] : @"";
+        NSString *msgStr = [[NSString alloc] initWithFormat:fmtStr arguments: args];
+        _logHandler(level, tagStr, msgStr);
+    } else {
+        vprintf(new_fmt, args);
+    }
+    va_end(args);
+}
+#endif
 + (void)setLogReport:(BOOL)preferLogReport
 {
     ijkmp_global_set_log_report(preferLogReport ? 1 : 0);
@@ -475,6 +520,16 @@ inline static int getPlayerOption(IJKFFOptionCategory category)
 + (void)setLogLevel:(IJKLogLevel)logLevel
 {
     ijkmp_global_set_log_level(logLevel);
+}
+
++ (IJKLogLevel)getLogLevel
+{
+    return ijkmp_global_get_log_level();
+}
+
++ (void)setLogHandler:(void (^)(IJKLogLevel, NSString *, NSString *))handler
+{
+    _logHandler = handler;
 }
 
 + (BOOL)checkIfFFmpegVersionMatch:(BOOL)showAlert;

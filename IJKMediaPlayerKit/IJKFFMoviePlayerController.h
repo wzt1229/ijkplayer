@@ -107,6 +107,7 @@ typedef enum IJKLogLevel {
 
 + (void)setLogReport:(BOOL)preferLogReport;
 + (void)setLogLevel:(IJKLogLevel)logLevel;
++ (void)setLogHandler:(void (^)(IJKLogLevel level, NSString *tag, NSString *msg))handler;
 + (BOOL)checkIfFFmpegVersionMatch:(BOOL)showAlert;
 + (BOOL)checkIfPlayerVersionMatch:(BOOL)showAlert
                             version:(NSString *)version;

@@ -4520,6 +4520,12 @@ void ffp_global_set_log_report(int use_report)
     }
 }
 
+int ffp_global_get_log_level(void)
+{
+    int avlv = av_log_get_level();
+    return log_level_av_to_ijk(avlv);
+}
+
 void ffp_global_set_log_level(int log_level)
 {
     int av_level = log_level_ijk_to_av(log_level);

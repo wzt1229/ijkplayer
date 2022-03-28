@@ -86,6 +86,11 @@ void ijkmp_global_set_log_level(int log_level)
     ffp_global_set_log_level(log_level);
 }
 
+int ijkmp_global_get_log_level(void)
+{
+    return ffp_global_get_log_level();
+}
+
 void ijkmp_global_set_inject_callback(ijk_inject_callback cb)
 {
     ffp_global_set_inject_callback(cb);
