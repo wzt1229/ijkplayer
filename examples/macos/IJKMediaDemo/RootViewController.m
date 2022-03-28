@@ -464,6 +464,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     NSURL *lastUrl = nil;
     for (int i = 1; i < lines.count; i++) {
         NSString *path = lines[i];
+        if (!path || [path length] == 0 || [path hasPrefix:@"#"]) {
+            continue;
+        }
+        
         NSString *urlStr = [host stringByAppendingString:path];
         NSURL *url = [NSURL URLWithString:urlStr];
         [self.playList addObject:url];
@@ -496,20 +500,21 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     self.playingUrl = url;
     
+    if (my_stdout) {
+        fflush(my_stdout);
+        fclose(my_stdout);
+        my_stdout = NULL;
+    }
+    if (my_stderr) {
+        fflush(my_stderr);
+        fclose(my_stderr);
+        my_stderr = NULL;
+    }
+    
     if (self.autoTest) {
         
         [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
         
-        if (my_stdout) {
-            fflush(my_stdout);
-            fclose(my_stdout);
-            my_stdout = NULL;
-        }
-        if (my_stderr) {
-            fflush(my_stderr);
-            fclose(my_stderr);
-            my_stderr = NULL;
-        }
         NSString *dir = [self dirForCurrentPlayingUrl];
         NSString *movieName = [[url absoluteString] lastPathComponent];
         NSString *fileName = [NSString stringWithFormat:@"%@.txt",movieName];
@@ -988,6 +993,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
         [self stopPlay:nil];
         self.autoTest = NO;
         [self.playList removeAllObjects];
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:lastPlayedKey];
         return;
     }
     
