@@ -24,6 +24,7 @@
 
 PLAT=$1
 LIBS=$2
+ARCH=$3
 
 set -e
 
@@ -33,7 +34,7 @@ c_dir="$PWD"
 function usage()
 {
     echo " useage:"
-    echo "  $0 [ios,macos,all] [fdk-aac|ffmpeg|lame|libyuv|openssl|opus|x264]"
+    echo "  $0 [ios,macos,all] [fdk-aac|ffmpeg|lame|libyuv|openssl|opus|x264] [all,arm64,x86_64]"
 }
 
 if [[ "x$LIBS" == "x" ]]; then
@@ -45,7 +46,7 @@ if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' || "$PLAT" == 'all' ]]; then
     do
         echo "===[init $lib]===================="
         source $c_dir/init-cfgs/$lib
-        $c_dir/tools/init-repo.sh "$PLAT"
+        $c_dir/tools/init-repo.sh "$PLAT" "$ARCH"
         echo "===================================="
     done
 else

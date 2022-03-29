@@ -21,15 +21,25 @@ TOOLS=$(dirname "$0")
 source ${TOOLS}/env_assert.sh
 
 echo "===check env begin==="
-echo "argv:$*"
+echo "argv:[$*]"
 env_assert "GIT_UPSTREAM"
 env_assert "GIT_LOCAL_REPO"
 env_assert "GIT_COMMIT"
 env_assert "REPO_DIR"
 echo "===check env end==="
 
-iOS_ARCHS="x86_64 arm64"
-macOS_ARCHS="x86_64 arm64"
+ARCH=$2
+
+if [[ "$ARCH" == 'all' || "x$ARCH" == 'x' ]];then
+    iOS_ARCHS="x86_64 arm64"
+    macOS_ARCHS="x86_64 arm64"
+elif [[ "$ARCH" == 'x86_64' || "$ARCH" == 'arm64' ]];then
+    iOS_ARCHS="$ARCH"
+    macOS_ARCHS="$ARCH"
+else
+    echo "wrong arch:[$ARCH], can't init repo."
+    exit -1
+fi
 
 function apply_patches()
 {
