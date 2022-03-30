@@ -596,7 +596,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             fprintf(pf, "%d:%s\n",errCode,[[self.playingUrl absoluteString]UTF8String]);
             fflush(pf);
             fclose(pf);
-            [self playNext:nil];
+            //-5 网络错误
+            if (errCode != -5) {
+                [self playNext:nil];
+            }
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
             NSLog(@"播放结束");
             [self playNext:nil];
