@@ -276,30 +276,46 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self switchMoreView:!isShowing];
 }
 
+- (void)toggleTitleBar:(BOOL)show
+{
+    if (!show && !self.playingUrl) {
+        return;
+    }
+    
+    if (show == self.view.window.titlebarAppearsTransparent) {
+        self.view.window.titlebarAppearsTransparent = !show;
+        self.view.window.titleVisibility = show ? NSWindowTitleVisible : NSWindowTitleHidden;
+        [[self.view.window standardWindowButton:NSWindowCloseButton] setHidden:!show];
+        [[self.view.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:!show];
+        [[self.view.window standardWindowButton:NSWindowZoomButton] setHidden:!show];
+        
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+            context.duration = 0.45;
+            self.playerCtrlPanel.animator.alphaValue = show ? 1.0 : 0.0;
+        }];
+    }
+}
+
 - (void)baseView:(SHBaseView *)baseView mouseEntered:(NSEvent *)event
 {
-    [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-        context.duration = 0.35;
-        self.playerCtrlPanel.animator.alphaValue = 1.0;
-        [[self.view.window standardWindowButton:NSWindowCloseButton] setHidden:NO];
-        [[self.view.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:NO];
-        [[self.view.window standardWindowButton:NSWindowZoomButton] setHidden:NO];
-    }];
+    if ([event locationInWindow].y > self.view.bounds.size.height - 35) {
+        return;
+    }
+    [self toggleTitleBar:YES];
+}
+
+- (void)baseView:(SHBaseView *)baseView mouseMoved:(NSEvent *)event
+{
+    if ([event locationInWindow].y > self.view.bounds.size.height - 35) {
+        return;
+    }
+    [self toggleTitleBar:YES];
 }
 
 - (void)baseView:(SHBaseView *)baseView mouseExited:(NSEvent *)event
 {
     [self switchMoreView:NO];
-    if (self.playingUrl) {
-        [[self.view.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
-        [[self.view.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
-        [[self.view.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
-        
-        [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-            context.duration = 0.35;
-            self.playerCtrlPanel.animator.alphaValue = 0.0;
-        }];
-    }
+    [self toggleTitleBar:NO];
 }
 
 - (void)keyDown:(NSEvent *)event
@@ -570,6 +586,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerCouldNotFindCodec:) name:IJKMPMovieNoCodecFoundNotification object:self.player];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerNaturalSizeAvailable:) name:IJKMPMovieNaturalSizeAvailableNotification object:self.player];
+    
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
     [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
@@ -580,6 +598,28 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 - (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
 {
     NSLog(@"找不到解码器，联系开发小帅锅：%@",notifi.userInfo);
+}
+
+- (void)ijkPlayerNaturalSizeAvailable:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        CGSize videoSize = NSSizeFromString(notifi.userInfo[@"size"]);
+        if (!CGSizeEqualToSize(self.view.window.aspectRatio, videoSize)) {
+            
+            [self.view.window setAspectRatio:videoSize];
+            CGRect rect = self.view.window.frame;
+            
+            if (videoSize.width > videoSize.height) {
+                rect.size.width = rect.size.height / videoSize.height * videoSize.width;
+            } else {
+                rect.size.height = rect.size.width / videoSize.width * videoSize.height;
+            }
+            
+            [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+                [self.view.window.animator setFrame:CGRectIntegral(rect) display:YES];
+            }];
+        }
+    }
 }
 
 - (void)ijkPlayerDidFinish:(NSNotification *)notifi
@@ -725,12 +765,13 @@ static IOPMAssertionID g_displaySleepAssertionID;
 {
     if (!g_displaySleepAssertionID && !enable)
     {
-        
+        NSLog(@"enableComputerSleep:NO");
         IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
                                     (__bridge CFStringRef)[[NSBundle mainBundle] bundleIdentifier],&g_displaySleepAssertionID);
     }
     else if (g_displaySleepAssertionID && enable)
     {
+        NSLog(@"enableComputerSleep:YES");
         IOPMAssertionRelease(g_displaySleepAssertionID);
         g_displaySleepAssertionID = 0;
     }
@@ -987,6 +1028,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 - (IBAction)playNext:(NSButton *)sender
 {
     if ([self.playList count] == 0) {
+        [self stopPlay:nil];
         return;
     }
     
