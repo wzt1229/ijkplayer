@@ -3348,8 +3348,8 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
                 }
             }
         }
-
-        if (is->is_video_high_fps) {
+        // hevc high fps video use discard_nonref cause hw decode failed.
+        if ((codec->id != AV_CODEC_ID_HEVC) && is->is_video_high_fps) {
             avctx->skip_frame       = FFMAX(avctx->skip_frame, AVDISCARD_NONREF);
             avctx->skip_loop_filter = FFMAX(avctx->skip_loop_filter, AVDISCARD_NONREF);
             avctx->skip_idct        = FFMAX(avctx->skip_loop_filter, AVDISCARD_NONREF);
