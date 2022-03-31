@@ -43,14 +43,15 @@
 @property(atomic) CGSize displaySize;
 @property(atomic) NSInteger videoDegrees;
 @property(atomic) float displayScale;
+@property(atomic) GLint backingWidth;
+@property(atomic) GLint backingHeight;
 
 @end
 
-@implementation IJKSDLGLView{
+@implementation IJKSDLGLView
+{
     IJK_GLES2_Renderer *_renderer;
     int                 _rendererGravity;
-    GLint               _backingWidth;
-    GLint               _backingHeight;
     //for snapshot.
     CGSize _FBOTextureSize;
     GLuint _FBO;
@@ -176,7 +177,7 @@
         if (!IJK_GLES2_Renderer_use(_renderer))
             return NO;
         
-        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
         
         IJK_GLES2_Renderer_updateRotate(_renderer, _rotatePreference.type, _rotatePreference.degrees);
         
@@ -208,14 +209,14 @@
 {
     NSRect viewBounds = [self bounds];
     NSRect viewRectPixels = [self convertRectToBacking:viewBounds];
-    _backingWidth  = viewRectPixels.size.width;
-    _backingHeight = viewRectPixels.size.height;
+    self.backingWidth  = viewRectPixels.size.width;
+    self.backingHeight = viewRectPixels.size.height;
     
     CGSize screenSize = [[NSScreen mainScreen]frame].size;
     self.displayScale = FFMIN(1.0 * viewBounds.size.width / screenSize.width,1.0 * viewBounds.size.height / screenSize.height);
     
     if (IJK_GLES2_Renderer_isValid(_renderer)) {
-        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
     }
 }
 
@@ -228,7 +229,6 @@
 - (void)doUploadSubtitle
 {
     if (self.currentSubtitle) {
-        IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         float ratio = 1.0;
         if (self.subtitlePict) {
             ratio = self.subtitlePreference.ratio;
@@ -237,11 +237,29 @@
             ratio *= self.displayScale;
         }
         
+        IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(self.currentSubtitle), ratio * CVPixelBufferGetHeight(self.currentSubtitle));
-        if (!IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle))
+        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle)) {
+            IJK_GLES2_Renderer_drawArrays();
+        } else {
             ALOGE("[GL] GLES2 Render Subtitle failed\n");
-        IJK_GLES2_Renderer_drawArrays();
+        }
         IJK_GLES2_Renderer_endDrawSubtitle(_renderer);
+    }
+}
+
+- (void)doUploadVideoPicture:(SDL_VoutOverlay *)overlay
+{
+    if (self.currentVideoPic) {
+        if (IJK_GLES2_Renderer_updateVetex(_renderer, overlay)) {
+            if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)self.currentVideoPic)) {
+                IJK_GLES2_Renderer_drawArrays();
+            } else {
+                ALOGE("[GL] Renderer_updateVetex failed\n");
+            }
+        } else {
+            ALOGE("[GL] Renderer_updateVetex failed\n");
+        }
     }
 }
 
@@ -251,20 +269,12 @@
     CGLLockContext([[self openGLContext] CGLContextObj]);
     // Bind the FBO to screen.
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, _backingWidth, _backingHeight);
+    glViewport(0, 0, self.backingWidth, self.backingHeight);
     glClear(GL_COLOR_BUFFER_BIT);
     
     if (_renderer) {
         //for video
-        if (self.currentVideoPic) {
-            if (!IJK_GLES2_Renderer_updateVetex(_renderer, NULL))
-                ALOGE("[GL] Renderer_updateVetex failed\n");
-            
-            if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)self.currentVideoPic))
-                ALOGE("[GL] Renderer_updateVetex failed\n");
-            
-            IJK_GLES2_Renderer_drawArrays();
-        }
+        [self doUploadVideoPicture:NULL];
         
         //for subtitle
         if (_subtitlePreferenceChanged) {
@@ -273,6 +283,7 @@
             } else if (self.subtitlePict != NULL) {
                 [self _generateSubtitlePixelFromPicture:self.subtitlePict];
             }
+            _subtitlePreferenceChanged = NO;
         }
         
         [self doUploadSubtitle];
@@ -326,8 +337,6 @@
     }
     
     self.currentSubtitle = [textureString createPixelBuffer];
-    
-    _subtitlePreferenceChanged = NO;
 }
 
 - (void)_generateSubtitlePixelFromPicture:(IJKSDLSubtitlePicture*)pict
@@ -370,8 +379,6 @@
     } else {
         // TODO: some dvd sub will set nb_colors to 4, ignore it for now.
     }
-    
-    _subtitlePreferenceChanged = NO;
 }
 
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(const char *)text subPict:(IJKSDLSubtitlePicture *)subPict
@@ -388,11 +395,13 @@
         NSString *subStr = [[NSString alloc] initWithUTF8String:text];
         if (_subtitlePreferenceChanged || ![subStr isEqualToString:self.subtitle]) {
             [self _generateSubtitlePixel:subStr];
+            _subtitlePreferenceChanged = NO;
             self.subtitle = subStr;
         }
     } else if (subPict != NULL) {
         if (_subtitlePreferenceChanged || subPict != self.subtitlePict) {
             [self _generateSubtitlePixelFromPicture:subPict];
+            _subtitlePreferenceChanged = NO;
             self.subtitlePict = subPict;
         }
     } else {
@@ -406,7 +415,7 @@
     
     // Bind the FBO to screen.
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, _backingWidth, _backingHeight);
+    glViewport(0, 0, self.backingWidth, self.backingHeight);
     glClear(GL_COLOR_BUFFER_BIT);
     
     if ([self setupRenderer:overlay] && _renderer) {
@@ -418,16 +427,8 @@
         
         CVPixelBufferRef videoPic = (CVPixelBufferRef)IJK_GLES2_Renderer_getVideoImage(_renderer, overlay);
         if (videoPic) {
-            
-            if (!IJK_GLES2_Renderer_updateVetex(_renderer, overlay))
-                ALOGE("[GL] Renderer_updateVetex failed\n");
-            
-            if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)videoPic))
-                ALOGE("[GL] Renderer_updateVetex failed\n");
-            
-            IJK_GLES2_Renderer_drawArrays();
-            
             self.currentVideoPic = CVPixelBufferRetain(videoPic);
+            [self doUploadVideoPicture:overlay];
         }
         
         //for subtitle
@@ -721,7 +722,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     }
     _scalingMode = scalingMode;
     if (IJK_GLES2_Renderer_isValid(_renderer)) {
-        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, _backingWidth, _backingHeight);
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
     }
 }
 
