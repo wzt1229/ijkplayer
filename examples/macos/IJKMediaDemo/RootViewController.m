@@ -590,7 +590,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
     [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
-    self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
 }

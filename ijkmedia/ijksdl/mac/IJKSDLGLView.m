@@ -104,6 +104,7 @@
         _darPreference      = (IJKSDLDARPreference){0.0};
         _subtitlePict       = NULL;
         _displayScale       = 1.0;
+        _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
     }
     return self;
 }
