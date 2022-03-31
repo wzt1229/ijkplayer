@@ -388,18 +388,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 self.autoTest = NO;
             }
                 break;
-            case kVK_ANSI_1:
-            {
-                self.autoTest = YES;
-                [self loadNASPlayListWithinBundle:1];
-            }
-                break;
-            case kVK_ANSI_2:
-            {
-                self.autoTest = YES;
-                [self loadNASPlayListWithinBundle:2];
-            }
-                break;
             default:
             {
                 NSLog(@"0x%X",[event keyCode]);
@@ -460,13 +448,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 break;
         }
     }
-}
-
-- (void)loadNASPlayListWithinBundle:(int)idx
-{
-    NSString *fileName = [NSString stringWithFormat:@"nas_list_%d.txt",idx];
-    NSString *nas_file = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
-    [self loadNASPlayList:[NSURL fileURLWithPath:nas_file]];
 }
 
 - (void)loadNASPlayList:(NSURL*)url
