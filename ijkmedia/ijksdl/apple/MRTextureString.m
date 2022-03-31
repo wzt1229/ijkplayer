@@ -286,7 +286,8 @@
 {
     CGSize picSize = [self size];
     //(width = 285914, height = 397)
-    if (picSize.width > 40960 || picSize.height > 40960) {
+    // when width > 16384 or height > 16384 will cause CGLTexImageIOSurface2D return error code kCGLBadValue(10008) invalid numerical value.
+    if (picSize.width > 1<<14 || picSize.height > 1<<14) {
         return NULL;
     }
      
