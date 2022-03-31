@@ -1066,7 +1066,6 @@ static IOPMAssertionID g_displaySleepAssertionID;
     self.player.playbackVolume = self.volume;
 }
 
-
 #pragma mark 倍速设置
 
 - (void)updateSpeed:(NSButton *)sender
@@ -1085,7 +1084,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.color = bgrValue;
     self.player.view.subtitlePreference = p;
-    [self.player.view setNeedsRefreshCurrentPic];
+    if (!self.player.isPlaying) {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
 }
 
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
@@ -1093,7 +1094,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.ratio = sender.floatValue;
     self.player.view.subtitlePreference = p;
-    [self.player.view setNeedsRefreshCurrentPic];
+    if (!self.player.isPlaying) {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
 }
 
 - (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
@@ -1120,7 +1123,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.bottomMargin = sender.floatValue;
     self.player.view.subtitlePreference = p;
-    [self.player.view setNeedsRefreshCurrentPic];
+    if (!self.player.isPlaying) {
+        [self.player.view setNeedsRefreshCurrentPic];
+    }
 }
 
 #pragma mark 画面设置
@@ -1191,6 +1196,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (NSString *)dirForCurrentPlayingUrl
 {
+    if ([self.playingUrl isFileURL]) {
+        return [self saveDir:[[self.playingUrl path] lastPathComponent]];
+    }
     return [self saveDir:[[self.playingUrl path] stringByDeletingLastPathComponent]];
 }
 

@@ -415,11 +415,18 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
     }
     
     //handle use define w-h ratio
+    float dar_ratio = renderer->user_dar_ratio;
     if (renderer->user_dar_ratio > 0) {
-        if (frame_width / frame_height > renderer->user_dar_ratio) {
-            frame_height = frame_width * 1.0 / renderer->user_dar_ratio;
+        
+        //when video's z rotate degrees is 90 odd multiple need swap user's ratio
+        if (IJK_GLES2_Renderer_isZRotate90oddMultiple(renderer)) {
+            dar_ratio = 1.0 / renderer->user_dar_ratio;
+        }
+        
+        if (frame_width / frame_height > dar_ratio) {
+            frame_height = frame_width * 1.0 / dar_ratio;
         } else {
-            frame_width = frame_height * renderer->user_dar_ratio;
+            frame_width = frame_height * dar_ratio;
         }
     }
     
@@ -480,6 +487,7 @@ void IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int d
     }
     //need update mvp
     if (flag) {
+        renderer->vertices_changed = 1;
         renderer->mvp_changed = 1;
     }
 }
