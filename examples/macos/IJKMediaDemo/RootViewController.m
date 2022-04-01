@@ -68,6 +68,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (assign) int snapshot;
 //for cocoa binding end
 
+@property (assign) BOOL seeking;
 @property (weak) id eventMonitor;
 
 @property (assign) BOOL autoTest;
@@ -569,10 +570,18 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerNaturalSizeAvailable:) name:IJKMPMovieNaturalSizeAvailableNotification object:self.player];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerAfterSeekFirstVideoFrameDisplay:) name:IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification object:self.player];
+    
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
     [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
+}
+
+- (void)ijkPlayerAfterSeekFirstVideoFrameDisplay:(NSNotification *)notifi
+{
+    NSLog(@"seek cost time:%@ms",notifi.userInfo[@"du"]);
+    self.seeking = NO;
 }
 
 - (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
@@ -1036,6 +1045,11 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)seekTo:(float)cp
 {
+    if (self.seeking) {
+        NSLog(@"xql ignore seek.");
+        return;
+    }
+    self.seeking = YES;
     if (cp < 0) {
         cp = 0;
     }

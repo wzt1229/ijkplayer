@@ -175,6 +175,7 @@ IJK_EXTERN NSString *const IJKMPMoviePlayerSeekAudioStartNotification;
 IJK_EXTERN NSString *const IJKMPMoviePlayerSeekVideoStartNotification;
 
 IJK_EXTERN NSString *const IJKMPMoviePlayerSelectedStreamDidChangeNotification;
+IJK_EXTERN NSString *const IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification;
 
 @end
 

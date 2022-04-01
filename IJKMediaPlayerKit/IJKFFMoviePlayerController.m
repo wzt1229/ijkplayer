@@ -1453,6 +1453,13 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
              object:self userInfo:@{@"codecName":name}];
             break;
         }
+        case FFP_MSG_AFTER_SEEK_FIRST_FRAME: {
+            int du = avmsg->arg1;
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification
+             object:self userInfo:@{@"du" : @(du)}];
+            break;
+        }
         default:
             // NSLog(@"unknown FFP_MSG_xxx(%d)\n", avmsg->what);
             break;

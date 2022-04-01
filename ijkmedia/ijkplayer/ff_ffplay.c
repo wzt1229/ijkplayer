@@ -333,7 +333,7 @@ static int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, S
     d->pkt_serial = 1;
     d->first_frame_decoded_time = SDL_GetTickHR();
     d->first_frame_decoded = 0;
-
+    d->after_seek_frame = 0;
     SDL_ProfilerReset(&d->decode_profiler, -1);
     return 0;
 }
@@ -1352,6 +1352,7 @@ static void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_by
         if (seek_by_bytes)
             is->seek_flags |= AVSEEK_FLAG_BYTE;
         is->seek_req = 1;
+        is->viddec.start_seek_time = SDL_GetTickHR();
         SDL_CondSignal(is->continue_read_thread);
     }
 }
@@ -1917,6 +1918,10 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
             ffp_notify_msg1(ffp, FFP_MSG_VIDEO_DECODED_START);
             is->viddec.first_frame_decoded_time = SDL_GetTickHR();
             is->viddec.first_frame_decoded = 1;
+        } else if (is->viddec.after_seek_frame) {
+            int du = (int)(SDL_GetTickHR() - is->viddec.start_seek_time);
+            is->viddec.after_seek_frame = 0;
+            ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
         }
     }
     return 0;
@@ -4004,6 +4009,7 @@ static int read_thread(void *arg)
             
             ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
             is->seek_req = 0;
+            is->viddec.after_seek_frame = 1;
             is->queue_attachments_req = 1;
             is->eof = 0;
 #ifdef FFP_MERGE
@@ -4040,6 +4046,14 @@ static int read_thread(void *arg)
 
             ffp_notify_msg3(ffp, FFP_MSG_SEEK_COMPLETE, (int)fftime_to_milliseconds(seek_target), ret);
             ffp_toggle_buffering(ffp, 1);
+            
+            if (is->show_mode != SHOW_MODE_VIDEO) {
+                if (is->viddec.after_seek_frame) {
+                    int du = (int)(SDL_GetTickHR() - is->viddec.start_seek_time);
+                    is->viddec.after_seek_frame = 0;
+                    ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
+                }
+            }
         }
         if (is->queue_attachments_req) {
             if (is->video_st && (is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
