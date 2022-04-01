@@ -143,6 +143,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [self.playerSlider onDraggedIndicator:^(double progress, MRProgressSlider * _Nonnull indicator, BOOL isEndDrag) {
         __strongSelf__
+        if (self.autoTest) {
+            self.autoSeeked = 1;
+        }
         [self seekTo:progress];
     }];
     
@@ -992,6 +995,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     [self.view.window setTitle:@""];
+    self.playedTimeLb.stringValue = @"--:--";
+    self.durationTimeLb.stringValue = @"--:--";
     [self enableComputerSleep:YES];
 }
 
