@@ -951,6 +951,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
         if (self.playCtrlBtn.state == NSControlStateValueOff) {
             [self enableComputerSleep:YES];
             [self.player pause];
+            [self toggleTitleBar:YES];
         } else {
             [self.player play];
         }

@@ -793,6 +793,9 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 
 - (NSDictionary *)allHudItem
 {
+    if (!self.shouldShowHudView) {
+        [self refreshHudView];
+    }
     return [_hudCtrl allHudItem];
 }
 
