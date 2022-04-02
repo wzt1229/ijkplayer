@@ -281,8 +281,6 @@
         if (_subtitlePreferenceChanged) {
             if (self.subtitle) {
                 [self _generateSubtitlePixel:self.subtitle];
-            } else if (self.subtitlePict != NULL) {
-                [self _generateSubtitlePixelFromPicture:self.subtitlePict];
             }
             _subtitlePreferenceChanged = NO;
         }
