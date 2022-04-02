@@ -731,14 +731,21 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 
 - (void)changeNaturalSize
 {
-    [self willChangeValueForKey:@"naturalSize"];
+    CGSize naturalSize = CGSizeZero;
     if (_sampleAspectRatioNumerator > 0 && _sampleAspectRatioDenominator > 0) {
-        self->_naturalSize = CGSizeMake(1.0f * _videoWidth * _sampleAspectRatioNumerator / _sampleAspectRatioDenominator, _videoHeight);
+        naturalSize = CGSizeMake(1.0f * _videoWidth * _sampleAspectRatioNumerator / _sampleAspectRatioDenominator, _videoHeight);
     } else {
-        self->_naturalSize = CGSizeMake(_videoWidth, _videoHeight);
+        naturalSize = CGSizeMake(_videoWidth, _videoHeight);
     }
-    [self didChangeValueForKey:@"naturalSize"];
-    if (self->_naturalSize.width > 0 && self->_naturalSize.height > 0) {
+    
+    if (CGSizeEqualToSize(self->_naturalSize, naturalSize)) {
+        return;
+    }
+    
+    if (naturalSize.width > 0 && naturalSize.height > 0) {
+        [self willChangeValueForKey:@"naturalSize"];
+        self->_naturalSize = naturalSize;
+        [self didChangeValueForKey:@"naturalSize"];
 #if TARGET_OS_IOS
         [[NSNotificationCenter defaultCenter]
          postNotificationName:IJKMPMovieNaturalSizeAvailableNotification

@@ -40,9 +40,12 @@
 @property(atomic) CVPixelBufferRef currentSubtitle;
 @property(atomic) NSString *subtitle;
 @property(atomic) IJKSDLSubtitlePicture *subtitlePict;
-@property(atomic) CGSize displaySize;
-@property(atomic) NSInteger videoDegrees;
-@property(atomic) float displayScale;
+@property(nonatomic) NSInteger videoDegrees;
+@property(nonatomic) CGSize videoNaturalSize;
+//display window size / screen
+@property(atomic) float displayScreenScale;
+//display window size / video size
+@property(atomic) float displayVideoScale;
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
 
@@ -51,13 +54,13 @@
 @implementation IJKSDLGLView
 {
     IJK_GLES2_Renderer *_renderer;
-    int                 _rendererGravity;
+    int    _rendererGravity;
     //for snapshot.
     CGSize _FBOTextureSize;
     GLuint _FBO;
     GLuint _ColorTexture;
-    float _videoSar;
-    BOOL _subtitlePreferenceChanged;
+    float  _videoSar;
+    BOOL  _subtitlePreferenceChanged;
 }
 
 @synthesize scalingMode = _scalingMode;
@@ -103,8 +106,9 @@
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
         _subtitlePict       = NULL;
-        _displayScale       = 1.0;
-        _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
+        _displayScreenScale = 1.0;
+        _displayVideoScale  = 1.0;
+        _rendererGravity    = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
     }
     return self;
 }
@@ -151,6 +155,15 @@
 - (void)videoZRotateDegrees:(NSInteger)degrees
 {
     self.videoDegrees = degrees;
+}
+
+- (void)videoNaturalSizeChanged:(CGSize)size
+{
+    self.videoNaturalSize = size;
+    NSRect viewBounds = [self bounds];
+    if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
+        self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width,1.0 * viewBounds.size.height / self.videoNaturalSize.height);
+    }
 }
 
 - (BOOL)setupRenderer:(SDL_VoutOverlay *)overlay
@@ -210,14 +223,20 @@
 {
     NSRect viewBounds = [self bounds];
     NSRect viewRectPixels = [self convertRectToBacking:viewBounds];
-    self.backingWidth  = viewRectPixels.size.width;
-    self.backingHeight = viewRectPixels.size.height;
     
-    CGSize screenSize = [[NSScreen mainScreen]frame].size;
-    self.displayScale = FFMIN(1.0 * viewBounds.size.width / screenSize.width,1.0 * viewBounds.size.height / screenSize.height);
-    
-    if (IJK_GLES2_Renderer_isValid(_renderer)) {
-        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
+    if (self.backingWidth != viewRectPixels.size.width || self.backingHeight != viewRectPixels.size.height) {
+        self.backingWidth  = viewRectPixels.size.width;
+        self.backingHeight = viewRectPixels.size.height;
+        
+        CGSize screenSize = [[NSScreen mainScreen]frame].size;
+        self.displayScreenScale = FFMIN(1.0 * viewBounds.size.width / screenSize.width,1.0 * viewBounds.size.height / screenSize.height);
+        if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
+            self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width,1.0 * viewBounds.size.height / self.videoNaturalSize.height);
+        }
+        
+        if (IJK_GLES2_Renderer_isValid(_renderer)) {
+            IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
+        }
     }
 }
 
@@ -232,10 +251,10 @@
     if (self.currentSubtitle) {
         float ratio = 1.0;
         if (self.subtitlePict) {
-            ratio = self.subtitlePreference.ratio;
+            ratio = self.subtitlePreference.ratio * self.displayVideoScale;
         } else {
             //for text subtitle scale display_scale.
-            ratio *= self.displayScale;
+            ratio *= self.displayScreenScale;
         }
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
