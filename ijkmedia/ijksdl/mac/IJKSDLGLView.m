@@ -342,43 +342,38 @@
 
 - (void)_generateSubtitlePixelFromPicture:(IJKSDLSubtitlePicture*)pict
 {
-    /// hadle 8bit color
-    if (pict->nb_colors == 256) {
-        CVPixelBufferRef pixelBuffer = NULL;
-        NSDictionary *options = @{
-            (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
-            (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
-        };
-        
-        CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict->w, pict->h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
-        
-        NSParameterAssert(ret == kCVReturnSuccess && pixelBuffer != NULL);
-        
-        CVPixelBufferLockBaseAddress(pixelBuffer, 0);
-        
-        uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
-        int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
-        
-        uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
-        int dst_linesizes[4] = {linesize,0,0,0};
-        
-        const uint8_t *src_data[4] = {pict->pixels,NULL,NULL,NULL};
-        const int src_linesizes[4] = {pict->linesize,0,0,0};
-        
-        av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict->w, pict->h);
-        
-        CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
-                
-        if (self.currentSubtitle) {
-            CVPixelBufferRelease(self.currentSubtitle);
-            self.currentSubtitle = NULL;
-        }
-        
-        if (kCVReturnSuccess == ret) {
-            self.currentSubtitle = pixelBuffer;
-        }
-    } else {
-        // TODO: some dvd sub will set nb_colors to 4, ignore it for now.
+    CVPixelBufferRef pixelBuffer = NULL;
+    NSDictionary *options = @{
+        (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
+        (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
+    };
+    
+    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict->w, pict->h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
+    
+    NSParameterAssert(ret == kCVReturnSuccess && pixelBuffer != NULL);
+    
+    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
+    
+    uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
+    int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
+    
+    uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
+    int dst_linesizes[4] = {linesize,0,0,0};
+    
+    const uint8_t *src_data[4] = {pict->pixels,NULL,NULL,NULL};
+    const int src_linesizes[4] = {pict->linesize,0,0,0};
+    
+    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict->w, pict->h);
+    
+    CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
+            
+    if (self.currentSubtitle) {
+        CVPixelBufferRelease(self.currentSubtitle);
+        self.currentSubtitle = NULL;
+    }
+    
+    if (kCVReturnSuccess == ret) {
+        self.currentSubtitle = pixelBuffer;
     }
 }
 
