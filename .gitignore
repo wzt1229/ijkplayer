@@ -53,3 +53,8 @@ OpenSSL_1_1_1.tar.gz
 ios/IJKMediaDemo/Pods
 mac/IJKMediaDemo/Pods
 examples/macos/Pods
+
+# Dependencies' src
+/shell/extra/*
+!/shell/extra/patches/
+
