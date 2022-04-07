@@ -537,7 +537,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
     
     if ([url isFileURL]) {
-        [options setPlayerOptionIntValue:5*1024*1024      forKey:@"max-buffer-size"];
+        [options setPlayerOptionIntValue:10*1024*1024      forKey:@"max-buffer-size"];
     }
     
 //    [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
