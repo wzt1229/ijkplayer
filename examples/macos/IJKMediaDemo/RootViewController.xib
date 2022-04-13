@@ -918,6 +918,50 @@
                                     </connections>
                                 </popUpButton>
                             </middleViews>
+                            <endViews>
+                                <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="bTQ-Hs-GPd" userLabel="日志级别：">
+                                    <rect key="frame" x="905" y="12" width="68" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" lineBreakMode="clipping" title="日志级别：" id="dF5-Xw-cyS">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <popUpButton verticalHuggingPriority="750" id="42b-R0-3XI">
+                                    <rect key="frame" x="976" y="6" width="78" height="25"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <popUpButtonCell key="cell" type="push" title="info" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="6MB-zo-Y9Y" id="DZB-oJ-9hB">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="menu"/>
+                                        <menu key="menu" id="Zys-fC-z3j">
+                                            <items>
+                                                <menuItem title="info" state="on" id="6MB-zo-Y9Y">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                                <menuItem title="debug" id="iUA-SS-njK">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                                <menuItem title="warn" id="wBh-fY-88k">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                                <menuItem title="error" id="Rgp-YN-I9I">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                                <menuItem title="fatal" id="tny-TO-Jul">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                                <menuItem title="silent" id="X8U-JL-95Z">
+                                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                                </menuItem>
+                                            </items>
+                                        </menu>
+                                    </popUpButtonCell>
+                                    <connections>
+                                        <action selector="onChangeLogLevel:" target="-2" id="KRK-Dh-glD"/>
+                                    </connections>
+                                </popUpButton>
+                            </endViews>
                             <constraints>
                                 <constraint firstAttribute="height" constant="40" id="yk2-to-xvb"/>
                             </constraints>
@@ -928,8 +972,12 @@
                                 <integer value="1000"/>
                                 <integer value="1000"/>
                                 <integer value="1000"/>
+                                <integer value="1000"/>
+                                <integer value="1000"/>
                             </visibilityPriorities>
                             <customSpacing>
+                                <real value="3.4028234663852886e+38"/>
+                                <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>
                                 <real value="3.4028234663852886e+38"/>

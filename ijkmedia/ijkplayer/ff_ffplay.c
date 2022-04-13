@@ -3487,6 +3487,10 @@ static int external_subtitle_thread(void *arg)
                 sp->sub.end_display_time = (uint32_t)pkt.duration;
                 if (pkt.pts != AV_NOPTS_VALUE)
                     pts = pkt.pts / 1000.0;
+            } else if (d->avctx->codec_id == AV_CODEC_ID_TEXT) {
+                sp->sub.end_display_time = (uint32_t)pkt.duration;
+                if (pkt.pts != AV_NOPTS_VALUE)
+                    pts = pkt.pts / 1000.0;
             }//其它格式pts为0，可暴露问题
             
             sp->pts = pts;
@@ -3538,11 +3542,15 @@ static int external_subtitle_open(FFPlayer* ffp,const char *file_name)
     
     if (!ss->subtitle_st) {
         ret = -3;
+        av_log(NULL, AV_LOG_WARNING, "none subtitle stream in %s\n",
+                file_name);
         goto fail;
     }
     
     AVCodec* codec = avcodec_find_decoder(ss->subtitle_st->codecpar->codec_id);
     if (!codec) {
+        av_log(NULL, AV_LOG_WARNING, "could find codec:%s for %s\n",
+                file_name, avcodec_get_name(ss->subtitle_st->codecpar->codec_id));
         ret = -4;
         goto fail;
     }
@@ -5843,10 +5851,9 @@ int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
             return ret;
         }
     }
-
-    if (external_subtitle_open(ffp,file_name) < 0) {
-        av_log(NULL, AV_LOG_WARNING, "%s: could not open external subtitle\n",
-                file_name);
+    int r = external_subtitle_open(ffp,file_name);
+    if (r < 0) {
+        av_log(NULL, AV_LOG_ERROR, "could not open external subtitle:(%d)%s\n", r, file_name);
         return -5;
     } else  {
         //recycle，release mem if the url array has been used

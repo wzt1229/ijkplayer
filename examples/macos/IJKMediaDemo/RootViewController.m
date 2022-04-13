@@ -42,7 +42,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (weak) IBOutlet NSButton *playCtrlBtn;
 @property (weak) IBOutlet MRProgressSlider *playerSlider;
 
-
 @property (nonatomic, strong) NSMutableArray *playList;
 @property (copy) NSURL *playingUrl;
 @property (weak) NSTimer *tickTimer;
@@ -66,6 +65,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (assign) int useAsyncVTB;
 @property (copy) NSString *fcc;
 @property (assign) int snapshot;
+
 //for cocoa binding end
 
 @property (assign) BOOL seeking;
@@ -113,6 +113,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
+    [self reSetLoglevel:@"info"];
     
     NSArray *bundleNameArr = @[@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
     
@@ -148,12 +149,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         }
         [self seekTo:progress];
     }];
-    
-#ifdef DEBUG
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
-#else
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_WARN];
-#endif
     
     self.playedTimeLb.stringValue = @"--:--";
     self.durationTimeLb.stringValue = @"--:--";
@@ -726,6 +721,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self.view.window setTitle:title];
     
     [self onReset:nil];
+    self.playCtrlBtn.state = NSControlStateValueOn;
     
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.bottomMargin = self.subtitleMargin;
@@ -999,6 +995,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     self.playedTimeLb.stringValue = @"--:--";
     self.durationTimeLb.stringValue = @"--:--";
     [self enableComputerSleep:YES];
+    self.playCtrlBtn.state = NSControlStateValueOff;
 }
 
 - (IBAction)playPrevious:(NSButton *)sender
@@ -1337,6 +1334,44 @@ static IOPMAssertionID g_displaySleepAssertionID;
     } else if (r == -4) {
         NSLog(@"exchange decoder faild.");
     }
+}
+
+#pragma mark 日志级别
+
+- (int)levelWithString:(NSString *)str
+{
+    str = [str lowercaseString];
+    if ([str isEqualToString:@"default"]) {
+        return k_IJK_LOG_DEFAULT;
+    } else if ([str isEqualToString:@"verbose"]) {
+        return k_IJK_LOG_VERBOSE;
+    } else if ([str isEqualToString:@"debug"]) {
+        return k_IJK_LOG_DEBUG;
+    } else if ([str isEqualToString:@"info"]) {
+        return k_IJK_LOG_INFO;
+    } else if ([str isEqualToString:@"warn"]) {
+        return k_IJK_LOG_WARN;
+    } else if ([str isEqualToString:@"error"]) {
+        return k_IJK_LOG_ERROR;
+    } else if ([str isEqualToString:@"fatal"]) {
+        return k_IJK_LOG_FATAL;
+    } else if ([str isEqualToString:@"silent"]) {
+        return k_IJK_LOG_SILENT;
+    } else {
+        return k_IJK_LOG_UNKNOWN;
+    }
+}
+
+- (void)reSetLoglevel:(NSString *)loglevel
+{
+    int level = [self levelWithString:loglevel];
+    [IJKFFMoviePlayerController setLogLevel:level];
+}
+
+- (IBAction)onChangeLogLevel:(NSPopUpButton*)sender
+{
+    NSString *title = sender.selectedItem.title;
+    [self reSetLoglevel:title];
 }
 
 @end

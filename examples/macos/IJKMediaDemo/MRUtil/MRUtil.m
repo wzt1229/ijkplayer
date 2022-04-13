@@ -29,7 +29,9 @@
         @"srt",
         @"ass",
         @"ssa",
-        @"vtt"
+        @"vtt",
+        @"webvtt",
+        @"lrc"
         ];
 }
 
