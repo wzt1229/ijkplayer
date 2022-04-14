@@ -1,0 +1,45 @@
+From 9f325438ac8a87a47abfbfe70e22a1e1e6150a68 Mon Sep 17 00:00:00 2001
+From: qianlongxu <qianlongxu@gmail.com>
+Date: Thu, 14 Apr 2022 18:38:30 +0800
+Subject: [PATCH] fix lrcdec read line bug on osx.
+
+---
+ libavformat/lrcdec.c | 22 ++++++++++++----------
+ 1 file changed, 12 insertions(+), 10 deletions(-)
+
+diff --git a/libavformat/lrcdec.c b/libavformat/lrcdec.c
+index f4e9a4efa91..f65cdfb3a22 100644
+--- a/libavformat/lrcdec.c
++++ b/libavformat/lrcdec.c
+@@ -103,16 +103,18 @@ static int64_t read_line(AVBPrint *buf, AVIOContext *pb)
+ {
+     int64_t pos = avio_tell(pb);
+ 
+-    av_bprint_clear(buf);
+-    while(!avio_feof(pb)) {
+-        int c = avio_r8(pb);
+-        if(c != '\r') {
+-            av_bprint_chars(buf, c, 1);
+-        }
+-        if(c == '\n') {
+-            break;
+-        }
+-    }
++    ff_read_line_to_bprint(pb, buf);
++
++    // av_bprint_clear(buf);
++    // while(!avio_feof(pb)) {
++    //     int c = avio_r8(pb);
++    //     if(c != '\r') {
++    //         av_bprint_chars(buf, c, 1);
++    //     }
++    //     if(c == '\n') {
++    //         break;
++    //     }
++    // }
+     return pos;
+ }
+ 
+-- 
+2.30.1 (Apple Git-130)
+
