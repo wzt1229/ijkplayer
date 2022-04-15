@@ -23,9 +23,10 @@ jobs:
             cd shell && ./init-any.sh macos
             cd macos && ./compile-any.sh build all 
       - name: Pod install
-        run: cd ../../examples/macos && pod install
+        run: cd examples/macos && pod install
       - name: Set Default Scheme
         run: |
+          cd examples/macos
           scheme_list=$(xcodebuild -list -json | tr -d "\n")
           default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
           echo $default | cat >default
@@ -34,6 +35,7 @@ jobs:
         env:
           scheme: ${{ 'default' }}
         run: |
+          cd examples/macos
           if [ $scheme = default ]; then scheme=$(cat default); fi
           if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
           file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
