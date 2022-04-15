@@ -401,8 +401,8 @@
         return;
     }
     
-    [[self openGLContext] makeCurrentContext];
     CGLLockContext([[self openGLContext] CGLContextObj]);
+    [[self openGLContext] makeCurrentContext];
     
     if (text && strlen(text) > 0) {
         NSString *subStr = [[NSString alloc] initWithUTF8String:text];
