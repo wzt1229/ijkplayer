@@ -2,9 +2,9 @@
 
  Platform | Build Status
  -------- | ------------
- Android | [![Build Status](https://travis-ci.org/Bilibili/ci-ijk-ffmpeg-android.svg?branch=master)](https://travis-ci.org/Bilibili/ci-ijk-ffmpeg-android) ⚠️ unknown state 
- iOS | [![Build Status](https://travis-ci.org/Bilibili/ci-ijk-ffmpeg-ios.svg?branch=master)](https://travis-ci.org/Bilibili/ci-ijk-ffmpeg-ios)
-macOS | 
+ Android | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/android.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml) ⚠️ unknown state 
+ iOS | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml)
+macOS | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/macos.yml)
 
 Video player based on [ffplay](http://ffmpeg.org)
 
