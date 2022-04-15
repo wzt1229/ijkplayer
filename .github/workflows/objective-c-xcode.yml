@@ -9,11 +9,21 @@ on:
 jobs:
   build:
     name: Build and analyse default scheme using xcodebuild command
-    runs-on: macos-latest
+    runs-on: macos-12.1
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Setup Cocoapods
+        uses: maxim-lobanov/setup-cocoapods@v1
+        with:
+          version: 1.11.2
+      - name: Compile Dependencies
+        run: | 
+            cd ijkplayer/shell
+            ./init-any.sh macos all && cd macos && ./compile-any.sh build all 
+      - name: Pod install
+        run: cd ../../examples/macos && pod install
       - name: Set Default Scheme
         run: |
           scheme_list=$(xcodebuild -list -json | tr -d "\n")
