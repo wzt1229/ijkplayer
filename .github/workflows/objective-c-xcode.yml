@@ -20,8 +20,8 @@ jobs:
           version: 1.11.2
       - name: Compile Dependencies
         run: | 
-            cd ijkplayer/shell
-            ./init-any.sh macos all && cd macos && ./compile-any.sh build all 
+            cd shell && ./init-any.sh macos all
+            cd macos && ./compile-any.sh build all 
       - name: Pod install
         run: cd ../../examples/macos && pod install
       - name: Set Default Scheme
