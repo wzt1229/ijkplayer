@@ -1,4 +1,4 @@
-name: IJKPlayer Analyze
+name: build
 
 on:
   push:
