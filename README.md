@@ -118,7 +118,7 @@ cd ijkplayer
 git checkout -B latest k0.9.0.5
 
 cd shell
-./init-any.sh macos all
+./init-any.sh macos
 cd macos
 ./compile-any.sh build all
 pod install --project-directory=../../examples/macos
@@ -133,7 +133,7 @@ cd ijkplayer
 git checkout -B latest k0.9.0.5
 
 cd shell
-./init-any.sh ios all
+./init-any.sh ios
 cd ios
 ./compile-any.sh build all
 pod install --project-directory=../../examples/ios
