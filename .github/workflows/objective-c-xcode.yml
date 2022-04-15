@@ -1,4 +1,4 @@
-name: Xcode - Build and Analyze
+name: IJKPlayer Analyze
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
           version: 1.11.2
       - name: Compile Dependencies
         run: | 
-            cd shell && ./init-any.sh macos all
+            cd shell && ./init-any.sh macos
             cd macos && ./compile-any.sh build all 
       - name: Pod install
         run: cd ../../examples/macos && pod install
