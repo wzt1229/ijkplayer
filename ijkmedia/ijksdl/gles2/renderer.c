@@ -225,8 +225,10 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
     IJK_GLES2_printString("Version", GL_VERSION);
     IJK_GLES2_printString("Vendor", GL_VENDOR);
     IJK_GLES2_printString("Renderer", GL_RENDERER);
-    IJK_GLES2_printString("Extensions", GL_EXTENSIONS);
-    
+//    GLint m_nMaxTextureSize;
+//    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_nMaxTextureSize);
+//    IJK_GLES2_printString("Extensions", GL_EXTENSIONS);
+//    IJK_GLES2_checkError("Extensions");
     if (openglVer == 0) {
         const char *version_string = (const char *) glGetString(GL_VERSION);
         int major = 0, minor = 0;
