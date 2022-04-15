@@ -1,13 +1,12 @@
-language: android
-android:
-  components:
-    - platform-tools
-    - tools
-    - build-tools-23.0.3
-    - android-23
-    - extra-android-support
-    - extra-android-m2repository
-
+osx_image: xcode13.1
+language: objective-c
 script:
-    - cd android/ijkplayer
-    - ./gradlew assemble
+- gem install cocoapods
+- git clone https://github.com/debugly/ijkplayer.git ijkplayer
+- cd ijkplayer
+- git checkout -B latest k0.9.0.5
+- cd shell
+- ./init-any.sh macos all
+- cd macos
+- ./compile-any.sh build all
+- pod install --project-directory=../../examples/macos
