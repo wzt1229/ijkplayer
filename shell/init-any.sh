@@ -21,6 +21,7 @@
 # ./init-any.sh ios "ffmpeg"
 # ./init-any.sh ios "ffmpeg opus"
 # ./init-any.sh ios "ffmpeg opus libyuv"
+# ./init-any.sh ios all x86_64
 
 PLAT=$1
 LIBS=$2
@@ -37,7 +38,7 @@ function usage()
     echo "  $0 [ios,macos,all] [fdk-aac|ffmpeg|lame|libyuv|openssl|opus|x264] [all,arm64,x86_64]"
 }
 
-if [[ "x$LIBS" == "x" ]]; then
+if [[ "x$LIBS" == "x" || "$LIBS" == "all" ]]; then
     LIBS=$(ls init-cfgs)
 fi
 
