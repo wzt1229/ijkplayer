@@ -45,22 +45,23 @@ fi
 function pull_common() {
     echo "== pull $REPO_DIR base =="
     if [[ -d "$GIT_LOCAL_REPO" ]];then
+        cd "$GIT_LOCAL_REPO"
+        git reset --hard
+
+        local origin=$(git remote get-url origin)
+        if [[ "$origin" != "$GIT_UPSTREAM" ]]; then
+            git remote remove origin
+            git remote add origin "$GIT_UPSTREAM"
+            echo "force update origin to: $GIT_UPSTREAM"
+        fi
         if [[ "$SKIP_PULL_BASE" ]];then
             echo "skip pull $REPO_DIR because you set SKIP_PULL_BASE env."
         else
-            cd "$GIT_LOCAL_REPO"
-            git reset --hard
-
-            local origin=$(git remote get-url origin)
-            if [[ "$origin" != "$GIT_UPSTREAM" ]]; then
-                git remote remove origin
-                git remote add origin "$GIT_UPSTREAM"
-                echo "force update origin to: $GIT_UPSTREAM"
-            fi
-            git fetch --all --tags
-            git checkout ${GIT_COMMIT} -B localBranch
-            cd - > /dev/null
+            git fetch --all --tags    
         fi
+        
+        git checkout ${GIT_COMMIT} -B localBranch
+        cd - > /dev/null
     else
         if [[ "$SKIP_PULL_BASE" ]];then
             echo "== local repo $REPO_DIR not exist,must clone by net firstly. =="

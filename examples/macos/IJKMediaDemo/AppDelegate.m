@@ -17,6 +17,7 @@
 @interface AppDelegate ()
 
 @property (strong) NSWindowController *windowCtrl;
+@property (strong) NSArray *waitHandleArr;
 
 @end
 
@@ -64,6 +65,12 @@
     [self.windowCtrl showWindow:nil];
     BOOL match = [IJKFFMoviePlayerController checkIfFFmpegVersionMatch:YES];
     NSLog(@"==FFmpegVersionMatch:%d",match);
+    
+    
+    if ([self.waitHandleArr count] > 0) {
+        [self application:NSApp openURLs:self.waitHandleArr];
+        self.waitHandleArr = nil;
+    }
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag
@@ -118,27 +125,39 @@
     [self.windowCtrl.window.contentViewController presentViewControllerAsModalWindow:[sb instantiateInitialController]];
 }
 
+- (BOOL)application:(NSApplication *)sender openFile:(nonnull NSString *)filename
+{
+    [self application:sender openFiles:@[filename]];
+    return YES;
+}
+
 - (void)application:(NSApplication *)sender openFiles:(NSArray<NSString *> *)filenames
 {
     NSMutableArray *urlArr = [NSMutableArray array];
     for (NSString *file in filenames) {
         [urlArr addObject:[NSURL fileURLWithPath:file]];
     }
-    [self playOpenedURL:urlArr];
+    
+    [self application:sender openURLs:urlArr];
 }
 
-- (void)application:(NSApplication *)application openURLs:(NSArray<NSURL *> *)urls
+- (void)application:(NSApplication *)application openURLs:(NSArray<NSURL *> *)urlArr
 {
-    NSMutableArray *notActions = [NSMutableArray array];
-    for (NSURL *url in urls) {
-        NSError *err = nil;
-        if (![MRActionManager handleActionWithURL:[url absoluteString] error:&err]) {
-            [notActions addObject:url];
+    if ([urlArr count] > 0) {
+        if (!self.windowCtrl) {
+            self.waitHandleArr = urlArr;
+        } else {
+            if ([urlArr count] == 1) {
+                NSURL *url = [urlArr firstObject];
+                NSError *err = nil;
+                if ([MRActionManager handleActionWithURL:[url absoluteString] error:&err]) {
+                    return;
+                }
+            }
+            
+            [self playOpenedURL:urlArr];
+            [NSApp activateIgnoringOtherApps:YES];
         }
-    }
-    
-    if ([notActions count] > 0) {
-        [self playOpenedURL:notActions];
     }
 }
 
