@@ -97,16 +97,15 @@ typedef enum : NSUInteger {
     IJKSDLSnapshot_Effect_Subtitle_Origin //keep original video size,with subtitle and video effect
 } IJKSDLSnapshotType;
 
-typedef struct _IJKSDLSubtitlePicture IJKSDLSubtitlePicture;
-struct _IJKSDLSubtitlePicture {
-    int x;
-    int y;
-    int w;
-    int h;
-    int nb_colors;
-    uint8_t *pixels; //pixels with length w * h, in BGRA pixel format
-    int linesize;
-};
+@interface IJKSDLSubtitle : NSObject
+
+@property(nonatomic, copy) NSString * text;
+//bitmap
+@property(nonatomic) int w;
+@property(nonatomic) int h;
+@property(nonatomic) uint8_t *pixels; //pixels with length w * h, in BGRA pixel format
+
+@end
 
 @protocol IJKSDLGLViewProtocol <NSObject>
 
@@ -131,7 +130,7 @@ struct _IJKSDLSubtitlePicture {
 - (void)setNeedsRefreshCurrentPic;
 
 // private method for jik internal.
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(const char *)subtitle subPict:(IJKSDLSubtitlePicture *)subPict;
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub;
 
 #if !TARGET_OS_OSX
 - (UIImage *)snapshot;

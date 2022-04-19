@@ -38,8 +38,7 @@
 
 @property(atomic) CVPixelBufferRef currentVideoPic;
 @property(atomic) CVPixelBufferRef currentSubtitle;
-@property(atomic) NSString *subtitle;
-@property(atomic) IJKSDLSubtitlePicture *subtitlePict;
+@property(atomic) IJKSDLSubtitle *sub;
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
 //display window size / screen
@@ -48,6 +47,7 @@
 @property(atomic) float displayVideoScale;
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
+@property(atomic) BOOL subtitlePreferenceChanged;
 
 @end
 
@@ -60,7 +60,6 @@
     GLuint _FBO;
     GLuint _ColorTexture;
     float  _videoSar;
-    BOOL  _subtitlePreferenceChanged;
 }
 
 @synthesize scalingMode = _scalingMode;
@@ -105,7 +104,6 @@
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
-        _subtitlePict       = NULL;
         _displayScreenScale = 1.0;
         _displayVideoScale  = 1.0;
         _rendererGravity    = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
@@ -160,9 +158,9 @@
 - (void)videoNaturalSizeChanged:(CGSize)size
 {
     self.videoNaturalSize = size;
-    NSRect viewBounds = [self bounds];
+    CGRect viewBounds = [self bounds];
     if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
-        self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width,1.0 * viewBounds.size.height / self.videoNaturalSize.height);
+        self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width, 1.0 * viewBounds.size.height / self.videoNaturalSize.height);
     }
 }
 
@@ -221,17 +219,17 @@
 
 - (void)resetViewPort
 {
-    NSRect viewBounds = [self bounds];
-    NSRect viewRectPixels = [self convertRectToBacking:viewBounds];
+    CGSize viewSize = [self bounds].size;
+    CGSize viewSizePixels = [self convertSizeToBacking:viewSize];
     
-    if (self.backingWidth != viewRectPixels.size.width || self.backingHeight != viewRectPixels.size.height) {
-        self.backingWidth  = viewRectPixels.size.width;
-        self.backingHeight = viewRectPixels.size.height;
+    if (self.backingWidth != viewSizePixels.width || self.backingHeight != viewSizePixels.height) {
+        self.backingWidth  = viewSizePixels.width;
+        self.backingHeight = viewSizePixels.height;
         
         CGSize screenSize = [[NSScreen mainScreen]frame].size;
-        self.displayScreenScale = FFMIN(1.0 * viewBounds.size.width / screenSize.width,1.0 * viewBounds.size.height / screenSize.height);
+        self.displayScreenScale = FFMIN(1.0 * viewSize.width / screenSize.width,1.0 * viewSize.height / screenSize.height);
         if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
-            self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width,1.0 * viewBounds.size.height / self.videoNaturalSize.height);
+            self.displayVideoScale = FFMIN(1.0 * viewSize.width / self.videoNaturalSize.width,1.0 * viewSize.height / self.videoNaturalSize.height);
         }
         
         if (IJK_GLES2_Renderer_isValid(_renderer)) {
@@ -250,7 +248,7 @@
 {
     if (self.currentSubtitle) {
         float ratio = 1.0;
-        if (self.subtitlePict) {
+        if (self.sub.pixels) {
             ratio = self.subtitlePreference.ratio * self.displayVideoScale;
         } else {
             //for text subtitle scale display_scale.
@@ -285,23 +283,24 @@
 
 - (void)setNeedsRefreshCurrentPic
 {
-    [[self openGLContext] makeCurrentContext];
     CGLLockContext([[self openGLContext] CGLContextObj]);
-    // Bind the FBO to screen.
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, self.backingWidth, self.backingHeight);
-    glClear(GL_COLOR_BUFFER_BIT);
+    [[self openGLContext] makeCurrentContext];
     
-    if (_renderer) {
+    if (IJK_GLES2_Renderer_isValid(_renderer)) {
+        // Bind the FBO to screen.
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, self.backingWidth, self.backingHeight);
+        glClear(GL_COLOR_BUFFER_BIT);
+        
         //for video
         [self doUploadVideoPicture:NULL];
         
         //for subtitle
-        if (_subtitlePreferenceChanged) {
-            if (self.subtitle) {
-                [self _generateSubtitlePixel:self.subtitle];
+        if (self.subtitlePreferenceChanged) {
+            if (self.sub.text) {
+                [self _generateSubtitlePixel:self.sub.text];
             }
-            _subtitlePreferenceChanged = NO;
+            self.subtitlePreferenceChanged = NO;
         }
         
         [self doUploadSubtitle];
@@ -343,11 +342,7 @@
     
     [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
     
-    MRTextureString *textureString = [[MRTextureString alloc] initWithString:subtitle withAttributes:attributes withBoxColor:[NSColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:nil];
-    
-    float inset = subtitleFont.pointSize / 2.0;
-    textureString.edgeInsets = NSEdgeInsetsMake(inset, inset, inset, inset);
-    textureString.cRadius = inset / 2.0;
+    MRTextureString *textureString = [[MRTextureString alloc] initWithString:subtitle withAttributes:attributes];
     
     if (self.currentSubtitle) {
         CVPixelBufferRelease(self.currentSubtitle);
@@ -357,7 +352,7 @@
     self.currentSubtitle = [textureString createPixelBuffer];
 }
 
-- (void)_generateSubtitlePixelFromPicture:(IJKSDLSubtitlePicture*)pict
+- (void)_generateSubtitlePixelFromPicture:(IJKSDLSubtitle*)pict
 {
     CVPixelBufferRef pixelBuffer = NULL;
     NSDictionary *options = @{
@@ -365,7 +360,7 @@
         (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
     };
     
-    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict->w, pict->h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
+    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict.w, pict.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
     
     NSParameterAssert(ret == kCVReturnSuccess && pixelBuffer != NULL);
     
@@ -373,14 +368,14 @@
     
     uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
     int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
-    
+
     uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
     int dst_linesizes[4] = {linesize,0,0,0};
-    
-    const uint8_t *src_data[4] = {pict->pixels,NULL,NULL,NULL};
-    const int src_linesizes[4] = {pict->linesize,0,0,0};
-    
-    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict->w, pict->h);
+
+    const uint8_t *src_data[4] = {pict.pixels,NULL,NULL,NULL};
+    const int src_linesizes[4] = {pict.w * 4,0,0,0};
+
+    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict.w, pict.h);
     
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
             
@@ -394,7 +389,29 @@
     }
 }
 
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(const char *)text subPict:(IJKSDLSubtitlePicture *)subPict
+- (void)_handleSubtitle:(IJKSDLSubtitle *)sub
+{
+    if (sub.text.length > 0) {
+        if (self.subtitlePreferenceChanged || ![self.sub.text isEqualToString:sub.text]) {
+            [self _generateSubtitlePixel:sub.text];
+            self.subtitlePreferenceChanged = NO;
+        }
+    } else if (sub.pixels != NULL) {
+        if (self.subtitlePreferenceChanged || sub.pixels != self.sub.pixels) {
+            [self _generateSubtitlePixelFromPicture:sub];
+            self.subtitlePreferenceChanged = NO;
+        }
+    } else {
+        if (self.currentSubtitle) {
+            CVPixelBufferRelease(self.currentSubtitle);
+            self.currentSubtitle = NULL;
+        }
+    }
+    
+    self.sub = sub;
+}
+
+- (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
 {
     if (!overlay) {
         ALOGW("IJKSDLGLView: overlay is nil\n");
@@ -404,27 +421,7 @@
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
     
-    if (text && strlen(text) > 0) {
-        NSString *subStr = [[NSString alloc] initWithUTF8String:text];
-        if (_subtitlePreferenceChanged || ![subStr isEqualToString:self.subtitle]) {
-            [self _generateSubtitlePixel:subStr];
-            _subtitlePreferenceChanged = NO;
-            self.subtitle = subStr;
-        }
-    } else if (subPict != NULL) {
-        if (_subtitlePreferenceChanged || subPict != self.subtitlePict) {
-            [self _generateSubtitlePixelFromPicture:subPict];
-            _subtitlePreferenceChanged = NO;
-            self.subtitlePict = subPict;
-        }
-    } else {
-        if (self.currentSubtitle) {
-            CVPixelBufferRelease(self.currentSubtitle);
-            self.currentSubtitle = NULL;
-        }
-        self.subtitle = nil;
-        self.subtitlePict = NULL;
-    }
+    [self _handleSubtitle:sub];
     
     // Bind the FBO to screen.
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -539,8 +536,8 @@
 - (CGImageRef)_snapshotEffectOriginWithSubtitle:(BOOL)containSub
 {
     CGImageRef img = NULL;
-    [[self openGLContext] makeCurrentContext];
     CGLLockContext([[self openGLContext] CGLContextObj]);
+    [[self openGLContext] makeCurrentContext];
     if (self.currentVideoPic && _renderer) {
         CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * _videoSar, CVPixelBufferGetHeight(self.currentVideoPic));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
@@ -694,7 +691,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         return nil;
     }
  
-    NSRect bounds = [self bounds];
+    CGRect bounds = [self bounds];
     CGSize size =  [self convertSizeToBacking:bounds.size];;
     
     if (CGSizeEqualToSize(CGSizeZero, size)) {
@@ -780,7 +777,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     
     if (_subtitlePreference.ratio != subtitlePreference.ratio || _subtitlePreference.color != subtitlePreference.color) {
         _subtitlePreference = subtitlePreference;
-        _subtitlePreferenceChanged = YES;
+        self.subtitlePreferenceChanged = YES;
     }
 }
 

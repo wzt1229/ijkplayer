@@ -47,6 +47,17 @@
 
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
+    int a = 0x11223344;
+    char *c = (char *)&a;
+    printf("%02X,%02X,%02X,%02X\n",c[0],c[1],c[2],c[3]);
+    int *b = c;
+    printf("%d:%d\n",a,*b);
+    if (*c == 0x44) {
+        printf("little endian\n");
+    } else {
+        printf("big endian\n");
+    }
+    
     [self prepareActionProcessor];
 }
 
