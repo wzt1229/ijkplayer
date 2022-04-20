@@ -121,7 +121,6 @@
     
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.color = 16776960;
-    
     self.player.view.subtitlePreference = p;
     self.view.autoresizesSubviews = YES;
     [self.view addSubview:self.player.view];

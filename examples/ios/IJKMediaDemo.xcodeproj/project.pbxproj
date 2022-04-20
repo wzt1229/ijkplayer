@@ -290,11 +290,11 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/IJKMediaPlayeriOSKit/IJKMediaPlayeriOSKit.framework",
+				"${BUILT_PRODUCTS_DIR}/IJKMediaPlayerKit/IJKMediaPlayerKit.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/IJKMediaPlayeriOSKit.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/IJKMediaPlayerKit.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

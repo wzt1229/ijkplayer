@@ -9,7 +9,7 @@
 Pod::Spec.new do |s|
   s.name             = 'IJKMediaPlayerKit'
   s.version          = '0.9.0.5'
-  s.summary          = 'IJKMediaPlayerKit for macOS.'
+  s.summary          = 'IJKMediaPlayerKit for ios/macOS.'
   
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -27,6 +27,7 @@ TODO: Add long description of the pod here.
   s.source           = { :git => 'https://github.com/debugly/ijkplayer', :tag => s.version.to_s }
 
   s.osx.deployment_target = '10.11'
+  s.ios.deployment_target = '9.0'
 
   s.osx.pod_target_xcconfig = {
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',
@@ -34,6 +35,17 @@ TODO: Add long description of the pod here.
       '$(inherited)',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ffmpeg/include',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/libyuv/include',
+      '${PODS_TARGET_SRCROOT}/ijkmedia'
+    ],
+    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0'
+  }
+
+  s.ios.pod_target_xcconfig = {
+    'ALWAYS_SEARCH_USER_PATHS' => 'YES',
+    'HEADER_SEARCH_PATHS' => [
+      '$(inherited)',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/libyuv/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0'
@@ -59,10 +71,9 @@ TODO: Add long description of the pod here.
       'IJKMediaPlayerKit/IJKMediaPlayer.h',
       'IJKMediaPlayerKit/IJKNotificationManager.h',
       'IJKMediaPlayerKit/IJKKVOController.h',
-      'IJKMediaPlayerKit/IJKSDLGLViewProtocol.h'
-    ss.osx.public_header_files = 'IJKMediaPlayerKit/IJKMediaPlayerKit.h'
-    ss.osx.exclude_files = 
-      'IJKMediaPlayerKit/IJKMediaPlayeriOSKit.h',
+      'IJKMediaPlayerKit/IJKSDLGLViewProtocol.h',
+      'IJKMediaPlayerKit/IJKMediaPlayerKit.h',
+    ss.osx.exclude_files =
       'IJKMediaPlayerKit/IJKAudioKit.*'
   end
 
@@ -104,7 +115,9 @@ TODO: Add long description of the pod here.
 
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++'
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
+  s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
-  s.osx.frameworks = 'AudioUnit', 'Cocoa', 'OpenGL', 'GLKit'
+  s.osx.frameworks = 'Cocoa', 'AudioUnit', 'OpenGL', 'GLKit'
+  s.ios.frameworks = 'UIKit', 'OpenGLES'
   
 end
