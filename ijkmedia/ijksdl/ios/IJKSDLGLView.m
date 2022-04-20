@@ -409,7 +409,8 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     if (self.currentSubtitle) {
         float ratio = 1.0;
         if (self.sub.pixels) {
-            ratio = self.subtitlePreference.ratio * self.displayVideoScale;
+            //default x2
+            ratio = self.subtitlePreference.ratio * self.displayVideoScale * 2;
         } else {
             //for text subtitle scale display_scale.
             ratio *= self.displayScreenScale;

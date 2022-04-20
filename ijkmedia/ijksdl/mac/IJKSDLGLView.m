@@ -249,7 +249,7 @@
     if (self.currentSubtitle) {
         float ratio = 1.0;
         if (self.sub.pixels) {
-            ratio = self.subtitlePreference.ratio * self.displayVideoScale;
+            ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
         } else {
             //for text subtitle scale display_scale.
             ratio *= self.displayScreenScale;
