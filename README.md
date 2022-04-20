@@ -32,7 +32,7 @@ TODO check:
 - iOS/macOS
     - platform: iOS 9.0/macOS 10.11
     - cpu: arm64,x86_64
-    - api: [MediaPlayer.framework-like](ijkplayer/IJKMediaPlayerKit/IJKMediaPlayback.h)
+    - api: [MediaPlayer.framework-like](IJKMediaPlayerKit/IJKMediaPlayback.h)
     - video-output: OpenGL ES 2.0/OpenGL 3.3
     - audio-output: AudioQueue, AudioUnit
     - hw-decoder: auto use VideoToolbox accel by default
