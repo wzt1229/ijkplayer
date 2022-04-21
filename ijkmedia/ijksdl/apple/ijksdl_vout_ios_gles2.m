@@ -28,7 +28,11 @@
 #include "ijksdl/ijksdl_vout_internal.h"
 #include "ijksdl_vout_overlay_ffmpeg.h"
 #include "ijksdl_vout_overlay_videotoolbox.h"
-#import "IJKSDLGLView.h"
+#if TARGET_OS_IOS
+#include "../ios/IJKSDLGLView.h"
+#else
+#include "../mac/IJKSDLGLView.h"
+#endif
 
 @implementation IJKSDLSubtitle
 

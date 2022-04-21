@@ -160,11 +160,6 @@ void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
 
 #endif
 
-#if TARGET_OS_IOS
-const char *IJK_GLES2_getFragmentShader_yuv444p10le();
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_yuv444p10le();
-#endif
-
 const GLfloat *IJK_GLES2_getColorMatrix_bt709(void);
 const GLfloat *IJK_GLES2_getColorMatrix_bt601(void);
 

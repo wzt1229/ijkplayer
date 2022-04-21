@@ -22,13 +22,7 @@
  */
 
 #import "IJKFFMoviePlayerController.h"
-
-#if TARGET_OS_IOS
-#import <UIKit/UIKit.h>
-#import "IJKAudioKit.h"
-#else
-#import <AppKit/AppKit.h>
-#endif
+#import "IJKSDLGLView.h"
 #import "IJKSDLHudControl.h"
 #import "IJKFFMoviePlayerDef.h"
 #import "IJKMediaPlayback.h"
@@ -39,9 +33,15 @@
 #import "ijkioapplication.h"
 #endif
 #include "string.h"
-#import "IJKSDLGLView.h"
+#if TARGET_OS_IOS
+#import "IJKAudioKit.h"
+#endif
 
-static const char *kIJKFFRequiredFFmpegVersion = "n4.0-3-g5a10629"; //"ff4.0--ijk0.8.8--20210426--001";
+#include "../ijkmedia/ijkplayer/apple/ijkplayer_ios.h"
+#include "../ijkmedia/ijkplayer/ijkmeta.h"
+#include "../ijkmedia/ijkplayer/ff_ffmsg_queue.h"
+
+static const char *kIJKFFRequiredFFmpegVersion = "n4.0-2-g5bf1d483f23"; //"ff4.0--ijk0.8.8--20210426--001";
 static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
 // It means you didn't call shutdown if you found this object leaked.
@@ -839,14 +839,14 @@ inline static NSString *formatedDurationMilli(int64_t duration) {
     }
 }
 
-#if ! IJK_IO_OFF
-inline static NSString *formatedDurationBytesAndBitrate(int64_t bytes, int64_t bitRate) {
-    if (bitRate <= 0) {
-        return @"inf";
-    }
-    return formatedDurationMilli(((float)bytes) * 8 * 1000 / bitRate);
-}
-#endif
+//#if ! IJK_IO_OFF
+//inline static NSString *formatedDurationBytesAndBitrate(int64_t bytes, int64_t bitRate) {
+//    if (bitRate <= 0) {
+//        return @"inf";
+//    }
+//    return formatedDurationMilli(((float)bytes) * 8 * 1000 / bitRate);
+//}
+//#endif
 
 inline static NSString *formatedSize(int64_t bytes) {
     if (bytes >= 100 * 1024) {
@@ -1236,7 +1236,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
     if (!msg)
         return;
 
-    AVMessage *avmsg = &msg->_msg;
+    AVMessage *avmsg = msg.msg;
     switch (avmsg->what) {
         case FFP_MSG_FLUSH:
             break;
@@ -1497,7 +1497,7 @@ static int media_player_msg_loop(void* arg)
                 if (!msg)
                     break;
 
-                int retval = ijkmp_get_msg(mp, &msg->_msg, 1);
+                int retval = ijkmp_get_msg(mp, msg.msg, 1);
                 if (retval < 0)
                     break;
 

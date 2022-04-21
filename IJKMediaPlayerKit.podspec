@@ -72,9 +72,8 @@ TODO: Add long description of the pod here.
       'IJKMediaPlayerKit/IJKNotificationManager.h',
       'IJKMediaPlayerKit/IJKKVOController.h',
       'IJKMediaPlayerKit/IJKSDLGLViewProtocol.h',
-      'IJKMediaPlayerKit/IJKMediaPlayerKit.h',
-    ss.osx.exclude_files =
-      'IJKMediaPlayerKit/IJKAudioKit.*'
+      'IJKMediaPlayerKit/IJKMediaPlayerKit.h'
+    ss.osx.exclude_files = 'IJKMediaPlayerKit/IJKAudioKit.*'
   end
 
   s.subspec 'ijkmedia' do |ss|
@@ -87,29 +86,13 @@ TODO: Add long description of the pod here.
       'ijkmedia/ijksdl/ijksdl_extra_log.c',
       'ijkmedia/ijkplayer/ijkversion.h',
       'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
-      # 'ijkmedia/ijkplayer/ijkavformat/*.*',
       'ijkmedia/ijkplayer/android/**/*.*',
       'ijkmedia/ijksdl/android/**/*.*',
       'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}'
       # need exclude when IJK_IO_OFF is 1.
       #'ijkmedia/ijkplayer/ijkavformat/*.*'
-    ss.osx.exclude_files = 
-      'ijkmedia/ijksdl/ijksdl_egl.*',
-      'ijkmedia/ijksdl/ios/*.*',
-      'ijkmedia/ijksdl/gles2/fsh/rgb.fsh.c',
-      'ijkmedia/ijksdl/gles2/fsh/yuv420p.fsh.c',
-      'ijkmedia/ijksdl/gles2/fsh/yuv420sp.fsh.c',
-      'ijkmedia/ijksdl/gles2/fsh/yuv444p10le.fsh.c',
-      'ijkmedia/ijksdl/gles2/renderer_yuv444p10le.c',
-      'ijkmedia/ijksdl/gles2/renderer_rgb.c',
-      'ijkmedia/ijksdl/gles2/renderer_yuv420p.c',
-      'ijkmedia/ijksdl/gles2/renderer_yuv420sp.c',
-      'ijkmedia/ijksdl/gles2/vsh/mvp.vsh.c'
-    
-    ss.ios.exclude_files = 
-      'ijkmedia/ijksdl/mac/*.*',
-      'ijkmedia/ijksdl/gles2/fsh/mac/*.*',
-      'ijkmedia/ijksdl/gles2/vsh/mac/*.*'
+    ss.osx.exclude_files = 'ijkmedia/ijksdl/ijksdl_egl.*', 'ijkmedia/ijksdl/ios/*.*'
+    ss.ios.exclude_files = 'ijkmedia/ijksdl/mac/*.*'
 
   end
 
