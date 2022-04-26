@@ -451,39 +451,35 @@ void ffp_apple_log_extra_vprint(int level, const char *tag, const char *fmt, va_
         return;
     }
     
-    char new_fmt[1024];
-    sprintf(new_fmt, "[%s]%s", tag, fmt);
-    
     if (_logHandler) {
         NSString *tagStr = tag ? [[NSString alloc] initWithUTF8String:tag] : @"";
         NSString *fmtStr = fmt ? [[NSString alloc] initWithUTF8String:fmt] : @"";
         NSString *msgStr = [[NSString alloc] initWithFormat:fmtStr arguments: ap];
         _logHandler(level, tagStr, msgStr);
     } else {
-        vprintf(new_fmt, ap);
+        size_t len = 0;
+        if (fmt && (len = strlen(fmt)) > 0) {
+            char end = fmt[len - 1];
+            if (end == '\n') {
+                if (len == 1) {
+                    vprintf(fmt, ap);
+                } else {
+                    char new_fmt[1024];
+                    sprintf(new_fmt, "[%s]%s", tag, fmt);
+                    vprintf(new_fmt, ap);
+                }
+            } else {
+                vprintf(fmt, ap);
+            }
+        }
     }
 }
 
 void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 {
-    IJKLogLevel curr_lv = [IJKFFMoviePlayerController getLogLevel];
-    if (level < curr_lv) {
-        return;
-    }
-    
-    char new_fmt[1024];
-    sprintf(new_fmt, "[%s]%s", tag, fmt);
-    
     va_list args;
     va_start(args, fmt);
-    if (_logHandler) {
-        NSString *tagStr = tag ? [[NSString alloc] initWithUTF8String:tag] : @"";
-        NSString *fmtStr = fmt ? [[NSString alloc] initWithUTF8String:fmt] : @"";
-        NSString *msgStr = [[NSString alloc] initWithFormat:fmtStr arguments: args];
-        _logHandler(level, tagStr, msgStr);
-    } else {
-        vprintf(new_fmt, args);
-    }
+    ffp_apple_log_extra_vprint(level, tag, fmt, args);
     va_end(args);
 }
 #endif
