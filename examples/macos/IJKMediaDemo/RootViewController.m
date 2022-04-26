@@ -616,16 +616,34 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         if (IJKMPMovieFinishReasonPlaybackError == reason) {
             int errCode = [notifi.userInfo[@"error"] intValue];
             NSLog(@"播放出错:%d",errCode);
-            NSString *dir = [self saveDir:nil];
-            NSString *fileName = [NSString stringWithFormat:@"a错误汇总.txt"];
-            NSString *filePath = [dir stringByAppendingPathComponent:fileName];
-            FILE *pf = fopen([filePath UTF8String], "a+");
-            fprintf(pf, "%d:%s\n",errCode,[[self.playingUrl absoluteString]UTF8String]);
-            fflush(pf);
-            fclose(pf);
-            //-5 网络错误
-            if (errCode != -5) {
-                [self playNext:nil];
+            if (self.autoTest) {
+                NSString *dir = [self saveDir:nil];
+                NSString *fileName = [NSString stringWithFormat:@"a错误汇总.txt"];
+                NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+                FILE *pf = fopen([filePath UTF8String], "a+");
+                fprintf(pf, "%d:%s\n",errCode,[[self.playingUrl absoluteString]UTF8String]);
+                fflush(pf);
+                fclose(pf);
+                
+                //-5 网络错误
+                if (errCode != -5) {
+                    [self playNext:nil];
+                }
+            } else {
+                NSAlert *alert = [[NSAlert alloc] init];
+                NSString *urlString = [self.player.contentURL isFileURL] ? [self.player.contentURL path] : [self.player.contentURL absoluteString];
+                alert.informativeText = urlString;
+                alert.messageText = [NSString stringWithFormat:@"播放出错：%d",errCode];
+                [alert addButtonWithTitle:@"OK"];
+                [alert addButtonWithTitle:@"Next"];
+                [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
+                    if (returnCode == NSAlertFirstButtonReturn)
+                    {
+                        
+                    } else if (returnCode == NSAlertSecondButtonReturn) {
+                        [self playNext:nil];
+                    }
+                }];
             }
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
             NSLog(@"播放结束");

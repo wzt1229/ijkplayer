@@ -54,13 +54,14 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
 @interface IJKFFMoviePlayerController()
 
+@property (nonatomic, strong) NSURL *contentURL;
+
 @end
 
 @implementation IJKFFMoviePlayerController {
     IjkMediaPlayer *_mediaPlayer;
     GLView<IJKSDLGLViewProtocol>* _glView;
     IJKFFMoviePlayerMessagePool *_msgPool;
-    NSString *_urlString;
 
     NSInteger _videoWidth;
     NSInteger _videoHeight;
@@ -164,27 +165,17 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_io_stat_complete_register(cb);
 }
 
-- (id)initWithContentURL:(NSURL *)aUrl
-             withOptions:(IJKFFOptions *)options
-{
-    if (aUrl == nil)
-        return nil;
-
-    // Detect if URL is file path and return proper string for it
-    NSString *aUrlString = [aUrl isFileURL] ? [aUrl path] : [aUrl absoluteString];
-
-    return [self initWithContentURLString:aUrlString
-                              withOptions:options];
-}
-
 - (void)setScreenOn: (BOOL)on
 {
     [IJKMediaModule sharedModule].mediaModuleIdleTimerDisabled = on;
     // [UIApplication sharedApplication].idleTimerDisabled = on;
 }
 
-- (void)_initWithOptions:(IJKFFOptions *)options glView:(GLView <IJKSDLGLViewProtocol> *)glView
+- (void)_initWithContent:(NSURL *)aUrl options:(IJKFFOptions *)options glView:(GLView <IJKSDLGLViewProtocol> *)glView
 {
+    // init media resource
+    _contentURL = aUrl;
+    
     ijkmp_global_init();
 #if ! IJK_IO_OFF
     ijkmp_global_set_inject_callback(ijkff_inject_callback);
@@ -246,16 +237,14 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 #endif
     
 }
-- (id)initWithContentURLString:(NSString *)aUrlString
-                   withOptions:(IJKFFOptions *)options
+
+- (id)initWithContentURL:(NSURL *)aUrl withOptions:(IJKFFOptions *)options
 {
-    if (aUrlString == nil)
+    if (aUrl == nil)
         return nil;
 
     self = [super init];
     if (self) {
-        // init media resource
-        _urlString = aUrlString;
         // init video sink
     #if TARGET_OS_IOS
         CGRect rect = [[UIScreen mainScreen] bounds];
@@ -265,7 +254,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     #endif
         IJKSDLGLView *glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         glView.isThirdGLView = NO;
-        [self _initWithOptions:options glView:glView];
+        [self _initWithContent:aUrl options:options glView:glView];
     }
     return self;
 }
@@ -277,28 +266,11 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (aUrl == nil)
         return nil;
 
-    // Detect if URL is file path and return proper string for it
-    NSString *aUrlString = [aUrl isFileURL] ? [aUrl path] : [aUrl absoluteString];
-
-    return [self initWithMoreContentString:aUrlString
-                              withOptions:options
-                               withGLView:glView];
-}
-
-- (id)initWithMoreContentString:(NSString *)aUrlString
-                 withOptions:(IJKFFOptions *)options
-                  withGLView:(GLView <IJKSDLGLViewProtocol> *)glView
-{
-    if (aUrlString == nil || glView == nil)
-        return nil;
-
     self = [super init];
     if (self) {
-        // init media resource
-        _urlString = aUrlString;
         // init video sink
         glView.isThirdGLView = YES;
-        [self _initWithOptions:options glView:glView];
+        [self _initWithContent:aUrl options:options glView:glView];
     }
     return self;
 }
@@ -329,7 +301,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         return;
 
     [self setScreenOn:_keepScreenOnWhilePlaying];
-    if (![_urlString hasPrefix:@"/"]) {
+    if (![_contentURL isFileURL]) {
         [self setHudValue:nil forKey:@"scheme"];
         [self setHudValue:nil forKey:@"host"];
         [self setHudValue:nil forKey:@"path"];
@@ -344,7 +316,10 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         [self setHudValue:nil forKey:@"t-http-seek"];
     }
     
-    ijkmp_set_data_source(_mediaPlayer, [_urlString UTF8String]);
+    // Detect if URL is file path and return proper string for it
+    NSString *urlString = [_contentURL isFileURL] ? [_contentURL path] : [_contentURL absoluteString];
+    
+    ijkmp_set_data_source(_mediaPlayer, [urlString UTF8String]);
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", 0); // for concat demuxer
 
     _monitor.prepareStartTick = (int64_t)SDL_GetTickHR();
