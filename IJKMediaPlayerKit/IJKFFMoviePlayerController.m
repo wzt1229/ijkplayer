@@ -1172,7 +1172,9 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                         fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_CHANNEL_LAYOUT, nil);
                         fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
                         fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
-                        
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_ARTIST, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_ALBUM, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TYER, nil);
                         if (audio_stream == i) {
                             _monitor.audioMeta = streamMeta;
                         }
