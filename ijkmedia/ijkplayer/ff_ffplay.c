@@ -3681,7 +3681,8 @@ static int read_thread(void *arg)
         last_error = err;
         goto fail;
     }
-    ffp_notify_msg1(ffp, FFP_MSG_OPEN_INPUT);
+    
+    ffp_notify_str2(ffp, FFP_MSG_OPEN_INPUT, ic->iformat->name);
     if (scan_all_pmts_set)
         av_dict_set(&ffp->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
 

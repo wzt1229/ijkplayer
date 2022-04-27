@@ -1387,9 +1387,18 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_OPEN_INPUT: {
+            const char *name = avmsg->obj;
+            NSString *str = nil;
+            if (name) {
+                str = [[NSString alloc] initWithUTF8String:name];
+            }
+            if (!str) {
+                str = @"";
+            }
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerOpenInputNotification
-             object:self];
+             object:self
+             userInfo:@{@"name": str}];
             break;
         }
         case FFP_MSG_FIND_STREAM_INFO: {

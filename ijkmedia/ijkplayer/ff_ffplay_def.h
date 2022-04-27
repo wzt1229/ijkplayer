@@ -898,6 +898,10 @@ inline static void ffp_notify_msg2(FFPlayer *ffp, int what, int arg1) {
     msg_queue_put_simple3(&ffp->msg_queue, what, arg1, 0);
 }
 
+inline static void ffp_notify_str2(FFPlayer *ffp, int what, const char *str) {
+    msg_queue_put_str(&ffp->msg_queue, what, str);
+}
+
 inline static void ffp_notify_msg3(FFPlayer *ffp, int what, int arg1, int arg2) {
     msg_queue_put_simple3(&ffp->msg_queue, what, arg1, arg2);
 }
