@@ -291,11 +291,9 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         }
 
         //debug all metadata
-//        AVDictionary* dictionary = ic->metadata;
-//        AVDictionaryEntry *pEntry = NULL;
-//        while ((pEntry = av_dict_get(dictionary, "", pEntry, AV_DICT_IGNORE_SUFFIX))) {
-//            printf("all metadata : %s=%s\n", pEntry->key, pEntry->value);
-//        }
+//        AVDictionaryEntry *tag = NULL;
+//        while ((tag = av_dict_get(ic->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+//            printf("ic metadata item:%s=%s\n", tag->key, tag->value);
 
         ijkmeta_set_int64_l(stream_meta, IJKM_KEY_STREAM_IDX, i);
         

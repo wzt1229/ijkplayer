@@ -24,7 +24,8 @@
         @"flac",
         @"dff",
         @"dts",
-        @"caf"
+        @"caf",
+        @"ape"
         ];
 }
 
