@@ -1204,6 +1204,17 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
     _monitor.vdecoder = [self coderNameWithVdecType:(int)vdec];
 }
 
+- (NSString *)averrToString:(int)errnum
+{
+    char errbuf[128] = { '\0' };
+    const char *errbuf_ptr = errbuf;
+
+    if (av_strerror(errnum, errbuf, sizeof(errbuf)) < 0) {
+        errbuf_ptr = strerror(AVUNERROR(errnum));
+    }
+    return [[NSString alloc] initWithUTF8String:errbuf];
+}
+
 - (void)postEvent: (IJKFFMoviePlayerMessage *)msg
 {
     if (!msg)
@@ -1219,13 +1230,13 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerPlaybackStateDidChangeNotification
              object:self];
-
+            
             [[NSNotificationCenter defaultCenter]
                 postNotificationName:IJKMPMoviePlayerPlaybackDidFinishNotification
                 object:self
                 userInfo:@{
                     IJKMPMoviePlayerPlaybackDidFinishReasonUserInfoKey: @(IJKMPMovieFinishReasonPlaybackError),
-                    @"error": @(avmsg->arg1)}];
+                    @"msg":[self averrToString:avmsg->arg1],@"code": @(avmsg->arg1)}];
             break;
         }
         case FFP_MSG_SELECTED_STREAM_CHANGED:  {//stream changed msg

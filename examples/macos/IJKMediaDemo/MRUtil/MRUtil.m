@@ -23,7 +23,8 @@
         @"wav",
         @"flac",
         @"dff",
-        @"dts"
+        @"dts",
+        @"caf"
         ];
 }
 

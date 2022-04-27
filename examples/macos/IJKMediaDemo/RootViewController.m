@@ -614,7 +614,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     if (self.player == notifi.object) {
         int reason = [notifi.userInfo[IJKMPMoviePlayerPlaybackDidFinishReasonUserInfoKey] intValue];
         if (IJKMPMovieFinishReasonPlaybackError == reason) {
-            int errCode = [notifi.userInfo[@"error"] intValue];
+            int errCode = [notifi.userInfo[@"code"] intValue];
             NSLog(@"播放出错:%d",errCode);
             if (self.autoTest) {
                 NSString *dir = [self saveDir:nil];
@@ -633,15 +633,19 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 NSAlert *alert = [[NSAlert alloc] init];
                 NSString *urlString = [self.player.contentURL isFileURL] ? [self.player.contentURL path] : [self.player.contentURL absoluteString];
                 alert.informativeText = urlString;
-                alert.messageText = [NSString stringWithFormat:@"播放出错：%d",errCode];
+                
+                alert.messageText = [NSString stringWithFormat:@"%@(%d)",notifi.userInfo[@"msg"],errCode];
+                
+                if ([self.playList count] > 1) {
+                    [alert addButtonWithTitle:@"Next"];
+                }
                 [alert addButtonWithTitle:@"OK"];
-                [alert addButtonWithTitle:@"Next"];
                 [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
-                    if (returnCode == NSAlertFirstButtonReturn)
-                    {
-                        
-                    } else if (returnCode == NSAlertSecondButtonReturn) {
-                        [self playNext:nil];
+                    if ([[alert buttons] count] == 2) {
+                        if (returnCode == NSAlertFirstButtonReturn)
+                        {
+                            [self playNext:nil];
+                        }
                     }
                 }];
             }
@@ -674,6 +678,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             NSString *type = stream[k_IJKM_KEY_TYPE];
             int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
             if ([type isEqualToString:k_IJKM_VAL_TYPE__SUBTITLE]) {
+                NSLog(@"subtile all meta:%@",stream);
                 NSString *url = stream[k_IJKM_KEY_EX_SUBTITLE_URL];
                 NSString *title = nil;
                 if (url) {
@@ -693,6 +698,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 }
                 [self.subtitlePopUpBtn addItemWithTitle:title];
             } else if ([type isEqualToString:k_IJKM_VAL_TYPE__AUDIO]) {
+                NSLog(@"audio all meta:%@",stream);
                 NSString *title = stream[k_IJKM_KEY_TITLE];
                 if (title.length == 0) {
                     title = stream[k_IJKM_KEY_LANGUAGE];
@@ -706,6 +712,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 }
                 [self.audioPopUpBtn addItemWithTitle:title];
             } else if ([type isEqualToString:k_IJKM_VAL_TYPE__VIDEO]) {
+                NSLog(@"video all meta:%@",stream);
                 NSString *title = stream[k_IJKM_KEY_TITLE];
                 if (title.length == 0) {
                     title = stream[k_IJKM_KEY_LANGUAGE];
