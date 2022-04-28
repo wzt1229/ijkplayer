@@ -15,6 +15,7 @@
 
 + (NSArray <NSString *>*)audioType
 {
+    //https://samplerateconverter.com/educational/dsd-dsf-dff-audio
     return @[
         @"mp3",
         @"m4a",
@@ -23,6 +24,7 @@
         @"wav",
         @"flac",
         @"dff",
+        @"dsf",
         @"dts",
         @"caf",
         @"ape"
