@@ -56,6 +56,9 @@
 // stream: audio
 #define k_IJKM_KEY_SAMPLE_RATE    @"sample_rate"
 #define k_IJKM_KEY_CHANNEL_LAYOUT @"channel_layout"
+#define k_IJKM_KEY_ARTIST         @"artist"
+#define k_IJKM_KEY_ALBUM          @"album"
+#define k_IJKM_KEY_TYER           @"TYER"
 // stream: subtitle
 #define k_IJKM_KEY_TITLE          @"title"
 #define k_IJKM_KEY_LANGUAGE       @"language"
