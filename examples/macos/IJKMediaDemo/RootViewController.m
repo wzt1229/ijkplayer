@@ -646,12 +646,28 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 if ([self.playList count] > 1) {
                     [alert addButtonWithTitle:@"Next"];
                 }
+                [alert addButtonWithTitle:@"Retry"];
                 [alert addButtonWithTitle:@"OK"];
                 [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
-                    if ([[alert buttons] count] == 2) {
-                        if (returnCode == NSAlertFirstButtonReturn)
-                        {
+                    if ([[alert buttons] count] == 3) {
+                        if (returnCode == NSAlertFirstButtonReturn) {
                             [self playNext:nil];
+                        } else if (returnCode == NSAlertSecondButtonReturn) {
+                            //retry
+                            NSURL *url = self.playingUrl;
+                            [self stopPlay:nil];
+                            [self playURL:url];
+                        } else {
+                            //
+                        }
+                    } else if ([[alert buttons] count] == 2) {
+                        if (returnCode == NSAlertFirstButtonReturn) {
+                            //retry
+                            NSURL *url = self.playingUrl;
+                            [self stopPlay:nil];
+                            [self playURL:url];
+                        } else if (returnCode == NSAlertSecondButtonReturn) {
+                            //
                         }
                     }
                 }];
