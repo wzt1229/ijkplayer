@@ -3015,10 +3015,7 @@ static int audio_open(FFPlayer *opaque, int64_t wanted_channel_layout, int wante
     SDL_AudioSpec wanted_spec, spec;
     const char *env;
     static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
-#ifdef FFP_MERGE
     static const int next_sample_rates[] = {0, 44100, 48000, 96000, 192000};
-#endif
-    static const int next_sample_rates[] = {0, 44100, 48000};
     int next_sample_rate_idx = FF_ARRAY_ELEMS(next_sample_rates) - 1;
 
     env = SDL_getenv("SDL_AUDIO_CHANNELS");
@@ -3041,7 +3038,7 @@ static int audio_open(FFPlayer *opaque, int64_t wanted_channel_layout, int wante
         next_sample_rate_idx--;
     wanted_spec.format = AUDIO_S16SYS;
     wanted_spec.silence = 0;
-    wanted_spec.samples = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE, 2 << av_log2(wanted_spec.freq / SDL_AoutGetAudioPerSecondCallBacks(ffp->aout)));
+    wanted_spec.samples = FFMIN(0xFFFF, FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE, 2 << av_log2(wanted_spec.freq / SDL_AoutGetAudioPerSecondCallBacks(ffp->aout))));
     wanted_spec.callback = sdl_audio_callback;
     wanted_spec.userdata = opaque;
     while (SDL_AoutOpenAudio(ffp->aout, &wanted_spec, &spec) < 0) {
