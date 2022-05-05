@@ -152,6 +152,7 @@
     ///Fix the default red background color on the Intel platform
     [[self openGLContext] makeCurrentContext];
     glClear(GL_COLOR_BUFFER_BIT);
+    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
 }
 
 - (void)videoZRotateDegrees:(NSInteger)degrees
@@ -308,11 +309,12 @@
         }
         
         [self doUploadSubtitle];
+        
+        CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     } else {
         ALOGW("IJKSDLGLView: not ready.\n");
     }
    
-    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
@@ -591,8 +593,9 @@
             
             img = [self _snapshotTheContextWithSize:picSize];
         }
+        
+        CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     }
-    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
     return img;
 }
