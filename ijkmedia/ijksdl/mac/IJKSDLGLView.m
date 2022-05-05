@@ -148,6 +148,10 @@
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
     [self setWantsBestResolutionOpenGLSurface:YES];
+    
+    ///Fix the default red background color on the Intel platform
+    [[self openGLContext] makeCurrentContext];
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 - (void)videoZRotateDegrees:(NSInteger)degrees
