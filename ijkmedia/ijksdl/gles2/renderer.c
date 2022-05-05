@@ -132,8 +132,8 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
     char vsh_buffer[1024] = { '\0' };
     IJK_GLES2_getVertexShader_default(vsh_buffer,openglVer);
     
-    ALOGI("vertex shader source:\n%s\n",vsh_buffer);
-    ALOGI("fragment shader source:\n%s\n",fragment_shader_source);
+    ALOGD("vertex shader source:\n%s\n",vsh_buffer);
+    ALOGD("fragment shader source:\n%s\n",fragment_shader_source);
     
     vertex_shader = IJK_GLES2_loadShader(GL_VERTEX_SHADER, vsh_buffer);
     if (!vertex_shader)
