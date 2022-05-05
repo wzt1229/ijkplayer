@@ -3152,17 +3152,18 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     int64_t channel_layout;
     int ret = 0;
     int stream_lowres = ffp->lowres;
-
+    AVStream *st = ic->streams[stream_index];
+    
     if (stream_index < 0 || stream_index >= ic->nb_streams)
         return -1;
     avctx = avcodec_alloc_context3(NULL);
     if (!avctx)
         return AVERROR(ENOMEM);
 
-    ret = avcodec_parameters_to_context(avctx, ic->streams[stream_index]->codecpar);
+    ret = avcodec_parameters_to_context(avctx, st->codecpar);
     if (ret < 0)
         goto fail;
-    avctx->pkt_timebase = ic->streams[stream_index]->time_base;
+    avctx->pkt_timebase = st->time_base;
 
     codec = avcodec_find_decoder(avctx->codec_id);
 
@@ -3196,7 +3197,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     if (ffp->fast)
         avctx->flags2 |= AV_CODEC_FLAG2_FAST;
 
-    opts = filter_codec_opts(ffp->codec_opts, avctx->codec_id, ic, ic->streams[stream_index], (AVCodec *)codec);
+    opts = filter_codec_opts(ffp->codec_opts, avctx->codec_id, ic, st, (AVCodec *)codec);
     if (!av_dict_get(opts, "threads", NULL, 0))
         av_dict_set(&opts, "threads", "auto", 0);
     if (stream_lowres)
@@ -3204,7 +3205,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     
 #ifdef __APPLE__
     hw_config = NULL;
-    if (ffp->videotoolbox == 2 && avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+    if (ffp->videotoolbox == 2 && avctx->codec_type == AVMEDIA_TYPE_VIDEO && !(st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
         enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");
         const AVCodecHWConfig *config = NULL;
         for (int i = 0;; i++) {
@@ -3240,7 +3241,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     }
 
     is->eof = 0;
-    ic->streams[stream_index]->discard = AVDISCARD_DEFAULT;
+    st->discard = AVDISCARD_DEFAULT;
     switch (avctx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
 #if CONFIG_AVFILTER
@@ -3286,7 +3287,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         is->audio_diff_threshold = 2.0 * is->audio_hw_buf_size / is->audio_tgt.bytes_per_sec;
 
         is->audio_stream = stream_index;
-        is->audio_st = ic->streams[stream_index];
+        is->audio_st = st;
 
         if((ret = decoder_init(&is->auddec, avctx, &is->audioq, is->continue_read_thread)) < 0)
             goto fail;
@@ -3300,7 +3301,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         break;
     case AVMEDIA_TYPE_VIDEO:
         is->video_stream = stream_index;
-        is->video_st = ic->streams[stream_index];
+        is->video_st = st;
 
         if (ffp->async_init_decoder) {
             while (!is->initialized_decoder) {
@@ -3362,7 +3363,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         if (!ffp->subtitle) break;
 
         is->subtitle_stream = stream_index;
-        is->subtitle_st = ic->streams[stream_index];
+        is->subtitle_st = st;
 
         ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
 
