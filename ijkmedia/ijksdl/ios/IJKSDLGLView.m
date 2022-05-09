@@ -50,6 +50,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
 @property(atomic) BOOL subtitlePreferenceChanged;
+@property(atomic,getter=isRenderBufferInvalidated) BOOL renderBufferInvalidated;
 
 @end
 
@@ -67,6 +68,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     IJK_GLES2_Renderer *_renderer;
     int                 _rendererGravity;
 
+    
     int             _tryLockErrorCount;
     BOOL            _didSetupGL;
     BOOL            _didStopGL;
@@ -322,7 +324,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     CGSize viewSize = [self bounds].size;
     //TODO:need check airplay
     CGSize viewSizePixels = CGSizeMake(viewSize.width * _scaleFactor, viewSize.height * _scaleFactor);
-     
+    
     if (self.backingWidth != viewSizePixels.width || self.backingHeight != viewSizePixels.height) {
         self.backingWidth  = viewSizePixels.width;
         self.backingHeight = viewSizePixels.height;
@@ -337,6 +339,8 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
             IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
         }
     }
+    
+    self.renderBufferInvalidated = YES;
 }
 
 - (BOOL)setupRenderer: (SDL_VoutOverlay *) overlay
@@ -597,10 +601,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 
     [self _handleSubtitle:sub];
     
-    glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
-    glViewport(0, 0, _backingWidth, _backingHeight);
-
     if ([self setupRenderer:overlay] && _renderer) {
+        
+        glBindRenderbuffer(GL_RENDERBUFFER, _renderbuffer);
+        
+        if (self.isRenderBufferInvalidated) {
+            self.renderBufferInvalidated = NO;
+            [_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer];
+            glViewport(0, 0, _backingWidth, _backingHeight);
+        }
+        
         //for video
         if (self.currentVideoPic) {
             CVPixelBufferRelease(self.currentVideoPic);
@@ -619,7 +629,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         ALOGW("IJKSDLGLView: not ready.\n");
     }
 
-    glBindRenderbuffer(GL_RENDERBUFFER, _renderbuffer);
     [_context presentRenderbuffer:GL_RENDERBUFFER];
 }
 
