@@ -167,34 +167,48 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
     uniform sampler2DRect us2_Sampler0;
     uniform sampler2DRect us2_Sampler1;
     uniform sampler2DRect us2_Sampler2;
-                                                   
+#if TARGET_OS_OSX
     uniform vec2 textureDimension0;
     uniform vec2 textureDimension1;
     uniform vec2 textureDimension2;
-                                                   
+#endif
     uniform int isSubtitle;
     uniform int isFullRange;
                                                       
     void main()
     {
         if (isSubtitle == 1) {
+#if TARGET_OS_OSX
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+#else
+            fragColor = texture2DRect(us2_Sampler0, vv2_Texcoord);
+#endif
         } else {
+#if TARGET_OS_OSX
             vec3 yuv;
             vec3 rgb;
-
+            
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
             vec2 recTexCoord2 = vv2_Texcoord * textureDimension2;
 
             yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
+            yuv.y = texture2DRect(us2_Sampler1, recTexCoord1).r - 0.5;
+            yuv.z = texture2DRect(us2_Sampler2, recTexCoord2).r - 0.5;
+#else
+            mediump vec3 yuv;
+            lowp vec3 rgb;
+            
+            yuv.x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
+            yuv.y = texture2DRect(us2_Sampler1, vv2_Texcoord).r - 0.5;
+            yuv.z = texture2DRect(us2_Sampler2, vv2_Texcoord).r - 0.5;
+#endif
+            
             if (isFullRange == 1) {
                 yuv.x = yuv.x - (16.0 / 255.0);
             }
-            yuv.y = texture2DRect(us2_Sampler1, recTexCoord1).r - 0.5;
-            yuv.z = texture2DRect(us2_Sampler2, recTexCoord2).r - 0.5;
-
+            
             rgb = um3_ColorConversion * yuv;
 
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
