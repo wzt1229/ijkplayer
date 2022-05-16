@@ -4854,54 +4854,9 @@ int ffp_get_loop(FFPlayer *ffp)
     return ffp->loop;
 }
 
-int ffp_packet_queue_init(PacketQueue *q)
-{
-    return packet_queue_init(q);
-}
-
-void ffp_packet_queue_destroy(PacketQueue *q)
-{
-    return packet_queue_destroy(q);
-}
-
-void ffp_packet_queue_abort(PacketQueue *q)
-{
-    return packet_queue_abort(q);
-}
-
-void ffp_packet_queue_start(PacketQueue *q)
-{
-    return packet_queue_start(q);
-}
-
-void ffp_packet_queue_flush(PacketQueue *q)
-{
-    return packet_queue_flush(q);
-}
-
-int ffp_packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *serial)
-{
-    return packet_queue_get(q, pkt, block, serial);
-}
-
 int ffp_packet_queue_get_or_buffering(FFPlayer *ffp, PacketQueue *q, AVPacket *pkt, int *serial, int *finished)
 {
     return packet_queue_get_or_buffering(ffp, q, pkt, serial, finished);
-}
-
-int ffp_packet_queue_put(PacketQueue *q, AVPacket *pkt)
-{
-    return packet_queue_put(q, pkt);
-}
-
-Frame *ffp_frame_queue_peek_writable(FrameQueue *f)
-{
-    return frame_queue_peek_writable(f);
-}
-
-void ffp_frame_queue_push(FrameQueue *f)
-{
-    return frame_queue_push(f);
 }
 
 int ffp_queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double duration, int64_t pos, int serial)
