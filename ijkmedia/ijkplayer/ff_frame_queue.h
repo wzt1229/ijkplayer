@@ -8,7 +8,6 @@
 #ifndef ff_frame_queue_h
 #define ff_frame_queue_h
 
-#include <stdio.h>
 #include "ff_ffplay_def.h"
 
 void frame_queue_unref_item(Frame *vp);
