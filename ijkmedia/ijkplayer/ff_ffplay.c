@@ -172,23 +172,6 @@ static int packet_queue_get_or_buffering(FFPlayer *ffp, PacketQueue *q, AVPacket
     return 1;
 }
 
-static int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond) {
-    memset(d, 0, sizeof(Decoder));
-    d->pkt = av_packet_alloc();
-    if (!d->pkt)
-        return AVERROR(ENOMEM);
-    d->avctx = avctx;
-    d->queue = queue;
-    d->empty_queue_cond = empty_queue_cond;
-    d->start_pts = AV_NOPTS_VALUE;
-    d->pkt_serial = 1;
-    d->first_frame_decoded_time = SDL_GetTickHR();
-    d->first_frame_decoded = 0;
-    d->after_seek_frame = 0;
-    SDL_ProfilerReset(&d->decode_profiler, -1);
-    return 0;
-}
-
 static int convert_image(FFPlayer *ffp, AVFrame *src_frame, int64_t src_frame_pts, int width, int height) {
     GetImgInfo *img_info = ffp->get_img_info;
     VideoState *is = ffp->is;
@@ -495,20 +478,6 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
             }
         }
     }
-}
-
-static void decoder_destroy(Decoder *d) {
-    av_packet_unref(d->pkt);
-    avcodec_free_context(&d->avctx);
-}
-
-static void decoder_abort(Decoder *d, FrameQueue *fq)
-{
-    packet_queue_abort(d->queue);
-    frame_queue_signal(fq);
-    SDL_WaitThread(d->decoder_tid, NULL);
-    d->decoder_tid = NULL;
-    packet_queue_flush(d->queue);
 }
 
 // FFP_MERGE: fill_rectangle
@@ -2000,17 +1969,6 @@ static int audio_thread(void *arg)
 #endif
     av_frame_free(&frame);
     return ret;
-}
-
-static int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *name)
-{
-    packet_queue_start(d->queue);
-    d->decoder_tid = SDL_CreateThreadEx(&d->_decoder_tid, fn, arg, name);
-    if (!d->decoder_tid) {
-        av_log(NULL, AV_LOG_ERROR, "SDL_CreateThread(): %s\n", SDL_GetError());
-        return AVERROR(ENOMEM);
-    }
-    return 0;
 }
 
 static int ffplay_video_thread(void *arg)

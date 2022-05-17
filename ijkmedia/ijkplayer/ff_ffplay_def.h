@@ -931,4 +931,9 @@ inline static const char *ffp_get_error_string(int error) {
 #define AVCODEC_MODULE_NAME    "avcodec"
 #define MEDIACODEC_MODULE_NAME "MediaCodec"
 
+int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond);
+int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *name);
+void decoder_destroy(Decoder *d);
+void decoder_abort(Decoder *d, FrameQueue *fq);
+
 #endif
