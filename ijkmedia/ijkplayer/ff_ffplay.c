@@ -3390,8 +3390,6 @@ static int read_thread(void *arg)
             }
         }
         
-        //TODO: 外挂字幕读包
-        
         pkt->flags = 0;
         ret = av_read_frame(ic, pkt);
         if (ret < 0) {
@@ -4797,7 +4795,7 @@ static int ffp_set_ex_stream_selected(FFPlayer *ffp, int stream, int selected)
     
     if (selected) {
         opened = exSub_open_file_idx(is->exSub, want_ex) == 0;
-        //TODO seek;
+        //TODO seek; 上层逻辑seek了，这里先不seek;
     }
     
     if (opened || closed) {
