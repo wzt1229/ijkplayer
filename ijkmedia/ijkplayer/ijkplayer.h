@@ -221,9 +221,10 @@ int             ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block);
 void            ijkmp_set_frame_at_time(IjkMediaPlayer *mp, const char *path, int64_t start_time, int64_t end_time, int num, int definition);
 void            ijkmp_set_subtitle_extra_delay(IjkMediaPlayer *mp,const float delay);
 float           ijkmp_get_subtitle_extra_delay(IjkMediaPlayer *mp);
-int             ijkmp_set_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
-/*only load ex-subtitle, not use*/
-int             ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
+//add + avtive ex-subtitle
+int             ijkmp_add_active_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
+//add only ex-subtitle
+int             ijkmp_addOnly_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 /*force exchange decoder*/
 int ijkmp_exchange_video_decoder(IjkMediaPlayer *mp);
 /* get video frame queue chache remaining count*/

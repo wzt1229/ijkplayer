@@ -108,12 +108,14 @@ void      ffp_set_property_int64(FFPlayer *ffp, int id, int64_t value);
 
 // must be freed with free();
 struct IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp);
+
+//when get or set extra delay,make sure already added external subtitle.
 void      ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay);
 float     ffp_get_subtitle_extra_delay(FFPlayer *ffp);
-
-int       ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name);
-/*only load ex-subtitle*/
-int       ffp_load_external_subtitle(FFPlayer *ffp, const char *file_name);
+//add + avtive ex-subtitle
+int       ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name);
+//add only ex-subtitle
+int       ffp_addOnly_external_subtitle(FFPlayer *ffp, const char *file_name);
 int       ffp_exchange_video_decoder(FFPlayer *ffp);
 int       ffp_get_video_frame_cache_remaining(FFPlayer *ffp);
 #endif

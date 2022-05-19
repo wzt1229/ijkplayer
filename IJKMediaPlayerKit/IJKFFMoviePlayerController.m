@@ -331,7 +331,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer)
         return;
     
-    ijkmp_set_external_subtitle(_mediaPlayer, [url UTF8String]);
+    ijkmp_add_active_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
 - (void)loadSubtitleFileOnly:(NSString *)url
@@ -339,7 +339,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer)
         return;
     
-    ijkmp_load_external_subtitle(_mediaPlayer, [url UTF8String]);
+    ijkmp_addOnly_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
 - (void)play

@@ -276,20 +276,7 @@ typedef struct Decoder {
     int    is_switching;
 } Decoder;
 
-typedef struct SubtitleExState{
-    AVInputFormat *iformat;
-    AVFormatContext *ic;
-
-    FrameQueue subpq;
-    Decoder subdec;
-
-    int sub_st_idx;
-    AVStream *subtitle_st;
-    PacketQueue subtitleq;
-    int eof;
-    
-    SDL_mutex* mutex;
-} SubtitleExState;
+typedef struct IJKEXSubtitle IJKEXSubtitle;
 
 typedef struct VideoState {
     SDL_Thread *read_tid;
@@ -305,7 +292,6 @@ typedef struct VideoState {
     int64_t seek_pos;
     int64_t seek_rel;
     
-    int load_sub_ex;
 #ifdef FFP_MERGE
     int read_pause_return;
 #endif
@@ -438,10 +424,9 @@ typedef struct VideoState {
     SDL_cond  *audio_accurate_seek_cond;
     volatile int initialized_decoder;
     int seek_buffering;
+    //for internal subtitle.
     float subtitle_extra_delay;//(s)
-    SubtitleExState* subtitle_ex;
-    char* ex_sub_url[IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET];
-    int   ex_sub_next;
+    IJKEXSubtitle *exSub;
 } VideoState;
 
 /* options specified by the user */
@@ -753,6 +738,7 @@ typedef struct FFPlayer {
 
 #define fftime_to_milliseconds(ts) (av_rescale(ts, 1000, AV_TIME_BASE))
 #define milliseconds_to_fftime(ms) (av_rescale(ms, AV_TIME_BASE, 1000))
+#define seconds_to_fftime(ms)      (av_rescale(ms, AV_TIME_BASE, 1))
 
 inline static void ffp_reset_internal(FFPlayer *ffp)
 {
