@@ -39,7 +39,7 @@ int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *name)
 
 void decoder_destroy(Decoder *d)
 {
-    av_packet_unref(d->pkt);
+    av_packet_free(&d->pkt);
     avcodec_free_context(&d->avctx);
 }
 
