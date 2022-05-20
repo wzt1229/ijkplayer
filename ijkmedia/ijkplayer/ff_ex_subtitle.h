@@ -33,6 +33,6 @@ int exSub_get_opened_stream_idx(IJKEXSubtitle *sub);
 int exSub_seek_to(IJKEXSubtitle *sub, float sec);
 int exSub_frame_queue_size(IJKEXSubtitle *sub);
 int exSub_has_enough_packets(IJKEXSubtitle *sub, int min_frames);
-int exSub_convert_streamIdx(IJKEXSubtitle *sub, int idx);
+int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx);
 
 #endif /* ff_ex_subtitle_h */

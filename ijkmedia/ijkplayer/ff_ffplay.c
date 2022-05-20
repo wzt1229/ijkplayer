@@ -4769,7 +4769,7 @@ static int ffp_set_ex_stream_selected(FFPlayer *ffp, int stream, int selected)
         return -1;
     }
     //may be external subtitle
-    int want_ex = exSub_convert_streamIdx(is->exSub, stream);
+    int want_ex = exSub_contain_streamIdx(is->exSub, stream);
     if (want_ex == -1) {
         return -2;
     }
