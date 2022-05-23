@@ -277,6 +277,7 @@ typedef struct Decoder {
 } Decoder;
 
 typedef struct IJKEXSubtitle IJKEXSubtitle;
+typedef struct FFINSubtitle FFINSubtitle;
 
 typedef struct VideoState {
     SDL_Thread *read_tid;
@@ -303,13 +304,11 @@ typedef struct VideoState {
     Clock extclk;
 
     FrameQueue pictq;
-    FrameQueue subpq;
     FrameQueue sampq;
 
     Decoder auddec;
     Decoder viddec;
-    Decoder subdec;
-
+    
     int audio_stream;
 
     int av_sync_type;
@@ -359,10 +358,6 @@ typedef struct VideoState {
     SDL_Texture *vis_texture;
     SDL_Texture *sub_texture;
 #endif
-
-    int subtitle_stream;
-    AVStream *subtitle_st;
-    PacketQueue subtitleq;
 
     double frame_timer;
     double frame_last_returned_time;
@@ -424,8 +419,7 @@ typedef struct VideoState {
     SDL_cond  *audio_accurate_seek_cond;
     volatile int initialized_decoder;
     int seek_buffering;
-    //for internal subtitle.
-    float subtitle_extra_delay;//(s)
+    FFINSubtitle *inSub;
     IJKEXSubtitle *exSub;
 } VideoState;
 
