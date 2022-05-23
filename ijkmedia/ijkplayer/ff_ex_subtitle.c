@@ -188,7 +188,8 @@ int exSub_frame_queue_size(IJKEXSubtitle *sub)
     return 0;
 }
 
-static int stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue, int min_frames) {
+static int stream_has_enough_packets(AVStream *st, int stream_id, PacketQueue *queue, int min_frames)
+{
     return stream_id < 0 ||
            queue->abort_request ||
            (st->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
@@ -551,8 +552,6 @@ int exSub_open_file_idx(IJKEXSubtitle *sub, int idx)
         return -1;
     }
     
-    idx = convert_streamIdx(sub, idx);
-    
     if (idx == -1) {
         return -2;
     }
@@ -722,6 +721,7 @@ int exSub_addOnly_subtitle(FFPlayer *ffp, const char *file_name)
     sub->next_idx++;
     ijkmeta_set_ex_subtitle_context_l(ffp->meta, ic, sub, 0);
     SDL_UnlockMutex(sub->mutex);
+    avformat_close_input(&ic);
     return 0;
 }
 
