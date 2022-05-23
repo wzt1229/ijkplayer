@@ -18,6 +18,8 @@
 
 set -e
 
+source $1
+
 TOOLS=$(dirname "$0")
 source ${TOOLS}/env_assert.sh
 
@@ -29,7 +31,8 @@ env_assert "GIT_COMMIT"
 env_assert "REPO_DIR"
 echo "===check env end==="
 
-ARCH=$2
+PLAT=$2
+ARCH=$3
 
 if [[ "$ARCH" == 'all' || "x$ARCH" == 'x' ]];then
     iOS_ARCHS="x86_64 arm64"
@@ -94,6 +97,9 @@ function make_arch_repo() {
     $TOOLS/copy-local-repo.sh $GIT_LOCAL_REPO $dest_repo
     cd $dest_repo
     git checkout ${GIT_COMMIT} -B localBranch
+    if [[ "$GIT_WITH_SUBMODULE" ]]; then
+        git submodule update --init --depth=1
+    fi
     echo "last commit:"$(git log -1 --pretty=format:"[%h] %s:%ce %cd")
     apply_patches
     cd - > /dev/null
@@ -159,4 +165,4 @@ function main() {
     esac
 }
 
-main $*
+main $PLAT $ARCH
