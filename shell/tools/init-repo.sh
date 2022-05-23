@@ -111,7 +111,7 @@ function main() {
             found=0
             for arch in $iOS_ARCHS
             do
-                if [[ "$2" == "$arch" || "x$2" == "x" ]];then
+                if [[ "$2" == "$arch" || "x$2" == "x" || "$2" == "all" ]];then
                     found=1
                     make_arch_repo 'ios' $arch
                 fi
@@ -128,7 +128,7 @@ function main() {
             found=0
             for arch in $macOS_ARCHS
             do
-                if [[ "$2" == "$arch" || "x$2" == "x" ]];then
+                if [[ "$2" == "$arch" || "x$2" == "x" || "$2" == "all" ]];then
                     found=1
                     make_arch_repo 'macos' $arch
                 fi
