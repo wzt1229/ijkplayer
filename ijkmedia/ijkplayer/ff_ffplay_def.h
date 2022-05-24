@@ -276,8 +276,7 @@ typedef struct Decoder {
     int    is_switching;
 } Decoder;
 
-typedef struct IJKEXSubtitle IJKEXSubtitle;
-typedef struct FFINSubtitle FFINSubtitle;
+typedef struct FFSubtitle FFSubtitle;
 
 typedef struct VideoState {
     SDL_Thread *read_tid;
@@ -419,8 +418,7 @@ typedef struct VideoState {
     SDL_cond  *audio_accurate_seek_cond;
     volatile int initialized_decoder;
     int seek_buffering;
-    FFINSubtitle *inSub;
-    IJKEXSubtitle *exSub;
+    FFSubtitle *ffSub;
 } VideoState;
 
 /* options specified by the user */

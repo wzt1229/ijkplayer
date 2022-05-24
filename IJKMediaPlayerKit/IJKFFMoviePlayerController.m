@@ -1928,10 +1928,12 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
 - (void)exchangeSelectedStream:(int)streamIdx
 {
     if (_mediaPlayer) {
-        ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
-        //TODO: 通过seek解决切换为内嵌字幕后不能立马显示问题
-        long pst = ijkmp_get_current_position(_mediaPlayer);
-        ijkmp_seek_to(_mediaPlayer, pst);
+        int r = ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
+        if (r > 0) {
+            //TODO: 通过seek解决切换为内嵌字幕后不能立马显示问题
+            long pst = ijkmp_get_current_position(_mediaPlayer);
+            ijkmp_seek_to(_mediaPlayer, pst);
+        }
     }
 }
 
