@@ -1092,8 +1092,20 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
 
     NSString *key = [NSString stringWithUTF8String:name];
     const char *value = ijkmeta_get_string_l(rawMeta, name);
-    if (value) {
-        [meta setObject:[NSString stringWithUTF8String:value] forKey:key];
+    NSString *str = nil;
+    if (value && strlen(value) > 0) {
+        str = [NSString stringWithUTF8String:value];
+        if (!str) {
+            //"\xce޼\xab\xb5\xe7Ӱ-bbs.wujidy.com" is nil !!
+            //try gbk encoding.
+            NSStringEncoding gbkEncoding = CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000);
+            NSData *data = [[NSData alloc]initWithBytes:value length:strlen(value)];
+            //无极电影-bbs.wujidy.com
+            str = [[NSString alloc]initWithData:data encoding:gbkEncoding];
+        }
+    }
+    if (str) {
+        [meta setObject:str forKey:key];
     } else if (defaultValue) {
         [meta setObject:defaultValue forKey:key];
     } else {
