@@ -175,6 +175,20 @@ else
 fi
 echo "------------------------"
 
+#----------------------
+# with bluray
+if [[ -f "${XC_PRODUCT_ROOT}/opus-$XC_ARCH/lib/pkgconfig/opus.pc" ]]; then
+    
+    FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-libbluray --enable-protocol=bluray"
+    
+    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${XC_PRODUCT_ROOT}/opus-$XC_ARCH/lib/pkgconfig"
+
+    echo "[*] --enable-libbluray --enable-protocol=bluray"
+else
+    echo "[*] --disable-libbluray --disable-protocol=bluray"
+fi
+echo "------------------------"
+
 #parser subtitles
 FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-demuxer=ass --enable-demuxer=webvtt --enable-demuxer=srt"
     
