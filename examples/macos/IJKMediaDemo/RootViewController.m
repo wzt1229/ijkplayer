@@ -572,10 +572,23 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerOpenInput:) name:IJKMPMoviePlayerOpenInputNotification object:self.player];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerVideoDecoderFatal:) name:IJKMPMoviePlayerVideoDecoderFatalNotification object:self.player];
+    
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
     [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
+}
+
+- (void)ijkPlayerVideoDecoderFatal:(NSNotification *)notifi
+{
+    NSLog(@"decoder fatal:%@",notifi.userInfo[@"code"]);
+    if (self.useVideoToolBox == 2) {
+        self.useVideoToolBox = 0;
+        NSURL *playingUrl = self.playingUrl;
+        [self stopPlay:nil];
+        [self playURL:playingUrl];
+    }
 }
 
 - (void)ijkPlayerOpenInput:(NSNotification *)notifi
@@ -1023,7 +1036,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMovieNaturalSizeAvailableNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerOpenInputNotification object:nil];
-
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerVideoDecoderFatalNotification object:nil];
+    
     [self.kvoCtrl safelyRemoveAllObservers];
     if (self.player) {
         [self.player.view removeFromSuperview];

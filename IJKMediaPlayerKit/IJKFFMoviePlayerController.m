@@ -1463,6 +1463,13 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
              object:self userInfo:@{@"du" : @(du)}];
             break;
         }
+        case FFP_MSG_VIDEO_DECODER_FATAL: {
+            int code = avmsg->arg1;
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:IJKMPMoviePlayerVideoDecoderFatalNotification
+             object:self userInfo:@{@"code" : @(code)}];
+            break; 
+        }
         default:
             // NSLog(@"unknown FFP_MSG_xxx(%d)\n", avmsg->what);
             break;

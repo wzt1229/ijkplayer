@@ -177,6 +177,7 @@ IJK_EXTERN NSString *const IJKMPMoviePlayerSeekVideoStartNotification;
 
 IJK_EXTERN NSString *const IJKMPMoviePlayerSelectedStreamDidChangeNotification;
 IJK_EXTERN NSString *const IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification;
+IJK_EXTERN NSString *const IJKMPMoviePlayerVideoDecoderFatalNotification; /*useinfo's code is decoder's err code.*/
 
 @end
 

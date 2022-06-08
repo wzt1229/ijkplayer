@@ -636,11 +636,19 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
             }
             av_packet_unref(d->pkt);
         } else {
-            if (avcodec_send_packet(d->avctx, d->pkt) == AVERROR(EAGAIN)) {
+            int send = avcodec_send_packet(d->avctx, d->pkt);
+            if (send == AVERROR(EAGAIN)) {
                 av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
                 d->packet_pending = 1;
             } else {
                 av_packet_unref(d->pkt);
+                if (send == AVERROR_INVALIDDATA){
+                    VideoState *is = ffp->is;
+                    if (!is->viddec.first_frame_decoded) {
+                        //print_error("decode video frame", ret);
+                        ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_FATAL, send);                        
+                    }
+                }
             }
         }
     }
