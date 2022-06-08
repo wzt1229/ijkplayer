@@ -116,7 +116,7 @@ index 0000000..c553650
 @@ -0,0 +1,29 @@
 +/*
 + * BluRay (libbluray) protocol
-+ * 
++ *
 + * This file is part of FFmpeg.
 + *
 + * FFmpeg is free software; you can redistribute it and/or
