@@ -35,7 +35,7 @@ c_dir="$PWD"
 function usage()
 {
     echo " useage:"
-    echo " $0 [ios,macos,all] [all|fdk-aac|ffmpeg|lame|libyuv|openssl|opus|x264] [all,arm64,x86_64]"
+    echo " $0 [ios,macos,all] [all|fdk-aac|ffmpeg|lame|libyuv|openssl|opus|x264|bluray] [all,arm64,x86_64]"
 }
 
 if [[ "x$LIBS" == "x" || "$LIBS" == "all" ]]; then
@@ -46,8 +46,7 @@ if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' || "$PLAT" == 'all' ]]; then
     for lib in $LIBS
     do
         echo "===[init $lib]===================="
-        source $c_dir/init-cfgs/$lib
-        $c_dir/tools/init-repo.sh "$PLAT" "$ARCH"
+        $c_dir/tools/init-repo.sh "$c_dir/init-cfgs/$lib" "$PLAT" "$ARCH"
         echo "===================================="
     done
 else
