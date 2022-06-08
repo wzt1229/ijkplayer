@@ -1,18 +1,18 @@
-From c57c894b5ed7190537d948bff65b04a3ab41bfcd Mon Sep 17 00:00:00 2001
+From bd05472c49f88d3d2e0e94ba84cc28d552407a10 Mon Sep 17 00:00:00 2001
 From: YoushiQian <youshiqian206918@sohu-inc.com>
-Date: Wed, 1 Jun 2022 17:21:47 +0800
+Date: Wed, 8 Jun 2022 14:07:32 +0800
 Subject: [PATCH] support to parse all tracks' language meta when open the
  bluray input
 
 ---
- libavformat/bluray.c | 102 +++++++++++++++++++++++++++++++++++++++++++
- libavformat/bluray.h |  29 ++++++++++++
- libavformat/utils.c  |  14 ++++++
- 3 files changed, 145 insertions(+)
+ libavformat/bluray.c | 65 ++++++++++++++++++++++++++++++++++++++++++++
+ libavformat/bluray.h | 29 ++++++++++++++++++++
+ libavformat/utils.c  | 14 ++++++++++
+ 3 files changed, 108 insertions(+)
  create mode 100644 libavformat/bluray.h
 
 diff --git a/libavformat/bluray.c b/libavformat/bluray.c
-index 9282bf9..d1ef0f5 100644
+index 9282bf9..80d4ff7 100644
 --- a/libavformat/bluray.c
 +++ b/libavformat/bluray.c
 @@ -26,6 +26,8 @@
@@ -40,23 +40,19 @@ index 9282bf9..d1ef0f5 100644
                  duration = info->duration;
              }
  
-@@ -223,6 +227,104 @@ static int64_t bluray_seek(URLContext *h, int64_t pos, int whence)
+@@ -223,6 +227,67 @@ static int64_t bluray_seek(URLContext *h, int64_t pos, int whence)
      return AVERROR(EINVAL);
  }
  
-+static int ff_bluray_parse_priv_ic(URLContext *h, AVFormatContext *ic)
++int ff_bluray_parse_priv(AVFormatContext *ic, URLContext *h)
 +{
 +    BlurayContext *bd = h->priv_data;
 +    BLURAY_TITLE_INFO *title_info = NULL;
 +    BLURAY_CLIP_INFO clip_info;
 +
-+    int nb_video_streams = 0;
-+    AVStream **video_streams = NULL;
-+    int nb_audio_streams = 0;
-+    AVStream **audio_streams = NULL;
-+    int nb_sub_streams = 0;
-+    AVStream **sub_streams = NULL;
-+    AVStream **tmp = NULL;
++    int v_idx = 0;
++    int a_idx = 0;
++    int s_idx = 0;
 +    int ret = 0;
 +
 +    if (!bd || !bd->bd) {
@@ -78,31 +74,25 @@ index 9282bf9..d1ef0f5 100644
 +        if (ic->streams[i] && ic->streams[i]->codecpar) {
 +            switch (ic->streams[i]->codecpar->codec_type) {
 +            case AVMEDIA_TYPE_VIDEO:
-+                tmp = av_realloc_array(video_streams, nb_video_streams + 1, sizeof(*video_streams));
-+                if (!tmp) {
-+                    ret = ENOMEM;
-+                    goto fail;
++                if (v_idx < clip_info.video_stream_count) {
++                    av_log(h, AV_LOG_INFO, "video stream %d lang = %s\n", v_idx, clip_info.video_streams[v_idx].lang);
++                    av_dict_set(&ic->streams[i]->metadata, "language", clip_info.video_streams[v_idx].lang, AV_DICT_DONT_OVERWRITE);
++                    v_idx++;
 +                }
-+                video_streams = tmp;
-+                video_streams[nb_video_streams++] = ic->streams[i];
 +                break;
 +            case AVMEDIA_TYPE_AUDIO:
-+                tmp = av_realloc_array(audio_streams, nb_audio_streams + 1, sizeof(*audio_streams));
-+                if (!tmp) {
-+                    ret = ENOMEM;
-+                    goto fail;
++                if (a_idx < clip_info.audio_stream_count) {
++                    av_log(h, AV_LOG_INFO, "audio stream %d lang = %s\n", a_idx, clip_info.audio_streams[a_idx].lang);
++                    av_dict_set(&ic->streams[i]->metadata, "language", clip_info.audio_streams[a_idx].lang, AV_DICT_DONT_OVERWRITE);
++                    a_idx++;
 +                }
-+                audio_streams = tmp;
-+                audio_streams[nb_audio_streams++] = ic->streams[i];
 +                break;
 +            case AVMEDIA_TYPE_SUBTITLE:
-+                tmp = av_realloc_array(sub_streams, nb_sub_streams + 1, sizeof(*sub_streams));
-+                if (!tmp) {
-+                    ret = ENOMEM;
-+                    goto fail;
++                if (s_idx < clip_info.pg_stream_count) {
++                    av_log(h, AV_LOG_INFO, "subtitle stream %d lang = %s\n", s_idx, clip_info.pg_streams[s_idx].lang);
++                    av_dict_set(&ic->streams[i]->metadata, "language", clip_info.pg_streams[s_idx].lang, AV_DICT_DONT_OVERWRITE);
++                    s_idx++;
 +                }
-+                sub_streams = tmp;
-+                sub_streams[nb_sub_streams++] = ic->streams[i];
 +                break;
 +            default:
 +                break;
@@ -110,44 +100,17 @@ index 9282bf9..d1ef0f5 100644
 +        }
 +    }
 +
-+    for (int k = 0; k < clip_info.video_stream_count; k++) {
-+        av_log(h, AV_LOG_INFO, "video stream %d lang = %s\n", k, clip_info.video_streams[k].lang);
-+        if (k < nb_video_streams) {
-+            av_dict_set(&video_streams[k]->metadata, "language", clip_info.video_streams[k].lang, AV_DICT_DONT_OVERWRITE);
-+        }
-+    }
-+    for (int k = 0; k < clip_info.audio_stream_count; k++) {
-+        av_log(h, AV_LOG_INFO, "audio stream %d lang = %s\n", k, clip_info.audio_streams[k].lang);
-+        if (k < nb_audio_streams) {
-+            av_dict_set(&audio_streams[k]->metadata, "language", clip_info.audio_streams[k].lang, AV_DICT_DONT_OVERWRITE);
-+        }
-+    }
-+    for (int k = 0; k < clip_info.pg_stream_count; k++) {
-+        av_log(h, AV_LOG_INFO, "subtitle stream %d lang = %s\n", k, clip_info.pg_streams[k].lang);
-+        if (k < nb_sub_streams) {
-+            av_dict_set(&sub_streams[k]->metadata, "language", clip_info.pg_streams[k].lang, AV_DICT_DONT_OVERWRITE);
-+        }
-+    }
-+
 +fail:
 +    bd_free_title_info(title_info);
-+    av_free(video_streams);
-+    av_free(audio_streams);
-+    av_free(sub_streams);
-+    
-+    return ret != 0 ? AVERROR(ret) : 0;
-+}
 +
-+int ff_bluray_parse_priv(URLContext *h, AVFormatContext **s)
-+{
-+    return ff_bluray_parse_priv_ic(h, *s);
++    return ret != 0 ? AVERROR(ret) : 0;
 +}
  
  const URLProtocol ff_bluray_protocol = {
      .name            = "bluray",
 diff --git a/libavformat/bluray.h b/libavformat/bluray.h
 new file mode 100644
-index 0000000..5605876
+index 0000000..c553650
 --- /dev/null
 +++ b/libavformat/bluray.h
 @@ -0,0 +1,29 @@
@@ -174,14 +137,15 @@ index 0000000..5605876
 +#ifndef AVFORMAT_BLURAY_H
 +#define AVFORMAT_BLURAY_H
 +
-+#include "avformat.h"
++typedef struct AVFormatContext AVFormatContext;
++typedef struct URLContext URLContext;
 +
-+int ff_bluray_parse_priv(URLContext *h, AVFormatContext **s);
++int ff_bluray_parse_priv(AVFormatContext *ic, URLContext *h);
 +
 +#endif /* AVFORMAT_BLURAY_H */
-+ 
+\ No newline at end of file
 diff --git a/libavformat/utils.c b/libavformat/utils.c
-index dfbfb0a..de5c752 100644
+index dfbfb0a..0f28068 100644
 --- a/libavformat/utils.c
 +++ b/libavformat/utils.c
 @@ -52,6 +52,9 @@
@@ -202,8 +166,8 @@ index dfbfb0a..de5c752 100644
 +    if (s->pb) {
 +        URLContext *url_context = ffio_geturlcontext(s->pb);
 +        if (url_context && url_context->prot) {
-+            if (!strcmp(url_context->prot->name, "bluray")) {
-+                ff_bluray_parse_priv(url_context, &s);
++            if (url_context->prot->name && !strcmp(url_context->prot->name, "bluray")) {
++                ff_bluray_parse_priv(s, url_context);
 +            }
 +        }
 +    }
