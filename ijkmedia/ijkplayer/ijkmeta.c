@@ -358,6 +358,10 @@ void ijkmeta_set_ex_subtitle_context_l(IjkMediaMeta *meta, struct AVFormatContex
 
         ijkmeta_append_child_l(meta, stream_meta);
         stream_meta = NULL;
+        
+//        AVDictionaryEntry *tag = NULL;
+//        while ((tag = av_dict_get(ic->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+//            printf("ic metadata item:%s=%s\n", tag->key, tag->value);
     }
 }
 
