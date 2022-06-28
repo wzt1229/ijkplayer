@@ -2959,7 +2959,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
                is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
            } else {
                gotFrame = 1;
-               if (is->show_mode != SHOW_MODE_VIDEO)
+//               if (is->show_mode != SHOW_MODE_VIDEO)
                    update_sample_display(ffp, (int16_t *)is->audio_buf, audio_size);
                is->audio_buf_size = audio_size;
            }
