@@ -204,8 +204,8 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     weakHolder.object = self;
 
     ijkmp_set_weak_thiz(_mediaPlayer, (__bridge_retained void *) self);
-#if ! IJK_IO_OFF
     ijkmp_set_inject_opaque(_mediaPlayer, (__bridge_retained void *) weakHolder);
+#if ! IJK_IO_OFF
     ijkmp_set_ijkio_inject_opaque(_mediaPlayer, (__bridge_retained void *)weakHolder);
 #endif
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "start-on-prepared", _shouldAutoplay ? 1 : 0);
@@ -587,9 +587,10 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
     _liveOpenDelegate       = nil;
     _nativeInvokeDelegate   = nil;
 
-#if ! IJK_IO_OFF
     __unused id weakPlayer = (__bridge_transfer IJKFFMoviePlayerController*)ijkmp_set_weak_thiz(_mediaPlayer, NULL);
     __unused id weakHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_inject_opaque(_mediaPlayer, NULL);
+
+#if ! IJK_IO_OFF
     __unused id weakijkHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_ijkio_inject_opaque(_mediaPlayer, NULL);
 #endif
     ijkmp_dec_ref_p(&_mediaPlayer);
@@ -1020,6 +1021,17 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         [self startHudTimer];
     else
         [self stopHudTimer];
+}
+
+- (void)setAudioSamplesCallback:(void (^)(int16_t *, int, int, int))audioSamplesCallback
+{
+    _audioSamplesCallback = audioSamplesCallback;
+
+    if (audioSamplesCallback) {
+        ijkmp_set_audio_sample_observer(_mediaPlayer, ijkff_audio_samples_callback);
+    } else {
+        ijkmp_set_audio_sample_observer(_mediaPlayer, NULL);
+    }
 }
 
 - (BOOL)shouldShowHudView
@@ -1739,6 +1751,21 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
         default: {
             return 0;
         }
+    }
+}
+
+static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int sampleSize, int sampleRate, int channels)
+{
+    IJKWeakHolder *weakHolder = (__bridge IJKWeakHolder*)opaque;
+    IJKFFMoviePlayerController *mpc = weakHolder.object;
+    if (!mpc)
+        return 0;
+
+    if (mpc.audioSamplesCallback) {
+        mpc.audioSamplesCallback(samples, sampleSize, sampleRate, channels);
+        return 0;
+    } else {
+        return -1;
     }
 }
 

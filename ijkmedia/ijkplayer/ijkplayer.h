@@ -228,4 +228,8 @@ int             ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* fil
 int ijkmp_exchange_video_decoder(IjkMediaPlayer *mp);
 /* get video frame queue chache remaining count*/
 int ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp);
+
+/* register audio samples observer*/
+void            ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callback cb);
+
 #endif

@@ -848,3 +848,9 @@ int ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp)
     int retval = ffp_get_video_frame_cache_remaining(mp->ffplayer);
     return retval;
 }
+
+void ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callback cb)
+{
+    assert(mp);
+    ffp_set_audio_sample_observer(mp->ffplayer, cb);
+}

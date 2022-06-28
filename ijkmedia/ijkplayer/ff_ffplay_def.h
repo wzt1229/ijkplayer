@@ -749,6 +749,8 @@ typedef struct FFPlayer {
     int is_manifest;
 #endif
     LasPlayerStatistic las_player_statistic;
+
+    ijk_audio_samples_callback audio_samples_callback;
 } FFPlayer;
 
 #define fftime_to_milliseconds(ts) (av_rescale(ts, 1000, AV_TIME_BASE))

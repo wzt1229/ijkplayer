@@ -2670,9 +2670,10 @@ static int subtitle_thread(void *arg)
 }
 
 /* copy samples for viewing in editor window */
-static void update_sample_display(VideoState *is, short *samples, int samples_size)
+static void update_sample_display(FFPlayer *ffp, short *samples, int samples_size)
 {
     int size, len;
+    VideoState *is = ffp->is;
 
     size = samples_size / sizeof(short);
     while (size > 0) {
@@ -2685,6 +2686,17 @@ static void update_sample_display(VideoState *is, short *samples, int samples_si
         if (is->sample_array_index >= SAMPLE_ARRAY_SIZE)
             is->sample_array_index = 0;
         size -= len;
+    }
+
+    if (ffp->audio_samples_callback) {
+        ffp->audio_samples_callback(
+                                    ffp->inject_opaque,
+                                    (int16_t*)is->sample_array,
+                                    FFMIN(samples_size / sizeof(short), SAMPLE_ARRAY_SIZE - is->sample_array_index),
+                                    is->audio_src.freq,
+                                    is->audio_src.channels
+                                    );
+        is->sample_array_index = 0;
     }
 }
 
@@ -2948,7 +2960,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
            } else {
                gotFrame = 1;
                if (is->show_mode != SHOW_MODE_VIDEO)
-                   update_sample_display(is, (int16_t *)is->audio_buf, audio_size);
+                   update_sample_display(ffp, (int16_t *)is->audio_buf, audio_size);
                is->audio_buf_size = audio_size;
            }
            is->audio_buf_index = 0;
@@ -4634,6 +4646,7 @@ FFPlayer *ffp_create()
 #if ! IJK_IO_OFF
     las_stat_init(&ffp->las_player_statistic);
 #endif
+    ffp->audio_samples_callback = NULL;
     return ffp;
 }
 
@@ -5966,4 +5979,14 @@ int ffp_get_video_frame_cache_remaining(FFPlayer *ffp)
         return 0;
     }
     return frame_queue_nb_remaining(&ffp->is->pictq);
+}
+
+void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque);
+
+void ffp_set_audio_sample_observer(FFPlayer *ffp, ijk_audio_samples_callback cb)
+{
+    if (!ffp) {
+        return;
+    }
+    ffp->audio_samples_callback = cb;
 }
