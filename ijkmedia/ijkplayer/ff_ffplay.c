@@ -2689,14 +2689,22 @@ static void update_sample_display(FFPlayer *ffp, short *samples, int samples_siz
     }
 
     if (ffp->audio_samples_callback) {
-        ffp->audio_samples_callback(
-                                    ffp->inject_opaque,
-                                    (int16_t*)is->sample_array,
-                                    FFMIN(samples_size / sizeof(short), SAMPLE_ARRAY_SIZE - is->sample_array_index),
-                                    is->audio_src.freq,
-                                    is->audio_src.channels
-                                    );
-        is->sample_array_index = 0;
+        int windowSize = FFMIN(2048 * is->audio_src.channels, SAMPLE_ARRAY_SIZE - 1);
+        int i = 0;
+        for (; i < floor(is->sample_array_index / windowSize); i++) {
+            ffp->audio_samples_callback(
+                                        ffp->inject_opaque,
+                                        (int16_t*)is->sample_array + i * windowSize,
+                                        windowSize,
+                                        is->audio_src.freq,
+                                        is->audio_src.channels
+                                        );
+        }
+        if (i > 0) {
+            i--;
+            memcpy(is->sample_array, is->sample_array + windowSize * i, (is->sample_array_index - windowSize * i) * sizeof(short));
+            is->sample_array_index -= windowSize * i;
+        }
     }
 }
 
