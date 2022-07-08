@@ -992,7 +992,7 @@ static void video_image_display2(FFPlayer *ffp)
                                        && sp->sub.rects[0]->linesize[0]) {
                                 update_subtitle_pict(ffp, sp->sub.rects[0]);
                             } else {
-                                assert(0);
+                                update_subtitle_text(ffp, "");
                             }
                         }
                         sp->uploaded = 1;
@@ -1022,7 +1022,7 @@ static void video_image_display2(FFPlayer *ffp)
                                        && sp->sub.rects[0]->linesize[0]) {
                                 update_subtitle_pict(ffp, sp->sub.rects[0]);
                             } else {
-                                assert(0);
+                                update_subtitle_text(ffp, "");
                             }
                         }
                         sp->uploaded = 1;
