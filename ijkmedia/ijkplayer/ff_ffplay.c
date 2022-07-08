@@ -979,9 +979,9 @@ static void video_image_display2(FFPlayer *ffp)
                 if (vp->pts >= is->subtitle_extra_delay + sp->pts + ((float) sp->sub.start_display_time / 1000)) {
                     if (!sp->uploaded) {
                         if (sp->sub.num_rects > 0) {
-                            if (sp->sub.rects[0]->text) {
+                            if (sp->sub.rects[0]->type == SUBTITLE_TEXT && sp->sub.rects[0]->text) {
                                 update_subtitle_text(ffp, sp->sub.rects[0]->text);
-                            } else if (sp->sub.rects[0]->ass) {
+                            } else if (sp->sub.rects[0]->type == SUBTITLE_ASS && sp->sub.rects[0]->ass) {
                                 char *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
                                 if (buffer) {
                                     update_subtitle_text(ffp, buffer);
@@ -1009,14 +1009,18 @@ static void video_image_display2(FFPlayer *ffp)
                 if (vp->pts >= is->subtitle_extra_delay + sp->pts + ((float) sp->sub.start_display_time / 1000)) {
                     if (!sp->uploaded) {
                         if (sp->sub.num_rects > 0) {
-                            if (sp->sub.rects[0]->text) {
+                            if (sp->sub.rects[0]->type == SUBTITLE_TEXT && sp->sub.rects[0]->text) {
                                 update_subtitle_text(ffp, sp->sub.rects[0]->text);
-                            } else if (sp->sub.rects[0]->ass) {
+                            } else if (sp->sub.rects[0]->type == SUBTITLE_ASS && sp->sub.rects[0]->ass) {
                                 char *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
                                 if (buffer) {
                                     update_subtitle_text(ffp, buffer);
                                     free(buffer);
                                 }
+                            } else if (sp->sub.rects[0]->type == SUBTITLE_BITMAP
+                                       && sp->sub.rects[0]->data[0]
+                                       && sp->sub.rects[0]->linesize[0]) {
+                                update_subtitle_pict(ffp, sp->sub.rects[0]);
                             } else {
                                 assert(0);
                             }
