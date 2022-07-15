@@ -36,6 +36,7 @@ typedef struct _SDL_Image_Converter
     struct SwsContext *sws_ctx;
     AVFrame *frame;
     AVBufferRef *frame_buffer;
+    int frame_buffer_size;
 }_SDL_Image_Converter;
 
 void SDL_VoutFree(SDL_Vout *vout)
@@ -108,21 +109,35 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
         
         convert->frame = av_frame_alloc();
         
-        int frame_bytes = av_image_get_buffer_size(vout->ff_format, inFrame->width, inFrame->height, 1);
-        AVBufferRef *frame_buffer_ref = av_buffer_alloc(frame_bytes);
+        av_frame_copy_props(convert->frame, inFrame);
+        convert->frame->format  = vout->ff_format;
+        
+        vout->image_converter = convert;
+        convert->frame_buffer = NULL;
+    }
+    
+    int frame_bytes = av_image_get_buffer_size(vout->ff_format, inFrame->width, inFrame->height, 1);
+    if (frame_bytes != convert->frame_buffer_size) {
+        AVBufferRef *frame_buffer_ref;
+        if (convert->frame_buffer != NULL) {
+            if (av_buffer_realloc(&convert->frame_buffer, frame_bytes)) {
+                free(convert);
+                return -2;
+            }
+            frame_buffer_ref = convert->frame_buffer;
+        } else {
+            frame_buffer_ref = av_buffer_alloc(frame_bytes);
+        }
         if (!frame_buffer_ref) {
             free(convert);
             return -2;
         }
         
-        av_frame_copy_props(convert->frame, inFrame);
-        convert->frame->format  = vout->ff_format;
-        
         av_image_fill_arrays(convert->frame->data, convert->frame->linesize,
                              frame_buffer_ref->data, vout->ff_format, inFrame->width, inFrame->height, 1);
-        convert->frame_buffer  = frame_buffer_ref;
         
-        vout->image_converter = convert;
+        convert->frame_buffer = frame_buffer_ref;
+        convert->frame_buffer_size = frame_bytes;
     }
     
     //优先使用libyuv转换
@@ -132,20 +147,18 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
     
     //libyuv转换失败？
     if (r) {
-        if (convert->sws_ctx == NULL) {
-            convert->sws_ctx = sws_getCachedContext(convert->sws_ctx, inFrame->width, inFrame->height,
-                                      inFrame->format, inFrame->width, inFrame->height,
-                                      vout->ff_format, SWS_BILINEAR, NULL, NULL, NULL);
-        }
+        convert->sws_ctx = sws_getCachedContext(convert->sws_ctx, inFrame->width, inFrame->height,
+                                  inFrame->format, inFrame->width, inFrame->height,
+                                  vout->ff_format, SWS_BILINEAR, NULL, NULL, NULL);
         
         if (convert->sws_ctx == NULL) {
             ALOGE("sws_getCachedContext failed");
             return -3;
         }
         
-        sws_scale(convert->sws_ctx, (const uint8_t**) inFrame->data, inFrame->linesize,
+        int scaled = sws_scale(convert->sws_ctx, (const uint8_t**) inFrame->data, inFrame->linesize,
                   0, inFrame->height, convert->frame->data, convert->frame->linesize);
-        r = 0;
+        r = scaled == inFrame->height ? 0 : -1;
     }
     
     if (r == 0 && outFrame) {
