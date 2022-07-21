@@ -168,9 +168,11 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
         }
         
         for (int p = 0; p < planes; p++) {
-            CVPixelBufferLockBaseAddress(pixelBuffer,p);
             uint8_t *src = frame->data[p];
-            assert(src);
+            if (!src) {
+                continue;
+            }
+            CVPixelBufferLockBaseAddress(pixelBuffer,p);
             uint8_t *dst = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, p);
             int src_linesize = (int)frame->linesize[p];
             int dst_linesize = (int)CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, p);
