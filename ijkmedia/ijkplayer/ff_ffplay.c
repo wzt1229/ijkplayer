@@ -651,7 +651,7 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                     if (!is->viddec.first_frame_decoded) {
                         ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_FATAL, send);                        
                     }
-                } else {
+                } else if (send != 0){
                     int n_send = - send;
                     av_log(d->avctx, AV_LOG_ERROR, "avcodec_send_packet failed:%4s(%d).\n",(char *)&n_send,send);
                 }
