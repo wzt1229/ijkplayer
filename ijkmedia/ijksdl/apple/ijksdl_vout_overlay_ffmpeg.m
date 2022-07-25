@@ -526,7 +526,7 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
 #if defined(__ANDROID__)
                     overlay_format = SDL_FCC_YV12;
 #else
-                    overlay_format = SDL_FCC_I420;
+                    overlay_format = SDL_FCC_NV12;
 #endif
                     break;
             }
