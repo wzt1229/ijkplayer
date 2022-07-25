@@ -2682,9 +2682,22 @@ static int subtitle_thread(void *arg)
 /* copy samples for viewing in editor window */
 static void update_sample_display(FFPlayer *ffp, short *samples, int samples_size)
 {
-    int size, len;
     VideoState *is = ffp->is;
-
+    //flush
+    if (samples_size == -1) {
+        is->sample_array_index = 0;
+        if (ffp->audio_samples_callback) {
+            ffp->audio_samples_callback(ffp->inject_opaque,
+                                        NULL,
+                                        -1,
+                                        is->audio_src.freq,
+                                        is->audio_src.channels
+                                        );
+        }
+        return;
+    }
+    
+    int size, len;
     size = samples_size / sizeof(short);
     while (size > 0) {
         len = SAMPLE_ARRAY_SIZE - is->sample_array_index;
@@ -2977,8 +2990,6 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
                is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
            } else {
                gotFrame = 1;
-//               if (is->show_mode != SHOW_MODE_VIDEO)
-                   update_sample_display(ffp, (int16_t *)is->audio_buf, audio_size);
                is->audio_buf_size = audio_size;
            }
            is->audio_buf_index = 0;
@@ -2989,15 +3000,18 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
             // stream += len;
             // len = 0;
             SDL_AoutFlushAudio(ffp->aout);
+            update_sample_display(ffp, NULL, -1);
             gotFrame = 0;
             break;
         }
         rest_len = is->audio_buf_size - is->audio_buf_index;
         if (rest_len > len)
             rest_len = len;
-        if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME)
+        if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME) {
             memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, rest_len);
-        else {
+            //give same data to upper.
+            update_sample_display(ffp, (int16_t *)is->audio_buf + is->audio_buf_index, rest_len);
+        } else {
             memset(stream, 0, rest_len);
             if (!is->muted && is->audio_buf)
                 SDL_MixAudio(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, rest_len, is->audio_volume);

@@ -45,6 +45,7 @@
 
 typedef int (*ijk_inject_callback)(void *opaque, int type, void *data, size_t data_size);
 
+//when sampleSize is -1,means needs reset and refresh ui.
 typedef int (*ijk_audio_samples_callback)(void *opaque, int16_t *samples, int sampleSize, int sampleRate, int channels);
 
 #define FFP_OPT_CATEGORY_FORMAT 1
