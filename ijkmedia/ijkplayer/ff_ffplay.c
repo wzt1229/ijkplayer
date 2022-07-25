@@ -642,12 +642,18 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                 d->packet_pending = 1;
             } else {
                 av_packet_unref(d->pkt);
-                if (send == AVERROR_INVALIDDATA){
+                if (send == AVERROR_INVALIDDATA
+                    || send == AVERROR_UNKNOWN
+                    || send == AVERROR_EXTERNAL
+                    || send == AVERROR(ENOSYS)
+                    || send == AVERROR(EINVAL)) {
                     VideoState *is = ffp->is;
                     if (!is->viddec.first_frame_decoded) {
-                        //print_error("decode video frame", ret);
                         ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_FATAL, send);                        
                     }
+                } else {
+                    int n_send = - send;
+                    av_log(d->avctx, AV_LOG_ERROR, "avcodec_send_packet failed:%4s(%d).\n",(char *)&n_send,send);
                 }
             }
         }
