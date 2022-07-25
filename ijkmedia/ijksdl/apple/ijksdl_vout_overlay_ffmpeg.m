@@ -52,6 +52,7 @@ struct SDL_VoutOverlay_Opaque {
     Uint16 pitches[AV_NUM_DATA_POINTERS];
 #if USE_FF_VTB
     CVPixelBufferRef pixelBuffer;
+    CVPixelBufferPoolRef pixelBufferPool;
 #endif
 
 };
@@ -120,6 +121,25 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
     [attributes setObject:@(linesize) forKey:(NSString*)kCVPixelBufferBytesPerRowAlignmentKey];
     [attributes setObject:[NSDictionary dictionary] forKey:(NSString*)kCVPixelBufferIOSurfacePropertiesKey];
     return attributes;
+}
+
+static CVReturn createCVPixelBufferPoolFromAVFrame(CVPixelBufferPoolRef * poolRef, int width, int height, int format)
+{
+    if (NULL == poolRef) {
+        return kCVReturnInvalidArgument;
+    }
+    
+    CVReturn result = kCVReturnError;
+    //FIXME TODO
+    const bool fullRange = true;
+    NSDictionary * attributes = prepareCVPixelBufferAttibutes(format, fullRange, height, width);
+    
+    result = CVPixelBufferPoolCreate(NULL, NULL, (__bridge CFDictionaryRef) attributes, poolRef);
+    
+    if (result != kCVReturnSuccess) {
+        ALOGE("CVPixelBufferCreate Failed:%d\n", result);
+    }
+    return result;
 }
 
 static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPixelBufferPoolRef poolRef)
@@ -452,7 +472,16 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
         opaque->pixelBuffer = NULL;
     }
     
-    CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, NULL);
+    CVPixelBufferPoolRef poolRef = NULL;
+    if (opaque->pixelBufferPool) {
+        NSDictionary *attributes = (__bridge NSDictionary *)CVPixelBufferPoolGetPixelBufferAttributes(opaque->pixelBufferPool);
+        int _width = [[attributes objectForKey:(NSString*)kCVPixelBufferWidthKey] intValue];
+        int _height = [[attributes objectForKey:(NSString*)kCVPixelBufferHeightKey] intValue];
+        if (frame->width == _width && frame->height == _height) {
+            poolRef = opaque->pixelBufferPool;
+        }
+    }
+    CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, poolRef);
     if (pixel_buffer) {
         opaque->pixelBuffer = pixel_buffer;
         overlay->cv_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
@@ -621,6 +650,14 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
         buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
         opaque->planes = 2;
     }
+    
+    if (!display->cvPixelBufferPool) {
+        CVPixelBufferPoolRef cvPixelBufferPool = NULL;
+        createCVPixelBufferPoolFromAVFrame(&cvPixelBufferPool, width, height,ff_format);
+        display->cvPixelBufferPool = cvPixelBufferPool;
+    }
+    
+    opaque->pixelBufferPool = display->cvPixelBufferPool;
 #endif
     //record ff_format
     overlay->ff_format = ff_format;
