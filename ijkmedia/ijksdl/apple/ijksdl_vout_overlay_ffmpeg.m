@@ -187,20 +187,26 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
             planes = (int)CVPixelBufferGetPlaneCount(pixelBuffer);
         }
         
+        CVPixelBufferLockBaseAddress(pixelBuffer,0);
         for (int p = 0; p < planes; p++) {
             uint8_t *src = frame->data[p];
-            if (!src) {
+            uint8_t *dst = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, p);
+            if (!src || !dst) {
                 continue;
             }
-            CVPixelBufferLockBaseAddress(pixelBuffer,p);
-            uint8_t *dst = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, p);
+            
             int src_linesize = (int)frame->linesize[p];
             int dst_linesize = (int)CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, p);
             int height = (int)CVPixelBufferGetHeightOfPlane(pixelBuffer, p);
-            int bytewidth = MIN(src_linesize, dst_linesize);
-            av_image_copy_plane(dst, dst_linesize, src, src_linesize, bytewidth, height);
-            CVPixelBufferUnlockBaseAddress(pixelBuffer, p);
+            
+            if (src_linesize == dst_linesize) {
+                memcpy(dst, src, dst_linesize * height);
+            } else {
+                int bytewidth = MIN(src_linesize, dst_linesize);
+                av_image_copy_plane(dst, dst_linesize, src, src_linesize, bytewidth, height);
+            }
         }
+        CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
         return pixelBuffer;
     } else {
         ALOGE("CVPixelBufferCreate Failed:%d\n", result);
