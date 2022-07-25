@@ -89,7 +89,7 @@ int SDL_VoutSetOverlayFormat(SDL_Vout *vout, Uint32 overlay_format)
     return 0;
 }
 
-int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame **outFrame)
+int SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame **outFrame)
 {
     if (!vout) {
         return -1;
@@ -110,7 +110,7 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
         convert->frame = av_frame_alloc();
         
         av_frame_copy_props(convert->frame, inFrame);
-        convert->frame->format  = vout->ff_format;
+        convert->frame->format = vout->ff_format;
         
         vout->image_converter = convert;
         convert->frame_buffer = NULL;
@@ -121,7 +121,6 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
         AVBufferRef *frame_buffer_ref;
         if (convert->frame_buffer != NULL) {
             if (av_buffer_realloc(&convert->frame_buffer, frame_bytes)) {
-                free(convert);
                 return -2;
             }
             frame_buffer_ref = convert->frame_buffer;
@@ -129,8 +128,7 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
             frame_buffer_ref = av_buffer_alloc(frame_bytes);
         }
         if (!frame_buffer_ref) {
-            free(convert);
-            return -2;
+            return -3;
         }
         
         av_image_fill_arrays(convert->frame->data, convert->frame->linesize,
@@ -153,7 +151,7 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
         
         if (convert->sws_ctx == NULL) {
             ALOGE("sws_getCachedContext failed");
-            return -3;
+            return -4;
         }
         
         int scaled = sws_scale(convert->sws_ctx, (const uint8_t**) inFrame->data, inFrame->linesize,
