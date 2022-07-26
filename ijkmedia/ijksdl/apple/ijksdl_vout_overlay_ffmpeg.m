@@ -512,26 +512,25 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
 SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_format, SDL_Vout *display)
 {
     Uint32 overlay_format = display->overlay_format;
-    switch (overlay_format) {
-        case SDL_FCC__GLES2: {
-            switch (frame_format) {
-#if TARGET_OS_IOS
-                case AV_PIX_FMT_YUV444P10LE:
-                    overlay_format = SDL_FCC_I444P10LE;
-                    break;
-#endif
-                case AV_PIX_FMT_YUV420P:
-                case AV_PIX_FMT_YUVJ420P:
-                default:
+    if (SDL_FCC__GLES2 == overlay_format) {
 #if defined(__ANDROID__)
-                    overlay_format = SDL_FCC_YV12;
-#else
-                    overlay_format = SDL_FCC_NV12;
-#endif
-                    break;
-            }
-            break;
+        overlay_format = SDL_FCC_YV12;
+#elif defined(__APPLE__)
+    #if TARGET_OS_IOS
+        if (frame_format == AV_PIX_FMT_YUV444P10LE) {
+            overlay_format = SDL_FCC_I444P10LE;
         }
+    #else
+        if (frame_format == AV_PIX_FMT_UYVY422) {
+            overlay_format = SDL_FCC_UYVY;
+        }
+    #endif
+        if (frame_format == AV_PIX_FMT_YUV420P) {
+            overlay_format = SDL_FCC_I420;
+        } else {
+            overlay_format = SDL_FCC_NV12;
+        }
+#endif
     }
 
     SDL_VoutOverlay *overlay = SDL_VoutOverlay_CreateInternal(sizeof(SDL_VoutOverlay_Opaque));
@@ -663,7 +662,7 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
         display->cvPixelBufferPool = cvPixelBufferPool;
     }
     
-    opaque->pixelBufferPool = display->cvPixelBufferPool;
+    opaque->pixelBufferPool = (CVPixelBufferPoolRef)display->cvPixelBufferPool;
 #endif
     //record ff_format
     overlay->ff_format = ff_format;
