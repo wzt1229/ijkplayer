@@ -833,15 +833,6 @@ int ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
     return retval;
 }
 
-int ijkmp_exchange_video_decoder(IjkMediaPlayer *mp)
-{
-    assert(mp);
-    MPTRACE("ffp_exchange_video_decoder\n");
-    int retval = ffp_exchange_video_decoder(mp->ffplayer);
-    MPTRACE("ffp_exchange_video_decoder()=%d\n", retval);
-    return retval;
-}
-
 int ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp)
 {
     assert(mp);

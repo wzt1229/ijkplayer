@@ -76,7 +76,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 - (BOOL)isPlaying;
 - (void)shutdown;
 - (void)setPauseInBackground:(BOOL)pause;
-- (int)exchangeVideoDecoder;
 
 @property(nonatomic, readonly)  UIView <IJKSDLGLViewProtocol>*view;
 @property(nonatomic)            NSTimeInterval currentPlaybackTime;

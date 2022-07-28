@@ -78,9 +78,7 @@
 #define     FFP_PROPV_DECODER_UNKNOWN                   0
 #define     FFP_PROPV_DECODER_AVCODEC                   1
 #define     FFP_PROPV_DECODER_MEDIACODEC                2
-#define     FFP_PROPV_DECODER_VIDEOTOOLBOX              3
 #define     FFP_PROPV_DECODER_AVCODEC_HW                4
-#define     FFP_PROPV_DECODER_VIDEOTOOLBOX_ASYNC        5
 #define FFP_PROP_INT64_VIDEO_CACHED_DURATION            20005
 #define FFP_PROP_INT64_AUDIO_CACHED_DURATION            20006
 #define FFP_PROP_INT64_VIDEO_CACHED_BYTES               20007
@@ -112,7 +110,6 @@
 #define FFP_PROP_INT64_IMMEDIATE_RECONNECT              20211
 
 //
-#define FFP_PROP_INT64_ANOTHER_VIDEO_DECODER            30000
 #define FFP_MSG_VIDEO_Z_ROTATE_DEGREE                   30001 /* arg1 = degrees */
 #define FFP_MSG_NO_CODEC_FOUND                          30002 /* No codec could be found with id pcm_s16le */
 #define FFP_MSG_AFTER_SEEK_FIRST_FRAME                  30003 /* arg1 = seek duration */

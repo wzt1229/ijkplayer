@@ -852,10 +852,6 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
 - (NSString *)coderNameWithVdecType:(int)vdec
 {
     switch (vdec) {
-        case FFP_PROPV_DECODER_VIDEOTOOLBOX:
-            return @"VideoToolbox";
-        case FFP_PROPV_DECODER_VIDEOTOOLBOX_ASYNC:
-            return @"VideoToolbox-Async";
         case FFP_PROPV_DECODER_AVCODEC:
             return [NSString stringWithFormat:@"avcodec %d.%d.%d",
                                  LIBAVCODEC_VERSION_MAJOR,
@@ -877,8 +873,6 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         return;
 
     [self setHudValue:_monitor.vdecoder forKey:@"vdec"];
-//    int64_t vdec2 = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_ANOTHER_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
-//    [self setHudValue:[self coderNameWithVdecType:(int)vdec2] forKey:@"vdec-swithing"];
     
     [self setHudValue:[NSString stringWithFormat:@"%d / %.2f", [self dropFrameCount], [self dropFrameRate]] forKey:@"drop-frame(c/r)"];
     
@@ -1988,11 +1982,6 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
 - (float)currentSubtitleExtraDelay
 {
     return ijkmp_get_subtitle_extra_delay(_mediaPlayer);
-}
-
-- (int)exchangeVideoDecoder
-{
-    return ijkmp_exchange_video_decoder(_mediaPlayer);
 }
 
 @end

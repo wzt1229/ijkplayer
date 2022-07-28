@@ -397,7 +397,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         switch ([event keyCode]) {
             case kVK_ANSI_H:
             {
-                [self exchangeVideoDecoder];
+                
             }
                 break;
         }
@@ -1385,22 +1385,6 @@ static IOPMAssertionID g_displaySleepAssertionID;
     NSString *title = sender.selectedItem.title;
     NSString *fcc = [@"fcc-" stringByAppendingString:title];
     self.fcc = fcc;
-}
-
-- (void)exchangeVideoDecoder
-{
-    int r = [self.player exchangeVideoDecoder];
-    if (r == 1) {
-        NSLog(@"exchang decoder begin");
-    } else if (r == -1) {
-        NSLog(@"exchanging decoder");
-    } else if (r == -2) {
-        NSLog(@"can't exchange decoder,try later");
-    } else if (r == -3) {
-        NSLog(@"no more decoder can exchange.");
-    } else if (r == -4) {
-        NSLog(@"exchange decoder faild.");
-    }
 }
 
 #pragma mark 日志级别
