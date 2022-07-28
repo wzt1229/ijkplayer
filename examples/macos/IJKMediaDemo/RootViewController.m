@@ -507,6 +507,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         my_stderr = NULL;
     }
     
+    self.seeking = NO;
+    
     if (self.autoTest) {
         
         [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
