@@ -1,8 +1,8 @@
-From bd05472c49f88d3d2e0e94ba84cc28d552407a10 Mon Sep 17 00:00:00 2001
+From d8265ca339e8549f481d470e7a3943820a5ac44a Mon Sep 17 00:00:00 2001
 From: YoushiQian <youshiqian206918@sohu-inc.com>
 Date: Wed, 8 Jun 2022 14:07:32 +0800
-Subject: [PATCH] support to parse all tracks' language meta when open the
- bluray input
+Subject: [PATCH 15/16] support to parse all tracks' language meta when open
+ the bluray input
 
 ---
  libavformat/bluray.c | 65 ++++++++++++++++++++++++++++++++++++++++++++
@@ -110,7 +110,7 @@ index 9282bf9..80d4ff7 100644
      .name            = "bluray",
 diff --git a/libavformat/bluray.h b/libavformat/bluray.h
 new file mode 100644
-index 0000000..c553650
+index 0000000..dfd3cb5
 --- /dev/null
 +++ b/libavformat/bluray.h
 @@ -0,0 +1,29 @@
@@ -177,5 +177,5 @@ index dfbfb0a..0f28068 100644
          goto fail;
  
 -- 
-2.32.0 (Apple Git-132)
+2.30.1 (Apple Git-130)
 
