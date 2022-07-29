@@ -50,7 +50,6 @@ void      ffp_reset(FFPlayer *ffp);
 void     ffp_set_frame_at_time(FFPlayer *ffp, const char *path, int64_t start_time, int64_t end_time, int num, int definition);
 #if ! IJK_IO_OFF
 void     *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque);
-void     *ffp_set_ijkio_inject_opaque(FFPlayer *ffp, void *opaque);
 #endif
 void      ffp_set_option(FFPlayer *ffp, int opt_category, const char *name, const char *value);
 void      ffp_set_option_int(FFPlayer *ffp, int opt_category, const char *name, int64_t value);

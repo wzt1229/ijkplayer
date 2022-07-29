@@ -29,9 +29,6 @@
 #import "IJKMediaModule.h"
 #import "IJKNotificationManager.h"
 #import "NSString+IJKMedia.h"
-#if ! IJK_IO_OFF
-#import "ijkioapplication.h"
-#endif
 #include "string.h"
 #if TARGET_OS_IOS
 #import "IJKAudioKit.h"
@@ -79,7 +76,6 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
 #if ! IJK_IO_OFF
     AVAppAsyncStatistic _asyncStat;
-    IjkIOAppCacheStatistic _cacheStat;
 #endif
     NSTimer *_hudTimer;
     IJKSDLHudControl *_hudCtrl;
@@ -193,7 +189,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     _shouldAutoplay = YES;
 #if ! IJK_IO_OFF
     memset(&_asyncStat, 0, sizeof(_asyncStat));
-    memset(&_cacheStat, 0, sizeof(_cacheStat));
 #endif
     _monitor = [[IJKFFMonitor alloc] init];
 
@@ -205,9 +200,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
     ijkmp_set_weak_thiz(_mediaPlayer, (__bridge_retained void *) self);
     ijkmp_set_inject_opaque(_mediaPlayer, (__bridge_retained void *) weakHolder);
-#if ! IJK_IO_OFF
-    ijkmp_set_ijkio_inject_opaque(_mediaPlayer, (__bridge_retained void *)weakHolder);
-#endif
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "start-on-prepared", _shouldAutoplay ? 1 : 0);
 
     _view = _glView = glView;
@@ -588,10 +580,8 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
     _nativeInvokeDelegate   = nil;
 
     __unused id weakPlayer = (__bridge_transfer IJKFFMoviePlayerController*)ijkmp_set_weak_thiz(_mediaPlayer, NULL);
-    __unused id weakHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_inject_opaque(_mediaPlayer, NULL);
-
 #if ! IJK_IO_OFF
-    __unused id weakijkHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_ijkio_inject_opaque(_mediaPlayer, NULL);
+    __unused id weakHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_inject_opaque(_mediaPlayer, NULL);
 #endif
     ijkmp_dec_ref_p(&_mediaPlayer);
 
@@ -811,15 +801,6 @@ inline static NSString *formatedDurationMilli(int64_t duration) {
     }
 }
 
-//#if ! IJK_IO_OFF
-//inline static NSString *formatedDurationBytesAndBitrate(int64_t bytes, int64_t bitRate) {
-//    if (bitRate <= 0) {
-//        return @"inf";
-//    }
-//    return formatedDurationMilli(((float)bytes) * 8 * 1000 / bitRate);
-//}
-//#endif
-
 inline static NSString *formatedSize(int64_t bytes) {
     if (bytes >= 100 * 1024) {
         return [NSString stringWithFormat:@"%.2f MB", ((float)bytes) / 1000 / 1024];
@@ -904,23 +885,6 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     [self setHudValue:[NSString stringWithFormat:@"%.3f %.3f", avdelay, -vmdiff] forKey:@"delay-avdiff"];
 
     if (self.monitor.httpUrl) {
-//#if ! IJK_IO_OFF
-//        int64_t bitRate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
-//        [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
-//                             formatedSize(_cacheStat.cache_file_forwards),
-//                              formatedDurationBytesAndBitrate(_cacheStat.cache_file_forwards, bitRate)] forKey:@"cache-forwards"];
-//        [self setHudValue:formatedSize(_cacheStat.cache_physical_pos) forKey:@"cache-physical-pos"];
-//        [self setHudValue:formatedSize(_cacheStat.cache_file_pos) forKey:@"cache-file-pos"];
-//        [self setHudValue:formatedSize(_cacheStat.cache_count_bytes) forKey:@"cache-bytes"];
-//        [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
-//                              formatedSize(_asyncStat.buf_backwards),
-//                              formatedDurationBytesAndBitrate(_asyncStat.buf_backwards, bitRate)]
-//                      forKey:@"async-backward"];
-//        [self setHudValue:[NSString stringWithFormat:@"+%@, %@",
-//                              formatedSize(_asyncStat.buf_forwards),
-//                              formatedDurationBytesAndBitrate(_asyncStat.buf_forwards, bitRate)]
-//                      forKey:@"async-forward"];
-//#endif
         int64_t tcpSpeed = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
         [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
                    forKey:@"tcp-spd"];
@@ -1061,13 +1025,6 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     if (!_mediaPlayer)
         return 0.0f;
     return ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_PLAYBACK_VOLUME, 1.0f);
-}
-
-- (int64_t)getFileSize
-{
-    if (!_mediaPlayer)
-        return 0;
-    return ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_LOGICAL_FILE_SIZE, 0);
 }
 
 - (int64_t)trafficStatistic
@@ -1608,16 +1565,6 @@ static int onInjectAsyncStatistic(IJKFFMoviePlayerController *mpc, int type, voi
     return 0;
 }
 
-static int onInectIJKIOStatistic(IJKFFMoviePlayerController *mpc, int type, void *data, size_t data_size)
-{
-    IjkIOAppCacheStatistic *realData = data;
-    assert(realData);
-    assert(sizeof(IjkIOAppCacheStatistic) == data_size);
-
-    mpc->_cacheStat = *realData;
-    return 0;
-}
-
 static int64_t calculateElapsed(int64_t begin, int64_t end)
 {
     if (begin <= 0)
@@ -1733,8 +1680,6 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
             return onInjectIOControl(mpc, mpc.liveOpenDelegate, message, data, data_size);
         case AVAPP_EVENT_ASYNC_STATISTIC:
             return onInjectAsyncStatistic(mpc, message, data, data_size);
-        case IJKIOAPP_EVENT_CACHE_STATISTIC:
-            return onInectIJKIOStatistic(mpc, message, data, data_size);
         case AVAPP_CTRL_DID_TCP_OPEN:
             return onInjectTcpIOControl(mpc, mpc.tcpOpenDelegate, message, data, data_size);
         case AVAPP_EVENT_WILL_HTTP_OPEN:

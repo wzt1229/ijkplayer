@@ -49,7 +49,6 @@
 #include "libavutil/time.h"
 #include "libavutil/bprint.h"
 #include "libavformat/avformat.h"
-#include "ijkavformat/ijklas.h"
 #if CONFIG_AVDEVICE
 #include "libavdevice/avdevice.h"
 #endif
@@ -3667,14 +3666,6 @@ static int read_thread(void *arg)
     if (ffp->iformat_name)
         is->iformat = av_find_input_format(ffp->iformat_name);
  
-#if ! IJK_IO_OFF
-    if (ffp->is_manifest) {
-        extern AVInputFormat ijkff_las_demuxer;
-        is->iformat = &ijkff_las_demuxer;
-        av_dict_set_int(&ffp->format_opts, "las_player_statistic", (intptr_t) (&ffp->las_player_statistic), 0);
-        ffp->find_stream_info = false;
-    }
-#endif
     err = avformat_open_input(&ic, is->filename, is->iformat, &ffp->format_opts);
     if (err < 0) {
         print_error(is->filename, err);
@@ -4504,9 +4495,7 @@ static void ffp_log_callback_report(void *ptr, int level, const char *fmt, va_li
 
     ALOG(ffplv, IJK_LOG_TAG, "%s", line);
 }
-#if ! IJK_IO_OFF
-int ijkav_register_all(void);
-#endif
+
 void ffp_global_init()
 {
     if (g_ffmpeg_global_inited)
@@ -4514,9 +4503,7 @@ void ffp_global_init()
 #if CONFIG_AVDEVICE
     avdevice_register_all();
 #endif
-#if ! IJK_IO_OFF
-    ijkav_register_all();
-#endif
+
     avformat_network_init();
 
     av_log_set_callback(ffp_log_callback_brief);
@@ -4627,9 +4614,7 @@ FFPlayer *ffp_create()
     ffp->meta = ijkmeta_create();
 
     av_opt_set_defaults(ffp);
-#if ! IJK_IO_OFF
-    las_stat_init(&ffp->las_player_statistic);
-#endif
+
     ffp->audio_samples_callback = NULL;
     return ffp;
 }
@@ -4650,9 +4635,7 @@ void ffp_destroy(FFPlayer *ffp)
     ffpipenode_free_p(&ffp->node_vdec);
     ffpipeline_free_p(&ffp->pipeline);
     ijkmeta_destroy_p(&ffp->meta);
-#if ! IJK_IO_OFF
-    las_stat_destroy(&ffp->las_player_statistic);
-#endif
+
     ffp_reset_internal(ffp);
 
     SDL_DestroyMutexP(&ffp->af_mutex);
@@ -4712,26 +4695,6 @@ static int app_func_event(AVApplicationContext *h, int message ,void *data, size
     return inject_callback(ffp->inject_opaque, message , data, size);
 }
 
-static int ijkio_app_func_event(IjkIOApplicationContext *h, int message ,void *data, size_t size)
-{
-    if (!h || !h->opaque || !data)
-        return 0;
-
-    FFPlayer *ffp = (FFPlayer *)h->opaque;
-    if (!ffp->ijkio_inject_opaque)
-        return 0;
-
-    if (message == IJKIOAPP_EVENT_CACHE_STATISTIC && sizeof(IjkIOAppCacheStatistic) == size) {
-        IjkIOAppCacheStatistic *statistic =  (IjkIOAppCacheStatistic *) (intptr_t)data;
-        ffp->stat.cache_physical_pos      = statistic->cache_physical_pos;
-        ffp->stat.cache_file_forwards     = statistic->cache_file_forwards;
-        ffp->stat.cache_file_pos          = statistic->cache_file_pos;
-        ffp->stat.cache_count_bytes       = statistic->cache_count_bytes;
-        ffp->stat.logical_file_size       = statistic->logical_file_size;
-    }
-
-    return 0;
-}
 #endif
 void ffp_set_frame_at_time(FFPlayer *ffp, const char *path, int64_t start_time, int64_t end_time, int num, int definition) {
     if (!ffp->get_img_info) {
@@ -4765,21 +4728,6 @@ void ffp_set_frame_at_time(FFPlayer *ffp, const char *path, int64_t start_time, 
 }
 
 #if ! IJK_IO_OFF
-void *ffp_set_ijkio_inject_opaque(FFPlayer *ffp, void *opaque)
-{
-    if (!ffp)
-        return NULL;
-    void *prev_weak_thiz = ffp->ijkio_inject_opaque;
-    ffp->ijkio_inject_opaque = opaque;
-
-    ijkio_manager_destroyp(&ffp->ijkio_manager_ctx);
-    ijkio_manager_create(&ffp->ijkio_manager_ctx, ffp);
-    ijkio_manager_set_callback(ffp->ijkio_manager_ctx, ijkio_app_func_event);
-    ffp_set_option_int(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkiomanager", (int64_t)(intptr_t)ffp->ijkio_manager_ctx);
-
-    return prev_weak_thiz;
-}
-
             
 void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque)
 {
@@ -5265,22 +5213,12 @@ void ffp_audio_statistic_l(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
     ffp_track_statistic_l(ffp, is->audio_st, &is->audioq, &ffp->stat.audio_cache);
-#if ! IJK_IO_OFF
-    if (ffp->is_manifest) {
-          las_set_audio_cached_duration_ms(&ffp->las_player_statistic, ffp->stat.audio_cache.duration);
-    }
-#endif
 }
 
 void ffp_video_statistic_l(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
     ffp_track_statistic_l(ffp, is->video_st, &is->videoq, &ffp->stat.video_cache);
-#if ! IJK_IO_OFF
-    if (ffp->is_manifest) {
-        las_set_video_cached_duration_ms(&ffp->las_player_statistic, ffp->stat.video_cache.duration);
-    }
-#endif
 }
 
 void ffp_statistic_l(FFPlayer *ffp)
@@ -5741,26 +5679,6 @@ int64_t ffp_get_property_int64(FFPlayer *ffp, int id, int64_t default_value)
             return ffp ? ffp->stat.latest_seek_load_duration : default_value;
         case FFP_PROP_INT64_TRAFFIC_STATISTIC_BYTE_COUNT:
             return ffp ? ffp->stat.byte_count : default_value;
-        case FFP_PROP_INT64_CACHE_STATISTIC_PHYSICAL_POS:
-            if (!ffp)
-                return default_value;
-            return ffp->stat.cache_physical_pos;
-       case FFP_PROP_INT64_CACHE_STATISTIC_FILE_FORWARDS:
-            if (!ffp)
-                return default_value;
-            return ffp->stat.cache_file_forwards;
-       case FFP_PROP_INT64_CACHE_STATISTIC_FILE_POS:
-            if (!ffp)
-                return default_value;
-            return ffp->stat.cache_file_pos;
-       case FFP_PROP_INT64_CACHE_STATISTIC_COUNT_BYTES:
-            if (!ffp)
-                return default_value;
-            return ffp->stat.cache_count_bytes;
-       case FFP_PROP_INT64_LOGICAL_FILE_SIZE:
-            if (!ffp)
-                return default_value;
-            return ffp->stat.logical_file_size;
         case FFP_PROP_FLOAT_DROP_FRAME_COUNT:
             return ffp ? ffp->stat.drop_frame_count : default_value;
         default:
@@ -5770,27 +5688,6 @@ int64_t ffp_get_property_int64(FFPlayer *ffp, int id, int64_t default_value)
 
 void ffp_set_property_int64(FFPlayer *ffp, int id, int64_t value)
 {
-#if ! IJK_IO_OFF
-    switch (id) {
-        // case FFP_PROP_INT64_SELECTED_VIDEO_STREAM:
-        // case FFP_PROP_INT64_SELECTED_AUDIO_STREAM:
-        case FFP_PROP_INT64_SHARE_CACHE_DATA:
-            if (ffp) {
-                if (value) {
-                    ijkio_manager_will_share_cache_map(ffp->ijkio_manager_ctx);
-                } else {
-                    ijkio_manager_did_share_cache_map(ffp->ijkio_manager_ctx);
-                }
-            }
-            break;
-        case FFP_PROP_INT64_IMMEDIATE_RECONNECT:
-            if (ffp) {
-                ijkio_manager_immediate_reconnect(ffp->ijkio_manager_ctx);
-            }
-        default:
-            break;
-    }
-#endif
 }
 
 IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp)
