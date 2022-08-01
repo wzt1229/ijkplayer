@@ -49,6 +49,7 @@ function pull_common() {
     echo "== pull $REPO_DIR base =="
     if [[ -d "$GIT_LOCAL_REPO" ]];then
         cd "$GIT_LOCAL_REPO"
+        [[ -d .git/rebase-apply ]] && git am --skip
         git reset --hard
 
         local origin=$(git remote get-url origin)
@@ -82,10 +83,10 @@ function apply_patches()
     local patch_dir="${TOOLS}/../extra/patches/$REPO_DIR"
     if [[ -d "$patch_dir" ]];then
         echo "Applying patches to $REPO_DIR"
-        rm -rf .git/rebase-apply
         git am $patch_dir/*.patch
         if [[ $? -ne 0 ]]; then
             echo 'Apply patches failed!'
+            git am --skip
             exit 1
         fi
     fi
