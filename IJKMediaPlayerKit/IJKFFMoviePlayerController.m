@@ -1056,7 +1056,20 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
     NSString *key = [NSString stringWithUTF8String:name];
     const char *value = ijkmeta_get_string_l(rawMeta, name);
     if (value) {
-        [meta setObject:[NSString stringWithUTF8String:value] forKey:key];
+        NSString *str = [NSString stringWithUTF8String:value];
+        if (!str) {
+            //"\xce޼\xab\xb5\xe7Ӱ-bbs.wujidy.com" is nil !!
+            //try gbk encoding.
+            NSStringEncoding gbkEncoding = CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000);
+            NSData *data = [[NSData alloc]initWithBytes:value length:strlen(value)];
+            //无极电影-bbs.wujidy.com
+            str = [[NSString alloc]initWithData:data encoding:gbkEncoding];
+        }
+        if (str) {
+            [meta setObject:str forKey:key];
+        } else {
+            NSLog(@"unkonwn encoding for meta %s",name);
+        }
     } else if (defaultValue) {
         [meta setObject:defaultValue forKey:key];
     } else {
@@ -1126,7 +1139,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                             int64_t fps_den = ijkmeta_get_int64_l(streamRawMeta, IJKM_KEY_FPS_DEN, 0);
                             if (fps_num > 0 && fps_den > 0) {
                                 _fpsInMeta = ((CGFloat)(fps_num)) / fps_den;
-                                NSLog(@"fps in meta %f\n", _fpsInMeta);
                             }
                         }
 
