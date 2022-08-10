@@ -311,6 +311,11 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     // Detect if URL is file path and return proper string for it
     NSString *urlString = [_contentURL isFileURL] ? [_contentURL path] : [_contentURL absoluteString];
     
+    /// 解决bluray中文编码打不开的问题
+    if ([_contentURL.scheme isEqualToString:@"bluray"]) {
+        urlString = [urlString stringByRemovingPercentEncoding];
+    }
+    
     ijkmp_set_data_source(_mediaPlayer, [urlString UTF8String]);
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", 0); // for concat demuxer
 
