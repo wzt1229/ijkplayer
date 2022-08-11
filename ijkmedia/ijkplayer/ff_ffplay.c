@@ -2663,7 +2663,7 @@ static void update_sample_display(FFPlayer *ffp, short *samples, int samples_siz
     }
 
     if (ffp->audio_samples_callback) {
-        int factor = is->audio_src.freq / 44100;
+        float factor = FFMAX(is->audio_src.freq / 44100.0, 0.5);
         int windowSize = FFMIN(factor * 1024 * is->audio_src.channels, SAMPLE_ARRAY_SIZE - 1);
         int i = 0;
         for (; i < is->sample_array_index / windowSize; i++) {
