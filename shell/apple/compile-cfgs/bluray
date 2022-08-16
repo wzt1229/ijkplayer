@@ -24,4 +24,4 @@
 
 export LIB_NAME='bluray'
 export LIPO_LIBS="libbluray"
-export LIB_DEPENDS_BIN="autoconf automake libtool"
+export LIB_DEPENDS_BIN="autoconf automake libtool pkg-config"
