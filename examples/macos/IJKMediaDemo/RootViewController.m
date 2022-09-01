@@ -560,6 +560,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
     
+    //test
+    [playerView setBackgroundColor:100 g:10 b:20];
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:self.player];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self.player];

@@ -469,6 +469,8 @@
     // Synchronize buffer swaps with vertical refresh rate
     GLint swapInt = 1;
     [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
+    
+    glClearColor(0.0, 0.0, 0.0, 1.0f);
 }
 
 - (void)prepareOpenGL
@@ -693,15 +695,14 @@ static CGImageRef _FlipCGImage(CGImageRef src)
 
 - (CGImageRef)_snapshot_screen
 {
-    NSOpenGLContext *openGLContext = [self openGLContext];
-    if (!openGLContext) {
-        return nil;
-    }
- 
     CGRect bounds = [self bounds];
     CGSize size =  [self convertSizeToBacking:bounds.size];;
     
     if (CGSizeEqualToSize(CGSizeZero, size)) {
+        return nil;
+    }
+    NSOpenGLContext *openGLContext = [self openGLContext];
+    if (!openGLContext) {
         return nil;
     }
     [openGLContext makeCurrentContext];
@@ -786,6 +787,12 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         _subtitlePreference = subtitlePreference;
         self.subtitlePreferenceChanged = YES;
     }
+}
+
+- (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b
+{
+    [[self openGLContext] makeCurrentContext];
+    glClearColor(r/255.0, g/255.0, b/255.0, 1.0f);
 }
 
 - (NSView *)hitTest:(NSPoint)point

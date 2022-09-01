@@ -144,6 +144,8 @@ typedef enum : NSUInteger {
 - (void)videoNaturalSizeChanged:(CGSize)size;
 //when video z rotate degrees changed will call videoZRotateDegrees.
 - (void)videoZRotateDegrees:(NSInteger)degrees;
+- (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b;
+
 @end
 
 #endif /* IJKSDLGLViewProtocol_h */
