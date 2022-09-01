@@ -311,19 +311,6 @@ GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format)
     return renderer->format == format ? GL_TRUE : GL_FALSE;
 }
 
-/*
- * Per-Context routine
- */
-GLboolean IJK_GLES2_Renderer_setupGLES()
-{
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);       IJK_GLES2_checkError_TRACE("glClearColor");
-    glEnable(GL_CULL_FACE);                     IJK_GLES2_checkError_TRACE("glEnable(GL_CULL_FACE)");
-    glCullFace(GL_BACK);                        IJK_GLES2_checkError_TRACE("glCullFace");
-    glDisable(GL_DEPTH_TEST);
-
-    return GL_TRUE;
-}
-
 static void IJK_GLES2_Renderer_Vertices_reset(IJK_GLES2_Renderer *renderer)
 {
 /*
