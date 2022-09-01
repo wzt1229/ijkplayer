@@ -2631,7 +2631,7 @@ static int subtitle_thread(void *arg)
 }
 
 /* copy samples for viewing in editor window */
-static void update_sample_display(FFPlayer *ffp, short *samples, int samples_size)
+static void update_sample_display(FFPlayer *ffp, int16_t *samples, int samples_size)
 {
     VideoState *is = ffp->is;
     //flush
@@ -2649,12 +2649,12 @@ static void update_sample_display(FFPlayer *ffp, short *samples, int samples_siz
     }
     
     int size, len;
-    size = samples_size / sizeof(short);
+    size = samples_size / sizeof(int16_t);
     while (size > 0) {
         len = SAMPLE_ARRAY_SIZE - is->sample_array_index;
         if (len > size)
             len = size;
-        memcpy(is->sample_array + is->sample_array_index, samples, len * sizeof(short));
+        memcpy(is->sample_array + is->sample_array_index, samples, len * sizeof(int16_t));
         samples += len;
         is->sample_array_index += len;
         if (is->sample_array_index >= SAMPLE_ARRAY_SIZE)
@@ -2962,7 +2962,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
         if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME) {
             memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, rest_len);
             //give same data to upper.
-            update_sample_display(ffp, (int16_t *)is->audio_buf + is->audio_buf_index, rest_len);
+            update_sample_display(ffp, (int16_t *)(is->audio_buf + is->audio_buf_index), rest_len / 2);
         } else {
             memset(stream, 0, rest_len);
             if (!is->muted && is->audio_buf)
