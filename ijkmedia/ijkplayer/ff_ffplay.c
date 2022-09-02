@@ -2631,7 +2631,7 @@ static int subtitle_thread(void *arg)
 }
 
 /* copy samples for viewing in editor window */
-static void update_sample_display(FFPlayer *ffp, int16_t *samples, int samples_size)
+static void update_sample_display(FFPlayer *ffp, uint8_t *samples, int samples_size)
 {
     VideoState *is = ffp->is;
     //flush
@@ -2655,7 +2655,7 @@ static void update_sample_display(FFPlayer *ffp, int16_t *samples, int samples_s
         if (len > size)
             len = size;
         memcpy(is->sample_array + is->sample_array_index, samples, len * sizeof(int16_t));
-        samples += len;
+        samples += len * sizeof(int16_t);
         is->sample_array_index += len;
         if (is->sample_array_index >= SAMPLE_ARRAY_SIZE)
             is->sample_array_index = 0;
@@ -2664,7 +2664,7 @@ static void update_sample_display(FFPlayer *ffp, int16_t *samples, int samples_s
 
     if (ffp->audio_samples_callback) {
         float factor = FFMAX(is->audio_src.freq / 44100.0, 0.5);
-        int windowSize = FFMIN(factor * 1024 * is->audio_src.channels, SAMPLE_ARRAY_SIZE - 1);
+        int windowSize = FFMIN(factor * 1024 * is->audio_src.channels, SAMPLE_ARRAY_SIZE / 2);
         int i = 0;
         for (; i < is->sample_array_index / windowSize; i++) {
             ffp->audio_samples_callback(
@@ -2677,7 +2677,7 @@ static void update_sample_display(FFPlayer *ffp, int16_t *samples, int samples_s
         }
         if (i > 0) {
             i--;
-            memcpy(is->sample_array, is->sample_array + windowSize * i, (is->sample_array_index - windowSize * i) * sizeof(short));
+            memcpy(is->sample_array, is->sample_array + windowSize * i, (is->sample_array_index - windowSize * i) * sizeof(int16_t));
             is->sample_array_index -= windowSize * i;
         }
     }
@@ -2962,7 +2962,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
         if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME) {
             memcpy(stream, (uint8_t *)is->audio_buf + is->audio_buf_index, rest_len);
             //give same data to upper.
-            update_sample_display(ffp, (int16_t *)(is->audio_buf + is->audio_buf_index), rest_len / 2);
+            update_sample_display(ffp, is->audio_buf + is->audio_buf_index, rest_len);
         } else {
             memset(stream, 0, rest_len);
             if (!is->muted && is->audio_buf)
