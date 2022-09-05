@@ -1,12 +1,12 @@
 //
-//  ff_ex_subtitle.h
+//  ff_subtitle_ex.h
 //  IJKMediaPlayerKit
 //
 //  Created by Reach Matt on 2022/5/16.
 //
 
-#ifndef ff_ex_subtitle_h
-#define ff_ex_subtitle_h
+#ifndef ff_subtitle_ex_h
+#define ff_subtitle_ex_h
 
 #include <stdio.h>
 
@@ -29,4 +29,4 @@ int exSub_get_opened_stream_idx(IJKEXSubtitle *sub);
 int exSub_seek_to(IJKEXSubtitle *sub, float sec);
 int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx);
 
-#endif /* ff_ex_subtitle_h */
+#endif /* ff_subtitle_ex_h */

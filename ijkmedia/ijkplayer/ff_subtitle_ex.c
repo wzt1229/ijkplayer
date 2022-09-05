@@ -1,12 +1,12 @@
 //
-//  ff_ex_subtitle.c
+//  ff_subtitle_ex.c
 //  IJKMediaPlayerKit
 //
 //  Created by Reach Matt on 2022/5/16.
 //
 // after activate not need seek, because video stream will be seeked.
 
-#include "ff_ex_subtitle.h"
+#include "ff_subtitle_ex.h"
 #include "libavformat/avformat.h"
 #include "ff_ffplay_def.h"
 #include "ff_frame_queue.h"

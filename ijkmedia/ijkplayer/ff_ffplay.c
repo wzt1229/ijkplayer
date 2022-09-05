@@ -2732,7 +2732,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     case AVMEDIA_TYPE_SUBTITLE:
         if (!ffp->subtitle)
             break;
-        ret = ff_open_component(is->ffSub, stream_index, NULL, avctx);
+        ret = ff_sub_open_component(is->ffSub, stream_index, NULL, avctx);
         if (ret == 0) {
             ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
             goto out;
@@ -3138,7 +3138,7 @@ static int read_thread(void *arg)
             } else {
                 if (is->audio_stream >= 0)
                     packet_queue_flush(&is->audioq);
-                ff_inSub_flush_packet_queue(is->ffSub);
+                ff_sub_flush_packet_queue(is->ffSub);
                 if (is->video_stream >= 0) {
                     if (ffp->node_vdec) {
                         ffpipenode_flush(ffp->node_vdec);

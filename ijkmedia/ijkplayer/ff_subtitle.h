@@ -22,7 +22,7 @@ int ff_sub_init(FFSubtitle **subp);
 void ff_sub_abort(FFSubtitle *sub);
 int ff_sub_destroy(FFSubtitle **subp);
 //
-int ff_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx);
+int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx);
 int ff_sub_close_current(FFSubtitle *sub);
 
 //return value means dropped uploaded frame count rather than dropped frame count;
@@ -43,13 +43,13 @@ int ff_sub_get_opened_stream_idx(FFSubtitle *sub);
 int ff_sub_set_delay(FFSubtitle *sub, float delay, float cp);
 float ff_sub_get_delay(FFSubtitle *sub);
 
+int ff_sub_flush_packet_queue(FFSubtitle *sub);
 // return 0 means not internal,but not means is external;
 int ff_sub_isInternal_stream(FFSubtitle *sub, int stream);
 // return 0 means not external,but not means is internal;
 int ff_sub_isExternal_stream(FFSubtitle *sub, int stream);
 
 void ff_inSub_setMax_stream(FFSubtitle *sub, int stream);
-int ff_inSub_flush_packet_queue(FFSubtitle *sub);
 
 //for external subtitle.
 int ff_exSub_seek_to(FFSubtitle *sub, float sec);

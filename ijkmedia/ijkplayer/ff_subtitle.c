@@ -9,7 +9,7 @@
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
 #include "ff_ass_parser.h"
-#include "ff_ex_subtitle.h"
+#include "ff_subtitle_ex.h"
 #include "ff_sub_component.h"
 
 typedef struct FFSubtitle {
@@ -300,11 +300,22 @@ int ff_sub_isExternal_stream(FFSubtitle *sub, int stream)
     return exSub_contain_streamIdx(sub->exSub, stream);
 }
 
-int ff_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx)
+int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx)
 {
     packet_queue_flush(&sub->packetq);
     ff_sub_clean_frame_queue(sub);
     return subComponent_open(&sub->inSub, stream_index, ic, avctx, &sub->packetq, &sub->frameq);
+}
+
+int ff_sub_flush_packet_queue(FFSubtitle *sub)
+{
+    if (sub) {
+        if (sub->inSub || sub->exSub) {
+            packet_queue_flush(&sub->packetq);
+        }
+        return 0;
+    }
+    return -1;
 }
 
 //---------------------------Internal Subtitle Functions--------------------------------------------------//
@@ -316,14 +327,6 @@ void ff_inSub_setMax_stream(FFSubtitle *sub, int stream)
     }
 }
 
-int ff_inSub_flush_packet_queue(FFSubtitle *sub)
-{
-    if (sub && sub->inSub) {
-        packet_queue_flush(&sub->packetq);
-        return 0;
-    }
-    return -1;
-}
 //---------------------------External Subtitle Functions--------------------------------------------------//
 
 int ff_exSub_seek_to(FFSubtitle *sub, float sec)
