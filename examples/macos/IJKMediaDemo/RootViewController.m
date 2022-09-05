@@ -175,7 +175,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             } else {
                 [menu addItemWithTitle:@"播放" action:@selector(pauseOrPlay:)keyEquivalent:@""];
             }
-            [menu addItemWithTitle:@"停止" action:@selector(stop:)keyEquivalent:@""];
+            [menu addItemWithTitle:@"停止" action:@selector(stopPlay:) keyEquivalent:@"."];
             [menu addItemWithTitle:@"下一集" action:@selector(playNext:)keyEquivalent:@""];
             [menu addItemWithTitle:@"上一集" action:@selector(playPrevious:)keyEquivalent:@""];
             

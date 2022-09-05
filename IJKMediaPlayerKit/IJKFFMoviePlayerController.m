@@ -328,7 +328,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer)
         return;
     
-    ijkmp_set_external_subtitle(_mediaPlayer, [url UTF8String]);
+    ijkmp_add_active_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
 - (void)loadSubtitleFileOnly:(NSString *)url
@@ -336,7 +336,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer)
         return;
     
-    ijkmp_load_external_subtitle(_mediaPlayer, [url UTF8String]);
+    ijkmp_addOnly_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
 - (void)play
@@ -1060,8 +1060,10 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
 
     NSString *key = [NSString stringWithUTF8String:name];
     const char *value = ijkmeta_get_string_l(rawMeta, name);
-    if (value) {
-        NSString *str = [NSString stringWithUTF8String:value];
+
+    NSString *str = nil;
+    if (value && strlen(value) > 0) {
+        str = [NSString stringWithUTF8String:value];
         if (!str) {
             //"\xce޼\xab\xb5\xe7Ӱ-bbs.wujidy.com" is nil !!
             //try gbk encoding.
@@ -1918,10 +1920,12 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
 - (void)exchangeSelectedStream:(int)streamIdx
 {
     if (_mediaPlayer) {
-        ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
-        //TODO: 通过seek解决切换字幕后不能立马显示问题
-        long pst = ijkmp_get_current_position(_mediaPlayer);
-        ijkmp_seek_to(_mediaPlayer, pst);
+        int r = ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
+        if (r > 0) {
+            //TODO: 通过seek解决切换为内嵌字幕后不能立马显示问题
+            long pst = ijkmp_get_current_position(_mediaPlayer);
+            ijkmp_seek_to(_mediaPlayer, pst);
+        }
     }
 }
 

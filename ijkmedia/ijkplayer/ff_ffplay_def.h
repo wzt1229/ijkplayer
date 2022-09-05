@@ -272,20 +272,7 @@ typedef struct Decoder {
     Uint64 start_seek_time;
 } Decoder;
 
-typedef struct SubtitleExState{
-    AVInputFormat *iformat;
-    AVFormatContext *ic;
-
-    FrameQueue subpq;
-    Decoder subdec;
-
-    int sub_st_idx;
-    AVStream *subtitle_st;
-    PacketQueue subtitleq;
-    int eof;
-    
-    SDL_mutex* mutex;
-} SubtitleExState;
+typedef struct FFSubtitle FFSubtitle;
 
 typedef struct VideoState {
     SDL_Thread *read_tid;
@@ -301,7 +288,6 @@ typedef struct VideoState {
     int64_t seek_pos;
     int64_t seek_rel;
     
-    int load_sub_ex;
 #ifdef FFP_MERGE
     int read_pause_return;
 #endif
@@ -313,13 +299,11 @@ typedef struct VideoState {
     Clock extclk;
 
     FrameQueue pictq;
-    FrameQueue subpq;
     FrameQueue sampq;
 
     Decoder auddec;
     Decoder viddec;
-    Decoder subdec;
-
+    
     int audio_stream;
 
     int av_sync_type;
@@ -369,10 +353,6 @@ typedef struct VideoState {
     SDL_Texture *vis_texture;
     SDL_Texture *sub_texture;
 #endif
-
-    int subtitle_stream;
-    AVStream *subtitle_st;
-    PacketQueue subtitleq;
 
     double frame_timer;
     double frame_last_returned_time;
@@ -434,10 +414,7 @@ typedef struct VideoState {
     SDL_cond  *audio_accurate_seek_cond;
     volatile int initialized_decoder;
     int seek_buffering;
-    float subtitle_extra_delay;//(s)
-    SubtitleExState* subtitle_ex;
-    char* ex_sub_url[IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET];
-    int   ex_sub_next;
+    FFSubtitle *ffSub;
 } VideoState;
 
 /* options specified by the user */
@@ -738,6 +715,7 @@ typedef struct FFPlayer {
 
 #define fftime_to_milliseconds(ts) (av_rescale(ts, 1000, AV_TIME_BASE))
 #define milliseconds_to_fftime(ms) (av_rescale(ms, AV_TIME_BASE, 1000))
+#define seconds_to_fftime(ms)      (av_rescale(ms, AV_TIME_BASE, 1))
 
 inline static void ffp_reset_internal(FFPlayer *ffp)
 {
@@ -909,5 +887,10 @@ inline static const char *ffp_get_error_string(int error) {
 
 #define AVCODEC_MODULE_NAME    "avcodec"
 #define MEDIACODEC_MODULE_NAME "MediaCodec"
+
+int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond);
+int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *name);
+void decoder_destroy(Decoder *d);
+void decoder_abort(Decoder *d, FrameQueue *fq);
 
 #endif
