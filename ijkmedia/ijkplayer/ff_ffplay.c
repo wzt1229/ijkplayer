@@ -3138,7 +3138,6 @@ static int read_thread(void *arg)
             } else {
                 if (is->audio_stream >= 0)
                     packet_queue_flush(&is->audioq);
-                ff_sub_flush_packet_queue(is->ffSub);
                 if (is->video_stream >= 0) {
                     if (ffp->node_vdec) {
                         ffpipenode_flush(ffp->node_vdec);
@@ -3158,7 +3157,8 @@ static int read_thread(void *arg)
             
             //seek the extra subtitle
             int sec = (int)(fftime_to_milliseconds(seek_target - is->ic->start_time) / 1000);
-            ff_exSub_seek_to(is->ffSub, sec);
+            float delay = ff_sub_get_delay(is->ffSub);
+            ff_sub_set_delay(is->ffSub, delay, sec);
             
             ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
             is->seek_req = 0;
@@ -4518,25 +4518,27 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
     if (!ffp->subtitle)
         return -1;
     VideoState *is = ffp->is;
-    int type = 0;
-    if (ff_sub_isInternal_stream(is->ffSub, stream)) {
-        type = 1;
-    } else if (ff_sub_isExternal_stream(is->ffSub, stream)) {
-        type = 2;
-    } else {
-        return -1;
-    }
     
     int closed = 0,opened = 0;
     int current = ff_sub_get_opened_stream_idx(is->ffSub);
     if (selected && current == stream) {
-        return 0;
+        return 1;
     }
     if (current != -1) {
         ff_sub_close_current(is->ffSub);
         closed = 1;
     }
+    
     if (selected) {
+        int type = 0;
+        if (ff_sub_isInternal_stream(is->ffSub, stream)) {
+            type = 1;
+        } else if (ff_sub_isExternal_stream(is->ffSub, stream)) {
+            type = 2;
+        } else {
+            return -2;
+        }
+        
         if (type == 1) {
             stream_component_open(ffp, stream);
         } else {
@@ -4631,10 +4633,11 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
         }
     } else if (ff_sub_isExternal_stream(is->ffSub, stream)) {
         int r = ffp_set_sub_stream_selected(ffp, stream, selected);
-        if (r == 0) {
-            int64_t ms = ffp_get_current_position_l(ffp);
-            ff_exSub_seek_to(is->ffSub, ms/1000.0 - 1);
-            return 0;
+        if (r == 0 && selected) {
+            //seek the extra subtitle
+            float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
+            float delay = ff_sub_get_delay(is->ffSub);
+            return ff_sub_set_delay(is->ffSub, delay, sec);
         } else {
             return r;
         }

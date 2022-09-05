@@ -20,9 +20,6 @@
 
 typedef struct IJKEXSubtitle {
     SDL_mutex* mutex;
-    float delay;//(s)
-    float delay_diff;
-    float current_pts;
     FFSubComponent* opaque;
     AVFormatContext* ic;
     int idx;
@@ -369,7 +366,7 @@ int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name,IjkMedia
     //recycle; release memory if the url array has been used
     int idx = sub->next_idx % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
     
-    int r = exSub_open_filepath(sub, file_name, idx);
+    int r = exSub_open_filepath(sub, file_name, idx + IJK_EX_SUBTITLE_STREAM_OFFSET);
     if (r != 0) {
         av_log(NULL, AV_LOG_ERROR, "could not open ex subtitle:(%d)%s\n", r, file_name);
         return -5;

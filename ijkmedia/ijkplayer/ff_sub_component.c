@@ -64,10 +64,8 @@ static int read_packets(FFSubComponent *sub)
 static int get_packet(FFSubComponent *sub, Decoder *d)
 {
     while (1) {
-        int r = packet_queue_get(d->queue, d->pkt, 0, &d->pkt_serial);
-        if (r < 0) {
-            return -1;
-        } else if (sub->seek_req >= 0) {
+        
+        if (sub->seek_req >= 0) {
             if (avformat_seek_file(sub->ic, -1, INT64_MIN, sub->seek_req, INT64_MAX, 0) < 0) {
                 av_log(NULL, AV_LOG_WARNING, "%d: could not seek to position %lld\n",
                        sub->st_idx, sub->seek_req);
@@ -77,6 +75,12 @@ static int get_packet(FFSubComponent *sub, Decoder *d)
             sub->seek_req = -1;
             packet_queue_flush(sub->packetq);
             continue;
+        }
+        
+        int r = packet_queue_get(d->queue, d->pkt, 0, &d->pkt_serial);
+        av_log(NULL, AV_LOG_WARNING, "get_packet:%d\n",d->pkt_serial);
+        if (r < 0) {
+            return -1;
         } else if (r == 0) {
             if (read_packets(sub) >= 0) {
                 continue;
@@ -168,7 +172,7 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
         return -1;
     }
     
-    FFSubComponent *sub = av_malloc(sizeof(FFSubComponent));
+    FFSubComponent *sub = av_mallocz(sizeof(FFSubComponent));
     if (!sub) {
         return -2;
     }
@@ -182,12 +186,15 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
     sub->ic = ic;
     sub->pkt = av_packet_alloc();
     sub->eof = 0;
+    //packet queue is reused.
+    packetq->serial = 0;
     int ret = decoder_init(&sub->decoder, avctx, sub->packetq, NULL);
     
     if (ret < 0) {
         av_free(sub);
         return ret;
     }
+    
     ret = decoder_start(&sub->decoder, subtitle_thread, sub, "ff_subtitle_dec");
     if (ret < 0) {
         decoder_destroy(&sub->decoder);

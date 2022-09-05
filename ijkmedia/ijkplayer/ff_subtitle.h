@@ -52,7 +52,6 @@ int ff_sub_isExternal_stream(FFSubtitle *sub, int stream);
 void ff_inSub_setMax_stream(FFSubtitle *sub, int stream);
 
 //for external subtitle.
-int ff_exSub_seek_to(FFSubtitle *sub, float sec);
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int ff_exSub_open_stream(FFSubtitle *sub, int stream);

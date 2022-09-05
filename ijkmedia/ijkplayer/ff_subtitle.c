@@ -25,6 +25,15 @@ typedef struct FFSubtitle {
 
 //---------------------------Private Functions--------------------------------------------------//
 
+static float ff_sub_get_total_delay(FFSubtitle *sub)
+{
+    if (!sub) {
+        return 0.0f;
+    }
+    
+    return sub->delay + sub->delay_diff;
+}
+
 static double get_frame_real_begin_pts(FFSubtitle *sub, Frame *sp)
 {
     return sp->pts + (float)sp->sub.start_display_time / 1000.0;
@@ -32,12 +41,12 @@ static double get_frame_real_begin_pts(FFSubtitle *sub, Frame *sp)
 
 static double get_frame_begin_pts(FFSubtitle *sub, Frame *sp)
 {
-    return sp->pts + (float)sp->sub.start_display_time / 1000.0 + sub->delay + sub->delay_diff;
+    return sp->pts + (float)sp->sub.start_display_time / 1000.0 + ff_sub_get_total_delay(sub);
 }
 
 static double get_frame_end_pts(FFSubtitle *sub, Frame *sp)
 {
-    return sp->pts + (float)sp->sub.end_display_time / 1000.0 + sub->delay + sub->delay_diff;
+    return sp->pts + (float)sp->sub.end_display_time / 1000.0 + ff_sub_get_total_delay(sub);
 }
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -52,7 +61,7 @@ int ff_sub_init(FFSubtitle **subp)
     if (!subp) {
         return -1;
     }
-    FFSubtitle *sub = av_malloc(sizeof(FFSubtitle));
+    FFSubtitle *sub = av_mallocz(sizeof(FFSubtitle));
     
     if (!sub) {
         return -2;
@@ -169,9 +178,9 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
     if (frame_queue_nb_remaining(&sub->frameq) > 0) {
         Frame * sp = frame_queue_peek(&sub->frameq);
         sub->current_pts = get_frame_real_begin_pts(sub, sp);
-        float begin = sub->current_pts + sub->delay + sub->delay_diff;
+        float begin = sub->current_pts + ff_sub_get_total_delay(sub);
         
-        av_log(NULL, AV_LOG_ERROR, "sub_fetch_frame:%0.2f,%0.2f\n",pts,begin);
+        av_log(NULL, AV_LOG_ERROR, "sub_fetch_frame:%0.2f,%0.2f\n",pts,sub->current_pts);
         if (pts >= begin) {
             if (!sp->uploaded) {
                 if (sp->sub.num_rects > 0) {
@@ -240,7 +249,7 @@ int ff_sub_get_opened_stream_idx(FFSubtitle *sub)
         if (sub->inSub) {
             idx = subComponent_get_stream(sub->inSub);
         }
-        if (idx == -1) {
+        if (idx == -1 && sub->exSub) {
             idx = exSub_get_opened_stream_idx(sub->exSub);
         }
     }
@@ -277,11 +286,7 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float cp)
 
 float ff_sub_get_delay(FFSubtitle *sub)
 {
-    if (!sub) {
-        return 0.0f;
-    }
-    
-    return sub->delay + sub->delay_diff;
+    return ff_sub_get_total_delay(sub);
 }
 
 int ff_sub_isInternal_stream(FFSubtitle *sub, int stream)
@@ -302,8 +307,10 @@ int ff_sub_isExternal_stream(FFSubtitle *sub, int stream)
 
 int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx)
 {
-    packet_queue_flush(&sub->packetq);
-    ff_sub_clean_frame_queue(sub);
+    if (sub->inSub || sub->exSub) {
+        packet_queue_flush(&sub->packetq);
+        ff_sub_clean_frame_queue(sub);
+    }
     return subComponent_open(&sub->inSub, stream_index, ic, avctx, &sub->packetq, &sub->frameq);
 }
 
@@ -328,11 +335,6 @@ void ff_inSub_setMax_stream(FFSubtitle *sub, int stream)
 }
 
 //---------------------------External Subtitle Functions--------------------------------------------------//
-
-int ff_exSub_seek_to(FFSubtitle *sub, float sec)
-{
-    return exSub_seek_to(sub->exSub, sec);
-}
 
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta)
 {

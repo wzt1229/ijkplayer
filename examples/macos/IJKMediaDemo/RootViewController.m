@@ -440,6 +440,26 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 [self pauseOrPlay:nil];
             }
                 break;
+            case kVK_ANSI_Minus:
+            {
+                if (self.player) {
+                    float delay = [self.player currentSubtitleExtraDelay];
+                    delay -= 2;
+                    self.subtitleDelay = delay;
+                    [self.player updateSubtitleExtraDelay:delay];
+                }
+            }
+                break;
+            case kVK_ANSI_Equal:
+            {
+                if (self.player) {
+                    float delay = [self.player currentSubtitleExtraDelay];
+                    delay += 2;
+                    self.subtitleDelay = delay;
+                    [self.player updateSubtitleExtraDelay:delay];
+                }
+            }
+                break;
             default:
             {
                 NSLog(@"0x%X",[event keyCode]);
