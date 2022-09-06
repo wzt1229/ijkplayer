@@ -314,6 +314,17 @@ int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic
     return subComponent_open(&sub->inSub, stream_index, ic, avctx, &sub->packetq, &sub->frameq);
 }
 
+int ff_sub_flush_packet_queue(FFSubtitle *sub)
+{
+    if (sub) {
+        if (sub->inSub || sub->exSub) {
+            packet_queue_flush(&sub->packetq);
+        }
+        return 0;
+    }
+    return -1;
+}
+
 //---------------------------Internal Subtitle Functions--------------------------------------------------//
 
 void ff_inSub_setMax_stream(FFSubtitle *sub, int stream)
@@ -332,6 +343,7 @@ int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMe
             return -1;
         }
     }
+    
     return exSub_addOnly_subtitle(sub->exSub, file_name, meta);
 }
 
@@ -354,5 +366,6 @@ int ff_exSub_open_stream(FFSubtitle *sub, int stream)
     }
     packet_queue_flush(&sub->packetq);
     ff_sub_clean_frame_queue(sub);
+    
     return exSub_open_file_idx(sub->exSub, stream);
 }
