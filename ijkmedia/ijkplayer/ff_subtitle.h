@@ -43,12 +43,15 @@ int ff_sub_get_opened_stream_idx(FFSubtitle *sub);
 int ff_sub_set_delay(FFSubtitle *sub, float delay, float cp);
 float ff_sub_get_delay(FFSubtitle *sub);
 
-int ff_sub_flush_packet_queue(FFSubtitle *sub);
+int ff_inSub_packet_queue_flush(FFSubtitle *sub);
 // return 0 means not internal,but not means is external;
 int ff_sub_isInternal_stream(FFSubtitle *sub, int stream);
 // return 0 means not external,but not means is internal;
 int ff_sub_isExternal_stream(FFSubtitle *sub, int stream);
+//0 means has no sub;1 means internal sub;2 means external sub;
+int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx);
 
+//for internal subtitle.
 void ff_inSub_setMax_stream(FFSubtitle *sub, int stream);
 
 //for external subtitle.

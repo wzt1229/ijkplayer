@@ -81,6 +81,7 @@ int ff_sub_init(FFSubtitle **subp)
     sub->delay_diff = 0.0f;
     sub->current_pts = 0.0f;
     sub->maxInternalStream = -1;
+    
     *subp = sub;
     return 0;
 }
@@ -110,6 +111,11 @@ int ff_sub_destroy(FFSubtitle **subp)
     }
     packet_queue_destroy(&sub->packetq);
     frame_queue_destory(&sub->frameq);
+    
+    sub->delay = 0.0f;
+    sub->delay_diff = 0.0f;
+    sub->current_pts = 0.0f;
+    sub->maxInternalStream = -1;
     
     av_freep(subp);
     return 0;
@@ -180,7 +186,7 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
         sub->current_pts = get_frame_real_begin_pts(sub, sp);
         float begin = sub->current_pts + ff_sub_get_total_delay(sub);
         
-        av_log(NULL, AV_LOG_ERROR, "sub_fetch_frame:%0.2f,%0.2f\n",pts,sub->current_pts);
+        av_log(NULL, AV_LOG_ERROR, "sub_fetch_frame:%0.2f,%0.2f,%0.2f\n",pts,sub->current_pts,ff_sub_get_total_delay(sub));
         if (pts >= begin) {
             if (!sp->uploaded) {
                 if (sp->sub.num_rects > 0) {
@@ -259,7 +265,7 @@ int ff_sub_get_opened_stream_idx(FFSubtitle *sub)
 int ff_sub_set_delay(FFSubtitle *sub, float delay, float cp)
 {
     if (!sub) {
-        return 0;
+        return -1;
     }
     
     float wantDisplay = cp - delay;
@@ -268,13 +274,18 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float cp)
         sub->delay_diff = 0.0f;
         //need seek to wantDisplay;
         if (sub->inSub) {
-            return -1;
+            //after seek can display want sub,but can't seek every dealy change,so when dealy is zero do seek.
+            if (wantDisplay <= cp) {
+                ff_sub_clean_frame_queue(sub);
+                return 1;
+            }
+            return -2;
         } else if (sub->exSub) {
             ff_sub_clean_frame_queue(sub);
             exSub_seek_to(sub->exSub, wantDisplay-2);
             return 0;
         } else {
-            return 0;
+            return -3;
         }
     } else {
         //when no need seek,just apply the diff to output frame's pts
@@ -305,6 +316,30 @@ int ff_sub_isExternal_stream(FFSubtitle *sub, int stream)
     return exSub_contain_streamIdx(sub->exSub, stream);
 }
 
+int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx)
+{
+    int type = 0;
+    int idx = -1;
+    if (sub) {
+        if (sub->inSub) {
+            idx = subComponent_get_stream(sub->inSub);
+            type = 1;
+        }
+        if (idx == -1 && sub->exSub) {
+            idx = exSub_get_opened_stream_idx(sub->exSub);
+            if (idx != -1) {
+                type = 2;
+            }
+        }
+    }
+    
+    if (outIdx) {
+        *outIdx = idx;
+    }
+    return type;
+}
+
+
 int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx)
 {
     if (sub->inSub || sub->exSub) {
@@ -314,10 +349,10 @@ int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic
     return subComponent_open(&sub->inSub, stream_index, ic, avctx, &sub->packetq, &sub->frameq);
 }
 
-int ff_sub_flush_packet_queue(FFSubtitle *sub)
+int ff_inSub_packet_queue_flush(FFSubtitle *sub)
 {
     if (sub) {
-        if (sub->inSub || sub->exSub) {
+        if (sub->inSub) {
             packet_queue_flush(&sub->packetq);
         }
         return 0;

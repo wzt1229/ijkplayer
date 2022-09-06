@@ -3144,6 +3144,7 @@ static int read_thread(void *arg)
                     }
                     packet_queue_flush(&is->videoq);
                 }
+                ff_inSub_packet_queue_flush(is->ffSub);
                 if (is->seek_flags & AVSEEK_FLAG_BYTE) {
                    set_clock(&is->extclk, NAN, 0);
                 } else {
@@ -3155,10 +3156,12 @@ static int read_thread(void *arg)
                 is->latest_seek_load_start_at = av_gettime();
             }
             
-            //seek the extra subtitle
-            int sec = (int)(fftime_to_milliseconds(seek_target - is->ic->start_time) / 1000);
-            float delay = ff_sub_get_delay(is->ffSub);
-            ff_sub_set_delay(is->ffSub, delay, sec);
+            if (ff_sub_current_stream_type(is->ffSub, NULL) == 2) {
+                //seek the extra subtitle
+                int sec = (int)(fftime_to_milliseconds(seek_target - is->ic->start_time) / 1000);
+                float delay = ff_sub_get_delay(is->ffSub);
+                ff_sub_set_delay(is->ffSub, delay, sec);
+            }
             
             ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
             is->seek_req = 0;
@@ -4784,10 +4787,10 @@ void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)
     VideoState *is = ffp->is;
     int64_t ms = ffp_get_current_position_l(ffp);
     int r = ff_sub_set_delay(is->ffSub, delay, ms/1000.0);
-    if (r == -1) {
-        //TODO here;
-    }
     SDL_UnlockMutex(ffp->is->play_mutex);
+    if (r == 1) {
+        ffp_seek_to_l(ffp, ms-500);
+    }
 }
 
 float ffp_get_subtitle_extra_delay(FFPlayer *ffp)
