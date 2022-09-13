@@ -262,20 +262,20 @@ int ff_sub_get_opened_stream_idx(FFSubtitle *sub)
     return idx;
 }
 
-int ff_sub_set_delay(FFSubtitle *sub, float delay, float cp)
+int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
 {
     if (!sub) {
         return -1;
     }
     
-    float wantDisplay = cp - delay;
+    float wantDisplay = v_pts - delay;
     if (sub->current_pts > wantDisplay) {
         sub->delay = delay;
         sub->delay_diff = 0.0f;
         //need seek to wantDisplay;
         if (sub->inSub) {
             //after seek can display want sub,but can't seek every dealy change,so when dealy is zero do seek.
-            if (wantDisplay <= cp) {
+            if (wantDisplay <= v_pts) {
                 ff_sub_clean_frame_queue(sub);
                 return 1;
             }

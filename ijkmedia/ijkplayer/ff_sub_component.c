@@ -241,7 +241,9 @@ int subComponent_seek_to(FFSubComponent *sub, int sec)
     if (!sub || !sub->ic) {
         return -1;
     }
-    
+    if (sec < 0) {
+        sec = 0;
+    }
     sub->seek_req = seconds_to_fftime(sec);
     sub->eof = 0;
     return 0;
