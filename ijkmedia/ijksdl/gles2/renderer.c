@@ -753,6 +753,7 @@ GLboolean IJK_GLES2_Renderer_resetVao(IJK_GLES2_Renderer *renderer)
     IJK_GLES2_Renderer_TexCoords_reset(renderer);
     IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
     IJK_GLES2_updateMVP_ifNeed(renderer);
+    IJK_GLES2_updateRGB_adjust_ifNeed(renderer);
     glBindVertexArray(renderer->vao); IJK_GLES2_checkError_TRACE("glBindVertexArray");
     return GL_TRUE;
 }

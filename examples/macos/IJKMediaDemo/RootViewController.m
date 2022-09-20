@@ -579,7 +579,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
-    
+    //playerView.preventDisplay = YES;
     //test
     [playerView setBackgroundColor:100 g:10 b:20];
     
@@ -711,8 +711,11 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 }];
             }
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
-            NSLog(@"播放结束");
-            [self playNext:nil];
+            
+            if (![[MRUtil pictureType] containsObject:[[self.playingUrl lastPathComponent] pathExtension]]) {
+                NSLog(@"播放结束");
+                [self playNext:nil];
+            }
         }
     }
 }
@@ -1304,7 +1307,11 @@ static IOPMAssertionID g_displaySleepAssertionID;
 - (NSString *)dirForCurrentPlayingUrl
 {
     if ([self.playingUrl isFileURL]) {
-        return [self saveDir:[[self.playingUrl path] lastPathComponent]];
+        if (![[MRUtil pictureType] containsObject:[[self.playingUrl lastPathComponent] pathExtension]]) {
+            return [self saveDir:[[self.playingUrl path] lastPathComponent]];
+        } else {
+            return [self saveDir:nil];
+        }
     }
     return [self saveDir:[[self.playingUrl path] stringByDeletingLastPathComponent]];
 }
@@ -1314,7 +1321,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     CGImageRef img = [self.player.view snapshot:self.snapshot];
     if (img) {
         NSString * dir = [self dirForCurrentPlayingUrl];
-        NSString *movieName = [[self.playingUrl absoluteString] lastPathComponent];
+        NSString *movieName = [self.playingUrl lastPathComponent];
         NSString *fileName = [NSString stringWithFormat:@"%@-%ld.jpg",movieName,(long)CFAbsoluteTimeGetCurrent()];
         NSString *filePath = [dir stringByAppendingPathComponent:fileName];
         NSLog(@"截屏:%@",filePath);

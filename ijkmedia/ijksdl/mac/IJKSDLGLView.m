@@ -72,6 +72,7 @@
 @synthesize colorPreference = _colorPreference;
 // user defined display aspect ratio
 @synthesize darPreference = _darPreference;
+@synthesize preventDisplay;
 
 - (void)dealloc
 {
@@ -444,11 +445,15 @@
         CVPixelBufferRef videoPic = (CVPixelBufferRef)IJK_GLES2_Renderer_getVideoImage(_renderer, overlay);
         if (videoPic) {
             self.currentVideoPic = CVPixelBufferRetain(videoPic);
-            [self doUploadVideoPicture:overlay];
+            if (!self.preventDisplay) {
+                [self doUploadVideoPicture:overlay];
+            }
         }
         
-        //for subtitle
-        [self doUploadSubtitle];
+        if (!self.preventDisplay) {
+            //for subtitle
+            [self doUploadSubtitle];
+        }
     } else {
         ALOGW("IJKSDLGLView: not ready.\n");
     }

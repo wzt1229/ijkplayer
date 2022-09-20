@@ -136,6 +136,8 @@ typedef enum : NSUInteger {
 - (UIImage *)snapshot;
 #else
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
+// not render picture and subtitle,but holder overlay content.
+@property(atomic) BOOL preventDisplay;
 #endif
 
 @optional;//when isThirdGLView,will call display_pixels method.
