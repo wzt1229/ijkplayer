@@ -16,7 +16,6 @@ typedef struct FFSubtitle {
     PacketQueue packetq;
     FrameQueue frameq;
     float delay;
-    float delay_diff;
     float current_pts;
     int maxInternalStream;
     FFSubComponent* inSub;
@@ -31,7 +30,7 @@ static float ff_sub_get_total_delay(FFSubtitle *sub)
         return 0.0f;
     }
     
-    return sub->delay + sub->delay_diff;
+    return sub->delay;
 }
 
 static double get_frame_real_begin_pts(FFSubtitle *sub, Frame *sp)
@@ -78,7 +77,6 @@ int ff_sub_init(FFSubtitle **subp)
         return -4;
     }
     sub->delay = 0.0f;
-    sub->delay_diff = 0.0f;
     sub->current_pts = 0.0f;
     sub->maxInternalStream = -1;
     
@@ -113,7 +111,6 @@ int ff_sub_destroy(FFSubtitle **subp)
     frame_queue_destory(&sub->frameq);
     
     sub->delay = 0.0f;
-    sub->delay_diff = 0.0f;
     sub->current_pts = 0.0f;
     sub->maxInternalStream = -1;
     
@@ -186,7 +183,7 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
         sub->current_pts = get_frame_real_begin_pts(sub, sp);
         float begin = sub->current_pts + ff_sub_get_total_delay(sub);
         
-        av_log(NULL, AV_LOG_ERROR, "sub_fetch_frame:%0.2f,%0.2f,%0.2f\n",pts,sub->current_pts,ff_sub_get_total_delay(sub));
+        //av_log(NULL, AV_LOG_ERROR, "sub_fetch_frame:%0.2f,%0.2f,%0.2f\n",pts,sub->current_pts,ff_sub_get_total_delay(sub));
         if (pts >= begin) {
             if (!sp->uploaded) {
                 if (sp->sub.num_rects > 0) {
@@ -271,7 +268,6 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
     float wantDisplay = v_pts - delay;
     if (sub->current_pts > wantDisplay) {
         sub->delay = delay;
-        sub->delay_diff = 0.0f;
         //need seek to wantDisplay;
         if (sub->inSub) {
             //after seek can display want sub,but can't seek every dealy change,so when dealy is zero do seek.
@@ -289,8 +285,7 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
         }
     } else {
         //when no need seek,just apply the diff to output frame's pts
-        float diff = delay - sub->delay;
-        sub->delay_diff = diff;
+        sub->delay = delay;
         return 0;
     }
 }
