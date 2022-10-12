@@ -22,7 +22,7 @@ typedef struct IJKEXSubtitle {
     SDL_mutex* mutex;
     FFSubComponent* opaque;
     AVFormatContext* ic;
-    int idx;
+    int stream_idx;//相对于 IJK_EX_SUBTITLE_STREAM_OFFSET 的
     FrameQueue * frameq;
     PacketQueue * pktq;
     char* pathArr[IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET];
@@ -48,7 +48,7 @@ int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq)
     }
     sub->frameq = frameq;
     sub->pktq = pktq;
-    sub->idx = -1;
+    sub->stream_idx = -1;
     *subp = sub;
     return 0;
 }
@@ -56,7 +56,7 @@ int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq)
 int exSub_get_opened_stream_idx(IJKEXSubtitle *sub)
 {
     if (sub && sub->opaque) {
-        return sub->idx;
+        return sub->stream_idx;
     }
     return -1;
 }
@@ -69,11 +69,8 @@ int exSub_seek_to(IJKEXSubtitle *sub, float sec)
     return subComponent_seek_to(sub->opaque, sec);
 }
 
-static int convert_streamIdx(IJKEXSubtitle *sub, int idx)
+static int convert_idx_from_stream(int idx)
 {
-    if (!sub) {
-        return -1;
-    }
     int arr_idx = -1;
     if (idx >= IJK_EX_SUBTITLE_STREAM_OFFSET && idx < IJK_EX_SUBTITLE_STREAM_MAX) {
         arr_idx = (idx - IJK_EX_SUBTITLE_STREAM_OFFSET) % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
@@ -157,7 +154,7 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
     }
     
     sub->ic = ic;
-    sub->idx = idx;
+    sub->stream_idx = idx;
     return 0;
 fail:
     if (ret < 0) {
@@ -179,13 +176,13 @@ int exSub_open_file_idx(IJKEXSubtitle *sub, int idx)
         return -2;
     }
     
-    idx = convert_streamIdx(sub, idx);
+    int arr_idx = convert_idx_from_stream(idx);
     
     if (idx == -1) {
         return -3;
     }
     
-    const char *file_name = sub->pathArr[idx];
+    const char *file_name = sub->pathArr[arr_idx];
     
     if (!file_name) {
         return -4;
@@ -311,12 +308,19 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
     }
     SDL_LockMutex(sub->mutex);
     //maybe already added.
+    bool alread_added = 0;
     for (int i = 0; i < IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET; i++) {
         char* next = sub->pathArr[i];
-        if (next && (0 == av_strncasecmp(next, file_name, 1024)))
-            return 1;
+        if (next && (0 == av_strncasecmp(next, file_name, 1024))) {
+            alread_added = 1;
+            break;
+        }
     }
     SDL_UnlockMutex(sub->mutex);
+    
+    if (alread_added) {
+        return 1;
+    }
     
     //if open failed not add to ex_sub_url.
     AVFormatContext* ic = avformat_alloc_context();
@@ -355,14 +359,20 @@ int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name,IjkMedia
     }
     
     SDL_LockMutex(sub->mutex);
+    bool already_added = 0;
     //maybe already added.
     for (int i = 0; i < IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET; i++) {
         char* next = sub->pathArr[i];
-        if (next && (0 == av_strncasecmp(next, file_name, 1024)))
-            return 1;
+        if (next && (0 == av_strncasecmp(next, file_name, 1024))) {
+            already_added = 1;
+            break;
+        }
     }
     SDL_UnlockMutex(sub->mutex);
     
+    if (already_added) {
+        return 1;
+    }
     //recycle; release memory if the url array has been used
     int idx = sub->next_idx % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
     
@@ -391,7 +401,7 @@ int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx)
     }
     
     SDL_LockMutex(sub->mutex);
-    int arr_idx = convert_streamIdx(sub, idx);
+    int arr_idx = convert_idx_from_stream(idx);
     if (NULL == sub->pathArr[arr_idx]) {
         av_log(sub, AV_LOG_ERROR, "invalid stream index %d is NULL\n", idx);
         arr_idx = -1;
