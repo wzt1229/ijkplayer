@@ -1266,7 +1266,11 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
 
         /* the allocation must be done in the main thread to avoid
            locking problems. */
-        alloc_picture(ffp, src_frame->format);
+        if (src_frame->format == AV_PIX_FMT_YUV420P && src_frame->color_range == AVCOL_RANGE_JPEG) {
+            alloc_picture(ffp, AV_PIX_FMT_YUVJ420P);
+        } else {
+            alloc_picture(ffp, src_frame->format);
+        }
 
         if (is->videoq.abort_request)
             return -1;
@@ -3906,6 +3910,7 @@ void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
     switch (chroma_fourcc) {
         case SDL_FCC__GLES2:
         case SDL_FCC_I420:
+        case SDL_FCC_J420:
         case SDL_FCC_YV12:
         case SDL_FCC_BGRA:
         case SDL_FCC_BGR0:

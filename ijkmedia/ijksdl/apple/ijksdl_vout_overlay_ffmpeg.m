@@ -77,8 +77,10 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
     } else if (format == AV_PIX_FMT_BGRA || format == AV_PIX_FMT_BGR0) {
         pixelFormatType = kCVPixelFormatType_32BGRA;
     } else if (format == AV_PIX_FMT_YUV420P) {
-        pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8PlanarFullRange : kCVPixelFormatType_420YpCbCr8Planar;
-    }else if (format == AV_PIX_FMT_UYVY422) {
+        pixelFormatType = kCVPixelFormatType_420YpCbCr8PlanarFullRange;
+    } else if (format == AV_PIX_FMT_YUVJ420P) {
+        pixelFormatType = kCVPixelFormatType_420YpCbCr8Planar;
+    } else if (format == AV_PIX_FMT_UYVY422) {
         pixelFormatType = fullRange ? kCVPixelFormatType_422YpCbCr8FullRange : kCVPixelFormatType_422YpCbCr8;
     }
 //    ffmpeg only;
@@ -374,6 +376,7 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
             need_swap_uv = 1;
             // no break;
         case SDL_FCC_I420:
+        case SDL_FCC_J420:
             if (frame->format == AV_PIX_FMT_YUV420P || frame->format == AV_PIX_FMT_YUVJ420P) {
                 // ALOGE("direct draw frame");
                 use_linked_frame = 1;
@@ -525,8 +528,11 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
             overlay_format = SDL_FCC_UYVY;
         }
     #endif
+        
         if (frame_format == AV_PIX_FMT_YUV420P) {
             overlay_format = SDL_FCC_I420;
+        } else if (frame_format == AV_PIX_FMT_YUVJ420P) {
+            overlay_format = SDL_FCC_J420;
         } else {
             overlay_format = SDL_FCC_NV12;
         }
@@ -565,9 +571,15 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
     enum AVPixelFormat ff_format = AV_PIX_FMT_NONE;
     int buf_width = width;
     switch (overlay_format) {
+        case SDL_FCC_J420:
         case SDL_FCC_I420:
-        case SDL_FCC_YV12: {
-            ff_format = AV_PIX_FMT_YUV420P;
+        case SDL_FCC_YV12:
+        {
+            if (overlay_format == SDL_FCC_J420) {
+                ff_format = AV_PIX_FMT_YUVJ420P;
+            } else {
+                ff_format = AV_PIX_FMT_YUV420P;
+            }
             // FIXME: need runtime config
     #if defined(__ANDROID__)
             // 16 bytes align pitch for arm-neon image-convert

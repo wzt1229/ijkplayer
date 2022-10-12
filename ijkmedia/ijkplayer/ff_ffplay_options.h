@@ -108,6 +108,7 @@ static const AVOption ffp_context_options[] = {
         .unit = "overlay-format" },
     { "fcc-_es2",                       "", 0, OPTION_CONST(SDL_FCC__GLES2), .unit = "overlay-format" },
     { "fcc-i420",                       "", 0, OPTION_CONST(SDL_FCC_I420), .unit = "overlay-format" },
+    { "fcc-j420",                       "", 0, OPTION_CONST(SDL_FCC_J420), .unit = "overlay-format" },
     { "fcc-yv12",                       "", 0, OPTION_CONST(SDL_FCC_YV12), .unit = "overlay-format" },
     { "fcc-nv12",                       "", 0, OPTION_CONST(SDL_FCC_NV12), .unit = "overlay-format" },
     { "fcc-bgra",                       "", 0, OPTION_CONST(SDL_FCC_BGRA), .unit = "overlay-format" },

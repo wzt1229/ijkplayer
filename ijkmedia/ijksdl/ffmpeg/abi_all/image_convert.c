@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "../ijksdl_image_convert.h"
-#if defined(__ANDROID__) || defined(__APPLE__)
+#if defined(__ANDROID__)
 #include "libyuv/convert_from.h"
 #endif
 

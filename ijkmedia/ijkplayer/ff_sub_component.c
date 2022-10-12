@@ -78,7 +78,6 @@ static int get_packet(FFSubComponent *sub, Decoder *d)
         }
         
         int r = packet_queue_get(d->queue, d->pkt, 0, &d->pkt_serial);
-        av_log(NULL, AV_LOG_WARNING, "get_packet:%d\n",d->pkt_serial);
         if (r < 0) {
             return -1;
         } else if (r == 0) {
