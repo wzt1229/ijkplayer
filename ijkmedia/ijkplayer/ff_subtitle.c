@@ -204,10 +204,10 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
             }
         } else {
             if (sp->uploaded) {
-                //clean current display sub
                 sp->uploaded = 0;
-                r = -3;
             }
+            //clean current display sub
+            r = -3;
         }
     }
     return r;
