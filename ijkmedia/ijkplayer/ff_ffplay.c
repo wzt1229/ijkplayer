@@ -4566,7 +4566,7 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
 //return value :
 //err: less than zero;
 //ok: zero;
-//already ok: greather than zero;
+//already ok: greater than zero;
 static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selected)
 {
     VideoState        *is = ffp->is;
@@ -4626,7 +4626,7 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
     return 0;
 }
 
-//return value greather than 0 means top caller need seek;
+//return value greater than 0 means top caller need seek;
 int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
 {
     VideoState *is = ffp->is;

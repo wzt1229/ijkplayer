@@ -266,13 +266,16 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
     }
     
     float wantDisplay = v_pts - delay;
+    //subtile's frame queue greater than can display pts
     if (sub->current_pts > wantDisplay) {
+        float diff = fabsf(delay - sub->delay);
         sub->delay = delay;
         //need seek to wantDisplay;
         if (sub->inSub) {
-            //after seek can display want sub,but can't seek every dealy change,so when dealy is zero do seek.
-            if (wantDisplay <= v_pts) {
+            //after seek maybe can display want sub,but can't seek every dealy change,so when diff greater than 2s do seek.
+            if (diff > 2) {
                 ff_sub_clean_frame_queue(sub);
+                //return 1 means need seek.
                 return 1;
             }
             return -2;
