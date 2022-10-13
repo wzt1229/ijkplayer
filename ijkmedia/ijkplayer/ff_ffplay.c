@@ -4563,6 +4563,10 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
     return 0;
 }
 
+//return value :
+//err: less than zero;
+//ok: zero;
+//already ok: greather than zero;
 static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selected)
 {
     VideoState        *is = ffp->is;
@@ -4636,6 +4640,8 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
         int r = ffp_set_internal_stream_selected(ffp, stream, selected);
         if (r == 0) {
             return 1;
+        } else if (r > 0){
+            return 0;
         } else {
             return r;
         }
@@ -4646,6 +4652,8 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
             float delay = ff_sub_get_delay(is->ffSub);
             return ff_sub_set_delay(is->ffSub, delay, sec);
+        } else if (r > 0){
+            return 0;
         } else {
             return r;
         }
