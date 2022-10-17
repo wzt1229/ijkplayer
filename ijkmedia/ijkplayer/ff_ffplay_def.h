@@ -781,7 +781,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     av_freep(&ffp->audio_codec_info);
     av_freep(&ffp->subtitle_codec_info);
 #ifdef __APPLE__
-    ffp->overlay_format         = SDL_FCC_BGR0;
+    ffp->overlay_format         = SDL_FCC__GLES2;
 #else
     ffp->overlay_format         = SDL_FCC_RV32;
 #endif
