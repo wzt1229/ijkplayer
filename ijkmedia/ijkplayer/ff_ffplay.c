@@ -1109,7 +1109,6 @@ static void alloc_picture(FFPlayer *ffp, int frame_format)
     video_open(is, vp);
 #endif
 
-    SDL_VoutSetOverlayFormat(ffp->vout, ffp->overlay_format);
     vp->bmp = SDL_Vout_CreateOverlay(vp->width, vp->height,
                                    frame_format,
                                    ffp->vout);

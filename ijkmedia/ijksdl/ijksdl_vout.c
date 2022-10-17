@@ -80,15 +80,6 @@ int SDL_VoutDisplayYUVOverlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     return -1;
 }
 
-int SDL_VoutSetOverlayFormat(SDL_Vout *vout, Uint32 overlay_format)
-{
-    if (!vout)
-        return -1;
-
-    vout->overlay_format = overlay_format;
-    return 0;
-}
-
 int SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame **outFrame)
 {
     if (!vout) {
@@ -104,6 +95,7 @@ int SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame *
     
     _SDL_Image_Converter *convert = vout->image_converter;
     if (NULL == convert) {
+        ALOGI("create image convert to:%d\n",vout->ff_format);
         convert = malloc(sizeof(_SDL_Image_Converter));
         bzero(convert, sizeof(_SDL_Image_Converter));
         
@@ -132,7 +124,8 @@ int SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame *
         }
         
         av_image_fill_arrays(convert->frame->data, convert->frame->linesize,
-                             frame_buffer_ref->data, vout->ff_format, inFrame->width, inFrame->height, 1);
+                             frame_buffer_ref->data, vout->ff_format,
+                             inFrame->width, inFrame->height, 1);
         
         convert->frame_buffer = frame_buffer_ref;
         convert->frame_buffer_size = frame_bytes;
