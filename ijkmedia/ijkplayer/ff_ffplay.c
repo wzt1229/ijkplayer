@@ -3166,7 +3166,7 @@ static int read_thread(void *arg)
                 float delay = ff_sub_get_delay(is->ffSub);
                 ff_sub_set_delay(is->ffSub, delay, sec);
             }
-            
+            //seek 后降低水位线，让播放器更快满足条件
             ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
             is->seek_req = 0;
             is->viddec.after_seek_frame = 1;
@@ -3388,13 +3388,21 @@ static int read_thread(void *arg)
 
         if (ffp->packet_buffering) {
             io_tick_counter = SDL_GetTickHR();
+            //首帧秒开，每隔50ms检查一次缓冲情况
             if ((!ffp->first_video_frame_rendered && is->video_st) || (!ffp->first_audio_frame_rendered && is->audio_st)) {
                 if (abs((int)(io_tick_counter - prev_io_tick_counter)) > FAST_BUFFERING_CHECK_PER_MILLISECONDS) {
                     prev_io_tick_counter = io_tick_counter;
                     ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
                     ffp_check_buffering_l(ffp);
                 }
+            } else if (is->seek_buffering) {
+                //seek之后，执行快速检查，50ms一次；让播放器更快的查询是否满足播放条件
+                if (abs((int)(io_tick_counter - prev_io_tick_counter)) > FAST_BUFFERING_CHECK_PER_MILLISECONDS) {
+                    prev_io_tick_counter = io_tick_counter;
+                    ffp_check_buffering_l(ffp);
+                }
             } else {
+                //非首帧，每隔500ms检查一次缓冲情况
                 if (abs((int)(io_tick_counter - prev_io_tick_counter)) > BUFFERING_CHECK_PER_MILLISECONDS) {
                     prev_io_tick_counter = io_tick_counter;
                     ffp_check_buffering_l(ffp);

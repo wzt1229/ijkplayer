@@ -115,6 +115,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self onReset:nil];
     [self reSetLoglevel:@"info"];
     
+    [self.playList addObject:[NSURL URLWithString:@"https://kvideo01.youju.sohu.com/f559f6ad-df2f-42c9-9f47-841cf6e4086f1_0_0.mp4"]];
+    
     NSArray *bundleNameArr = @[@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
     
     for (NSString *fileName in bundleNameArr) {
@@ -551,7 +553,12 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:6      forKey:@"video-pictq-size"];
     //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
     [options setPlayerOptionIntValue:119     forKey:@"max-fps"];
-    [options setPlayerOptionIntValue:1      forKey:@"packet-buffering"];
+    
+//    [options setCodecOptionValue:@"48" forKey:@"skip_loop_filter"];
+//    [options setFormatOptionValue:@"100L" forKey:@"analyzemaxduration"];
+//    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
+//    [options setPlayerOptionIntValue:0      forKey:@"packet-buffering"];
+//    [options setPlayerOptionIntValue:1      forKey:@"render-wait-start"];
     
     if ([url isFileURL]) {
         [options setPlayerOptionIntValue:10*1024*1024      forKey:@"max-buffer-size"];
