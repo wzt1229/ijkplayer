@@ -549,6 +549,7 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 
 - (void)shutdown
 {
+    NSAssert([NSThread isMainThread], @"must on main thread call shutdown");
     if (!_mediaPlayer)
         return;
 #if TARGET_OS_IOS
