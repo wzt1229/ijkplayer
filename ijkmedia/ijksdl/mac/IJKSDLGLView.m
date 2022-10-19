@@ -31,6 +31,7 @@
 #import "ijksdl_vout_overlay_videotoolbox.h"
 #import <AVFoundation/AVFoundation.h>
 #import "renderer_pixfmt.h"
+#import "ijksdl_vout_ios_gles2.h"
 #import "MRTextureString.h"
 #import "IJKMediaPlayback.h"
 
@@ -442,7 +443,7 @@
             self.currentVideoPic = NULL;
         }
         
-        CVPixelBufferRef videoPic = (CVPixelBufferRef)IJK_GLES2_Renderer_getVideoImage(_renderer, overlay);
+        CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
         if (videoPic) {
             self.currentVideoPic = CVPixelBufferRetain(videoPic);
             if (!self.preventDisplay) {

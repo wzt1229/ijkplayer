@@ -37,3 +37,4 @@ typedef UIView GLView;
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(Uint32 overlay_format);
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>* view);
+CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay);

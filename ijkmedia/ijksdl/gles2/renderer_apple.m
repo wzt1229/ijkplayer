@@ -207,25 +207,11 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
     return uploaded;
 }
 
-static CVPixelBufferRef getCVPixelBufferRef(SDL_VoutOverlay *overlay)
-{
-    switch (overlay->format) {
-        case SDL_FCC__VTB:
-            return SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
-#if USE_FF_VTB
-        case SDL_FCC__FFVTB:
-            return SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
-#endif
-        default:
-            return NULL;
-    }
-}
-
 static void * getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
-    if (!renderer || !renderer->opaque || !overlay)
-        return NULL;
-    return getCVPixelBufferRef(overlay);
+    assert(0);
+    //why call me?
+    return NULL;
 }
 
 static GLvoid destroy(IJK_GLES2_Renderer *renderer)

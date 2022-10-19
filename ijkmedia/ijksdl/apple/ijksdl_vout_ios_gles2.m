@@ -125,14 +125,11 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         ijk_overlay.sar_num = overlay->sar_num;
         ijk_overlay.sar_den = overlay->sar_den;
 #ifdef __APPLE__
-        if (ijk_overlay.format == SDL_FCC__VTB) {
-            ijk_overlay.pixel_buffer = SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
-        } else if (ijk_overlay.format == SDL_FCC__FFVTB) {
-            ijk_overlay.pixel_buffer = SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
-        } else {
-#if ! USE_FF_VTB
+        ijk_overlay.pixel_buffer = SDL_Overlay_getCVPixelBufferRef(overlay);
+        if (!ijk_overlay.pixel_buffer) {
+            #if ! USE_FF_VTB
             ijk_overlay.pixels = overlay->pixels;
-#endif
+            #endif
         }
 #else
         ijk_overlay.pixels = overlay->pixels;
@@ -281,4 +278,18 @@ void SDL_VoutIos_SetGLView(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>* view)
     SDL_LockMutex(vout->mutex);
     SDL_VoutIos_SetGLView_l(vout, view);
     SDL_UnlockMutex(vout->mutex);
+}
+
+CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay)
+{
+    switch (overlay->format) {
+        case SDL_FCC__VTB:
+            return SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
+        #if USE_FF_VTB
+        case SDL_FCC__FFVTB:
+            return SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
+        #endif
+        default:
+            return NULL;
+    }
 }
