@@ -293,6 +293,8 @@
 
 - (void)setNeedsRefreshCurrentPic
 {
+    NSAssert([NSThread isMainThread], @"must be called on main thread.");
+    
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
     
@@ -413,6 +415,13 @@
 }
 
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self doDisplay:overlay subtitle:sub];
+    });
+}
+
+- (void)doDisplay:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
 {
     if (!overlay) {
         ALOGW("IJKSDLGLView: overlay is nil\n");
@@ -575,7 +584,7 @@
     if (!self.currentVideoPic) {
         return NULL;
     }
-    
+    NSAssert([NSThread isMainThread], @"must be called on main thread.");
     CGImageRef img = NULL;
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
