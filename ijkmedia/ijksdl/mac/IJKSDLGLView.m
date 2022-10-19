@@ -24,13 +24,11 @@
  */
 
 #import "IJKSDLGLView.h"
-#import "ijksdl/ijksdl_timer.h"
-#import <CoreVideo/CVDisplayLink.h>
-#import "ijksdl/ijksdl_gles2.h"
-#import <CoreVideo/CoreVideo.h>
-#import "ijksdl_vout_overlay_videotoolbox.h"
 #import <AVFoundation/AVFoundation.h>
-#import "renderer_pixfmt.h"
+#import <CoreVideo/CoreVideo.h>
+#import "ijksdl_timer.h"
+#import "ijksdl_gles2.h"
+#import "ijksdl_vout_overlay_videotoolbox.h"
 #import "ijksdl_vout_ios_gles2.h"
 #import "MRTextureString.h"
 #import "IJKMediaPlayback.h"
@@ -61,6 +59,10 @@
     GLuint _FBO;
     GLuint _ColorTexture;
     float  _videoSar;
+    
+    Uint32 _overlayFormat;
+    Uint32 _ffFormat;
+    int _zRotateDegrees;
 }
 
 @synthesize scalingMode = _scalingMode;
@@ -171,17 +173,12 @@
     }
 }
 
-- (BOOL)setupRenderer:(SDL_VoutOverlay *)overlay
+- (BOOL)setupRenderer:(Uint32)overlay_format
+             ffFormat:(Uint32)ff_format
+       zRotateDegrees:(int)z_rotate_degrees
 {
-    if (overlay == nil)
-        return _renderer != nil;
-    
-    if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-        _videoSar = 1.0 * overlay->sar_num / overlay->sar_den;
-    }
-    
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
-        !IJK_GLES2_Renderer_isFormat(_renderer, overlay->format)) {
+        !IJK_GLES2_Renderer_isFormat(_renderer, overlay_format)) {
         
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
@@ -189,7 +186,8 @@
     #if USE_LEGACY_OPENGL
         openglVer = 120;
     #endif
-        _renderer = IJK_GLES2_Renderer_create(overlay,openglVer);
+        
+        _renderer = IJK_GLES2_Renderer_create2(overlay_format,ff_format,openglVer);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
@@ -200,7 +198,7 @@
         
         IJK_GLES2_Renderer_updateRotate(_renderer, _rotatePreference.type, _rotatePreference.degrees);
         
-        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, overlay->auto_z_rotate_degrees);
+        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, z_rotate_degrees);
         
         IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
         
@@ -208,7 +206,6 @@
         
         IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, _darPreference.ratio);
     }
-    
     return YES;
 }
 
@@ -314,7 +311,7 @@
         
         CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     } else {
-        ALOGW("IJKSDLGLView: not ready.\n");
+        ALOGW("IJKSDLGLView: Renderer not ready.\n");
     }
    
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
@@ -352,11 +349,6 @@
     
     MRTextureString *textureString = [[MRTextureString alloc] initWithString:subtitle withAttributes:attributes];
     
-    if (self.currentSubtitle) {
-        CVPixelBufferRelease(self.currentSubtitle);
-        self.currentSubtitle = NULL;
-    }
-    
     self.currentSubtitle = [textureString createPixelBuffer];
 }
 
@@ -386,11 +378,6 @@
     av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict.w, pict.h);
     
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
-            
-    if (self.currentSubtitle) {
-        CVPixelBufferRelease(self.currentSubtitle);
-        self.currentSubtitle = NULL;
-    }
     
     if (kCVReturnSuccess == ret) {
         self.currentSubtitle = pixelBuffer;
@@ -399,6 +386,11 @@
 
 - (void)_handleSubtitle:(IJKSDLSubtitle *)sub
 {
+    if (self.currentSubtitle) {
+        CVPixelBufferRelease(self.currentSubtitle);
+        self.currentSubtitle = NULL;
+    }
+    
     if (sub.text.length > 0) {
         if (self.subtitlePreferenceChanged || ![self.sub.text isEqualToString:sub.text]) {
             [self _generateSubtitlePixel:sub.text];
@@ -408,11 +400,6 @@
         if (self.subtitlePreferenceChanged || sub.pixels != self.sub.pixels) {
             [self _generateSubtitlePixelFromPicture:sub];
             self.subtitlePreferenceChanged = NO;
-        }
-    } else {
-        if (self.currentSubtitle) {
-            CVPixelBufferRelease(self.currentSubtitle);
-            self.currentSubtitle = NULL;
         }
     }
     
@@ -426,37 +413,66 @@
         return;
     }
     
+    Uint32 overlay_format = overlay->format;
+    Uint32 ff_format;
+    if (SDL_FCC__VTB == overlay_format) {
+        ff_format = overlay->ff_format;
+    }
+    #if USE_FF_VTB
+    else if (SDL_FCC__FFVTB == overlay_format) {
+        ff_format = overlay->cv_format;
+    }
+    #endif
+    else {
+        ff_format = 0;
+        NSAssert(NO, @"wtf?");
+    }
+    
+    _overlayFormat = overlay_format;
+    _ffFormat = ff_format;
+    _zRotateDegrees = overlay->auto_z_rotate_degrees;
+    
+    //update video sar.
+    if (overlay->sar_num > 0 && overlay->sar_den > 0) {
+        _videoSar = 1.0 * overlay->sar_num / overlay->sar_den;
+    }
+    
+    //replace the current video picture.
+    if (self.currentVideoPic) {
+        CVPixelBufferRelease(self.currentVideoPic);
+        self.currentVideoPic = NULL;
+    }
+    
+    CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
+    if (videoPic) {
+        self.currentVideoPic = CVPixelBufferRetain(videoPic);
+    }
+    
+    //replace the current subtitle.
+    [self _handleSubtitle:sub];
+    
+    if (self.preventDisplay) {
+        return;
+    }
+    
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
     
-    [self _handleSubtitle:sub];
+    [self setupRenderer:_overlayFormat ffFormat:_ffFormat zRotateDegrees:_zRotateDegrees];
     
-    // Bind the FBO to screen.
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, self.backingWidth, self.backingHeight);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-    if ([self setupRenderer:overlay] && _renderer) {
+    if (_renderer) {
+        // Bind the FBO to screen.
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, self.backingWidth, self.backingHeight);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        
         //for video
-        if (self.currentVideoPic) {
-            CVPixelBufferRelease(self.currentVideoPic);
-            self.currentVideoPic = NULL;
-        }
-        
-        CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
-        if (videoPic) {
-            self.currentVideoPic = CVPixelBufferRetain(videoPic);
-            if (!self.preventDisplay) {
-                [self doUploadVideoPicture:overlay];
-            }
-        }
-        
-        if (!self.preventDisplay) {
-            //for subtitle
-            [self doUploadSubtitle];
-        }
+        [self doUploadVideoPicture:overlay];
+        //for subtitle
+        [self doUploadSubtitle];
     } else {
-        ALOGW("IJKSDLGLView: not ready.\n");
+        ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
    
     CGLFlushDrawable([[self openGLContext] CGLContextObj]);
@@ -549,10 +565,17 @@
 
 - (CGImageRef)_snapshotEffectOriginWithSubtitle:(BOOL)containSub
 {
+    if (!self.currentVideoPic) {
+        return NULL;
+    }
+    
     CGImageRef img = NULL;
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
-    if (self.currentVideoPic && _renderer) {
+    
+    [self setupRenderer:_overlayFormat ffFormat:_ffFormat zRotateDegrees:_zRotateDegrees];
+    
+    if (_renderer) {
         CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * _videoSar, CVPixelBufferGetHeight(self.currentVideoPic));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
         if (IJK_GLES2_Renderer_isZRotate90oddMultiple(_renderer)) {
@@ -601,7 +624,6 @@
             
             img = [self _snapshotTheContextWithSize:picSize];
         }
-        
         CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     }
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
@@ -711,8 +733,11 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     if (!openGLContext) {
         return nil;
     }
+    CGLLockContext([openGLContext CGLContextObj]);
     [openGLContext makeCurrentContext];
-    return [self _snapshotTheContextWithSize:size];
+    CGImageRef img = [self _snapshotTheContextWithSize:size];
+    CGLUnlockContext([openGLContext CGLContextObj]);
+    return img;
 }
 
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType

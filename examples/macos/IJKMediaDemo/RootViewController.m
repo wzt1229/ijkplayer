@@ -1329,7 +1329,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     if (img) {
         NSString * dir = [self dirForCurrentPlayingUrl];
         NSString *movieName = [self.playingUrl lastPathComponent];
-        NSString *fileName = [NSString stringWithFormat:@"%@-%ld.jpg",movieName,(long)CFAbsoluteTimeGetCurrent()];
+        NSString *fileName = [NSString stringWithFormat:@"%@-%ld.jpg",movieName,(long)(CFAbsoluteTimeGetCurrent() * 1000)];
         NSString *filePath = [dir stringByAppendingPathComponent:fileName];
         NSLog(@"截屏:%@",filePath);
         [MRUtil saveImageToFile:img path:filePath];

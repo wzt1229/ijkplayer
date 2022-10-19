@@ -189,26 +189,26 @@ fail:
 }
 
 #ifdef __APPLE__
-static IJK_GLES2_Renderer * _smart_create_renderer_appple(SDL_VoutOverlay *overlay, const Uint32 cv_format, int openglVer)
+static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format, const Uint32 cv_format, int openglVer)
 {
     if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
         ALOGI("create render yuv420sp vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,YUV_2P_SHADER,openglVer);
+        return IJK_GL_Renderer_create_common_vtb(overlay_format,YUV_2P_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_32BGRA) {
         ALOGI("create render bgrx vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,BGRX_SHADER,openglVer);
+        return IJK_GL_Renderer_create_common_vtb(overlay_format,BGRX_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_32ARGB) {
         ALOGI("create render xrgb vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,XRGB_SHADER,openglVer);
+        return IJK_GL_Renderer_create_common_vtb(overlay_format,XRGB_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
                cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
         ALOGI("create render yuv420p vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,YUV_3P_SHADER,openglVer);
+        return IJK_GL_Renderer_create_common_vtb(overlay_format,YUV_3P_SHADER,openglVer);
     }
     #if TARGET_OS_OSX
     else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
         ALOGI("create render uyvy vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay,UYVY_SHADER,openglVer);
+        return IJK_GL_Renderer_create_common_vtb(overlay_format,UYVY_SHADER,openglVer);
     }
     #endif
     else {
@@ -217,11 +217,8 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(SDL_VoutOverlay *overl
 }
 #endif
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openglVer)
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create2(Uint32 overlay_format,Uint32 ff_format,int openglVer)
 {
-    if (!overlay)
-        return NULL;
-
     IJK_GLES2_printString("Version", GL_VERSION);
     IJK_GLES2_printString("Vendor", GL_VENDOR);
     IJK_GLES2_printString("Renderer", GL_RENDERER);
@@ -256,14 +253,12 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
     IJK_GLES2_Renderer *renderer = NULL;
     
 #ifdef __APPLE__
-    if (SDL_FCC__VTB == overlay->format) {
-        const Uint32 ff_format = overlay->ff_format;
-        renderer = _smart_create_renderer_appple(overlay, ff_format, openglVer);
+    if (SDL_FCC__VTB == overlay_format) {
+        renderer = _smart_create_renderer_appple(overlay_format, ff_format, openglVer);
     }
     #if USE_FF_VTB
-    else if (SDL_FCC__FFVTB == overlay->format) {
-        const Uint32 cv_format = overlay->cv_format;
-        renderer = _smart_create_renderer_appple(overlay, cv_format, openglVer);
+    else if (SDL_FCC__FFVTB == overlay_format) {
+        renderer = _smart_create_renderer_appple(overlay_format, ff_format, openglVer);
     }
     #endif
 #else
@@ -285,7 +280,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
         }
 #endif
     if (renderer) {
-        renderer->format = overlay->format;
+        renderer->format = overlay_format;
         
         glGenVertexArrays(1, &renderer->vao);
         /// 创建顶点缓存对象
@@ -297,6 +292,30 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
         glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
     }
     return renderer;
+}
+
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openglVer)
+{
+    if (!overlay)
+        return NULL;
+    
+    Uint32 overlay_format = overlay->format;
+    Uint32 ff_format = 0;
+#ifdef __APPLE__
+    if (SDL_FCC__VTB == overlay_format) {
+        ff_format = overlay->ff_format;
+    }
+    #if USE_FF_VTB
+    else if (SDL_FCC__FFVTB == overlay_format) {
+        ff_format = overlay->cv_format;
+    }
+    #endif
+    else {
+        assert(0);
+    }
+#endif
+    
+    return IJK_GLES2_Renderer_create2(overlay_format, ff_format, overlay->auto_z_rotate_degrees);
 }
 
 GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer)

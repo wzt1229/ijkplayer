@@ -65,6 +65,7 @@ GLuint IJK_GLES2_loadShader(GLenum shader_type, const char *shader_source);
 typedef struct IJK_GLES2_Renderer IJK_GLES2_Renderer;
 //openglVer greater than 330 use morden opengl, otherwise use legacy opengl
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openglVer);
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create2(Uint32 overlay_format,Uint32 ff_format,int openglVer);
 void      IJK_GLES2_Renderer_reset(IJK_GLES2_Renderer *renderer);
 void      IJK_GLES2_Renderer_free(IJK_GLES2_Renderer *renderer);
 void      IJK_GLES2_Renderer_freeP(IJK_GLES2_Renderer **renderer);
