@@ -64,8 +64,6 @@
     Uint32 _overlayFormat;
     Uint32 _ffFormat;
     int _zRotateDegrees;
-    
-    GLint myFence;
 }
 
 @synthesize scalingMode = _scalingMode;
@@ -97,8 +95,6 @@
     if (_renderer) {
         IJK_GLES2_Renderer_freeP(&_renderer);
     }
-    
-    glDeleteFencesAPPLE(1,&myFence);
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -160,7 +156,6 @@
     
     ///Fix the default red background color on the Intel platform
     [[self openGLContext] makeCurrentContext];
-    glGenFencesAPPLE(1,&myFence);
     glClear(GL_COLOR_BUFFER_BIT);
     [[self openGLContext]flushBuffer];
 }
@@ -472,7 +467,6 @@
     
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
-    glSetFenceAPPLE(myFence);
     [self setupRenderer:_overlayFormat ffFormat:_ffFormat zRotateDegrees:_zRotateDegrees];
     
     if (_renderer) {
@@ -491,7 +485,6 @@
     }
     
     [[self openGLContext]flushBuffer];
-    glFinishFenceAPPLE(myFence);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
@@ -588,7 +581,6 @@
     CGImageRef img = NULL;
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
-    glSetFenceAPPLE(myFence);
     [self setupRenderer:_overlayFormat ffFormat:_ffFormat zRotateDegrees:_zRotateDegrees];
     
     if (_renderer) {
@@ -637,12 +629,10 @@
             if (containSub) {
                 [self doUploadSubtitle];
             }
-            
             img = [self _snapshotTheContextWithSize:picSize];
         }
         [[self openGLContext]flushBuffer];
     }
-    glFinishFenceAPPLE(myFence);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
     return img;
 }
