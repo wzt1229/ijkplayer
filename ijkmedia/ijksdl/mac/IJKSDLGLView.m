@@ -162,7 +162,7 @@
     [[self openGLContext] makeCurrentContext];
     glGenFencesAPPLE(1,&myFence);
     glClear(GL_COLOR_BUFFER_BIT);
-    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+    [[self openGLContext]flushBuffer];
 }
 
 - (void)videoZRotateDegrees:(NSInteger)degrees
@@ -315,7 +315,7 @@
         
         [self doUploadSubtitle];
         
-        CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+        [[self openGLContext]flushBuffer];
     } else {
         ALOGW("IJKSDLGLView: Renderer not ready.\n");
     }
@@ -480,7 +480,8 @@
     } else {
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
-    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+    
+    [[self openGLContext]flushBuffer];
     glFinishFenceAPPLE(myFence);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
@@ -630,7 +631,7 @@
             
             img = [self _snapshotTheContextWithSize:picSize];
         }
-        CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+        [[self openGLContext]flushBuffer];
     }
     glFinishFenceAPPLE(myFence);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
