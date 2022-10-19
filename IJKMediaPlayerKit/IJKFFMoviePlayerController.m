@@ -38,7 +38,7 @@
 #include "../ijkmedia/ijkplayer/ijkmeta.h"
 #include "../ijkmedia/ijkplayer/ff_ffmsg_queue.h"
 
-static const char *kIJKFFRequiredFFmpegVersion = "n4.0-16-g7f2009d"; //"ff4.0--ijk0.8.8--20210426--001";
+static const char *kIJKFFRequiredFFmpegVersion = "n4.0-16"; //"ff4.0--ijk0.8.8--20210426--001";
 static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
 // It means you didn't call shutdown if you found this object leaked.
@@ -502,9 +502,14 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 
 + (BOOL)checkIfFFmpegVersionMatch:(BOOL)showAlert;
 {
+    //n4.0-16-g1c96997 -> n4.0-16
+    //not compare last commit sha1,because it will chang after source code apply patches.
     const char *actualVersion = av_version_info();
+    char dst[128] = { 0 };
+    strcpy(dst, actualVersion);
+    *strrchr(dst, '-') = '\0';
     const char *expectVersion = kIJKFFRequiredFFmpegVersion;
-    if (0 == strcmp(actualVersion, expectVersion)) {
+    if (0 == strcmp(dst, expectVersion)) {
         return YES;
     } else {
         NSString *message = [NSString stringWithFormat:@"actual: %s\nexpect: %s\n", actualVersion, expectVersion];
