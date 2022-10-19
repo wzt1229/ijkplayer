@@ -32,6 +32,7 @@
 #import "ijksdl_vout_ios_gles2.h"
 #import "MRTextureString.h"
 #import "IJKMediaPlayback.h"
+#import <OpenGL/glext.h>
 
 @interface IJKSDLGLView()
 
@@ -63,6 +64,8 @@
     Uint32 _overlayFormat;
     Uint32 _ffFormat;
     int _zRotateDegrees;
+    
+    GLint myFence;
 }
 
 @synthesize scalingMode = _scalingMode;
@@ -94,6 +97,8 @@
     if (_renderer) {
         IJK_GLES2_Renderer_freeP(&_renderer);
     }
+    
+    glDeleteFencesAPPLE(1,&myFence);
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -155,6 +160,7 @@
     
     ///Fix the default red background color on the Intel platform
     [[self openGLContext] makeCurrentContext];
+    glGenFencesAPPLE(1,&myFence);
     glClear(GL_COLOR_BUFFER_BIT);
     CGLFlushDrawable([[self openGLContext] CGLContextObj]);
 }
@@ -457,7 +463,7 @@
     
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
-    
+    glSetFenceAPPLE(myFence);
     [self setupRenderer:_overlayFormat ffFormat:_ffFormat zRotateDegrees:_zRotateDegrees];
     
     if (_renderer) {
@@ -474,8 +480,8 @@
     } else {
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
-   
     CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+    glFinishFenceAPPLE(myFence);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
@@ -572,7 +578,7 @@
     CGImageRef img = NULL;
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
-    
+    glSetFenceAPPLE(myFence);
     [self setupRenderer:_overlayFormat ffFormat:_ffFormat zRotateDegrees:_zRotateDegrees];
     
     if (_renderer) {
@@ -626,6 +632,7 @@
         }
         CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     }
+    glFinishFenceAPPLE(myFence);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
     return img;
 }
