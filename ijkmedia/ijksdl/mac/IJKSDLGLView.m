@@ -23,6 +23,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+/*
+ 2022.10.19
+ on low macOS (below 10.13) CGLLock is no effect for multiple NSOpenGLContext!
+ multiple thread may get lock same time, and block in CGLFlushDrawable function.
+ try use apple fence and flushBuffer instead of CGLFlushDrawable are no effect.
+ so record IJKSDLGLView's count,when create more than one NSOpenGLContext just dispath all gl* task to main thread execute.
+ */
+
 #import "IJKSDLGLView.h"
 #import <AVFoundation/AVFoundation.h>
 #import <CoreVideo/CoreVideo.h>
@@ -33,6 +41,54 @@
 #import "MRTextureString.h"
 #import "IJKMediaPlayback.h"
 #import <OpenGL/glext.h>
+
+static NSHashTable *IJKRefTable() {
+    static NSHashTable *refTable = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        refTable = [[NSHashTable alloc] initWithOptions:NSPointerFunctionsWeakMemory capacity:1];
+    });
+    return refTable;
+}
+
+#define ijkRefTable IJKRefTable()
+
+static void _IJK_add_GLView_Ref(id<NSObject>obj)
+{
+    [ijkRefTable addObject:obj];
+}
+
+static void _IJK_minus_GLView_Ref(id<NSObject>obj)
+{
+    [ijkRefTable removeObject:obj];
+}
+
+static bool _has_more_than_one_GLView()
+{
+    return [ijkRefTable count] > 1;
+}
+
+// greather than 10.15 no need dispatch to main.
+static bool _is_low_os_version(void)
+{
+    NSOperatingSystemVersion sysVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+    if (sysVersion.majorVersion > 10) {
+        return false;
+    } else if (sysVersion.minorVersion > 15) {
+        return false;
+    }
+    return true;
+}
+
+static bool _is_need_dispath_to_main(void)
+{
+    bool low_os = _is_low_os_version();
+    if (low_os) {
+        return _has_more_than_one_GLView();
+    } else {
+        return false;
+    }
+}
 
 @interface IJKSDLGLView()
 
@@ -97,14 +153,16 @@
     }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    _IJK_minus_GLView_Ref(self);
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
     if (self) {
-        _videoSar = 1.0;
+        _IJK_add_GLView_Ref(self);
         [self setup];
+        _videoSar = 1.0;
         _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
@@ -288,8 +346,14 @@
 
 - (void)setNeedsRefreshCurrentPic
 {
-    NSAssert([NSThread isMainThread], @"must be called on main thread.");
-    
+    if (_is_need_dispath_to_main()) {
+        if (![NSThread isMainThread]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self setNeedsRefreshCurrentPic];
+            });
+            return;
+        }
+    }
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
     
@@ -411,9 +475,14 @@
 
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    //when more than one glview dispatch all task to main thread!
+    if (_is_need_dispath_to_main()) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self doDisplay:overlay subtitle:sub];
+        });
+    } else {
         [self doDisplay:overlay subtitle:sub];
-    });
+    }
 }
 
 - (void)doDisplay:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
