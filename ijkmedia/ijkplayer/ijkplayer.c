@@ -297,7 +297,7 @@ void ijkmp_shutdown_l(IjkMediaPlayer *mp)
 
     MPTRACE("ijkmp_shutdown_l()\n");
     if (mp->ffplayer) {
-        ffp_stop_l(mp->ffplayer);
+        //ffp_stop_l(mp->ffplayer);
         ffp_wait_stop_l(mp->ffplayer);
     }
     MPTRACE("ijkmp_shutdown_l()=void\n");
