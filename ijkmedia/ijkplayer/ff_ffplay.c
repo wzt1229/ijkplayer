@@ -3076,13 +3076,13 @@ static int read_thread(void *arg)
     if (!ffp->render_wait_start && !ffp->start_on_prepared)
         toggle_pause(ffp, 1);
     if (is->video_st && is->video_st->codecpar) {
-        AVCodecParameters *codecpar = is->video_st->codecpar;
-        ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, codecpar->width, codecpar->height);
-        ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codecpar->sample_aspect_ratio.num, codecpar->sample_aspect_ratio.den);
         //recode video z rotate degrees
         int deg = ffp_get_video_rotate_degrees(ffp);
         ffp->vout->z_rotate_degrees = deg;
         ffp_notify_msg2(ffp, FFP_MSG_VIDEO_Z_ROTATE_DEGREE, deg);
+        AVCodecParameters *codecpar = is->video_st->codecpar;
+        ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, codecpar->width, codecpar->height);
+        ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codecpar->sample_aspect_ratio.num, codecpar->sample_aspect_ratio.den);
     }
     ffp->prepared = true;
     ffp_notify_msg1(ffp, FFP_MSG_PREPARED);
