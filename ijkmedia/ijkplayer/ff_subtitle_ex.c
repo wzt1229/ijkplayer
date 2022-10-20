@@ -201,20 +201,21 @@ int exSub_close_current(IJKEXSubtitle *sub)
         return -1;
     }
     
-    if (sub->ic)
-        avformat_close_input(&sub->ic);
-    
     FFSubComponent *opaque = sub->opaque;
     
     if(!opaque) {
+        if (sub->ic)
+            avformat_close_input(&sub->ic);
         return -2;
     }
     
+    int r = subComponent_close(&opaque);
     SDL_LockMutex(sub->mutex);
     sub->opaque = NULL;
+    if (sub->ic)
+        avformat_close_input(&sub->ic);
     SDL_UnlockMutex(sub->mutex);
-    
-    return subComponent_close(&opaque);;
+    return r;
 }
 
 void exSub_subtitle_destroy(IJKEXSubtitle **subp)

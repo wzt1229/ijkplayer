@@ -403,7 +403,25 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             }
                 break;
         }
-    } else {
+    } else if (event.modifierFlags & NSEventModifierFlagOption) {
+        switch ([event keyCode]) {
+            case kVK_ANSI_S:
+            {
+                //loop exchange subtitles
+                NSInteger idx = [self.subtitlePopUpBtn indexOfSelectedItem];
+                idx ++;
+                if (idx >= [self.subtitlePopUpBtn numberOfItems]) {
+                    idx = 0;
+                }
+                NSMenuItem *item = [self.subtitlePopUpBtn itemAtIndex:idx];
+                if (item) {
+                    [self.subtitlePopUpBtn selectItem:item];
+                    [self.subtitlePopUpBtn.target performSelector:self.subtitlePopUpBtn.action withObject:self.subtitlePopUpBtn];
+                }
+            }
+                break;
+        }
+    }  else {
         switch ([event keyCode]) {
             case kVK_RightArrow:
             {
