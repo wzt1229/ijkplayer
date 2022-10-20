@@ -104,7 +104,14 @@ static bool _is_need_dispath_to_main(void)
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
 @property(atomic) BOOL subtitlePreferenceChanged;
-
+@property(atomic) int  sar_num;
+@property(atomic) int  sar_den;
+@property(atomic) Uint32 overlayFormat;
+@property(atomic) Uint32 ffFormat;
+@property(atomic) int zRotateDegrees;
+@property(atomic) int overlayH;
+@property(atomic) int overlayW;
+@property(atomic) int bufferW;
 @end
 
 @implementation IJKSDLGLView
@@ -115,11 +122,6 @@ static bool _is_need_dispath_to_main(void)
     CGSize _FBOTextureSize;
     GLuint _FBO;
     GLuint _ColorTexture;
-    float  _videoSar;
-    
-    Uint32 _overlayFormat;
-    Uint32 _ffFormat;
-    int _zRotateDegrees;
 }
 
 @synthesize scalingMode = _scalingMode;
@@ -162,7 +164,7 @@ static bool _is_need_dispath_to_main(void)
     if (self) {
         _IJK_add_GLView_Ref(self);
         [self setup];
-        _videoSar = 1.0;
+        _sar_den = _sar_num = 0;
         _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
@@ -232,12 +234,10 @@ static bool _is_need_dispath_to_main(void)
     }
 }
 
-- (BOOL)setupRenderer:(Uint32)overlay_format
-             ffFormat:(Uint32)ff_format
-       zRotateDegrees:(int)z_rotate_degrees
+- (BOOL)setupRendererIfNeed
 {
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
-        !IJK_GLES2_Renderer_isFormat(_renderer, overlay_format)) {
+        !IJK_GLES2_Renderer_isFormat(_renderer, self.overlayFormat)) {
         
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
@@ -246,7 +246,7 @@ static bool _is_need_dispath_to_main(void)
         openglVer = 120;
     #endif
         
-        _renderer = IJK_GLES2_Renderer_create2(overlay_format,ff_format,openglVer);
+        _renderer = IJK_GLES2_Renderer_create2(self.overlayFormat,self.ffFormat,openglVer);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
@@ -257,7 +257,7 @@ static bool _is_need_dispath_to_main(void)
         
         IJK_GLES2_Renderer_updateRotate(_renderer, _rotatePreference.type, _rotatePreference.degrees);
         
-        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, z_rotate_degrees);
+        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, self.zRotateDegrees);
         
         IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
         
@@ -329,10 +329,10 @@ static bool _is_need_dispath_to_main(void)
     }
 }
 
-- (void)doUploadVideoPicture:(SDL_VoutOverlay *)overlay
+- (void)doUploadVideoPicture
 {
     if (self.currentVideoPic) {
-        if (IJK_GLES2_Renderer_updateVetex(_renderer, overlay)) {
+        if (IJK_GLES2_Renderer_updateVetex2(_renderer, self.overlayH, self.overlayW, self.bufferW, self.sar_num, self.sar_den)) {
             if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)self.currentVideoPic)) {
                 IJK_GLES2_Renderer_drawArrays();
             } else {
@@ -364,7 +364,7 @@ static bool _is_need_dispath_to_main(void)
         glClear(GL_COLOR_BUFFER_BIT);
         
         //for video
-        [self doUploadVideoPicture:NULL];
+        [self doUploadVideoPicture];
         
         //for subtitle
         if (self.subtitlePreferenceChanged) {
@@ -475,23 +475,11 @@ static bool _is_need_dispath_to_main(void)
 
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
 {
-    //when more than one glview dispatch all task to main thread!
-    if (_is_need_dispath_to_main()) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self doDisplay:overlay subtitle:sub];
-        });
-    } else {
-        [self doDisplay:overlay subtitle:sub];
-    }
-}
-
-- (void)doDisplay:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
-{
     if (!overlay) {
         ALOGW("IJKSDLGLView: overlay is nil\n");
         return;
     }
-    
+    //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
     Uint32 overlay_format = overlay->format;
     Uint32 ff_format;
     if (SDL_FCC__VTB == overlay_format) {
@@ -506,14 +494,17 @@ static bool _is_need_dispath_to_main(void)
         ff_format = 0;
         NSAssert(NO, @"wtf?");
     }
+    self.ffFormat = ff_format;
     
-    _overlayFormat = overlay_format;
-    _ffFormat = ff_format;
-    _zRotateDegrees = overlay->auto_z_rotate_degrees;
-    
+    self.overlayFormat = overlay_format;
+    self.zRotateDegrees = overlay->auto_z_rotate_degrees;
+    self.overlayW = overlay->w;
+    self.overlayH = overlay->h;
+    self.bufferW = SDL_VoutGetBufferWidth(overlay);
     //update video sar.
     if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-        _videoSar = 1.0 * overlay->sar_num / overlay->sar_den;
+        self.sar_num = overlay->sar_num;
+        self.sar_den = overlay->sar_den;
     }
     
     //replace the current video picture.
@@ -534,9 +525,21 @@ static bool _is_need_dispath_to_main(void)
         return;
     }
     
+    //when more than one glview dispatch all task to main thread!
+    if (_is_need_dispath_to_main()) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self doDisplayVideoPicAndSubtitle];
+        });
+    } else {
+        [self doDisplayVideoPicAndSubtitle];
+    }
+}
+
+- (void)doDisplayVideoPicAndSubtitle
+{
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
-    [self setupRenderer:_overlayFormat ffFormat:_ffFormat zRotateDegrees:_zRotateDegrees];
+    [self setupRendererIfNeed];
     
     if (_renderer) {
         // Bind the FBO to screen.
@@ -546,7 +549,7 @@ static bool _is_need_dispath_to_main(void)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         
         //for video
-        [self doUploadVideoPicture:overlay];
+        [self doUploadVideoPicture];
         //for subtitle
         [self doUploadSubtitle];
     } else {
@@ -647,13 +650,16 @@ static bool _is_need_dispath_to_main(void)
         return NULL;
     }
     NSAssert([NSThread isMainThread], @"must be called on main thread.");
-    CGImageRef img = NULL;
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
-    [self setupRenderer:_overlayFormat ffFormat:_ffFormat zRotateDegrees:_zRotateDegrees];
-    
+    [self setupRendererIfNeed];
+    CGImageRef img = NULL;
     if (_renderer) {
-        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * _videoSar, CVPixelBufferGetHeight(self.currentVideoPic));
+        float videoSar = 1.0;
+        if (self.sar_num > 0 && self.sar_den > 0) {
+            videoSar = self.sar_num / self.sar_den;
+        }
+        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(self.currentVideoPic) * videoSar, CVPixelBufferGetHeight(self.currentVideoPic));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
         if (IJK_GLES2_Renderer_isZRotate90oddMultiple(_renderer)) {
             float pic_width = picSize.width;

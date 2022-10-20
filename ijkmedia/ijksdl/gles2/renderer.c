@@ -706,7 +706,7 @@ GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutO
     if (!renderer)
         return GL_FALSE;
 
-    GLsizei visible_width  = renderer->frame_width;
+    GLsizei visible_width = renderer->frame_width;
     if (overlay) {
         GLsizei visible_height = overlay->h;
                 visible_width  = overlay->w;
@@ -728,6 +728,69 @@ GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutO
         // NULL overlay means force reload vertice
         renderer->vertices_changed = 1;
     }
+    
+    GLsizei buffer_width = renderer->last_buffer_width;
+    if (!renderer->vertices_changed) {
+        if (buffer_width > 0 &&
+             buffer_width > visible_width &&
+             buffer_width != renderer->buffer_width &&
+             visible_width != renderer->visible_width) {
+            renderer->vertices_changed = 1;
+        }
+    }
+    
+    if (renderer->vertices_changed) {
+        renderer->vertices_changed = 0;
+
+        IJK_GLES2_Renderer_Vertices_apply(renderer);
+
+        renderer->buffer_width  = buffer_width;
+        renderer->visible_width = visible_width;
+
+        GLsizei padding_pixels     = buffer_width - visible_width;
+        GLfloat padding_normalized = ((GLfloat)padding_pixels) / buffer_width;
+
+        IJK_GLES2_Renderer_TexCoords_cropRight(renderer, padding_normalized);
+        IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
+    }
+    
+    IJK_GLES2_updateMVP_ifNeed(renderer);
+    IJK_GLES2_updateRGB_adjust_ifNeed(renderer);
+    glBindVertexArray(renderer->vao); IJK_GLES2_checkError_TRACE("glBindVertexArray");
+
+    return GL_TRUE;
+}
+
+/*
+ * update video vetex
+ */
+GLboolean IJK_GLES2_Renderer_updateVetex2(IJK_GLES2_Renderer *renderer,
+                                         int overlay_h,
+                                         int overlay_w,
+                                         int buffer_w,
+                                         int sar_num,
+                                         int sar_den)
+{
+    if (!renderer)
+        return GL_FALSE;
+
+    GLsizei visible_width  = renderer->frame_width;
+    GLsizei visible_height = overlay_h;
+            visible_width  = overlay_w;
+    if (renderer->frame_width   != visible_width    ||
+        renderer->frame_height  != visible_height   ||
+        renderer->frame_sar_num != sar_num ||
+        renderer->frame_sar_den != sar_den) {
+
+        renderer->frame_width   = visible_width;
+        renderer->frame_height  = visible_height;
+        renderer->frame_sar_num = sar_num;
+        renderer->frame_sar_den = sar_den;
+
+        renderer->vertices_changed = 1;
+    }
+    
+    renderer->last_buffer_width = buffer_w;
     
     GLsizei buffer_width = renderer->last_buffer_width;
     if (!renderer->vertices_changed) {

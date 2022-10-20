@@ -76,6 +76,7 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer,float brightness,float satutaion,float contrast);
 
 GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+GLboolean IJK_GLES2_Renderer_updateVetex2(IJK_GLES2_Renderer *renderer, int overlay_h, int overlay_w, int buffer_w, int sar_num, int sar_den);
 GLboolean IJK_GLES2_Renderer_uploadTexture(IJK_GLES2_Renderer *renderer, void *texture);
 GLboolean IJK_GLES2_Renderer_resetVao(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_drawArrays(void);
