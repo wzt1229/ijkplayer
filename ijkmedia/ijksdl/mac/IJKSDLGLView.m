@@ -416,6 +416,10 @@ static bool _is_need_dispath_to_main(void)
     
     MRTextureString *textureString = [[MRTextureString alloc] initWithString:subtitle withAttributes:attributes];
     
+    if (self.currentSubtitle) {
+        CVPixelBufferRelease(self.currentSubtitle);
+        self.currentSubtitle = NULL;
+    }
     self.currentSubtitle = [textureString createPixelBuffer];
 }
 
@@ -447,17 +451,16 @@ static bool _is_need_dispath_to_main(void)
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
     
     if (kCVReturnSuccess == ret) {
+        if (self.currentSubtitle) {
+            CVPixelBufferRelease(self.currentSubtitle);
+            self.currentSubtitle = NULL;
+        }
         self.currentSubtitle = pixelBuffer;
     }
 }
 
 - (void)_handleSubtitle:(IJKSDLSubtitle *)sub
 {
-    if (self.currentSubtitle) {
-        CVPixelBufferRelease(self.currentSubtitle);
-        self.currentSubtitle = NULL;
-    }
-    
     if (sub.text.length > 0) {
         if (self.subtitlePreferenceChanged || ![self.sub.text isEqualToString:sub.text]) {
             [self _generateSubtitlePixel:sub.text];
