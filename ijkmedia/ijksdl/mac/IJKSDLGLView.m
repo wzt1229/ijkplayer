@@ -471,6 +471,11 @@ static bool _is_need_dispath_to_main(void)
             [self _generateSubtitlePixelFromPicture:sub];
             self.subtitlePreferenceChanged = NO;
         }
+    } else {
+        if (self.currentSubtitle) {
+            CVPixelBufferRelease(self.currentSubtitle);
+            self.currentSubtitle = NULL;
+        }
     }
     
     self.sub = sub;
