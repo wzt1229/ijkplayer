@@ -468,7 +468,14 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                     || send == AVERROR(EINVAL)) {
                     VideoState *is = ffp->is;
                     if (!is->viddec.first_frame_decoded) {
-                        ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_FATAL, send);                        
+                        ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_FATAL, send);
+                    }
+                } else if (send == AVERROR_PATCHWELCOME) {
+                    //ffmpeg 4.0 can't decode tiff raw fmt.
+                    VideoState *is = ffp->is;
+                    if (!is->viddec.first_frame_decoded) {
+                        //save the error,when complete play,pass the error to caller.
+                        ffp->error = send;
                     }
                 } else if (send != 0){
                     int n_send = - send;
@@ -3271,7 +3278,7 @@ static int read_thread(void *arg)
                     toggle_pause(ffp, 1);
                     if (ffp->error) {
                         av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: error: %d\n", ffp->error);
-                        ffp_notify_msg1(ffp, FFP_MSG_ERROR);
+                        ffp_notify_msg2(ffp, FFP_MSG_ERROR, ffp->error);
                     } else {
                         av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK\n");
                         ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
