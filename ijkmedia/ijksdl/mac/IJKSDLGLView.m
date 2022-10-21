@@ -74,7 +74,7 @@ static bool _is_low_os_version(void)
     NSOperatingSystemVersion sysVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
     if (sysVersion.majorVersion > 10) {
         return false;
-    } else if (sysVersion.minorVersion > 15) {
+    } else if (sysVersion.minorVersion >= 15) {
         return false;
     }
     return true;
@@ -84,7 +84,7 @@ static bool _is_need_dispath_to_main(void)
 {
     bool low_os = _is_low_os_version();
     if (low_os) {
-        return _has_more_than_one_GLView();
+        return true;//_has_more_than_one_GLView();
     } else {
         return false;
     }
@@ -327,6 +327,11 @@ static bool _is_need_dispath_to_main(void)
         }
         IJK_GLES2_Renderer_endDrawSubtitle(_renderer);
     }
+}
+
+- (void)setFrame:(NSRect)frame
+{
+    [super setFrame:frame];
 }
 
 - (void)doUploadVideoPicture
