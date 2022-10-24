@@ -48,6 +48,7 @@ TODO: Add long description of the pod here.
       '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/libyuv/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
+    'EXCLUDED_ARCHS' => 'armv7',
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0'
   }
 
