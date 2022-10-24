@@ -148,6 +148,11 @@
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
     [self setWantsBestResolutionOpenGLSurface:YES];
+    
+    ///Fix the default red background color on the Intel platform
+    [[self openGLContext] makeCurrentContext];
+    glClear(GL_COLOR_BUFFER_BIT);
+    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
 }
 
 - (void)videoZRotateDegrees:(NSInteger)degrees
@@ -304,11 +309,12 @@
         }
         
         [self doUploadSubtitle];
+        
+        CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     } else {
         ALOGW("IJKSDLGLView: not ready.\n");
     }
    
-    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
@@ -335,7 +341,7 @@
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
     
-    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 30];
+    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 60];
     [attributes setObject:subtitleFont forKey:NSFontAttributeName];
     
     NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
@@ -587,8 +593,9 @@
             
             img = [self _snapshotTheContextWithSize:picSize];
         }
+        
+        CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     }
-    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
     return img;
 }

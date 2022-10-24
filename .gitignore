@@ -58,3 +58,4 @@ examples/macos/Pods
 /shell/extra/*
 !/shell/extra/patches/
 
+examples/ios/Pods

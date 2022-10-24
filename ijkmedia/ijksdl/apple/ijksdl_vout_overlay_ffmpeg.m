@@ -52,6 +52,7 @@ struct SDL_VoutOverlay_Opaque {
     Uint16 pitches[AV_NUM_DATA_POINTERS];
 #if USE_FF_VTB
     CVPixelBufferRef pixelBuffer;
+    CVPixelBufferPoolRef pixelBufferPool;
 #endif
 
 };
@@ -122,6 +123,25 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
     return attributes;
 }
 
+static CVReturn createCVPixelBufferPoolFromAVFrame(CVPixelBufferPoolRef * poolRef, int width, int height, int format)
+{
+    if (NULL == poolRef) {
+        return kCVReturnInvalidArgument;
+    }
+    
+    CVReturn result = kCVReturnError;
+    //FIXME TODO
+    const bool fullRange = true;
+    NSDictionary * attributes = prepareCVPixelBufferAttibutes(format, fullRange, height, width);
+    
+    result = CVPixelBufferPoolCreate(NULL, NULL, (__bridge CFDictionaryRef) attributes, poolRef);
+    
+    if (result != kCVReturnSuccess) {
+        ALOGE("CVPixelBufferCreate Failed:%d\n", result);
+    }
+    return result;
+}
+
 static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPixelBufferPoolRef poolRef)
 {
     if (NULL == frame) {
@@ -167,18 +187,26 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
             planes = (int)CVPixelBufferGetPlaneCount(pixelBuffer);
         }
         
+        CVPixelBufferLockBaseAddress(pixelBuffer,0);
         for (int p = 0; p < planes; p++) {
-            CVPixelBufferLockBaseAddress(pixelBuffer,p);
             uint8_t *src = frame->data[p];
-            assert(src);
             uint8_t *dst = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, p);
+            if (!src || !dst) {
+                continue;
+            }
+            
             int src_linesize = (int)frame->linesize[p];
             int dst_linesize = (int)CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, p);
             int height = (int)CVPixelBufferGetHeightOfPlane(pixelBuffer, p);
-            int bytewidth = MIN(src_linesize, dst_linesize);
-            av_image_copy_plane(dst, dst_linesize, src, src_linesize, bytewidth, height);
-            CVPixelBufferUnlockBaseAddress(pixelBuffer, p);
+            
+            if (src_linesize == dst_linesize) {
+                memcpy(dst, src, dst_linesize * height);
+            } else {
+                int bytewidth = MIN(src_linesize, dst_linesize);
+                av_image_copy_plane(dst, dst_linesize, src, src_linesize, bytewidth, height);
+            }
         }
+        CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
         return pixelBuffer;
     } else {
         ALOGE("CVPixelBufferCreate Failed:%d\n", result);
@@ -450,7 +478,16 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
         opaque->pixelBuffer = NULL;
     }
     
-    CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, NULL);
+    CVPixelBufferPoolRef poolRef = NULL;
+    if (opaque->pixelBufferPool) {
+        NSDictionary *attributes = (__bridge NSDictionary *)CVPixelBufferPoolGetPixelBufferAttributes(opaque->pixelBufferPool);
+        int _width = [[attributes objectForKey:(NSString*)kCVPixelBufferWidthKey] intValue];
+        int _height = [[attributes objectForKey:(NSString*)kCVPixelBufferHeightKey] intValue];
+        if (frame->width == _width && frame->height == _height) {
+            poolRef = opaque->pixelBufferPool;
+        }
+    }
+    CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, poolRef);
     if (pixel_buffer) {
         opaque->pixelBuffer = pixel_buffer;
         overlay->cv_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
@@ -475,26 +512,25 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
 SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_format, SDL_Vout *display)
 {
     Uint32 overlay_format = display->overlay_format;
-    switch (overlay_format) {
-        case SDL_FCC__GLES2: {
-            switch (frame_format) {
-#if TARGET_OS_IOS
-                case AV_PIX_FMT_YUV444P10LE:
-                    overlay_format = SDL_FCC_I444P10LE;
-                    break;
-#endif
-                case AV_PIX_FMT_YUV420P:
-                case AV_PIX_FMT_YUVJ420P:
-                default:
+    if (SDL_FCC__GLES2 == overlay_format) {
 #if defined(__ANDROID__)
-                    overlay_format = SDL_FCC_YV12;
-#else
-                    overlay_format = SDL_FCC_I420;
-#endif
-                    break;
-            }
-            break;
+        overlay_format = SDL_FCC_YV12;
+#elif defined(__APPLE__)
+    #if TARGET_OS_IOS
+        if (frame_format == AV_PIX_FMT_YUV444P10LE) {
+            overlay_format = SDL_FCC_I444P10LE;
         }
+    #else
+        if (frame_format == AV_PIX_FMT_UYVY422) {
+            overlay_format = SDL_FCC_UYVY;
+        }
+    #endif
+        if (frame_format == AV_PIX_FMT_YUV420P) {
+            overlay_format = SDL_FCC_I420;
+        } else {
+            overlay_format = SDL_FCC_NV12;
+        }
+#endif
     }
 
     SDL_VoutOverlay *overlay = SDL_VoutOverlay_CreateInternal(sizeof(SDL_VoutOverlay_Opaque));
@@ -619,6 +655,14 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
         buf_width = IJKALIGN(width, 4); // 4 bytes per pixel
         opaque->planes = 2;
     }
+    
+    if (!display->cvPixelBufferPool) {
+        CVPixelBufferPoolRef cvPixelBufferPool = NULL;
+        createCVPixelBufferPoolFromAVFrame(&cvPixelBufferPool, width, height,ff_format);
+        display->cvPixelBufferPool = cvPixelBufferPool;
+    }
+    
+    opaque->pixelBufferPool = (CVPixelBufferPoolRef)display->cvPixelBufferPool;
 #endif
     //record ff_format
     overlay->ff_format = ff_format;

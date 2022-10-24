@@ -397,7 +397,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         switch ([event keyCode]) {
             case kVK_ANSI_H:
             {
-                [self exchangeVideoDecoder];
+                
             }
                 break;
         }
@@ -507,6 +507,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         my_stderr = NULL;
     }
     
+    self.seeking = NO;
+    
     if (self.autoTest) {
         
         [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
@@ -570,10 +572,30 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerAfterSeekFirstVideoFrameDisplay:) name:IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification object:self.player];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerOpenInput:) name:IJKMPMoviePlayerOpenInputNotification object:self.player];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerVideoDecoderFatal:) name:IJKMPMoviePlayerVideoDecoderFatalNotification object:self.player];
+    
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
     [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
+}
+
+- (void)ijkPlayerVideoDecoderFatal:(NSNotification *)notifi
+{
+    NSLog(@"decoder fatal:%@",notifi.userInfo[@"code"]);
+    if (self.useVideoToolBox == 2) {
+        self.useVideoToolBox = 0;
+        NSURL *playingUrl = self.playingUrl;
+        [self stopPlay:nil];
+        [self playURL:playingUrl];
+    }
+}
+
+- (void)ijkPlayerOpenInput:(NSNotification *)notifi
+{
+    NSLog(@"demuxer:%@",notifi.userInfo[@"name"]);
 }
 
 - (void)ijkPlayerAfterSeekFirstVideoFrameDisplay:(NSNotification *)notifi
@@ -614,18 +636,56 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     if (self.player == notifi.object) {
         int reason = [notifi.userInfo[IJKMPMoviePlayerPlaybackDidFinishReasonUserInfoKey] intValue];
         if (IJKMPMovieFinishReasonPlaybackError == reason) {
-            int errCode = [notifi.userInfo[@"error"] intValue];
+            int errCode = [notifi.userInfo[@"code"] intValue];
             NSLog(@"播放出错:%d",errCode);
-            NSString *dir = [self saveDir:nil];
-            NSString *fileName = [NSString stringWithFormat:@"a错误汇总.txt"];
-            NSString *filePath = [dir stringByAppendingPathComponent:fileName];
-            FILE *pf = fopen([filePath UTF8String], "a+");
-            fprintf(pf, "%d:%s\n",errCode,[[self.playingUrl absoluteString]UTF8String]);
-            fflush(pf);
-            fclose(pf);
-            //-5 网络错误
-            if (errCode != -5) {
-                [self playNext:nil];
+            if (self.autoTest) {
+                NSString *dir = [self saveDir:nil];
+                NSString *fileName = [NSString stringWithFormat:@"a错误汇总.txt"];
+                NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+                FILE *pf = fopen([filePath UTF8String], "a+");
+                fprintf(pf, "%d:%s\n",errCode,[[self.playingUrl absoluteString]UTF8String]);
+                fflush(pf);
+                fclose(pf);
+                
+                //-5 网络错误
+                if (errCode != -5) {
+                    [self playNext:nil];
+                }
+            } else {
+                NSAlert *alert = [[NSAlert alloc] init];
+                NSString *urlString = [self.player.contentURL isFileURL] ? [self.player.contentURL path] : [self.player.contentURL absoluteString];
+                alert.informativeText = urlString;
+                
+                alert.messageText = [NSString stringWithFormat:@"%@(%d)",notifi.userInfo[@"msg"],errCode];
+                
+                if ([self.playList count] > 1) {
+                    [alert addButtonWithTitle:@"Next"];
+                }
+                [alert addButtonWithTitle:@"Retry"];
+                [alert addButtonWithTitle:@"OK"];
+                [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
+                    if ([[alert buttons] count] == 3) {
+                        if (returnCode == NSAlertFirstButtonReturn) {
+                            [self playNext:nil];
+                        } else if (returnCode == NSAlertSecondButtonReturn) {
+                            //retry
+                            NSURL *url = self.playingUrl;
+                            [self stopPlay:nil];
+                            [self playURL:url];
+                        } else {
+                            //
+                        }
+                    } else if ([[alert buttons] count] == 2) {
+                        if (returnCode == NSAlertFirstButtonReturn) {
+                            //retry
+                            NSURL *url = self.playingUrl;
+                            [self stopPlay:nil];
+                            [self playURL:url];
+                        } else if (returnCode == NSAlertSecondButtonReturn) {
+                            //
+                        }
+                    }
+                }];
             }
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
             NSLog(@"播放结束");
@@ -656,6 +716,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             NSString *type = stream[k_IJKM_KEY_TYPE];
             int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
             if ([type isEqualToString:k_IJKM_VAL_TYPE__SUBTITLE]) {
+                NSLog(@"subtile all meta:%@",stream);
                 NSString *url = stream[k_IJKM_KEY_EX_SUBTITLE_URL];
                 NSString *title = nil;
                 if (url) {
@@ -675,6 +736,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 }
                 [self.subtitlePopUpBtn addItemWithTitle:title];
             } else if ([type isEqualToString:k_IJKM_VAL_TYPE__AUDIO]) {
+                NSLog(@"audio all meta:%@",stream);
                 NSString *title = stream[k_IJKM_KEY_TITLE];
                 if (title.length == 0) {
                     title = stream[k_IJKM_KEY_LANGUAGE];
@@ -688,6 +750,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 }
                 [self.audioPopUpBtn addItemWithTitle:title];
             } else if ([type isEqualToString:k_IJKM_VAL_TYPE__VIDEO]) {
+                NSLog(@"video all meta:%@",stream);
                 NSString *title = stream[k_IJKM_KEY_TITLE];
                 if (title.length == 0) {
                     title = stream[k_IJKM_KEY_LANGUAGE];
@@ -972,6 +1035,10 @@ static IOPMAssertionID g_displaySleepAssertionID;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackDidFinishNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMovieNoCodecFoundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMovieNaturalSizeAvailableNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerOpenInputNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerVideoDecoderFatalNotification object:nil];
     
     [self.kvoCtrl safelyRemoveAllObservers];
     if (self.player) {
@@ -1318,22 +1385,6 @@ static IOPMAssertionID g_displaySleepAssertionID;
     NSString *title = sender.selectedItem.title;
     NSString *fcc = [@"fcc-" stringByAppendingString:title];
     self.fcc = fcc;
-}
-
-- (void)exchangeVideoDecoder
-{
-    int r = [self.player exchangeVideoDecoder];
-    if (r == 1) {
-        NSLog(@"exchang decoder begin");
-    } else if (r == -1) {
-        NSLog(@"exchanging decoder");
-    } else if (r == -2) {
-        NSLog(@"can't exchange decoder,try later");
-    } else if (r == -3) {
-        NSLog(@"no more decoder can exchange.");
-    } else if (r == -4) {
-        NSLog(@"exchange decoder faild.");
-    }
 }
 
 #pragma mark 日志级别

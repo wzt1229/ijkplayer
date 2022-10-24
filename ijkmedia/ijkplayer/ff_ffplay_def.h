@@ -60,13 +60,10 @@
 #endif
 
 #include <stdbool.h>
-#include "ijkavformat/ijkiomanager.h"
-#include "ijkavformat/ijkioapplication.h"
 #include "ff_ffinc.h"
 #include "ff_ffmsg_queue.h"
 #include "ff_ffpipenode.h"
 #include "ijkmeta.h"
-#include "ijkavformat/ijklas.h"
 
 #define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (256 * 1024)
 
@@ -273,7 +270,6 @@ typedef struct Decoder {
     int    first_frame_decoded;
     int    after_seek_frame;
     Uint64 start_seek_time;
-    int    is_switching;
 } Decoder;
 
 typedef struct SubtitleExState{
@@ -530,11 +526,6 @@ typedef struct FFStatistic
     SDL_SpeedSampler2 tcp_read_sampler;
     int64_t latest_seek_load_duration;
     int64_t byte_count;
-    int64_t cache_physical_pos;
-    int64_t cache_file_forwards;
-    int64_t cache_file_pos;
-    int64_t cache_count_bytes;
-    int64_t logical_file_size;
     int drop_frame_count;
     int decode_frame_count;
     float drop_frame_rate;
@@ -659,9 +650,7 @@ typedef struct FFPlayer {
     SDL_Vout *vout;
     struct IJKFF_Pipeline *pipeline;
     struct IJKFF_Pipenode *node_vdec;
-    //store the next decode
-    struct IJKFF_Pipenode *node_vdec_2;
-    int is_switching_vdec_node;
+
     int sar_num;
     int sar_den;
 
@@ -726,13 +715,11 @@ typedef struct FFPlayer {
     int         pf_playback_volume_changed;
 
     void               *inject_opaque;
-    void               *ijkio_inject_opaque;
     FFStatistic         stat;
     FFDemuxCacheControl dcc;
 
 #if ! IJK_IO_OFF
     AVApplicationContext *app_ctx;
-    IjkIOManagerContext *ijkio_manager_ctx;
 #endif
     int enable_accurate_seek;
     int accurate_seek_timeout;
@@ -745,10 +732,8 @@ typedef struct FFPlayer {
     char *mediacodec_default_name;
     int ijkmeta_delay_init;
     int render_wait_start;
-#if ! IJK_IO_OFF
-    int is_manifest;
-#endif
-    LasPlayerStatistic las_player_statistic;
+
+    ijk_audio_samples_callback audio_samples_callback;
 } FFPlayer;
 
 #define fftime_to_milliseconds(ts) (av_rescale(ts, 1000, AV_TIME_BASE))
@@ -810,8 +795,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->vout                   = NULL; /* reset outside */
     ffp->pipeline               = NULL;
     ffp->node_vdec              = NULL;
-    ffp->node_vdec_2            = NULL;
-    ffp->is_switching_vdec_node = 0;
+    
     ffp->sar_num                = 0;
     ffp->sar_den                = 0;
 
@@ -863,9 +847,6 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->mediacodec_default_name        = NULL; // option
     ffp->ijkmeta_delay_init             = 0; // option
     ffp->render_wait_start              = 0;
-#if ! IJK_IO_OFF
-    ffp->is_manifest                    = 0;
-#endif
     ijkmeta_reset(ffp->meta);
 
     SDL_SpeedSamplerReset(&ffp->vfps_sampler);
@@ -880,12 +861,10 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->pf_playback_volume_changed     = 0;
 #if ! IJK_IO_OFF
     av_application_closep(&ffp->app_ctx);
-    ijkio_manager_destroyp(&ffp->ijkio_manager_ctx);
 #endif
     msg_queue_flush(&ffp->msg_queue);
 
     ffp->inject_opaque = NULL;
-    ffp->ijkio_inject_opaque = NULL;
     ffp_reset_statistic(&ffp->stat);
     ffp_reset_demux_cache_control(&ffp->dcc);
 }
@@ -896,6 +875,10 @@ inline static void ffp_notify_msg1(FFPlayer *ffp, int what) {
 
 inline static void ffp_notify_msg2(FFPlayer *ffp, int what, int arg1) {
     msg_queue_put_simple3(&ffp->msg_queue, what, arg1, 0);
+}
+
+inline static void ffp_notify_str2(FFPlayer *ffp, int what, const char *str) {
+    msg_queue_put_str(&ffp->msg_queue, what, str);
 }
 
 inline static void ffp_notify_msg3(FFPlayer *ffp, int what, int arg1, int arg2) {

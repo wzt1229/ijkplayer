@@ -1,3 +1,14 @@
+tag 0.9.1
+--------------------------------
+
+- support morden audio format: aac,ac3,amr,wma,mp2,mp3,m4a,m4r,caf,ogg,oga,opus
+- support lossless audio format: dsf,flac,wav,ape,dff,dts
+- support bluray protocol
+- enable decoders (movtext, dvbsub, qtrle, mss2, rawvideo, tscc2)
+- improve memory copy performance
+- clean ijk videotoolbox hw decoder pipeline.
+- fix some crash,eg: GBK encoding meta.
+
 tag 0.9.0.5
 --------------------------------
 - support cocoapods

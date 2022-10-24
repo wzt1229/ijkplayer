@@ -50,7 +50,6 @@ void      ffp_reset(FFPlayer *ffp);
 void     ffp_set_frame_at_time(FFPlayer *ffp, const char *path, int64_t start_time, int64_t end_time, int num, int definition);
 #if ! IJK_IO_OFF
 void     *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque);
-void     *ffp_set_ijkio_inject_opaque(FFPlayer *ffp, void *opaque);
 #endif
 void      ffp_set_option(FFPlayer *ffp, int opt_category, const char *name, const char *value);
 void      ffp_set_option_int(FFPlayer *ffp, int opt_category, const char *name, int64_t value);
@@ -125,6 +124,8 @@ float     ffp_get_subtitle_extra_delay(FFPlayer *ffp);
 int       ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name);
 /*only load ex-subtitle*/
 int       ffp_load_external_subtitle(FFPlayer *ffp, const char *file_name);
-int       ffp_exchange_video_decoder(FFPlayer *ffp);
 int       ffp_get_video_frame_cache_remaining(FFPlayer *ffp);
+
+/* audio samples realtime observer callback, callback can be NULL */
+void      ffp_set_audio_sample_observer(FFPlayer *ffp, ijk_audio_samples_callback cb);
 #endif

@@ -161,15 +161,6 @@ void *ijkmp_set_inject_opaque(IjkMediaPlayer *mp, void *opaque)
     return prev_weak_thiz;
 }
 
-void *ijkmp_set_ijkio_inject_opaque(IjkMediaPlayer *mp, void *opaque)
-{
-    assert(mp);
-
-    MPTRACE("%s(%p)\n", __func__, opaque);
-    void *prev_weak_thiz = ffp_set_ijkio_inject_opaque(mp->ffplayer, opaque);
-    MPTRACE("%s()=void\n", __func__);
-    return prev_weak_thiz;
-}
 #endif
 
 void ijkmp_set_option(IjkMediaPlayer *mp, int opt_category, const char *name, const char *value)
@@ -833,18 +824,15 @@ int ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
     return retval;
 }
 
-int ijkmp_exchange_video_decoder(IjkMediaPlayer *mp)
-{
-    assert(mp);
-    MPTRACE("ffp_exchange_video_decoder\n");
-    int retval = ffp_exchange_video_decoder(mp->ffplayer);
-    MPTRACE("ffp_exchange_video_decoder()=%d\n", retval);
-    return retval;
-}
-
 int ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp)
 {
     assert(mp);
     int retval = ffp_get_video_frame_cache_remaining(mp->ffplayer);
     return retval;
+}
+
+void ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callback cb)
+{
+    assert(mp);
+    ffp_set_audio_sample_observer(mp->ffplayer, cb);
 }

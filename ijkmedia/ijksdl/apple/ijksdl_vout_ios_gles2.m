@@ -77,7 +77,14 @@ static void vout_free_l(SDL_Vout *vout)
 {
     if (!vout)
         return;
-
+    
+#if USE_FF_VTB
+    if (vout->cvPixelBufferPool) {
+        CVPixelBufferPoolRelease(vout->cvPixelBufferPool);
+        vout->cvPixelBufferPool = NULL;
+    }
+#endif
+    
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (opaque) {
         opaque->gl_view = nil;

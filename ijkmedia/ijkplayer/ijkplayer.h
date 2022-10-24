@@ -167,7 +167,6 @@ void            ijkmp_io_stat_complete_register(void (*cb)(const char *url,
 IjkMediaPlayer *ijkmp_create(int (*msg_loop)(void*));
 #if ! IJK_IO_OFF
 void*            ijkmp_set_inject_opaque(IjkMediaPlayer *mp, void *opaque);
-void*            ijkmp_set_ijkio_inject_opaque(IjkMediaPlayer *mp, void *opaque);
 #endif
 void            ijkmp_set_option(IjkMediaPlayer *mp, int opt_category, const char *name, const char *value);
 void            ijkmp_set_option_int(IjkMediaPlayer *mp, int opt_category, const char *name, int64_t value);
@@ -224,8 +223,10 @@ float           ijkmp_get_subtitle_extra_delay(IjkMediaPlayer *mp);
 int             ijkmp_set_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 /*only load ex-subtitle, not use*/
 int             ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
-/*force exchange decoder*/
-int ijkmp_exchange_video_decoder(IjkMediaPlayer *mp);
 /* get video frame queue chache remaining count*/
 int ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp);
+
+/* register audio samples observer*/
+void            ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callback cb);
+
 #endif
