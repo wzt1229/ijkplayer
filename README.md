@@ -115,7 +115,7 @@ sudo dpkg-reconfigure dash
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.9.0.5
+git checkout -B latest k0.9.1
 
 cd shell
 ./init-any.sh macos
@@ -130,7 +130,7 @@ open ../../examples/macos/IJKMediaMacDemo.xcworkspace
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.9.0.5
+git checkout -B latest k0.9.1
 
 cd shell
 ./init-any.sh ios
@@ -145,7 +145,7 @@ open ../../examples/macos/IJKMediaDemo.xcworkspace
 ```
 git clone https://github.com/Bilibili/ijkplayer.git ijkplayer-android
 cd ijkplayer-android
-git checkout -B latest k0.8.8
+git checkout -B latest k0.9.1
 
 ./init-android.sh
 
