@@ -3034,8 +3034,8 @@ static int read_thread(void *arg)
     }
     if (is->show_mode == SHOW_MODE_NONE)
         is->show_mode = ret >= 0 ? SHOW_MODE_VIDEO : SHOW_MODE_RDFT;
-
-    ff_inSub_setMax_stream(is->ffSub, ic->nb_streams);
+    //tell subtitle stream is ready.
+    ff_sub_stream_ic_ready(is->ffSub, ic);
     
     if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
         stream_component_open(ffp, st_index[AVMEDIA_TYPE_SUBTITLE]);

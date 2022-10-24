@@ -20,6 +20,7 @@ typedef struct FFSubtitle {
     int maxInternalStream;
     FFSubComponent* inSub;
     IJKEXSubtitle* exSub;
+    int streamStartTime;//ic start_time
 }FFSubtitle;
 
 //---------------------------Private Functions--------------------------------------------------//
@@ -133,6 +134,7 @@ int ff_sub_drop_frames_lessThan_pts(FFSubtitle *sub, float pts)
     if (!sub) {
         return -1;
     }
+    pts -= sub->streamStartTime;
     Frame *sp, *sp2;
     FrameQueue *subpq = &sub->frameq;
     int q_serial = sub->packetq.serial;
@@ -178,6 +180,7 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
         return -1;
     }
     int r = 1;
+    pts -= sub->streamStartTime;
     if (frame_queue_nb_remaining(&sub->frameq) > 0) {
         Frame * sp = frame_queue_peek(&sub->frameq);
         sub->current_pts = get_frame_real_begin_pts(sub, sp);
@@ -265,6 +268,7 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
         return -1;
     }
     
+    v_pts -= sub->streamStartTime;
     float wantDisplay = v_pts - delay;
     //subtile's frame queue greater than can display pts
     if (sub->current_pts > wantDisplay) {
@@ -337,6 +341,11 @@ int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx)
     return type;
 }
 
+void ff_sub_stream_ic_ready(FFSubtitle *sub,AVFormatContext* ic)
+{
+    sub->streamStartTime = (int)(fftime_to_milliseconds(ic->start_time) / 1000);
+    sub->maxInternalStream = ic->nb_streams;
+}
 
 int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx)
 {
@@ -360,12 +369,7 @@ int ff_inSub_packet_queue_flush(FFSubtitle *sub)
 
 //---------------------------Internal Subtitle Functions--------------------------------------------------//
 
-void ff_inSub_setMax_stream(FFSubtitle *sub, int stream)
-{
-    if (sub) {
-        sub->maxInternalStream = stream;
-    }
-}
+//
 
 //---------------------------External Subtitle Functions--------------------------------------------------//
 

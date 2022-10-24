@@ -51,8 +51,8 @@ int ff_sub_isExternal_stream(FFSubtitle *sub, int stream);
 //0 means has no sub;1 means internal sub;2 means external sub;
 int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx);
 
-//for internal subtitle.
-void ff_inSub_setMax_stream(FFSubtitle *sub, int stream);
+//when video steam ic ready,call me.
+void ff_sub_stream_ic_ready(FFSubtitle *sub,AVFormatContext* ic);
 
 //for external subtitle.
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
