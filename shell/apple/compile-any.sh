@@ -42,7 +42,12 @@ fi
 source 'init-env.sh'
 
 if [[ -z "$LIBS" || "$LIBS" == "all" ]]; then
-    LIBS=$(cat compile-cfgs/list.txt)
+    list='compile-cfgs/list.txt'
+    #use plat list
+    if [[ -f "compile-cfgs/list_${PLAT}.txt" ]]; then
+        list="compile-cfgs/list_${PLAT}.txt"   
+    fi
+    LIBS=$(cat $list)
 fi
 
 if [[ -z "$ARCH" || "$ARCH" == 'all' ]]; then

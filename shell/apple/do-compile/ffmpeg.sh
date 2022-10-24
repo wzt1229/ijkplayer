@@ -31,6 +31,7 @@ env_assert "XC_BUILD_NAME"
 env_assert "XC_BUILD_SOURCE"
 env_assert "XC_BUILD_PREFIX"
 env_assert "XC_DEPLOYMENT_TARGET"
+env_assert "XCRUN_CC"
 echo "ARGV:$*"
 echo "===check env end==="
 

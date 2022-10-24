@@ -80,15 +80,21 @@ function pull_common() {
 
 function apply_patches()
 {
+    local plat="$1"
     local patch_dir="${TOOLS}/../extra/patches/$REPO_DIR"
+    if [[ -d "${patch_dir}_${plat}" ]];then
+        patch_dir="${patch_dir}_${plat}"
+    fi
     if [[ -d "$patch_dir" ]];then
-        echo "Applying patches to $REPO_DIR"
+        echo
+        echo "== Applying patches: $(basename $patch_dir) → $(basename $PWD) =="
         git am $patch_dir/*.patch
         if [[ $? -ne 0 ]]; then
             echo 'Apply patches failed!'
             git am --skip
             exit 1
         fi
+        echo
     fi
 }
 
@@ -102,7 +108,7 @@ function make_arch_repo() {
         git submodule update --init --depth=1
     fi
     echo "last commit:"$(git log -1 --pretty=format:"[%h] %s:%ce %cd")
-    apply_patches
+    apply_patches $1
     cd - > /dev/null
 }
 
