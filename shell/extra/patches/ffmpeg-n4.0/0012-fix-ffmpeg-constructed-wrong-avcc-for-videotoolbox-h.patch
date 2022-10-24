@@ -30,7 +30,7 @@ index 57b6698..79ab799 100644
 +            char buffer[128];
 +            sprintf(buffer, "%s", "ff avcc maybe wrong:");
 +            int len = (int)strlen(buffer);
-+            int size = MIN(vt_extradata_size, 127 - len) / 2;
++            int size = FFMIN(vt_extradata_size, 127 - len) / 2;
 +            for (int i = 0; i < size; i++) {
 +                len += sprintf(buffer + len, "%02X", vt_extradata[i]);
 +            }
@@ -40,7 +40,7 @@ index 57b6698..79ab799 100644
 +            char buffer[128];
 +            sprintf(buffer, "%s", "\nuse origin avcc:");
 +            int len = (int)strlen(buffer);
-+            int size = MIN(avctx->extradata_size, 127 - len) / 2;
++            int size = FFMIN(avctx->extradata_size, 127 - len) / 2;
 +            for (int i = 0; i < size; i++) {
 +                len += sprintf(buffer + len, "%02X", avctx->extradata[i]);
 +            }
