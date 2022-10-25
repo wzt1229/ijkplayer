@@ -115,7 +115,6 @@ float     ffp_get_subtitle_extra_delay(FFPlayer *ffp);
 int       ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name);
 /* add only ex-subtitle */
 int       ffp_addOnly_external_subtitle(FFPlayer *ffp, const char *file_name);
-int       ffp_exchange_video_decoder(FFPlayer *ffp);
 int       ffp_get_video_frame_cache_remaining(FFPlayer *ffp);
 
 /* audio samples realtime observer callback, callback can be NULL */
