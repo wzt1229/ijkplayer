@@ -4,9 +4,9 @@
 
 MRFFToolChain products was built for my FFmepg tutorial : [https://github.com/debugly/FFmpegTutorial](https://github.com/debugly/FFmpegTutorial).
 
-At present MRFFToolChain contained OpenSSL、FFmpeg 、Lame、X264、Fdk-aac、libyuv、libopus.
+At present MRFFToolChain contained OpenSSL、FFmpeg 、libyuv、libopus、libbluray、etc.
 
-~~All MRFFToolChain lib were made to Pod in [MRFFToolChainPod](https://github.com/debugly/MRFFToolChainPod/).~~
+
 
 ## Folder structure
 
@@ -21,11 +21,13 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、Lame、X264、Fdk-aac、l
 │   ├── product     #编译产物
 │   └── src         #构建时源码仓库
 ├── extra           #ffmpeg，openssl 等库的源码
+│   ├── bluray
+│   ├── dav1d
 │   ├── ffmpeg
 │   ├── libyuv
 │   ├── openssl
-│   ├── bluray
-│   └── opus
+│   ├── opus
+│   └── patches     #打的补丁
 ├── ffconfig        #ffmpeg 功能裁剪配置
 │   ├── configure.md
 │   ├── module-default.sh
@@ -35,19 +37,22 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、Lame、X264、Fdk-aac、l
 │   └── module.sh -> module-full.sh
 ├── init-any.sh     #初始化源码仓库
 ├── init-cfgs       #三方库的配置，包括库名，git仓库地址等信息
+│   ├── bluray
+│   ├── dav1d
 │   ├── ffmpeg
 │   ├── libyuv
 │   ├── openssl
-│   ├── bluray
 │   └── opus
 ├── ios             #ios 平台编译脚本
 │   └── compile-any.sh
 ├── macos           #macos 平台编译脚本
 │   └── compile-any.sh
 └── tools           #初始化仓库依赖的脚本
+    ├── copy-local-repo.sh
     ├── env_assert.sh
     ├── init-repo.sh
-    └── copy-local-repo.sh
+    ├── pull-repo-base.sh
+    └── pull-repo-ref.sh
 ```
 
 ## Init Lib Repo
@@ -129,9 +134,19 @@ cd macos
 
 如果 github 上的仓库克隆较慢，或者需要使用内网私有仓库，可在执行编译脚本前声明对应的环境变量！
 
-| 名称 | 默认仓库 | 使用镜像 |
-|---|---|---|
-| FFmpeg | https://github.com/bilibili/FFmpeg.git | export GIT_FFMPEG_UPSTREAM=git@xx:yy/ffmpeg.git |
-| libYUV | https://github.com/lemenkov/libyuv.git | export GIT_FDK_UPSTREAM=git@xx:yy/libyuv.git
-| OpenSSL | https://github.com/openssl/openssl.git | export GIT_OPUS_UPSTREAM=git@xx:yy/openssl.git |
-| Opus | https://gitlab.xiph.org/xiph/opus.git | export GIT_OPUS_UPSTREAM=git@xx:yy/opusfile.git  |
+| 名称        | 默认仓库                                             | 使用镜像                                               |
+| --------- | ------------------------------------------------ | -------------------------------------------------- |
+| FFmpeg    | https://github.com/bilibili/FFmpeg.git           | export GIT_FFMPEG_UPSTREAM=git@xx:yy/ffmpeg.git    |
+| libYUV    | https://github.com/lemenkov/libyuv.git           | export GIT_FDK_UPSTREAM=git@xx:yy/libyuv.git       |
+| OpenSSL   | https://github.com/openssl/openssl.git           | export GIT_OPUS_UPSTREAM=git@xx:yy/openssl.git     |
+| Opus      | https://gitlab.xiph.org/xiph/opus.git            | export GIT_OPUS_UPSTREAM=git@xx:yy/opusfile.git    |
+| libbluray | https://code.videolan.org/videolan/libbluray.git | export GIT_BLURAY_UPSTREAM=git@xx:yy/libbluray.git |
+| dav1d     | https://code.videolan.org/videolan/dav1d.git     | GIT_DAV1D_UPSTREAM=git@xx:yy/dav1d.git             |
+
+
+
+## Platform Configuration
+
+1、如果不同的平台需要编译不同的库，只需要在 apple/compile-cfgs 目录下，建立 list_PLAT.txt 文件即可，PLAT 为对应的平台，比如 ios,macos 等；默认情况下按照 list.txt 里声明的顺序编译各个库。
+
+2、ffmpeg 的配置需要分平台指定，只需要在 ffconfig 目录下创建 module_PLAT.sh 文件即可，PLAT 为对应的平台，比如 ios,macos 等；默认情况下根据 module.sh 声明的配置进行编译 ffmpeg。
