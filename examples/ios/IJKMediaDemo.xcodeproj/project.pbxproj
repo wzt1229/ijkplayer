@@ -441,7 +441,7 @@
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				TARGETED_DEVICE_FAMILY = 1;
-				VALID_ARCHS = "arm64,x86_64";
+				VALID_ARCHS = "arm64 x86_64";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -468,7 +468,7 @@
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				TARGETED_DEVICE_FAMILY = 1;
-				VALID_ARCHS = "arm64,x86_64";
+				VALID_ARCHS = "arm64 x86_64";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
