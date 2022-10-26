@@ -616,8 +616,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
             CVPixelBufferRelease(self.currentVideoPic);
             self.currentVideoPic = NULL;
         }
-        
-        CVPixelBufferRef videoPic = (CVPixelBufferRef)IJK_GLES2_Renderer_getVideoImage(_renderer, overlay);
+        CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
         if (videoPic) {
             self.currentVideoPic = CVPixelBufferRetain(videoPic);
             [self doUploadVideoPicture:overlay];
