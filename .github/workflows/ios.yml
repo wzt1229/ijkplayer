@@ -18,6 +18,7 @@ jobs:
         uses: maxim-lobanov/setup-cocoapods@v1
         with:
           version: 1.11.2
+      - run: brew install tree
       - name: Download Pre Compiled Dependencies
         run: | 
             # cd shell && ./init-any.sh ios
