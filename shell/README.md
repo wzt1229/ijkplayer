@@ -6,8 +6,6 @@ MRFFToolChain products was built for my FFmepg tutorial : [https://github.com/de
 
 At present MRFFToolChain contained OpenSSL、FFmpeg 、libyuv、libopus、libbluray、etc.
 
-
-
 ## Folder structure
 
 ```
@@ -36,6 +34,7 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、libyuv、libopus、libblu
 │   ├── module-lite.sh
 │   └── module.sh -> module-full.sh
 ├── init-any.sh     #初始化源码仓库
+├── download-pre.sh #从github下载预编好的库
 ├── init-cfgs       #三方库的配置，包括库名，git仓库地址等信息
 │   ├── bluray
 │   ├── dav1d
@@ -53,6 +52,19 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、libyuv、libopus、libblu
     ├── init-repo.sh
     ├── pull-repo-base.sh
     └── pull-repo-ref.sh
+```
+
+## ## Download Pre Compiled
+
+可以跳过自己编译，直接从github上下载预编译好的库，节省时间！
+
+```bash
+#下载 iOS 平台的预编译库
+./download-pre.sh ios
+#下载 macOS 平台的预编译库
+./download-pre.sh macos
+#下载 ios 和 macOS 平台的预编译库
+./download-pre.sh all
 ```
 
 ## Init Lib Repo
@@ -142,8 +154,6 @@ cd macos
 | Opus      | https://gitlab.xiph.org/xiph/opus.git            | export GIT_OPUS_UPSTREAM=git@xx:yy/opusfile.git    |
 | libbluray | https://code.videolan.org/videolan/libbluray.git | export GIT_BLURAY_UPSTREAM=git@xx:yy/libbluray.git |
 | dav1d     | https://code.videolan.org/videolan/dav1d.git     | GIT_DAV1D_UPSTREAM=git@xx:yy/dav1d.git             |
-
-
 
 ## Platform Configuration
 
