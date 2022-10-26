@@ -74,6 +74,9 @@
 #include "ijkmeta.h"
 #include "ijkversion.h"
 #include "ijkplayer.h"
+#include "ff_frame_queue.h"
+#include "ff_packet_list.h"
+#include "ff_subtitle.h"
 #include <stdatomic.h>
 #if defined(__ANDROID__)
 #include "ijksoundtouch/ijksoundtouch_wrap.h"
@@ -139,158 +142,6 @@ int64_t get_valid_channel_layout(int64_t channel_layout, int channels)
 
 static void free_picture(Frame *vp);
 
-static int packet_queue_put_private(PacketQueue *q, AVPacket *pkt)
-{
-    MyAVPacketList pkt1;
-
-    if (q->abort_request)
-       return -1;
-
-    if (av_fifo_space(q->pkt_list) < sizeof(pkt1)) {
-        if (av_fifo_grow(q->pkt_list, sizeof(pkt1)) < 0)
-            return -1;
-    }
-    pkt1.pkt = pkt;
-    pkt1.serial = q->serial;
-    
-    av_fifo_generic_write(q->pkt_list, &pkt1, sizeof(pkt1), NULL);
-    q->nb_packets++;
-    q->size += pkt1.pkt->size + sizeof(pkt1);
-    q->duration += FFMAX(pkt1.pkt->duration, MIN_PKT_DURATION);
-
-    /* XXX: should duplicate packet data in DV case */
-    SDL_CondSignal(q->cond);
-    return 0;
-}
-
-static int packet_queue_put(PacketQueue *q, AVPacket *pkt)
-{
-    AVPacket *pkt1;
-    int ret;
-
-    pkt1 = av_packet_alloc();
-    if (!pkt1) {
-        av_packet_unref(pkt);
-        return -1;
-    }
-    av_packet_move_ref(pkt1, pkt);
-
-    SDL_LockMutex(q->mutex);
-    ret = packet_queue_put_private(q, pkt1);
-    SDL_UnlockMutex(q->mutex);
-
-    if (ret < 0)
-        av_packet_free(&pkt1);
-
-    return ret;
-}
-
-static int packet_queue_put_nullpacket(PacketQueue *q, AVPacket *pkt, int stream_index)
-{
-    pkt->stream_index = stream_index;
-    return packet_queue_put(q, pkt);
-}
-
-/* packet queue handling */
-static int packet_queue_init(PacketQueue *q)
-{
-    memset(q, 0, sizeof(PacketQueue));
-    q->pkt_list = av_fifo_alloc(sizeof(MyAVPacketList));
-    if (!q->pkt_list)
-        return AVERROR(ENOMEM);
-    q->mutex = SDL_CreateMutex();
-    if (!q->mutex) {
-        av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
-        return AVERROR(ENOMEM);
-    }
-    q->cond = SDL_CreateCond();
-    if (!q->cond) {
-        av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
-        return AVERROR(ENOMEM);
-    }
-    q->abort_request = 1;
-    return 0;
-}
-
-static void packet_queue_flush(PacketQueue *q)
-{
-    MyAVPacketList pkt1;
-
-    SDL_LockMutex(q->mutex);
-    while (av_fifo_size(q->pkt_list) >= sizeof(pkt1)) {
-        av_fifo_generic_read(q->pkt_list, &pkt1, sizeof(pkt1), NULL);
-        av_packet_free(&pkt1.pkt);
-    }
-    q->nb_packets = 0;
-    q->size = 0;
-    q->duration = 0;
-    q->serial++;
-    SDL_UnlockMutex(q->mutex);
-}
-
-static void packet_queue_destroy(PacketQueue *q)
-{
-    packet_queue_flush(q);
-    av_fifo_freep(&q->pkt_list);
-    SDL_DestroyMutex(q->mutex);
-    SDL_DestroyCond(q->cond);
-}
-
-static void packet_queue_abort(PacketQueue *q)
-{
-    SDL_LockMutex(q->mutex);
-
-    q->abort_request = 1;
-
-    SDL_CondSignal(q->cond);
-
-    SDL_UnlockMutex(q->mutex);
-}
-
-static void packet_queue_start(PacketQueue *q)
-{
-    SDL_LockMutex(q->mutex);
-    q->abort_request = 0;
-    q->serial++;
-    SDL_UnlockMutex(q->mutex);
-}
-
-/* return < 0 if aborted, 0 if no packet and > 0 if packet.  */
-static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *serial)
-{
-    MyAVPacketList pkt1;
-    int ret;
-
-    SDL_LockMutex(q->mutex);
-
-    for (;;) {
-        if (q->abort_request) {
-            ret = -1;
-            break;
-        }
-        
-        if (av_fifo_size(q->pkt_list) >= sizeof(pkt1)) {
-            av_fifo_generic_read(q->pkt_list, &pkt1, sizeof(pkt1), NULL);
-            q->nb_packets--;
-            q->size -= pkt1.pkt->size + sizeof(pkt1);
-            q->duration -= FFMAX(pkt1.pkt->duration, MIN_PKT_DURATION);
-            av_packet_move_ref(pkt, pkt1.pkt);
-            if (serial)
-                *serial = pkt1.serial;
-            av_packet_free(&pkt1.pkt);
-            ret = 1;
-            break;
-        } else if (!block) {
-            ret = 0;
-            break;
-        } else {
-            SDL_CondWait(q->cond, q->mutex);
-        }
-    }
-    SDL_UnlockMutex(q->mutex);
-    return ret;
-}
-
 static int packet_queue_get_or_buffering(FFPlayer *ffp, PacketQueue *q, AVPacket *pkt, int *serial, int *finished)
 {
     assert(finished);
@@ -318,23 +169,6 @@ static int packet_queue_get_or_buffering(FFPlayer *ffp, PacketQueue *q, AVPacket
     }
 
     return 1;
-}
-
-static int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond) {
-    memset(d, 0, sizeof(Decoder));
-    d->pkt = av_packet_alloc();
-    if (!d->pkt)
-        return AVERROR(ENOMEM);
-    d->avctx = avctx;
-    d->queue = queue;
-    d->empty_queue_cond = empty_queue_cond;
-    d->start_pts = AV_NOPTS_VALUE;
-    d->pkt_serial = 1;
-    d->first_frame_decoded_time = SDL_GetTickHR();
-    d->first_frame_decoded = 0;
-    d->after_seek_frame = 0;
-    SDL_ProfilerReset(&d->decode_profiler, -1);
-    return 0;
 }
 
 static int convert_image(FFPlayer *ffp, AVFrame *src_frame, int64_t src_frame_pts, int width, int height) {
@@ -634,7 +468,14 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                     || send == AVERROR(EINVAL)) {
                     VideoState *is = ffp->is;
                     if (!is->viddec.first_frame_decoded) {
-                        ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_FATAL, send);                        
+                        ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_FATAL, send);
+                    }
+                } else if (send == AVERROR_PATCHWELCOME) {
+                    //ffmpeg 4.0 can't decode tiff raw fmt.
+                    VideoState *is = ffp->is;
+                    if (!is->viddec.first_frame_decoded) {
+                        //save the error,when complete play,pass the error to caller.
+                        ffp->error = send;
                     }
                 } else if (send != 0){
                     int n_send = - send;
@@ -643,158 +484,6 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
             }
         }
     }
-}
-
-static void decoder_destroy(Decoder *d) {
-    av_packet_free(&d->pkt);
-    avcodec_free_context(&d->avctx);
-}
-
-static void frame_queue_unref_item(Frame *vp)
-{
-    av_frame_unref(vp->frame);
-    SDL_VoutUnrefYUVOverlay(vp->bmp);
-    avsubtitle_free(&vp->sub);
-}
-
-static int frame_queue_init(FrameQueue *f, PacketQueue *pktq, int max_size, int keep_last)
-{
-    int i;
-    memset(f, 0, sizeof(FrameQueue));
-    if (!(f->mutex = SDL_CreateMutex())) {
-        av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
-        return AVERROR(ENOMEM);
-    }
-    if (!(f->cond = SDL_CreateCond())) {
-        av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
-        return AVERROR(ENOMEM);
-    }
-    f->pktq = pktq;
-    f->max_size = FFMIN(max_size, FRAME_QUEUE_SIZE);
-    f->keep_last = !!keep_last;
-    for (i = 0; i < f->max_size; i++)
-        if (!(f->queue[i].frame = av_frame_alloc()))
-            return AVERROR(ENOMEM);
-    return 0;
-}
-
-static void frame_queue_destory(FrameQueue *f)
-{
-    int i;
-    for (i = 0; i < f->max_size; i++) {
-        Frame *vp = &f->queue[i];
-        frame_queue_unref_item(vp);
-        av_frame_free(&vp->frame);
-        free_picture(vp);
-    }
-    SDL_DestroyMutex(f->mutex);
-    SDL_DestroyCond(f->cond);
-}
-
-static void frame_queue_signal(FrameQueue *f)
-{
-    SDL_LockMutex(f->mutex);
-    SDL_CondSignal(f->cond);
-    SDL_UnlockMutex(f->mutex);
-}
-
-static Frame *frame_queue_peek(FrameQueue *f)
-{
-    return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
-}
-
-static Frame *frame_queue_peek_next(FrameQueue *f)
-{
-    return &f->queue[(f->rindex + f->rindex_shown + 1) % f->max_size];
-}
-
-static Frame *frame_queue_peek_last(FrameQueue *f)
-{
-    return &f->queue[f->rindex];
-}
-
-static Frame *frame_queue_peek_writable(FrameQueue *f)
-{
-    /* wait until we have space to put a new frame */
-    SDL_LockMutex(f->mutex);
-    while (f->size >= f->max_size &&
-           !f->pktq->abort_request) {
-        SDL_CondWait(f->cond, f->mutex);
-    }
-    SDL_UnlockMutex(f->mutex);
-
-    if (f->pktq->abort_request)
-        return NULL;
-
-    return &f->queue[f->windex];
-}
-
-static Frame *frame_queue_peek_readable(FrameQueue *f)
-{
-    /* wait until we have a readable a new frame */
-    SDL_LockMutex(f->mutex);
-    while (f->size - f->rindex_shown <= 0 &&
-           !f->pktq->abort_request) {
-        SDL_CondWait(f->cond, f->mutex);
-    }
-    SDL_UnlockMutex(f->mutex);
-
-    if (f->pktq->abort_request)
-        return NULL;
-
-    return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
-}
-
-static void frame_queue_push(FrameQueue *f)
-{
-    if (++f->windex == f->max_size)
-        f->windex = 0;
-    SDL_LockMutex(f->mutex);
-    f->size++;
-    SDL_CondSignal(f->cond);
-    SDL_UnlockMutex(f->mutex);
-}
-
-static void frame_queue_next(FrameQueue *f)
-{
-    if (f->keep_last && !f->rindex_shown) {
-        f->rindex_shown = 1;
-        return;
-    }
-    frame_queue_unref_item(&f->queue[f->rindex]);
-    if (++f->rindex == f->max_size)
-        f->rindex = 0;
-    SDL_LockMutex(f->mutex);
-    f->size--;
-    SDL_CondSignal(f->cond);
-    SDL_UnlockMutex(f->mutex);
-}
-
-/* return the number of undisplayed frames in the queue */
-static int frame_queue_nb_remaining(FrameQueue *f)
-{
-    return f->size - f->rindex_shown;
-}
-
-/* return last shown position */
-#ifdef FFP_MERGE
-static int64_t frame_queue_last_pos(FrameQueue *f)
-{
-    Frame *fp = &f->queue[f->rindex];
-    if (f->rindex_shown && fp->serial == f->pktq->serial)
-        return fp->pos;
-    else
-        return -1;
-}
-#endif
-
-static void decoder_abort(Decoder *d, FrameQueue *fq)
-{
-    packet_queue_abort(d->queue);
-    frame_queue_signal(fq);
-    SDL_WaitThread(d->decoder_tid, NULL);
-    d->decoder_tid = NULL;
-    packet_queue_flush(d->queue);
 }
 
 // FFP_MERGE: fill_rectangle
@@ -818,120 +507,6 @@ static void free_picture(Frame *vp)
 // FFP_MERGE: calculate_display_rect
 // FFP_MERGE: upload_texture
 // FFP_MERGE: video_image_display
-
-static const char * remove_ass_line_header(const char *ass)
-{
-    const char *tok = NULL;
-    tok = strchr(ass, ':'); if (tok) tok += 1; // skip event
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip layer
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip start_time
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip end_time
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip style
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip name
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_l
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_r
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_v
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip effect
-    return tok;
-}
-
-static void replace_N_to_n(char *buffer)
-{
-    int len = (int)strlen(buffer);
-    if (len > 0) {
-        do {
-            char *found = strstr(buffer, "\\N");
-            if (found) {
-                *(found) = '\n';
-                memmove(found + 1, found + 2, strlen(found + 2));
-                *(buffer+len - 1) = '\0';
-            } else {
-                break;
-            }
-        } while(1);
-    }
-}
-
-static void remove_last_rn(char *buffer)
-{
-    int len = (int)strlen(buffer);
-    if (len > 0) {
-        char *found = strstr(buffer, "\r\n");
-        if (found) {
-            if (found + 2 == buffer + len) {
-                *(found) = '\0';
-            }
-        }
-    }
-}
-
-static void remove_last_n(char *buffer)
-{
-    int len = (int)strlen(buffer);
-    if (len > 0) {
-        char *found = strstr(buffer, "\n");
-        if (found) {
-            if (found + 1 == buffer + len) {
-                *(found) = '\0';
-            }
-        }
-    }
-}
-
-static char * remove_ass_line_effect(const char *ass)
-{
-    while (ass && strlen(ass) > 2) {
-        //移除 { 开头并且 } 结尾的特效内容
-        if (ass[0] == '{') {
-            char* end = strchr(ass, '}');
-            if (end) {
-                ass = end + 1;
-            } else {
-                break;
-            }
-        } else {
-            break;
-        }
-    }
-    
-    char *buffer = malloc(strlen(ass) + 1);
-    bzero(buffer, strlen(ass) + 1);
-    memcpy(buffer, ass, strlen(ass));
-    
-    while (1) {
-        char *left  = strstr(buffer, "{");
-        char *right = strstr(buffer, "}");
-        if (left && right > left) {
-            if (right - buffer == strlen(buffer)) {
-                bzero(left, right - left);
-            } else {
-                int count = (int)strlen(buffer) - (int)(right - buffer);
-                memmove(left, right + 1, count);
-                bzero(left + count + 1, 1);
-            }
-        } else {
-            break;
-        }
-    }
-    return buffer;
-}
-
-//need free!
-static char * parse_ass_subtitle(const char *ass)
-{
-//    ass = "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,这里是自由城\\N{\\fn微软雅黑\\fs52.5\\b0\\bord0}{\\i1}This is Free City.{\\i}{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了\r\n{\\i1}";
-//    ass = "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,{\an3\fnDFKai-SB\c&HFEFDFD&\3c&H070101&\pos(260,422)}{\fad(300,150)}字幕来源 X2&CASO";
-    
-    const char *text = remove_ass_line_header(ass);
-    if (text && strlen(text) > 0) {
-        char *buffer = remove_ass_line_effect(text);
-        replace_N_to_n(buffer);
-        remove_last_rn(buffer);
-        remove_last_n(buffer);
-        return buffer;
-    }
-    return NULL;
-}
 
 static void update_subtitle_text(FFPlayer *ffp,const char *str)
 {
@@ -958,70 +533,22 @@ static void update_subtitle_pict(FFPlayer *ffp, const AVSubtitleRect *rect)
 static void video_image_display2(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
-    Frame *vp;
-    Frame *sp = NULL;
-
-    vp = frame_queue_peek_last(&is->pictq);
+    Frame *vp = frame_queue_peek_last(&is->pictq);
 
     if (vp->bmp) {
-        if (is->subtitle_st) {
-            if (frame_queue_nb_remaining(&is->subpq) > 0) {
-                sp = frame_queue_peek(&is->subpq);
-                if (vp->pts >= is->subtitle_extra_delay + sp->pts + ((float) sp->sub.start_display_time / 1000)) {
-                    if (!sp->uploaded) {
-                        if (sp->sub.num_rects > 0) {
-                            if (sp->sub.rects[0]->type == SUBTITLE_TEXT && sp->sub.rects[0]->text) {
-                                update_subtitle_text(ffp, sp->sub.rects[0]->text);
-                            } else if (sp->sub.rects[0]->type == SUBTITLE_ASS && sp->sub.rects[0]->ass) {
-                                char *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
-                                if (buffer) {
-                                    update_subtitle_text(ffp, buffer);
-                                    free(buffer);
-                                }
-                            } else if (sp->sub.rects[0]->type == SUBTITLE_BITMAP
-                                       && sp->sub.rects[0]->data[0]
-                                       && sp->sub.rects[0]->linesize[0]) {
-                                update_subtitle_pict(ffp, sp->sub.rects[0]);
-                            } else {
-                                update_subtitle_text(ffp, "");
-                            }
-                        }
-                        sp->uploaded = 1;
-                    }
-                } else {
-                    if (sp->uploaded) {
-                        update_subtitle_text(ffp, "");
-                    }
+        if (is->ffSub) {
+            char *text = NULL;
+            AVSubtitleRect *bmp = NULL;
+            if (ff_sub_fetch_frame(is->ffSub, vp->pts, &text, &bmp) >= 0) {
+                if (text) {
+                    update_subtitle_text(ffp, text);
+                    av_free(text);
+                } else if (bmp) {
+                    update_subtitle_pict(ffp, bmp);
                 }
+            } else {
+                update_subtitle_text(ffp, "");
             }
-        } else if (is->subtitle_ex && is->subtitle_ex->subtitle_st) {
-            if (frame_queue_nb_remaining(&is->subtitle_ex->subpq) > 0) {
-                sp = frame_queue_peek(&is->subtitle_ex->subpq);
-                if (vp->pts >= is->subtitle_extra_delay + sp->pts + ((float) sp->sub.start_display_time / 1000)) {
-                    if (!sp->uploaded) {
-                        if (sp->sub.num_rects > 0) {
-                            if (sp->sub.rects[0]->type == SUBTITLE_TEXT && sp->sub.rects[0]->text) {
-                                update_subtitle_text(ffp, sp->sub.rects[0]->text);
-                            } else if (sp->sub.rects[0]->type == SUBTITLE_ASS && sp->sub.rects[0]->ass) {
-                                char *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
-                                if (buffer) {
-                                    update_subtitle_text(ffp, buffer);
-                                    free(buffer);
-                                }
-                            } else if (sp->sub.rects[0]->type == SUBTITLE_BITMAP
-                                       && sp->sub.rects[0]->data[0]
-                                       && sp->sub.rects[0]->linesize[0]) {
-                                update_subtitle_pict(ffp, sp->sub.rects[0]);
-                            } else {
-                                update_subtitle_text(ffp, "");
-                            }
-                        }
-                        sp->uploaded = 1;
-                    }
-                }
-            }
-        } else {
-            update_subtitle_text(ffp, "");
         }
         
         if (ffp->render_wait_start && !ffp->start_on_prepared && is->pause_req) {
@@ -1091,10 +618,6 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
         decoder_abort(&is->viddec, &is->pictq);
         decoder_destroy(&is->viddec);
         break;
-    case AVMEDIA_TYPE_SUBTITLE:
-        decoder_abort(&is->subdec, &is->subpq);
-        decoder_destroy(&is->subdec);
-        break;
     default:
         break;
     }
@@ -1110,46 +633,11 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
         is->video_stream = -1;
         break;
     case AVMEDIA_TYPE_SUBTITLE:
-        is->subtitle_st = NULL;
-        is->subtitle_stream = -1;
-        update_subtitle_text(ffp, "");
+        assert(0);
         break;
     default:
         break;
     }
-}
-
-static void external_subtitle_close(FFPlayer* ffp)
-{
-    VideoState* vs = ffp->is;
-    if (!vs || !vs->subtitle_ex) {
-        return;
-    }
-    
-    SubtitleExState *is = vs->subtitle_ex;
-    
-    if (!is->subtitle_st) {
-        return;
-    }
-    
-    SDL_LockMutex(is->mutex);
-
-    AVFormatContext *ic = is->ic;
-    if (ic) {
-        avformat_close_input(&ic);
-        is->ic = NULL;
-    }
-    
-    decoder_abort(&is->subdec, &is->subpq);
-    decoder_destroy(&is->subdec);
-    
-    is->subtitle_st = NULL;
-    is->sub_st_idx  = -1;
-    vs->load_sub_ex = 0;
-    
-    SDL_UnlockMutex(is->mutex);
-
-    update_subtitle_text(ffp, "");
 }
 
 static void stream_close(FFPlayer *ffp)
@@ -1159,6 +647,7 @@ static void stream_close(FFPlayer *ffp)
     is->abort_request = 1;
     packet_queue_abort(&is->videoq);
     packet_queue_abort(&is->audioq);
+    ff_sub_abort(is->ffSub);
     av_log(NULL, AV_LOG_DEBUG, "wait for read_tid\n");
     SDL_WaitThread(is->read_tid, NULL);
 
@@ -1167,29 +656,22 @@ static void stream_close(FFPlayer *ffp)
         stream_component_close(ffp, is->audio_stream);
     if (is->video_stream >= 0)
         stream_component_close(ffp, is->video_stream);
-    if (is->subtitle_stream >= 0)
-        stream_component_close(ffp, is->subtitle_stream);
-  
+    
+    ff_sub_close_current(is->ffSub);
+    
     avformat_close_input(&is->ic);
-    if (is->subtitle_ex) {
-        external_subtitle_close(ffp);
-    }
-
+    
     av_log(NULL, AV_LOG_DEBUG, "wait for video_refresh_tid\n");
     SDL_WaitThread(is->video_refresh_tid, NULL);
 
     packet_queue_destroy(&is->videoq);
     packet_queue_destroy(&is->audioq);
-    packet_queue_destroy(&is->subtitleq);
-    if (is->subtitle_ex)
-        packet_queue_destroy(&is->subtitle_ex->subtitleq);
 
     /* free all pictures */
     frame_queue_destory(&is->pictq);
     frame_queue_destory(&is->sampq);
-    frame_queue_destory(&is->subpq);
-    if (is->subtitle_ex)
-        frame_queue_destory(&is->subtitle_ex->subpq);
+
+    ff_sub_destroy(&is->ffSub);
     SDL_DestroyCond(is->audio_accurate_seek_cond);
     SDL_DestroyCond(is->video_accurate_seek_cond);
     SDL_DestroyCond(is->continue_read_thread);
@@ -1218,19 +700,6 @@ static void stream_close(FFPlayer *ffp)
         av_freep(&ffp->get_img_info);
     }
     av_free(is->filename);
-    int sub_max = IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET;
-    for (int i = 0; i < sub_max; i++) {
-        if (is->ex_sub_url[i]) {
-            av_free(is->ex_sub_url[i]);
-            is->ex_sub_url[i] = NULL;
-        }
-    }
-    if (is->subtitle_ex) {
-        SDL_DestroyMutex(is->subtitle_ex->mutex);
-        av_free(is->subtitle_ex);
-        is->subtitle_ex = NULL;
-    }
-
     av_free(is);
     ffp->is = NULL;
 }
@@ -1493,8 +962,6 @@ static void video_refresh(FFPlayer *opaque, double *remaining_time)
     VideoState *is = ffp->is;
     double time;
 
-    Frame *sp, *sp2;
-
     if (!is->paused && get_master_sync_type(is) == AV_SYNC_EXTERNAL_CLOCK && is->realtime)
         check_external_clock_speed(is);
 
@@ -1534,7 +1001,7 @@ retry:
             last_duration = vp_duration(is, lastvp, vp);
             delay = compute_target_delay(ffp, last_duration, is);
 
-            time= av_gettime_relative()/1000000.0;
+            time= av_gettime_relative() / 1000000.0;
             if (isnan(is->frame_timer) || time < is->frame_timer)
                 is->frame_timer = time;
             if (time < is->frame_timer + delay) {
@@ -1559,53 +1026,11 @@ retry:
                     goto retry;
                 }
             }
-
-            if (is->subtitle_st) {
-                while (frame_queue_nb_remaining(&is->subpq) > 0) {
-                    sp = frame_queue_peek(&is->subpq);
-
-                    if (frame_queue_nb_remaining(&is->subpq) > 1)
-                        sp2 = frame_queue_peek_next(&is->subpq);
-                    else
-                        sp2 = NULL;
-
-                    if (sp->serial != is->subtitleq.serial
-                            || (is->vidclk.pts > (is->subtitle_extra_delay + sp->pts + ((float) sp->sub.end_display_time / 1000)))
-                            || (sp2 && is->vidclk.pts > (is->subtitle_extra_delay + sp2->pts + ((float) sp2->sub.start_display_time / 1000))))
-                    {
-                        if (sp->uploaded) {
-                            update_subtitle_text(ffp, "");
-                        }
-                        frame_queue_next(&is->subpq);
-                    } else {
-                        break;
-                    }
-                }
+            
+            if (ff_sub_drop_frames_lessThan_pts(is->ffSub, is->vidclk.pts) > 0) {
+                update_subtitle_text(ffp, "");
             }
-            else if (is->subtitle_ex && is->subtitle_ex->subtitle_st){
-                while (frame_queue_nb_remaining(&is->subtitle_ex->subpq) > 0) {
-                    sp = frame_queue_peek(&is->subtitle_ex->subpq);
-
-                    if (frame_queue_nb_remaining(&is->subtitle_ex->subpq) > 1)
-                        sp2 = frame_queue_peek_next(&is->subtitle_ex->subpq);
-                    else
-                        sp2 = NULL;
-
-                    if (sp->serial != is->subtitle_ex->subtitleq.serial
-                            || (is->vidclk.pts > (is->subtitle_extra_delay + sp->pts + ((float) sp->sub.end_display_time / 1000)))
-                            || (sp2 && is->vidclk.pts > (is->subtitle_extra_delay + sp2->pts + ((float) sp2->sub.start_display_time / 1000))))
-                    {
-                        if (sp->uploaded) {
-                            update_subtitle_text(ffp,"");
-                        }
-
-                        frame_queue_next(&is->subtitle_ex->subpq);
-                    } else {
-                        break;
-                    }
-                }
-            }
-
+            
             frame_queue_next(&is->pictq);
             is->force_refresh = 1;
 
@@ -1691,7 +1116,6 @@ static void alloc_picture(FFPlayer *ffp, int frame_format)
     video_open(is, vp);
 #endif
 
-    SDL_VoutSetOverlayFormat(ffp->vout, ffp->overlay_format);
     vp->bmp = SDL_Vout_CreateOverlay(vp->width, vp->height,
                                    frame_format,
                                    ffp->vout);
@@ -1848,7 +1272,11 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
 
         /* the allocation must be done in the main thread to avoid
            locking problems. */
-        alloc_picture(ffp, src_frame->format);
+        if (src_frame->format == AV_PIX_FMT_YUV420P && src_frame->color_range == AVCOL_RANGE_JPEG) {
+            alloc_picture(ffp, AV_PIX_FMT_YUVJ420P);
+        } else {
+            alloc_picture(ffp, src_frame->format);
+        }
 
         if (is->videoq.abort_request)
             return -1;
@@ -2406,17 +1834,6 @@ static int audio_thread(void *arg)
     return ret;
 }
 
-static int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *name)
-{
-    packet_queue_start(d->queue);
-    d->decoder_tid = SDL_CreateThreadEx(&d->_decoder_tid, fn, arg, name);
-    if (!d->decoder_tid) {
-        av_log(NULL, AV_LOG_ERROR, "SDL_CreateThread(): %s\n", SDL_GetError());
-        return AVERROR(ENOMEM);
-    }
-    return 0;
-}
-
 static int ffplay_video_thread(void *arg)
 {
     FFPlayer *ffp = arg;
@@ -2587,47 +2004,6 @@ static int video_thread(void *arg)
         ret = ffpipenode_run_sync(ffp->node_vdec);
     }
     return ret;
-}
-
-static int subtitle_thread(void *arg)
-{
-    FFPlayer *ffp = arg;
-    VideoState *is = ffp->is;
-    Frame *sp;
-    int got_subtitle;
-    double pts;
-
-    for (;;) {
-        if (!(sp = frame_queue_peek_writable(&is->subpq)))
-            return 0;
-
-        if ((got_subtitle = decoder_decode_frame(ffp, &is->subdec, NULL, &sp->sub)) < 0)
-            break;
-
-        pts = 0;
-#ifdef FFP_MERGE
-        if (got_subtitle && sp->sub.format == 0)
-#else
-        if (got_subtitle)
-#endif
-        {
-            if (sp->sub.pts != AV_NOPTS_VALUE)
-                pts = sp->sub.pts / (double)AV_TIME_BASE;
-            sp->pts = pts;
-            sp->serial = is->subdec.pkt_serial;
-            sp->width = is->subdec.avctx->width;
-            sp->height = is->subdec.avctx->height;
-            sp->uploaded = 0;
-
-            /* now we can update the picture count */
-            frame_queue_push(&is->subpq);
-#ifdef FFP_MERGE
-        } else if (got_subtitle) {
-            avsubtitle_free(&sp->sub);
-#endif
-        }
-    }
-    return 0;
 }
 
 /* copy samples for viewing in editor window */
@@ -3364,17 +2740,16 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
 
         break;
     case AVMEDIA_TYPE_SUBTITLE:
-        if (!ffp->subtitle) break;
-
-        is->subtitle_stream = stream_index;
-        is->subtitle_st = st;
-
-        ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
-
-        if ((ret = decoder_init(&is->subdec, avctx, &is->subtitleq, is->continue_read_thread)) < 0)
-            goto fail;
-        if ((ret = decoder_start(&is->subdec, subtitle_thread, ffp, "ff_subtitle_dec")) < 0)
+        if (!ffp->subtitle)
+            break;
+        ret = ff_sub_open_component(is->ffSub, stream_index, NULL, avctx);
+        if (ret == 0) {
+            ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
             goto out;
+        } else {
+            //if failed, freed context internal.
+            goto out;
+        }
         break;
     default:
         break;
@@ -3420,180 +2795,6 @@ static int is_realtime(AVFormatContext *s)
         return 1;
     return 0;
 }
-
-static int external_subtitle_thread(void *arg)
-{
-    FFPlayer *ffp = arg;
-    SubtitleExState *ss = ffp->is->subtitle_ex;
-    Decoder* d = &ss->subdec;
-    Frame *sp = NULL;
-    int got_frame = 0;
-    double pts;
-
-    for (;;) {
-        if (!(sp = frame_queue_peek_writable(&ss->subpq)))
-            return 0;
-
-        int ret = 0;
-        AVPacket pkt;
-
-        for (;;) {
-            if (d->queue->serial == d->pkt_serial) {
-                if (d->queue->abort_request)
-                    return -1;
-            }
-            
-            do {
-                if (d->queue->nb_packets == 0)
-                    SDL_CondSignal(d->empty_queue_cond);
-                if (d->packet_pending) {
-                    av_packet_move_ref(&pkt, d->pkt);
-                    d->packet_pending = 0;
-                } else {
-                    int old_serial = d->pkt_serial;
-                    if (packet_queue_get_or_buffering(ffp, d->queue, &pkt, &d->pkt_serial, &d->finished) < 0)
-                        return -1;
-                    if (old_serial != d->pkt_serial) {
-                        avcodec_flush_buffers(d->avctx);
-                        d->finished = 0;
-                        d->next_pts = d->start_pts;
-                        d->next_pts_tb = d->start_pts_tb;
-                    }
-                }
-            } while (d->queue->serial != d->pkt_serial);
-
-            if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-                ret = avcodec_decode_subtitle2(d->avctx, &sp->sub, &got_frame, &pkt);
-                if (ret < 0) {
-                    ret = AVERROR(EAGAIN);
-                    return 0;
-                } else {
-                    if (got_frame && !pkt.data) {
-                        d->packet_pending = 1;
-                        av_packet_move_ref(d->pkt, &pkt);
-                    }
-                    break;
-                }
-            }
-        }
-        
-        pts = 0;
-        if (got_frame) {
-            //ctx的时间基不对，所以无法通过time_base计算
-            if (d->avctx->codec_id == AV_CODEC_ID_ASS) {
-                sp->sub.end_display_time = pkt.duration * 10.0;
-                if (pkt.pts != AV_NOPTS_VALUE)
-                    pts = pkt.pts / 100.0;
-            } else if (d->avctx->codec_id == AV_CODEC_ID_SUBRIP
-                       || d->avctx->codec_id == AV_CODEC_ID_WEBVTT) {
-                sp->sub.end_display_time = (uint32_t)pkt.duration;
-                if (pkt.pts != AV_NOPTS_VALUE)
-                    pts = pkt.pts / 1000.0;
-            } else if (d->avctx->codec_id == AV_CODEC_ID_TEXT) {
-                sp->sub.end_display_time = (uint32_t)pkt.duration;
-                if (pkt.pts != AV_NOPTS_VALUE)
-                    pts = pkt.pts / 1000.0;
-            }//其它格式pts为0，可暴露问题
-            
-            sp->pts = pts;
-            sp->serial = ss->subdec.pkt_serial;
-            sp->width = ss->subdec.avctx->width;
-            sp->height = ss->subdec.avctx->height;
-            sp->uploaded = 0;
-
-            /* now we can update the picture count */
-            frame_queue_push(&ss->subpq);
-        }
-        
-        av_packet_unref(&pkt);
-    }
-    return 0;
-}
-     
-static int external_subtitle_open(FFPlayer* ffp,const char *file_name)
-{
-    int err = 0;
-    int ret = 0;
-    
-    SubtitleExState* ss = ffp->is->subtitle_ex;
-    SDL_LockMutex(ss->mutex);
-    AVCodecContext* avctx = NULL;
-    AVFormatContext* ic = avformat_alloc_context();
-    err = avformat_open_input(&ic, file_name, NULL, NULL);
-    if (err < 0) {
-        print_error(file_name, err);
-        ret = -1;
-        goto fail;
-    }
-    
-    err = avformat_find_stream_info(ic, NULL);
-    if (err < 0) {
-        print_error(file_name, err);
-        ret = -2;
-        goto fail;
-    }
-    
-    //字幕流的索引
-    for (size_t i = 0; i < ic->nb_streams; ++i) {
-        if (ic->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-            ss->sub_st_idx  = (int)i;
-            ss->subtitle_st = ic->streams[i];
-            break;
-        }
-    }
-    
-    if (!ss->subtitle_st) {
-        ret = -3;
-        av_log(NULL, AV_LOG_WARNING, "none subtitle stream in %s\n",
-                file_name);
-        goto fail;
-    }
-    
-    AVCodec* codec = avcodec_find_decoder(ss->subtitle_st->codecpar->codec_id);
-    if (!codec) {
-        av_log(NULL, AV_LOG_WARNING, "could find codec:%s for %s\n",
-                file_name, avcodec_get_name(ss->subtitle_st->codecpar->codec_id));
-        ret = -4;
-        goto fail;
-    }
-    
-    avctx = avcodec_alloc_context3(NULL);
-    if (!avctx) {
-        ret = -5;
-        goto fail;
-    }
-
-    err = avcodec_parameters_to_context(avctx, ss->subtitle_st->codecpar);
-    if (err < 0) {
-        print_error(file_name, err);
-        ret = -6;
-        goto fail;
-    }
-    
-    if ((err = avcodec_open2(avctx, codec, NULL)) < 0) {
-        print_error(file_name, err);
-        ret = -7;
-        goto fail;
-    }
-    
-    decoder_init(&ss->subdec, avctx, &ss->subtitleq, ffp->is->continue_read_thread);
-    
-    decoder_start(&ss->subdec, external_subtitle_thread, ffp, "ff_ex_subtitle_thread");
-    
-    ss->ic = ic;
-    ss->eof = 0;
-fail:
-    if (ret < 0) {
-        ss->sub_st_idx = -1;
-        ss->subtitle_st = NULL;
-        if (ic)
-            avformat_close_input(&ic);
-        if (avctx)
-            avcodec_free_context(&avctx);
-    }
-    SDL_UnlockMutex(ss->mutex);
-    return ret;
-}
     
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
@@ -3604,7 +2805,6 @@ static int read_thread(void *arg)
     int err, i, ret __unused;
     int st_index[AVMEDIA_TYPE_NB];
     AVPacket *pkt = NULL;
-    AVPacket *ex_subpkt = NULL;
     int64_t stream_start_time;
     int completed = 0;
     int pkt_in_play_range = 0;
@@ -3628,13 +2828,6 @@ static int read_thread(void *arg)
 
     pkt = av_packet_alloc();
     if (!pkt) {
-        av_log(NULL, AV_LOG_FATAL, "Could not allocate packet.\n");
-        ret = AVERROR(ENOMEM);
-        goto fail;
-    }
-
-    ex_subpkt = av_packet_alloc();
-    if (!ex_subpkt) {
         av_log(NULL, AV_LOG_FATAL, "Could not allocate packet.\n");
         ret = AVERROR(ENOMEM);
         goto fail;
@@ -3841,10 +3034,13 @@ static int read_thread(void *arg)
     }
     if (is->show_mode == SHOW_MODE_NONE)
         is->show_mode = ret >= 0 ? SHOW_MODE_VIDEO : SHOW_MODE_RDFT;
-
+    //tell subtitle stream is ready.
+    ff_sub_stream_ic_ready(is->ffSub, ic);
+    
     if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
         stream_component_open(ffp, st_index[AVMEDIA_TYPE_SUBTITLE]);
     }
+    
     ffp_notify_msg1(ffp, FFP_MSG_COMPONENT_OPEN);
 
     if (!ffp->ijkmeta_delay_init) {
@@ -3887,13 +3083,13 @@ static int read_thread(void *arg)
     if (!ffp->render_wait_start && !ffp->start_on_prepared)
         toggle_pause(ffp, 1);
     if (is->video_st && is->video_st->codecpar) {
-        AVCodecParameters *codecpar = is->video_st->codecpar;
-        ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, codecpar->width, codecpar->height);
-        ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codecpar->sample_aspect_ratio.num, codecpar->sample_aspect_ratio.den);
         //recode video z rotate degrees
         int deg = ffp_get_video_rotate_degrees(ffp);
         ffp->vout->z_rotate_degrees = deg;
         ffp_notify_msg2(ffp, FFP_MSG_VIDEO_Z_ROTATE_DEGREE, deg);
+        AVCodecParameters *codecpar = is->video_st->codecpar;
+        ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, codecpar->width, codecpar->height);
+        ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codecpar->sample_aspect_ratio.num, codecpar->sample_aspect_ratio.den);
     }
     ffp->prepared = true;
     ffp_notify_msg1(ffp, FFP_MSG_PREPARED);
@@ -3933,27 +3129,6 @@ static int read_thread(void *arg)
             continue;
         }
 #endif
-        if (is->subtitle_ex && is->load_sub_ex && is->subtitle_ex->mutex) {
-            SDL_LockMutex(is->subtitle_ex->mutex);
-            if (is->subtitle_ex->ic) {
-                is->load_sub_ex = 0;
-                
-                if (is->subtitle_stream >= 0)
-                    stream_component_close(ffp, is->subtitle_stream);
-                
-                int64_t cp = ffp_get_current_position_l(ffp);
-                int64_t seek_time = milliseconds_to_fftime(cp);
-                
-                ret = avformat_seek_file(is->subtitle_ex->ic, -1, INT64_MIN, seek_time, INT64_MAX, 0);
-                
-                if (ret < 0) {
-                    av_log(NULL, AV_LOG_WARNING, "%d: could not seek to position %lld\n",
-                            is->subtitle_ex->sub_st_idx, cp);
-                }
-                is->subtitle_ex->eof = 0;
-            }
-            SDL_UnlockMutex(is->subtitle_ex->mutex);
-        }
         
         if (is->seek_req) {
             int64_t seek_target = is->seek_pos;
@@ -3973,14 +3148,13 @@ static int read_thread(void *arg)
             } else {
                 if (is->audio_stream >= 0)
                     packet_queue_flush(&is->audioq);
-                if (is->subtitle_stream >= 0)
-                    packet_queue_flush(&is->subtitleq);
                 if (is->video_stream >= 0) {
                     if (ffp->node_vdec) {
                         ffpipenode_flush(ffp->node_vdec);
                     }
                     packet_queue_flush(&is->videoq);
                 }
+                ff_inSub_packet_queue_flush(is->ffSub);
                 if (is->seek_flags & AVSEEK_FLAG_BYTE) {
                    set_clock(&is->extclk, NAN, 0);
                 } else {
@@ -3992,24 +3166,13 @@ static int read_thread(void *arg)
                 is->latest_seek_load_start_at = av_gettime();
             }
             
-            if (is->subtitle_ex && is->subtitle_ex->mutex) {
-                SDL_LockMutex(is->subtitle_ex->mutex);
-                if (is->subtitle_ex->ic) {
-                    int ret = -1;
-                    ret = avformat_seek_file(is->subtitle_ex->ic, -1, seek_min, seek_target, seek_max, 0);
-                    if (ret < 0) {
-                        av_log(NULL, AV_LOG_ERROR,
-                               "%s: external subtitle error while seeking\n", is->subtitle_ex->ic->url);
-                    } else {
-                        if (is->subtitle_ex->sub_st_idx >= 0) {
-                            packet_queue_flush(&is->subtitle_ex->subtitleq);
-                            is->subtitle_ex->eof = 0;
-                        }
-                    }
-                }
-                SDL_UnlockMutex(is->subtitle_ex->mutex);
+            if (ff_sub_current_stream_type(is->ffSub, NULL) == 2) {
+                //seek the extra subtitle
+                int sec = (int)(fftime_to_milliseconds(seek_target - is->ic->start_time) / 1000);
+                float delay = ff_sub_get_delay(is->ffSub);
+                ff_sub_set_delay(is->ffSub, delay, sec);
             }
-            
+            //seek 后降低水位线，让播放器更快满足条件
             ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
             is->seek_req = 0;
             is->viddec.after_seek_frame = 1;
@@ -4063,22 +3226,21 @@ static int read_thread(void *arg)
                 if ((ret = av_packet_ref(pkt, &is->video_st->attached_pic)) < 0)
                     goto fail;
                 packet_queue_put(&is->videoq, pkt);
-                packet_queue_put_nullpacket(&is->videoq, pkt, is->video_stream);
+                packet_queue_put_nullpacket(&is->videoq, is->video_stream);
             }
             is->queue_attachments_req = 0;
         }
 
         /* if the queue are full, no need to read more */
-        if (ffp->infinite_buffer<1 && !is->seek_req &&
+        if (ffp->infinite_buffer < 1 && !is->seek_req &&
 #ifdef FFP_MERGE
               (is->audioq.size + is->videoq.size + is->subtitleq.size > MAX_QUEUE_SIZE)
 #else
-               (is->audioq.size + is->videoq.size + is->subtitleq.size  + (is->subtitle_ex? is->subtitle_ex->subtitleq.size :0) > ffp->dcc.max_buffer_size
+               (is->audioq.size + is->videoq.size + ff_sub_frame_queue_size(is->ffSub) > ffp->dcc.max_buffer_size
 #endif
             || (   stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq, MIN_FRAMES)
                 && stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq, MIN_FRAMES)
-                && stream_has_enough_packets(is->subtitle_st, is->subtitle_stream, &is->subtitleq, MIN_FRAMES)
-                && (is->subtitle_ex? stream_has_enough_packets(is->subtitle_ex->subtitle_st, is->subtitle_ex->sub_st_idx, &is->subtitle_ex->subtitleq, MIN_FRAMES): 1)))) {
+                && ff_sub_has_enough_packets(is->ffSub, MIN_FRAMES)))) {
             if (!is->eof) {
                 ffp_toggle_buffering(ffp, 0);
             }
@@ -4116,32 +3278,13 @@ static int read_thread(void *arg)
                     toggle_pause(ffp, 1);
                     if (ffp->error) {
                         av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: error: %d\n", ffp->error);
-                        ffp_notify_msg1(ffp, FFP_MSG_ERROR);
+                        ffp_notify_msg2(ffp, FFP_MSG_ERROR, ffp->error);
                     } else {
                         av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK\n");
                         ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
                     }
                 }
             }
-        }
-            
-            
-        if (is->subtitle_ex && is->subtitle_ex->mutex) {
-            SDL_LockMutex(is->subtitle_ex->mutex);
-            if (is->subtitle_ex->ic && !is->subtitle_ex->eof) {
-                ex_subpkt->flags = 0;
-                int ret2 = av_read_frame(is->subtitle_ex->ic, ex_subpkt);
-                
-                if (ret2 >= 0 && ex_subpkt->stream_index == is->subtitle_ex->sub_st_idx){
-                    packet_queue_put(&is->subtitle_ex->subtitleq, ex_subpkt);
-                } else {
-                    if (ret2 == AVERROR_EOF) {
-                        packet_queue_put_nullpacket(&is->subtitle_ex->subtitleq, ex_subpkt, is->subtitle_ex->sub_st_idx);
-                        is->subtitle_ex->eof = 1;
-                    }
-                }
-            }
-            SDL_UnlockMutex(is->subtitle_ex->mutex);
         }
         
         pkt->flags = 0;
@@ -4165,20 +3308,18 @@ static int read_thread(void *arg)
 
             if (pb_eof) {
                 if (is->video_stream >= 0)
-                    packet_queue_put_nullpacket(&is->videoq, pkt, is->video_stream);
+                    packet_queue_put_nullpacket(&is->videoq, is->video_stream);
                 if (is->audio_stream >= 0)
-                    packet_queue_put_nullpacket(&is->audioq, pkt, is->audio_stream);
-                if (is->subtitle_stream >= 0)
-                    packet_queue_put_nullpacket(&is->subtitleq, pkt, is->subtitle_stream);
+                    packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
+                ff_sub_put_null_packet(is->ffSub, ff_sub_get_opened_stream_idx(is->ffSub));
                 is->eof = 1;
             }
             if (pb_error) {
                 if (is->video_stream >= 0)
-                    packet_queue_put_nullpacket(&is->videoq, pkt, is->video_stream);
+                    packet_queue_put_nullpacket(&is->videoq, is->video_stream);
                 if (is->audio_stream >= 0)
-                    packet_queue_put_nullpacket(&is->audioq, pkt, is->audio_stream);
-                if (is->subtitle_stream >= 0)
-                    packet_queue_put_nullpacket(&is->subtitleq, pkt, is->subtitle_stream);
+                    packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
+                ff_sub_put_null_packet(is->ffSub, ff_sub_get_opened_stream_idx(is->ffSub));
                 is->eof = 1;
                 ffp->error = pb_error;
                 av_log(ffp, AV_LOG_ERROR, "av_read_frame error: %s\n", ffp_get_error_string(ffp->error));
@@ -4213,8 +3354,9 @@ static int read_thread(void *arg)
                 is->audioq.serial++;
                 //packet_queue_put(&is->audioq, &flush_pkt);
             }
-            if (is->subtitle_stream >= 0) {
-                is->subtitleq.serial++;
+            if (ff_sub_get_opened_stream_idx(is->ffSub) >= 0) {
+                //TODO test here
+                //is->subtitleq.serial++;
                 //packet_queue_put(&is->subtitleq, &flush_pkt);
             }
             if (is->video_stream >= 0) {
@@ -4236,8 +3378,8 @@ static int read_thread(void *arg)
         } else if (pkt->stream_index == is->video_stream && pkt_in_play_range
                    && !(is->video_st && (is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC))) {
             packet_queue_put(&is->videoq, pkt);
-        } else if (pkt->stream_index == is->subtitle_stream && pkt_in_play_range) {
-            packet_queue_put(&is->subtitleq, pkt);
+        } else if (pkt->stream_index == ff_sub_get_opened_stream_idx(is->ffSub) && pkt_in_play_range) {
+            ff_sub_put_packet(is->ffSub, pkt);
         } else {
             av_packet_unref(pkt);
         }
@@ -4252,13 +3394,21 @@ static int read_thread(void *arg)
 
         if (ffp->packet_buffering) {
             io_tick_counter = SDL_GetTickHR();
+            //首帧秒开，每隔50ms检查一次缓冲情况
             if ((!ffp->first_video_frame_rendered && is->video_st) || (!ffp->first_audio_frame_rendered && is->audio_st)) {
                 if (abs((int)(io_tick_counter - prev_io_tick_counter)) > FAST_BUFFERING_CHECK_PER_MILLISECONDS) {
                     prev_io_tick_counter = io_tick_counter;
                     ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
                     ffp_check_buffering_l(ffp);
                 }
+            } else if (is->seek_buffering) {
+                //seek之后，执行快速检查，50ms一次；让播放器更快的查询是否满足播放条件
+                if (abs((int)(io_tick_counter - prev_io_tick_counter)) > FAST_BUFFERING_CHECK_PER_MILLISECONDS) {
+                    prev_io_tick_counter = io_tick_counter;
+                    ffp_check_buffering_l(ffp);
+                }
             } else {
+                //非首帧，每隔500ms检查一次缓冲情况
                 if (abs((int)(io_tick_counter - prev_io_tick_counter)) > BUFFERING_CHECK_PER_MILLISECONDS) {
                     prev_io_tick_counter = io_tick_counter;
                     ffp_check_buffering_l(ffp);
@@ -4273,13 +3423,6 @@ static int read_thread(void *arg)
         avformat_close_input(&ic);
     
     av_packet_free(&pkt);
-    av_packet_free(&ex_subpkt);
-    if (is->subtitle_ex && is->subtitle_ex->mutex) {
-        SDL_LockMutex(is->subtitle_ex->mutex);
-        if (is->subtitle_ex->ic)
-            avformat_close_input(&is->subtitle_ex->ic);
-        SDL_UnlockMutex(is->subtitle_ex->mutex);
-    }
             
     if (!ffp->prepared || !is->abort_request) {
         ffp_notify_msg2(ffp, FFP_MSG_ERROR, last_error);
@@ -4299,7 +3442,7 @@ static VideoState *stream_open(FFPlayer *ffp, const char *filename, AVInputForma
         return NULL;
     is->last_video_stream = is->video_stream = -1;
     is->last_audio_stream = is->audio_stream = -1;
-    is->last_subtitle_stream = is->subtitle_stream = -1;
+    is->last_subtitle_stream = -1;
     is->filename = av_strdup(filename);
     if (!is->filename)
         goto fail;
@@ -4315,16 +3458,17 @@ static VideoState *stream_open(FFPlayer *ffp, const char *filename, AVInputForma
     /* start video display */
     if (frame_queue_init(&is->pictq, &is->videoq, ffp->pictq_size, 1) < 0)
         goto fail;
-    if (frame_queue_init(&is->subpq, &is->subtitleq, SUBPICTURE_QUEUE_SIZE, 0) < 0)
-        goto fail;
     if (frame_queue_init(&is->sampq, &is->audioq, SAMPLE_QUEUE_SIZE, 1) < 0)
         goto fail;
 
     if (packet_queue_init(&is->videoq) < 0 ||
-        packet_queue_init(&is->audioq) < 0 ||
-        packet_queue_init(&is->subtitleq) < 0)
+        packet_queue_init(&is->audioq) < 0)
         goto fail;
-
+    
+    if (ff_sub_init(&is->ffSub) < 0) {
+        goto fail;
+    }
+    
     if (!(is->continue_read_thread = SDL_CreateCond())) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
         goto fail;
@@ -4780,6 +3924,7 @@ void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
     switch (chroma_fourcc) {
         case SDL_FCC__GLES2:
         case SDL_FCC_I420:
+        case SDL_FCC_J420:
         case SDL_FCC_YV12:
         case SDL_FCC_BGRA:
         case SDL_FCC_BGR0:
@@ -5095,54 +4240,9 @@ int ffp_get_loop(FFPlayer *ffp)
     return ffp->loop;
 }
 
-int ffp_packet_queue_init(PacketQueue *q)
-{
-    return packet_queue_init(q);
-}
-
-void ffp_packet_queue_destroy(PacketQueue *q)
-{
-    return packet_queue_destroy(q);
-}
-
-void ffp_packet_queue_abort(PacketQueue *q)
-{
-    return packet_queue_abort(q);
-}
-
-void ffp_packet_queue_start(PacketQueue *q)
-{
-    return packet_queue_start(q);
-}
-
-void ffp_packet_queue_flush(PacketQueue *q)
-{
-    return packet_queue_flush(q);
-}
-
-int ffp_packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *serial)
-{
-    return packet_queue_get(q, pkt, block, serial);
-}
-
 int ffp_packet_queue_get_or_buffering(FFPlayer *ffp, PacketQueue *q, AVPacket *pkt, int *serial, int *finished)
 {
     return packet_queue_get_or_buffering(ffp, q, pkt, serial, finished);
-}
-
-int ffp_packet_queue_put(PacketQueue *q, AVPacket *pkt)
-{
-    return packet_queue_put(q, pkt);
-}
-
-Frame *ffp_frame_queue_peek_writable(FrameQueue *f)
-{
-    return frame_queue_peek_writable(f);
-}
-
-void ffp_frame_queue_push(FrameQueue *f)
-{
-    return frame_queue_push(f);
 }
 
 int ffp_queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double duration, int64_t pos, int serial)
@@ -5435,28 +4535,53 @@ static void _ijkmeta_set_stream(FFPlayer* ffp, int type, int stream)
     }
 }
 
-static int ffp_subtitle_ex_init(FFPlayer *ffp)
+static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
 {
-    VideoState* is = ffp->is;
+    if (!ffp->subtitle)
+        return -1;
+    VideoState *is = ffp->is;
     
-    is->subtitle_ex = av_mallocz(sizeof(SubtitleExState));
-    
-    /* start video display */
-    if (frame_queue_init(&is->subtitle_ex->subpq, &is->subtitle_ex->subtitleq, SUBPICTURE_QUEUE_SIZE, 0) < 0)
-        return -2;
-
-    if (packet_queue_init(&is->subtitle_ex->subtitleq) < 0)
-        return -3;
-    
-    is->subtitle_ex->mutex = SDL_CreateMutex();
-    if (NULL == is->subtitle_ex->mutex) {
-        return -4;
+    int closed = 0,opened = 0;
+    int current = ff_sub_get_opened_stream_idx(is->ffSub);
+    if (selected && current == stream) {
+        return 1;
     }
-
+    if (current != -1) {
+        ff_sub_close_current(is->ffSub);
+        closed = 1;
+    }
+    
+    if (selected) {
+        int type = 0;
+        if (ff_sub_isInternal_stream(is->ffSub, stream)) {
+            type = 1;
+        } else if (ff_sub_isExternal_stream(is->ffSub, stream)) {
+            type = 2;
+        } else {
+            return -2;
+        }
+        
+        if (type == 1) {
+            stream_component_open(ffp, stream);
+        } else {
+            ff_exSub_open_stream(is->ffSub,stream);
+        }
+        opened = 1;
+    }
+    if (closed || opened) {
+        int idx = opened ? stream : -1;
+        _ijkmeta_set_stream(ffp, AVMEDIA_TYPE_SUBTITLE, idx);
+        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+        update_subtitle_text(ffp, "");
+    }
     return 0;
 }
 
-int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
+//return value :
+//err: less than zero;
+//ok: zero;
+//already ok: greater than zero;
+static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selected)
 {
     VideoState        *is = ffp->is;
     AVFormatContext   *ic = NULL;
@@ -5467,24 +4592,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
     if (!ic)
         return -1;
 
-    if (stream < 0 || stream >= IJK_EX_SUBTITLE_STREAM_MAX) {
-        av_log(ffp, AV_LOG_ERROR, "invalid stream index %d >= stream number (%d)\n", stream, ic->nb_streams);
-        return -1;
-    } else if (stream >= IJK_EX_SUBTITLE_STREAM_OFFSET && stream < IJK_EX_SUBTITLE_STREAM_MAX) {
-        int arr_idx = (stream - IJK_EX_SUBTITLE_STREAM_OFFSET) % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
-        if (NULL == is->ex_sub_url[arr_idx]) {
-            av_log(ffp, AV_LOG_ERROR, "invalid stream index %d is NULL\n", stream);
-            return -1;
-        }
-    }
-
-    int type = -1;
-    if (stream < ic->nb_streams) {
-        type = ic->streams[stream]->codecpar->codec_type;
-    } else {
-        //external subtitle
-        type = AVMEDIA_TYPE_NB + 1;
-    }
+    int type = ic->streams[stream]->codecpar->codec_type;
 
     int closed = 0,opened = 0;
             
@@ -5517,49 +4625,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             }
             break;
         case AVMEDIA_TYPE_SUBTITLE:
-            if (selected && stream == is->subtitle_stream) {
-                return 1;
-            }
-            if (is->subtitle_stream >= 0) {
-                stream_component_close(ffp, is->subtitle_stream);
-                closed = 1;
-            }
-
-            if (is->subtitle_ex) {
-                external_subtitle_close(ffp);
-                closed = 1;
-            }
-            
-            if (selected) {
-                opened = stream_component_open(ffp, stream) == 0;
-            }
-            break;
-        case AVMEDIA_TYPE_NB + 1:
-            if (selected && is->subtitle_ex && stream == is->subtitle_ex->sub_st_idx) {
-                return 1;
-            }
-            
-            if (is->subtitle_stream >= 0) {
-                stream_component_close(ffp, is->subtitle_stream);
-                closed = 1;
-            }
-            
-            if (is->subtitle_ex) {
-                external_subtitle_close(ffp);
-                closed = 1;
-            } else if (0 != ffp_subtitle_ex_init(ffp)) {
-                return -1;
-            }
-            
-            if (selected) {
-                int arr_idx = (stream - IJK_EX_SUBTITLE_STREAM_OFFSET) % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
-                opened = external_subtitle_open(ffp,is->ex_sub_url[arr_idx]) == 0;
-                if (opened) {
-                    //for file seek pos
-                    is->load_sub_ex = 1;
-                }
-            }
-            break;
+            return ffp_set_sub_stream_selected(ffp, stream, selected);
         default:
             av_log(ffp, AV_LOG_ERROR, "select invalid stream %d of video type %d\n", stream, codecpar->codec_type);
             return -1;
@@ -5572,6 +4638,43 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
     }
             
     return 0;
+}
+
+//return value greater than 0 means top caller need seek;
+int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
+{
+    VideoState *is = ffp->is;
+    if (!is)
+        return -1;
+    AVFormatContext *ic = is->ic;
+    if (!ic)
+        return -2;
+    
+    if (stream >= 0 && stream < ic->nb_streams) {
+        int r = ffp_set_internal_stream_selected(ffp, stream, selected);
+        if (r == 0) {
+            return 1;
+        } else if (r > 0){
+            return 0;
+        } else {
+            return r;
+        }
+    } else if (ff_sub_isExternal_stream(is->ffSub, stream)) {
+        int r = ffp_set_sub_stream_selected(ffp, stream, selected);
+        if (r == 0 && selected) {
+            //seek the extra subtitle
+            float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
+            float delay = ff_sub_get_delay(is->ffSub);
+            return ff_sub_set_delay(is->ffSub, delay, sec);
+        } else if (r > 0){
+            return 0;
+        } else {
+            return r;
+        }
+    } else {
+        av_log(ffp, AV_LOG_ERROR, "can't selecet invalid stream index: %d\n", stream);
+        return -3;
+    }
 }
 
 float ffp_get_property_float(FFPlayer *ffp, int id, float default_value)
@@ -5624,7 +4727,13 @@ int64_t ffp_get_property_int64(FFPlayer *ffp, int id, int64_t default_value)
         case FFP_PROP_INT64_SELECTED_TIMEDTEXT_STREAM:
             if (!ffp || !ffp->is)
                 return default_value;
-            return ffp->is->subtitle_stream;
+            VideoState *is = ffp->is;
+            int idx = ff_sub_get_opened_stream_idx(is->ffSub);
+            if (idx != -1) {
+                return idx;
+            } else {
+                return default_value;
+            }
         case FFP_PROP_INT64_VIDEO_DECODER:
             if (!ffp)
                 return default_value;
@@ -5703,101 +4812,41 @@ void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)
 {
     SDL_LockMutex(ffp->is->play_mutex);
     VideoState *is = ffp->is;
-    is->subtitle_extra_delay = delay;
+    int64_t ms = ffp_get_current_position_l(ffp);
+    int r = ff_sub_set_delay(is->ffSub, delay, ms/1000.0);
     SDL_UnlockMutex(ffp->is->play_mutex);
+    if (r == 1) {
+        ffp_seek_to_l(ffp, ms-500);
+    }
 }
 
 float ffp_get_subtitle_extra_delay(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
-    return is->subtitle_extra_delay;
+    return ff_sub_get_delay(is->ffSub);
 }
 
-int ffp_set_external_subtitle(FFPlayer *ffp, const char *file_name)
+//add + avtive
+int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
 {
-    /* there is a length limit in avformat */
-    if (strlen(file_name) + 1 > 1024) {
-        av_log(ffp, AV_LOG_ERROR, "%s too long path\n", __func__);
-        return -1;
-    }
-    
-    VideoState* is = ffp->is;
-    
-    for (int i = 0; i < IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET; i++) {
-        char* next = is->ex_sub_url[i];
-        if (next && (0 == av_strncasecmp(next, file_name, 1024)))
-            return 1;
-    }
-    
-    if (is->subtitle_ex) {
-        external_subtitle_close(ffp);
-    } else {
-        int ret = ffp_subtitle_ex_init(ffp);
-        if (0 != ret) {
-            return ret;
-        }
-    }
-    int r = external_subtitle_open(ffp,file_name);
-    if (r < 0) {
-        av_log(NULL, AV_LOG_ERROR, "could not open external subtitle:(%d)%s\n", r, file_name);
-        return -5;
-    } else  {
-        //recycle，release mem if the url array has been used
-        int idx = is->ex_sub_next % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
-        char* current = is->ex_sub_url[idx];
-        if (current) {
-            av_free(current);
-        }
-        is->ex_sub_url[idx] = av_strdup(file_name);
-        is->ex_sub_next++;
-        
-        ijkmeta_set_ex_subtitle_context_l(ffp->meta, ffp->is->subtitle_ex->ic, ffp->is, 1);
-        is->load_sub_ex = 1;
-        
+    VideoState *is = ffp->is;
+    ff_sub_close_current(is->ffSub);
+    int ret = ff_exSub_add_active_subtitle(is->ffSub, file_name, ffp->meta);
+    if (ret == 0) {
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     }
-    
-    return 0;
+    return ret;
 }
 
-            
-int ffp_load_external_subtitle(FFPlayer *ffp, const char *file_name)
+//add only
+int ffp_addOnly_external_subtitle(FFPlayer *ffp, const char *file_name)
 {
-    /* there is a length limit in avformat */
-    if (strlen(file_name) + 1 > 1024) {
-        av_log(ffp, AV_LOG_ERROR, "%s too long path\n", __func__);
-        return -1;
+    VideoState *is = ffp->is;
+    int ret = ff_exSub_addOnly_subtitle(is->ffSub, file_name, ffp->meta);
+    if (ret == 0) {
+        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     }
-    
-    VideoState* is = ffp->is;
-    
-    for (int i = 0; i < IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET; i++) {
-        char* next = is->ex_sub_url[i];
-        if (next && (0 == av_strncasecmp(next, file_name, 1024)))
-            return 1;
-    }
-    
-    //if open failed not add to ex_sub_url.
-    AVFormatContext* ic = avformat_alloc_context();
-    int err = avformat_open_input(&ic, file_name, NULL, NULL);
-    if (err < 0) {
-        print_error(file_name, err);
-        avformat_close_input(&ic);
-        return -2;
-    }
-    
-    //recycle，release mem if the url array has been used
-    int idx = is->ex_sub_next % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
-    char* current = is->ex_sub_url[idx];
-    if (current) {
-        av_free(current);
-    }
-    is->ex_sub_url[idx] = av_strdup(file_name);
-    is->ex_sub_next++;
-    ijkmeta_set_ex_subtitle_context_l(ffp->meta, ic, is, 0);
-    
-    ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-    return 0;
+    return ret;
 }
 
 int ffp_get_video_frame_cache_remaining(FFPlayer *ffp)

@@ -54,8 +54,4 @@ typedef int (*ijk_audio_samples_callback)(void *opaque, int16_t *samples, int sa
 #define FFP_OPT_CATEGORY_PLAYER 4
 #define FFP_OPT_CATEGORY_SWR    5
 
-#define FFP_EXCHANGE_DECODER_FLAG       -1000
-#define IJK_EX_SUBTITLE_STREAM_OFFSET   1000
-#define IJK_EX_SUBTITLE_STREAM_MAX      1100
-
 #endif

@@ -38,7 +38,7 @@
 #include "../ijkmedia/ijkplayer/ijkmeta.h"
 #include "../ijkmedia/ijkplayer/ff_ffmsg_queue.h"
 
-static const char *kIJKFFRequiredFFmpegVersion = "n4.0-2-g5bf1d483f23"; //"ff4.0--ijk0.8.8--20210426--001";
+static const char *kIJKFFRequiredFFmpegVersion = "n4.0-16"; //"ff4.0--ijk0.8.8--20210426--001";
 static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
 // It means you didn't call shutdown if you found this object leaked.
@@ -328,7 +328,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer)
         return;
     
-    ijkmp_set_external_subtitle(_mediaPlayer, [url UTF8String]);
+    ijkmp_add_active_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
 - (void)loadSubtitleFileOnly:(NSString *)url
@@ -336,7 +336,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer)
         return;
     
-    ijkmp_load_external_subtitle(_mediaPlayer, [url UTF8String]);
+    ijkmp_addOnly_external_subtitle(_mediaPlayer, [url UTF8String]);
 }
 
 - (void)play
@@ -502,9 +502,14 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 
 + (BOOL)checkIfFFmpegVersionMatch:(BOOL)showAlert;
 {
+    //n4.0-16-g1c96997 -> n4.0-16
+    //not compare last commit sha1,because it will chang after source code apply patches.
     const char *actualVersion = av_version_info();
+    char dst[128] = { 0 };
+    strcpy(dst, actualVersion);
+    *strrchr(dst, '-') = '\0';
     const char *expectVersion = kIJKFFRequiredFFmpegVersion;
-    if (0 == strcmp(actualVersion, expectVersion)) {
+    if (0 == strcmp(dst, expectVersion)) {
         return YES;
     } else {
         NSString *message = [NSString stringWithFormat:@"actual: %s\nexpect: %s\n", actualVersion, expectVersion];
@@ -549,6 +554,7 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 
 - (void)shutdown
 {
+    NSAssert([NSThread isMainThread], @"must on main thread call shutdown");
     if (!_mediaPlayer)
         return;
 #if TARGET_OS_IOS
@@ -1060,8 +1066,10 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
 
     NSString *key = [NSString stringWithUTF8String:name];
     const char *value = ijkmeta_get_string_l(rawMeta, name);
-    if (value) {
-        NSString *str = [NSString stringWithUTF8String:value];
+
+    NSString *str = nil;
+    if (value && strlen(value) > 0) {
+        str = [NSString stringWithUTF8String:value];
         if (!str) {
             //"\xce޼\xab\xb5\xe7Ӱ-bbs.wujidy.com" is nil !!
             //try gbk encoding.
@@ -1918,10 +1926,12 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
 - (void)exchangeSelectedStream:(int)streamIdx
 {
     if (_mediaPlayer) {
-        ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
-        //TODO: 通过seek解决切换字幕后不能立马显示问题
+        //通过seek解决切换内嵌字幕，内嵌音轨后不能立马生效问题
         long pst = ijkmp_get_current_position(_mediaPlayer);
-        ijkmp_seek_to(_mediaPlayer, pst);
+        int r = ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
+        if (r > 0) {
+            ijkmp_seek_to(_mediaPlayer, pst);
+        }
     }
 }
 

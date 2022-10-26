@@ -297,7 +297,7 @@ void ijkmp_shutdown_l(IjkMediaPlayer *mp)
 
     MPTRACE("ijkmp_shutdown_l()\n");
     if (mp->ffplayer) {
-        ffp_stop_l(mp->ffplayer);
+        //ffp_stop_l(mp->ffplayer);
         ffp_wait_stop_l(mp->ffplayer);
     }
     MPTRACE("ijkmp_shutdown_l()=void\n");
@@ -806,20 +806,20 @@ float ijkmp_get_subtitle_extra_delay(IjkMediaPlayer* mp)
     return ffp_get_subtitle_extra_delay(mp->ffplayer);
 }
 
-int  ijkmp_set_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
+int ijkmp_add_active_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
 {
     assert(file_name);
     MPTRACE("ijkmp_set_external_subtitle(%s)\n", file_name);
-    int retval = ffp_set_external_subtitle(mp->ffplayer, file_name);
+    int retval = ffp_add_active_external_subtitle(mp->ffplayer, file_name);
     MPTRACE("ijkmp_set_external_subtitle()=%d\n", retval);
     return retval;
 }
 
-int ijkmp_load_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
+int ijkmp_addOnly_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
 {
     assert(file_name);
     MPTRACE("ijkmp_load_external_subtitle(%s)\n", file_name);
-    int retval = ffp_load_external_subtitle(mp->ffplayer, file_name);
+    int retval = ffp_addOnly_external_subtitle(mp->ffplayer, file_name);
     MPTRACE("ijkmp_load_external_subtitle()=%d\n", retval);
     return retval;
 }
