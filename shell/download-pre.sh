@@ -19,7 +19,7 @@ PLAT=$1
 VER=$2
 
 if test -z $VER ;then
-    VER='V1.0-2d86700'
+    VER='V1.0-104be8c'
 fi
 
 set -e

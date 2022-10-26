@@ -38,7 +38,12 @@
 #include "../ijkmedia/ijkplayer/ijkmeta.h"
 #include "../ijkmedia/ijkplayer/ff_ffmsg_queue.h"
 
+#if TARGET_OS_IOS
+static const char *kIJKFFRequiredFFmpegVersion = "n4.0-14"; //"ff4.0--ijk0.8.8--20210426--001";
+#else
 static const char *kIJKFFRequiredFFmpegVersion = "n4.0-16"; //"ff4.0--ijk0.8.8--20210426--001";
+#endif
+
 static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
 // It means you didn't call shutdown if you found this object leaked.

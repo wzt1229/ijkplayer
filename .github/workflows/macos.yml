@@ -18,12 +18,13 @@ jobs:
         uses: maxim-lobanov/setup-cocoapods@v1
         with:
           version: 1.11.2
-      - name: Compile Dependencies
+      - name: Download Pre Compiled Dependencies
         run: | 
-            cd shell && ./init-any.sh macos
-            cd macos && ./compile-any.sh build all 
+            # cd shell && ./init-any.sh macos
+            # cd macos && ./compile-any.sh build all 
+            cd shell && ./download-pre.sh macos
       - name: Pod install
-        run: cd examples/macos && pod install
+        run: pod install --project-directory=examples/macos
       - name: Set Default Scheme
         run: |
           cd examples/macos
