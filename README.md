@@ -1,10 +1,10 @@
 # ijkplayer
 
- Platform | Build Status
- -------- | ------------
- Android | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/android.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/android.yml) ⚠️ unknown state 
- iOS | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml)
-macOS | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/macos.yml)
+| Platform | Build Status                                                                                                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Android  | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/android.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/android.yml) ⚠️ unknown state |
+| iOS      | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml)                          |
+| macOS    | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/macos.yml)                      |
 
 Video player based on [ffplay](http://ffmpeg.org)
 
@@ -15,10 +15,11 @@ Video player based on [ffplay](http://ffmpeg.org)
 - cocoapods 1.11.2
 
 TODO check:
+
 - Android
- - [NDK r10e](http://developer.android.com/tools/sdk/ndk/index.html)
- - Android Studio 2.1.3
- - Gradle 2.14.1
+  - [NDK r10e](http://developer.android.com/tools/sdk/ndk/index.html)
+  - Android Studio 2.1.3
+  - Gradle 2.14.1
 
 ### Latest Changes
 
@@ -27,25 +28,25 @@ TODO check:
 ### Features
 
 - Common
-    - remove rarely used ffmpeg components to reduce binary size [config/module-lite.sh](config/module-lite.sh)
-    - workaround for some buggy online video.
+  - remove rarely used ffmpeg components to reduce binary size [config/module-lite.sh](config/module-lite.sh)
+  - workaround for some buggy online video.
 - iOS/macOS
-    - platform: iOS 9.0/macOS 10.11
-    - cpu: arm64,x86_64
-    - api: [MediaPlayer.framework-like](IJKMediaPlayerKit/IJKMediaPlayback.h)
-    - video-output: OpenGL ES 2.0/OpenGL 3.3
-    - audio-output: AudioQueue, AudioUnit
-    - hw-decoder: auto use VideoToolbox accel by default
-    - subtitle: use Quartz to draw text into a CVPixelBufferRef then use OpenGL render
-    - alternative-backend: AVFoundation.Framework.AVPlayer, MediaPlayer.Framework.MPMoviePlayerControlelr (obselete since iOS 8)
+  - platform: iOS 9.0/macOS 10.11
+  - cpu: arm64,x86_64
+  - api: [MediaPlayer.framework-like](IJKMediaPlayerKit/IJKMediaPlayback.h)
+  - video-output: OpenGL ES 2.0/OpenGL 3.3
+  - audio-output: AudioQueue, AudioUnit
+  - hw-decoder: auto use VideoToolbox accel by default
+  - subtitle: use Quartz to draw text into a CVPixelBufferRef then use OpenGL render
+  - alternative-backend: AVFoundation.Framework.AVPlayer, MediaPlayer.Framework.MPMoviePlayerControlelr (obselete since iOS 8)
 - Android (⚠️ unknown state)
-    - platform: API 9~23
-    - cpu: ARMv7a, ARM64v8a, x86 (ARMv5 is not tested on real devices)
-    - api: [MediaPlayer-like](android/ijkplayer/ijkplayer-java/src/main/java/tv/danmaku/ijk/media/player/IMediaPlayer.java)
-    - video-output: NativeWindow, OpenGL ES 2.0
-    - audio-output: AudioTrack, OpenSL ES
-    - hw-decoder: MediaCodec (API 16+, Android 4.1+)
-    - alternative-backend: android.media.MediaPlayer, ExoPlayer
+  - platform: API 9~23
+  - cpu: ARMv7a, ARM64v8a, x86 (ARMv5 is not tested on real devices)
+  - api: [MediaPlayer-like](android/ijkplayer/ijkplayer-java/src/main/java/tv/danmaku/ijk/media/player/IMediaPlayer.java)
+  - video-output: NativeWindow, OpenGL ES 2.0
+  - audio-output: AudioTrack, OpenSL ES
+  - hw-decoder: MediaCodec (API 16+, Android 4.1+)
+  - alternative-backend: android.media.MediaPlayer, ExoPlayer
 
 ### ON-PLAN
 
@@ -115,7 +116,7 @@ sudo dpkg-reconfigure dash
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.9.1
+git checkout -B latest k0.9.2
 
 cd shell
 ./init-any.sh macos
@@ -130,7 +131,7 @@ open ../../examples/macos/IJKMediaMacDemo.xcworkspace
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.9.1
+git checkout -B latest k0.9.2
 
 cd shell
 ./init-any.sh ios
@@ -145,7 +146,7 @@ open ../../examples/macos/IJKMediaDemo.xcworkspace
 ```
 git clone https://github.com/Bilibili/ijkplayer.git ijkplayer-android
 cd ijkplayer-android
-git checkout -B latest k0.9.1
+git checkout -B latest k0.9.2
 
 ./init-android.sh
 
@@ -191,7 +192,6 @@ cd ..
 # Gradle
 #     cd ijkplayer
 #     gradle
-
 ```
 
 ### Support (支持)
@@ -207,6 +207,7 @@ Licensed under LGPLv2.1 or later
 ```
 
 ijkplayer required features are based on or derives from projects below:
+
 - LGPL
   - [FFmpeg](http://git.videolan.org/?p=ffmpeg.git)
   - [libVLC](http://git.videolan.org/?p=vlc.git)
@@ -220,18 +221,22 @@ ijkplayer required features are based on or derives from projects below:
   - [libyuv/source/x86inc.asm](https://code.google.com/p/libyuv/source/browse/trunk/source/x86inc.asm)
 
 android/ijkplayer-exo is based on or derives from projects below:
+
 - Apache License 2.0
   - [ExoPlayer](https://github.com/google/ExoPlayer)
 
 android/example is based on or derives from projects below:
+
 - GPL
   - [android-ndk-profiler](https://github.com/richq/android-ndk-profiler) (not included by default)
 
 ios/IJKMediaDemo is based on or derives from projects below:
+
 - Unknown license
   - [iOS7-BarcodeScanner](https://github.com/jpwiddy/iOS7-BarcodeScanner)
 
 ijkplayer's build scripts are based on or derives from projects below:
+
 - [gas-preprocessor](http://git.libav.org/?p=gas-preprocessor.git)
 - [VideoLAN](http://git.videolan.org)
 - [yixia/FFmpeg-Android](https://github.com/yixia/FFmpeg-Android)
