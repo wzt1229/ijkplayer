@@ -100,6 +100,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     //[self.view setWantsLayer:YES];
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
     
+    [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
+        NSLog(@"[%@] [%d] %@",tag,level,msg);
+    }];
+    
     [self.moreView setWantsLayer:YES];
     //self.ctrlView.layer.backgroundColor = [[NSColor colorWithWhite:0.2 alpha:0.5] CGColor];
     self.moreView.layer.cornerRadius = 4;
@@ -580,6 +584,18 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     if ([url isFileURL]) {
         [options setPlayerOptionIntValue:10*1024*1024      forKey:@"max-buffer-size"];
+    }
+    
+    BOOL isLive = NO;
+    //isLive表示是直播还是点播
+    if (isLive) {
+        // Param for living
+        [options setPlayerOptionIntValue:1 forKey:@"infbuf"];
+        [options setPlayerOptionIntValue:0 forKey:@"packet-buffering"];
+    } else {
+        // Param for playback
+        [options setPlayerOptionIntValue:0 forKey:@"infbuf"];
+        [options setPlayerOptionIntValue:1 forKey:@"packet-buffering"];
     }
     
 //    [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
