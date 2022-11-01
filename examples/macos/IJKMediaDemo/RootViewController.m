@@ -153,7 +153,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         if (self.autoTest) {
             self.autoSeeked = 1;
         }
-        [self seekTo:progress];
+        if (isEndDrag) {
+            [self seekTo:progress];
+        }
     }];
     
     self.playedTimeLb.stringValue = @"--:--";
