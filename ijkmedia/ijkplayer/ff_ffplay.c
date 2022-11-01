@@ -1344,15 +1344,24 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         av_frame_move_ref(vp->frame, src_frame);
 #endif
         frame_queue_push(&is->pictq);
-        if (!is->viddec.first_frame_decoded) {
-            ALOGD("Video: first frame decoded\n");
-            ffp_notify_msg1(ffp, FFP_MSG_VIDEO_DECODED_START);
-            is->viddec.first_frame_decoded_time = SDL_GetTickHR();
-            is->viddec.first_frame_decoded = 1;
-        } else if (is->viddec.after_seek_frame) {
-            int du = (int)(SDL_GetTickHR() - is->viddec.start_seek_time);
-            is->viddec.after_seek_frame = 0;
-            ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
+        /*
+         paused player firstly,then seek stream,because frame queue is full,waiting readable slot;
+         after seek file,flushed packet queue,step to display next frame,will buffet out frame queue,because the frame queue's serial is not equal videoq's serail.
+         the frame which before seek will push to queue! cause send FFP_MSG_AFTER_SEEK_FIRST_FRAME ahead!
+         */
+        if (is->videoq.serial == serial) {
+            if (!is->viddec.first_frame_decoded) {
+                ALOGD("Video: first frame decoded\n");
+                ffp_notify_msg1(ffp, FFP_MSG_VIDEO_DECODED_START);
+                is->viddec.first_frame_decoded_time = SDL_GetTickHR();
+                is->viddec.first_frame_decoded = 1;
+            } else if (is->viddec.after_seek_frame) {
+                int du = (int)(SDL_GetTickHR() - is->viddec.start_seek_time);
+                is->viddec.after_seek_frame = 0;
+                ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
+            }
+        } else {
+            ALOGD("push old frame:%d\n",serial);
         }
     }
     return 0;
