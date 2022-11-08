@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		48785FCC6E8D62593A0839B8 /* Pods_IJKMediaMacDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DCADD1347BDB5B68E4C0CFA /* Pods_IJKMediaMacDemo.framework */; };
+		C92D5BC72914C525009D80D7 /* 2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = C92D5BC62914C525009D80D7 /* 2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8 */; };
 		C955003E27C75A580026AB17 /* Setting.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C955003D27C75A580026AB17 /* Setting.storyboard */; };
 		C955004227C75E740026AB17 /* LeftCategoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004127C75E740026AB17 /* LeftCategoryController.m */; };
 		C955004527C7634F0026AB17 /* SettingSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004427C7634F0026AB17 /* SettingSplitViewController.m */; };
@@ -27,6 +28,7 @@
 		C969BE4B27BDCD27008BC2AD /* MRGlobalNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = C969BE4927BDCD27008BC2AD /* MRGlobalNotification.m */; };
 		C969BE4E27BDD34E008BC2AD /* MRUtil+SystemPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = C969BE4C27BDD34E008BC2AD /* MRUtil+SystemPanel.m */; };
 		C969BEBA27BDEAD0008BC2AD /* 5003509-693880-1.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = C969BEB927BDEAD0008BC2AD /* 5003509-693880-1.m3u8 */; };
+		C96F5B9B291A052100C79E07 /* MRProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = C96F5B99291A052000C79E07 /* MRProgressIndicator.m */; };
 		C97DCC0727C867EA0019874F /* MRBaseView.m in Sources */ = {isa = PBXBuildFile; fileRef = C97DCC0627C867EA0019874F /* MRBaseView.m */; };
 		C9FFF21527C864C100284B46 /* MRProgressSlider.m in Sources */ = {isa = PBXBuildFile; fileRef = C9FFF21327C864C100284B46 /* MRProgressSlider.m */; };
 		DD0443E627E7749800CB946B /* MRActionProcessor+Private.m in Sources */ = {isa = PBXBuildFile; fileRef = DD0443DE27E7749800CB946B /* MRActionProcessor+Private.m */; };
@@ -67,6 +69,7 @@
 /* Begin PBXFileReference section */
 		9409D4EABED075A613A5C430 /* Pods-IJKMediaMacDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaMacDemo.release.xcconfig"; path = "Target Support Files/Pods-IJKMediaMacDemo/Pods-IJKMediaMacDemo.release.xcconfig"; sourceTree = "<group>"; };
 		9DCADD1347BDB5B68E4C0CFA /* Pods_IJKMediaMacDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IJKMediaMacDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C92D5BC62914C525009D80D7 /* 2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8"; sourceTree = "<group>"; };
 		C955003D27C75A580026AB17 /* Setting.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Setting.storyboard; sourceTree = "<group>"; };
 		C955004027C75E740026AB17 /* LeftCategoryController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LeftCategoryController.h; sourceTree = "<group>"; };
 		C955004127C75E740026AB17 /* LeftCategoryController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LeftCategoryController.m; sourceTree = "<group>"; };
@@ -96,6 +99,8 @@
 		C969BE4C27BDD34E008BC2AD /* MRUtil+SystemPanel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "MRUtil+SystemPanel.m"; sourceTree = "<group>"; };
 		C969BE4D27BDD34E008BC2AD /* MRUtil+SystemPanel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MRUtil+SystemPanel.h"; sourceTree = "<group>"; };
 		C969BEB927BDEAD0008BC2AD /* 5003509-693880-1.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "5003509-693880-1.m3u8"; sourceTree = "<group>"; };
+		C96F5B99291A052000C79E07 /* MRProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRProgressIndicator.m; sourceTree = "<group>"; };
+		C96F5B9A291A052100C79E07 /* MRProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRProgressIndicator.h; sourceTree = "<group>"; };
 		C97DCC0527C867EA0019874F /* MRBaseView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRBaseView.h; sourceTree = "<group>"; };
 		C97DCC0627C867EA0019874F /* MRBaseView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MRBaseView.m; sourceTree = "<group>"; };
 		C9FFF21327C864C100284B46 /* MRProgressSlider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRProgressSlider.m; sourceTree = "<group>"; };
@@ -284,6 +289,8 @@
 				C97DCC0627C867EA0019874F /* MRBaseView.m */,
 				C9FFF21427C864C100284B46 /* MRProgressSlider.h */,
 				C9FFF21327C864C100284B46 /* MRProgressSlider.m */,
+				C96F5B9A291A052100C79E07 /* MRProgressIndicator.h */,
+				C96F5B99291A052000C79E07 /* MRProgressIndicator.m */,
 				DD050F9A25A43A1300F01E2F /* DragView */,
 				DD050F9425A43A1300F01E2F /* MRUtil */,
 				DD0443DB27E7749800CB946B /* MRActionKit */,
@@ -291,6 +298,7 @@
 				DD9B139022C23A7A002D1D79 /* MainMenu.xib */,
 				C955004627C765A30026AB17 /* PrefixHeader.pch */,
 				DD9B139322C23A7A002D1D79 /* Info.plist */,
+				C92D5BC62914C525009D80D7 /* 2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8 */,
 				C969BEB927BDEAD0008BC2AD /* 5003509-693880-1.m3u8 */,
 				DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */,
 				C969BBAB27BBA4E1008BC2AD /* 5003509-693880-2.webvtt */,
@@ -407,6 +415,7 @@
 				DD4EAF24272FC22D00FBCD3A /* RootViewController.xib in Resources */,
 				C955005027C769050026AB17 /* GeneralSettingViewController.xib in Resources */,
 				C969BBAF27BBA4E1008BC2AD /* 5003509-693880-2.webvtt in Resources */,
+				C92D5BC72914C525009D80D7 /* 2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8 in Resources */,
 				C969BBB027BBA4E1008BC2AD /* 5003509-693880-5.webvtt in Resources */,
 				C969BBB227BBA4E1008BC2AD /* 5003509-693880-3.m3u8 in Resources */,
 				C955004B27C768DD0026AB17 /* SubtitleSettingViewController.xib in Resources */,
@@ -479,6 +488,7 @@
 				DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */,
 				C969BE4E27BDD34E008BC2AD /* MRUtil+SystemPanel.m in Sources */,
 				DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */,
+				C96F5B9B291A052100C79E07 /* MRProgressIndicator.m in Sources */,
 				DDE9FC70273BD3CF00481560 /* NSFileManager+Sandbox.m in Sources */,
 				C955004227C75E740026AB17 /* LeftCategoryController.m in Sources */,
 				C955004527C7634F0026AB17 /* SettingSplitViewController.m in Sources */,

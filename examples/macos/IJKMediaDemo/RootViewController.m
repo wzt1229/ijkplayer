@@ -16,7 +16,7 @@
 #import <Quartz/Quartz.h>
 #import "MRGlobalNotification.h"
 #import "AppDelegate.h"
-#import "MRProgressSlider.h"
+#import "MRProgressIndicator.h"
 #import "MRBaseView.h"
 #import <IOKit/pwr_mgt/IOPMLib.h>
 
@@ -40,7 +40,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (weak) IBOutlet NSTextField *durationTimeLb;
 
 @property (weak) IBOutlet NSButton *playCtrlBtn;
-@property (weak) IBOutlet MRProgressSlider *playerSlider;
+@property (weak) IBOutlet MRProgressIndicator *playerSlider;
 
 @property (nonatomic, strong) NSMutableArray *playList;
 @property (copy) NSURL *playingUrl;
@@ -49,6 +49,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
 @property (weak) IBOutlet NSPopUpButton *audioPopUpBtn;
 @property (weak) IBOutlet NSPopUpButton *videoPopUpBtn;
+@property (weak) IBOutlet NSTextField *seekCostLb;
+
 @property (weak) NSTrackingArea *trackingArea;
 
 //for cocoa binding begin
@@ -117,17 +119,17 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
-    [self reSetLoglevel:@"info"];
+    [self reSetLoglevel:@"debug"];
+    self.seekCostLb.stringValue = @"";
     
-    [self.playList addObject:[NSURL URLWithString:@"https://kvideo01.youju.sohu.com/f559f6ad-df2f-42c9-9f47-841cf6e4086f1_0_0.mp4"]];
-    
-    NSArray *bundleNameArr = @[@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
+    NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
     
     for (NSString *fileName in bundleNameArr) {
         NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
         [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
     }
     [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
+    [self.playList addObject:[NSURL URLWithString:@"https://kvideo01.youju.sohu.com/f559f6ad-df2f-42c9-9f47-841cf6e4086f1_0_0.mp4"]];
     
     if ([self.view isKindOfClass:[SHBaseView class]]) {
         SHBaseView *baseView = (SHBaseView *)self.view;
@@ -148,13 +150,24 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     OBSERVER_NOTIFICATION(self, _playNetMovies:,kPlayNetMovieNotificationName_G, nil);
     [self prepareRightMenu];
     
-    [self.playerSlider onDraggedIndicator:^(double progress, MRProgressSlider * _Nonnull indicator, BOOL isEndDrag) {
+    [self.playerSlider onDraggedIndicator:^(double progress, MRProgressIndicator * _Nonnull indicator, BOOL isEndDrag) {
         __strongSelf__
         if (self.autoTest) {
             self.autoSeeked = 1;
         }
         if (isEndDrag) {
-            [self seekTo:progress];
+            [self seekTo:progress * indicator.maxValue];
+            if (!self.tickTimer) {
+                self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
+            }
+        } else {
+            if (self.tickTimer) {
+                [self.tickTimer invalidate];
+                self.tickTimer = nil;
+                self.tickCount = 0;
+            }
+            int interval = progress * indicator.maxValue;
+            self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
         }
     }];
     
@@ -613,6 +626,26 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
     options.showHudView = YES;
     
+    NSMutableArray *dus = [NSMutableArray array];
+    if ([url.scheme isEqualToString:@"file"] && [url.absoluteString.pathExtension isEqualToString:@"m3u8"]) {
+        NSString *str = [[NSString alloc] initWithContentsOfURL:url encoding:NSUTF8StringEncoding error:nil];
+        NSArray *lines = [str componentsSeparatedByString:@"\n"];
+        double sum = 0;
+        for (NSString *line in lines) {
+            if ([line hasPrefix:@"#EXTINF"]) {
+                NSArray *items = [line componentsSeparatedByString:@":"];
+                NSString *du = [[[items lastObject] componentsSeparatedByString:@","] firstObject];
+                if (du) {
+                    sum += [du doubleValue];
+                    [dus addObject:@(sum)];
+                }
+            } else {
+                continue;
+            }
+        }
+    }
+    self.playerSlider.tags = dus;
+    
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
     CGRect rect = self.view.frame;
@@ -677,6 +710,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 {
     NSLog(@"seek cost time:%@ms",notifi.userInfo[@"du"]);
     self.seeking = NO;
+    self.seekCostLb.stringValue = [NSString stringWithFormat:@"%@ms",notifi.userInfo[@"du"]];
 }
 
 - (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
@@ -914,10 +948,10 @@ static IOPMAssertionID g_displaySleepAssertionID;
         long duration = self.player.monitor.duration / 1000;
         self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
         self.durationTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(duration/60),(int)(duration%60)];
-        self.playerSlider.currentValue = interval;
+        self.playerSlider.playedValue = interval;
         self.playerSlider.minValue = 0;
         self.playerSlider.maxValue = duration;
-        
+        self.playerSlider.preloadValue = interval + self.player.playableDuration / 1000;
         if (self.autoTest) {
             //auto seek
             if (duration > 0) {
@@ -1194,11 +1228,16 @@ static IOPMAssertionID g_displaySleepAssertionID;
     if (cp < 0) {
         cp = 0;
     }
+    
     if (self.player.monitor.duration > 0) {
         if (cp >= self.player.monitor.duration) {
             cp = self.player.monitor.duration - 5;
         }
         self.player.currentPlaybackTime = cp;
+        
+        long interval = (long)self.player.currentPlaybackTime;
+        self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
+        self.playerSlider.playedValue = interval;
     }
 }
 
