@@ -315,7 +315,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
     }
 #endif
     
-    return IJK_GLES2_Renderer_create2(overlay_format, ff_format, overlay->auto_z_rotate_degrees);
+    return IJK_GLES2_Renderer_create2(overlay_format, ff_format, openglVer);
 }
 
 GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer)
