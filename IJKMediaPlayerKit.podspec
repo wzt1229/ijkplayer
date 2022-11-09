@@ -101,7 +101,7 @@ TODO: Add long description of the pod here.
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
   s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
-  s.osx.frameworks = 'Cocoa', 'AudioUnit', 'OpenGL', 'GLKit'
+  s.osx.frameworks = 'Cocoa', 'AudioUnit', 'OpenGL', 'GLKit', 'CoreImage'
   s.ios.frameworks = 'UIKit', 'OpenGLES'
   
 end

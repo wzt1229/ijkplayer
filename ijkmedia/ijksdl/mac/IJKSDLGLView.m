@@ -41,6 +41,7 @@
 #import "MRTextureString.h"
 #import "IJKMediaPlayback.h"
 #import <OpenGL/glext.h>
+#import <CoreImage/CIContext.h>
 
 static NSHashTable *IJKRefTable() {
     static NSHashTable *refTable = nil;
