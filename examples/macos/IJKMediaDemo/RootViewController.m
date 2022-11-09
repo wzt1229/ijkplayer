@@ -27,24 +27,13 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     FILE *my_stderr;
     FILE *my_stdout;
 }
-@property (weak) IBOutlet NSView *moreView;
-@property (weak) IBOutlet NSLayoutConstraint *moreViewBottomCons;
-@property (assign) BOOL isMoreViewAnimating;
 
+@property (weak) IBOutlet NSStackView *advancedView;
 @property (weak) IBOutlet MRBaseView *playerCtrlPanel;
-
-@property (strong) IJKFFMoviePlayerController * player;
-@property (strong) IJKKVOController * kvoCtrl;
-
 @property (weak) IBOutlet NSTextField *playedTimeLb;
 @property (weak) IBOutlet NSTextField *durationTimeLb;
-
 @property (weak) IBOutlet NSButton *playCtrlBtn;
 @property (weak) IBOutlet MRProgressIndicator *playerSlider;
-
-@property (nonatomic, strong) NSMutableArray *playList;
-@property (copy) NSURL *playingUrl;
-@property (weak) NSTimer *tickTimer;
 
 @property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
 @property (weak) IBOutlet NSPopUpButton *audioPopUpBtn;
@@ -79,6 +68,14 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (assign) BOOL snapshot2;
 @property (assign) int tickCount;
 
+//player
+@property (strong) IJKFFMoviePlayerController * player;
+@property (strong) IJKKVOController * kvoCtrl;
+
+@property (nonatomic, strong) NSMutableArray *playList;
+@property (copy) NSURL *playingUrl;
+@property (weak) NSTimer *tickTimer;
+
 @end
 
 @implementation RootViewController
@@ -105,11 +102,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
         NSLog(@"[%@] [%d] %@",tag,level,msg);
     }];
-    
-    [self.moreView setWantsLayer:YES];
-    //self.ctrlView.layer.backgroundColor = [[NSColor colorWithWhite:0.2 alpha:0.5] CGColor];
-    self.moreView.layer.cornerRadius = 4;
-    self.moreView.layer.masksToBounds = YES;
 
     self.subtitleFontRatio = 1.0;
     self.subtitleMargin = 0.7;
@@ -122,7 +114,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self reSetLoglevel:@"debug"];
     self.seekCostLb.stringValue = @"";
     
-    NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
+    NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc.m3u8",@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
     
     for (NSString *fileName in bundleNameArr) {
         NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
@@ -264,36 +256,16 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     }
 }
 
-- (void)switchMoreView:(BOOL)wantShow
+- (void)toggleAdvancedViewShow
 {
-    float constant = wantShow ? 0 : - self.moreView.bounds.size.height;
-    
-    if (self.moreViewBottomCons.constant == constant) {
-        return;
-    }
-    
-    if (self.isMoreViewAnimating) {
-        return;
-    }
-    self.isMoreViewAnimating = YES;
-    
     __weakSelf__
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
         context.duration = 0.35;
         context.allowsImplicitAnimation = YES;
         context.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
         __strongSelf__
-        self.moreViewBottomCons.animator.constant = wantShow ? 0 : - self.moreView.bounds.size.height;
-    } completionHandler:^{
-        __strongSelf__
-        self.isMoreViewAnimating = NO;
+        self.advancedView.animator.hidden = !self.advancedView.isHidden;
     }];
-}
-
-- (void)toggleMoreViewShow
-{
-    BOOL isShowing = self.moreView.frame.origin.y >= 0;
-    [self switchMoreView:!isShowing];
 }
 
 - (void)toggleTitleBar:(BOOL)show
@@ -334,7 +306,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)baseView:(SHBaseView *)baseView mouseExited:(NSEvent *)event
 {
-    [self switchMoreView:NO];
     [self toggleTitleBar:NO];
 }
 
@@ -354,7 +325,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 break;
             case kVK_ANSI_B:
             {
-                [self toggleMoreViewShow];
+                [self toggleAdvancedViewShow];
             }
                 break;
             case kVK_ANSI_R:
@@ -1138,7 +1109,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (IBAction)onMoreFunc:(id)sender
 {
-    [self toggleMoreViewShow];
+    [self toggleAdvancedViewShow];
 }
 
 - (void)stopPlay:(NSButton *)sender
@@ -1228,7 +1199,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     if (cp < 0) {
         cp = 0;
     }
-    
+    self.seekCostLb.stringValue = @"";
     if (self.player.monitor.duration > 0) {
         if (cp >= self.player.monitor.duration) {
             cp = self.player.monitor.duration - 5;

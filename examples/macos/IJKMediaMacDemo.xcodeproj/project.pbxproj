@@ -29,6 +29,7 @@
 		C969BE4E27BDD34E008BC2AD /* MRUtil+SystemPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = C969BE4C27BDD34E008BC2AD /* MRUtil+SystemPanel.m */; };
 		C969BEBA27BDEAD0008BC2AD /* 5003509-693880-1.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = C969BEB927BDEAD0008BC2AD /* 5003509-693880-1.m3u8 */; };
 		C96F5B9B291A052100C79E07 /* MRProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = C96F5B99291A052000C79E07 /* MRProgressIndicator.m */; };
+		C96F5B9D291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = C96F5B9C291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 */; };
 		C97DCC0727C867EA0019874F /* MRBaseView.m in Sources */ = {isa = PBXBuildFile; fileRef = C97DCC0627C867EA0019874F /* MRBaseView.m */; };
 		C9FFF21527C864C100284B46 /* MRProgressSlider.m in Sources */ = {isa = PBXBuildFile; fileRef = C9FFF21327C864C100284B46 /* MRProgressSlider.m */; };
 		DD0443E627E7749800CB946B /* MRActionProcessor+Private.m in Sources */ = {isa = PBXBuildFile; fileRef = DD0443DE27E7749800CB946B /* MRActionProcessor+Private.m */; };
@@ -101,6 +102,7 @@
 		C969BEB927BDEAD0008BC2AD /* 5003509-693880-1.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "5003509-693880-1.m3u8"; sourceTree = "<group>"; };
 		C96F5B99291A052000C79E07 /* MRProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRProgressIndicator.m; sourceTree = "<group>"; };
 		C96F5B9A291A052100C79E07 /* MRProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRProgressIndicator.h; sourceTree = "<group>"; };
+		C96F5B9C291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "2e0fb226-d7c3-4672-a4bc.m3u8"; sourceTree = "<group>"; };
 		C97DCC0527C867EA0019874F /* MRBaseView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRBaseView.h; sourceTree = "<group>"; };
 		C97DCC0627C867EA0019874F /* MRBaseView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MRBaseView.m; sourceTree = "<group>"; };
 		C9FFF21327C864C100284B46 /* MRProgressSlider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRProgressSlider.m; sourceTree = "<group>"; };
@@ -298,6 +300,7 @@
 				DD9B139022C23A7A002D1D79 /* MainMenu.xib */,
 				C955004627C765A30026AB17 /* PrefixHeader.pch */,
 				DD9B139322C23A7A002D1D79 /* Info.plist */,
+				C96F5B9C291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 */,
 				C92D5BC62914C525009D80D7 /* 2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8 */,
 				C969BEB927BDEAD0008BC2AD /* 5003509-693880-1.m3u8 */,
 				DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */,
@@ -413,6 +416,7 @@
 				C955005A27C7698F0026AB17 /* DecoderSettingViewController.xib in Resources */,
 				DD9B139222C23A7A002D1D79 /* MainMenu.xib in Resources */,
 				DD4EAF24272FC22D00FBCD3A /* RootViewController.xib in Resources */,
+				C96F5B9D291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 in Resources */,
 				C955005027C769050026AB17 /* GeneralSettingViewController.xib in Resources */,
 				C969BBAF27BBA4E1008BC2AD /* 5003509-693880-2.webvtt in Resources */,
 				C92D5BC72914C525009D80D7 /* 2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8 in Resources */,
