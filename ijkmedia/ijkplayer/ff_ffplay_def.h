@@ -654,11 +654,7 @@ typedef struct FFPlayer {
     int max_fps;
     int startup_volume;
 
-    int videotoolbox;
-    int vtb_max_frame_width;
-    int vtb_async;
-    int vtb_wait_async;
-    int vtb_handle_resolution_change;
+    int videotoolbox_hwaccel;
 
     int mediacodec_all_videos;
     int mediacodec_avc;
@@ -801,11 +797,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->pictq_size                     = VIDEO_PICTURE_QUEUE_SIZE_DEFAULT; // option
     ffp->max_fps                        = 31; // option
 
-    ffp->videotoolbox                   = 0; // option
-    ffp->vtb_max_frame_width            = 0; // option
-    ffp->vtb_async                      = 0; // option
-    ffp->vtb_handle_resolution_change   = 0; // option
-    ffp->vtb_wait_async                 = 0; // option
+    ffp->videotoolbox_hwaccel           = 1; // option
 
     ffp->mediacodec_all_videos          = 0; // option
     ffp->mediacodec_avc                 = 0; // option

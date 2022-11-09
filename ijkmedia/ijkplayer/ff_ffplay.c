@@ -2594,7 +2594,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     
 #ifdef __APPLE__
     hw_config = NULL;
-    if (ffp->videotoolbox == 2 && avctx->codec_type == AVMEDIA_TYPE_VIDEO && !(st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
+    if (ffp->videotoolbox_hwaccel && avctx->codec_type == AVMEDIA_TYPE_VIDEO && !(st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
         enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");
         const AVCodecHWConfig *config = NULL;
         for (int i = 0;; i++) {
