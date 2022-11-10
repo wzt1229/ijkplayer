@@ -53,55 +53,6 @@
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
 
-static NSHashTable *IJKRefTable() {
-    static NSHashTable *refTable = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        refTable = [[NSHashTable alloc] initWithOptions:NSPointerFunctionsWeakMemory capacity:1];
-    });
-    return refTable;
-}
-
-#define ijkRefTable IJKRefTable()
-
-static void _IJK_add_GLView_Ref(id<NSObject>obj)
-{
-    [ijkRefTable addObject:obj];
-}
-
-static void _IJK_minus_GLView_Ref(id<NSObject>obj)
-{
-    [ijkRefTable removeObject:obj];
-}
-
-static bool _has_more_than_one_GLView()
-{
-    return [ijkRefTable count] > 1;
-}
-
-// greather than 10.15 no need dispatch to main.
-static bool _is_low_os_version(void)
-{
-    NSOperatingSystemVersion sysVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
-    if (sysVersion.majorVersion > 10) {
-        return false;
-    } else if (sysVersion.minorVersion >= 15) {
-        return false;
-    }
-    return true;
-}
-
-static bool _is_need_dispath_to_main(void)
-{
-    bool low_os = _is_low_os_version();
-    if (low_os) {
-        return _has_more_than_one_GLView();
-    } else {
-        return false;
-    }
-}
-
-
 static IJKSDLThread * _globalThread_(void)
 {
     static IJKSDLThread *globalThread;
@@ -277,14 +228,12 @@ static IJKSDLThread * _globalThread_(void)
     }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    _IJK_minus_GLView_Ref(self);
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
     if (self) {
-        _IJK_add_GLView_Ref(self);
         [self setup];
         _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
