@@ -38,7 +38,7 @@
 #import "ijksdl_gles2.h"
 #import "ijksdl_vout_overlay_videotoolbox.h"
 #import "ijksdl_vout_ios_gles2.h"
-#import "MRTextureString.h"
+#import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 #import <OpenGL/glext.h>
 #import <CoreImage/CIContext.h>
@@ -421,7 +421,7 @@ static bool _is_need_dispath_to_main(void)
     
     [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
     
-    MRTextureString *textureString = [[MRTextureString alloc] initWithString:subtitle withAttributes:attributes];
+    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes];
     
     if (self.currentSubtitle) {
         CVPixelBufferRelease(self.currentSubtitle);
