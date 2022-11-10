@@ -113,7 +113,7 @@ static IJKSDLThread * _globalThread_(void)
     return globalThread;
 }
 
-@interface IJKSDLGLViewAttach : NSObject
+@interface _IJKSDLGLViewAttach : NSObject
 
 @property(atomic) CVPixelBufferRef currentVideoPic;
 @property(atomic) CVPixelBufferRef currentSubtitle;
@@ -130,7 +130,7 @@ static IJKSDLThread * _globalThread_(void)
 
 @end
 
-@implementation IJKSDLGLViewAttach
+@implementation _IJKSDLGLViewAttach
 
 - (void)dealloc
 {
@@ -232,7 +232,7 @@ static IJKSDLThread * _globalThread_(void)
 
 @interface IJKSDLGLView()
 
-@property(atomic) IJKSDLGLViewAttach *currentAttach;
+@property(atomic) _IJKSDLGLViewAttach *currentAttach;
 
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
@@ -355,7 +355,7 @@ static IJKSDLThread * _globalThread_(void)
     }
 }
 
-- (BOOL)setupRendererIfNeed:(IJKSDLGLViewAttach *)attach
+- (BOOL)setupRendererIfNeed:(_IJKSDLGLViewAttach *)attach
 {
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
         !IJK_GLES2_Renderer_isFormat(_renderer, attach.overlayFormat)) {
@@ -502,7 +502,7 @@ static IJKSDLThread * _globalThread_(void)
     }
 }
 
-- (void)doUploadSubtitle:(IJKSDLGLViewAttach *)attach
+- (void)doUploadSubtitle:(_IJKSDLGLViewAttach *)attach
 {
     if (attach.currentSubtitle) {
         float ratio = 1.0;
@@ -524,7 +524,7 @@ static IJKSDLThread * _globalThread_(void)
     }
 }
 
-- (void)doUploadVideoPicture:(IJKSDLGLViewAttach *)attach
+- (void)doUploadVideoPicture:(_IJKSDLGLViewAttach *)attach
 {
     if (attach.currentVideoPic) {
         if (IJK_GLES2_Renderer_updateVetex2(_renderer, attach.overlayH, attach.overlayW, attach.bufferW, attach.sar_num, attach.sar_den)) {
@@ -539,7 +539,7 @@ static IJKSDLThread * _globalThread_(void)
     }
 }
 
-- (void)doRefreshCurrentAttach:(IJKSDLGLViewAttach *)currentAttach
+- (void)doRefreshCurrentAttach:(_IJKSDLGLViewAttach *)currentAttach
 {
     if (!currentAttach) {
         return;
@@ -560,7 +560,7 @@ static IJKSDLThread * _globalThread_(void)
     [self doDisplayVideoPicAndSubtitle:currentAttach];
 }
 
-- (void)doDisplayVideoPicAndSubtitle:(IJKSDLGLViewAttach *)attach
+- (void)doDisplayVideoPicAndSubtitle:(_IJKSDLGLViewAttach *)attach
 {
     if (!attach) {
         return;
@@ -621,7 +621,7 @@ static IJKSDLThread * _globalThread_(void)
         NSAssert(NO, @"wtf?");
     }
     
-    IJKSDLGLViewAttach *attach = [[IJKSDLGLViewAttach alloc] init];
+    _IJKSDLGLViewAttach *attach = [[_IJKSDLGLViewAttach alloc] init];
     
     attach.ffFormat = ff_format;
     attach.overlayFormat = overlay_format;
@@ -703,7 +703,7 @@ static IJKSDLThread * _globalThread_(void)
 - (void)_snapshotEffectOriginWithSubtitle:(NSDictionary *)params
 {
     BOOL containSub = [params[@"containSub"] boolValue];
-    IJKSDLGLViewAttach * attach = params[@"attach"];
+    _IJKSDLGLViewAttach * attach = params[@"attach"];
     NSValue *ptrValue = params[@"outImg"];
     CGImageRef *outImg = (CGImageRef *)[ptrValue pointerValue];
     if (outImg) {
@@ -781,7 +781,7 @@ static IJKSDLThread * _globalThread_(void)
     }
 }
 
-- (CGImageRef)_snapshot_origin:(IJKSDLGLViewAttach *)attach
+- (CGImageRef)_snapshot_origin:(_IJKSDLGLViewAttach *)attach
 {
     CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(attach.currentVideoPic);
     CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
@@ -905,7 +905,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
 
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType
 {
-    IJKSDLGLViewAttach *attach = self.currentAttach;
+    _IJKSDLGLViewAttach *attach = self.currentAttach;
     if (!attach) {
         return NULL;
     }
