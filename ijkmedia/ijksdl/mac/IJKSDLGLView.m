@@ -147,6 +147,89 @@ static IJKSDLThread * _globalThread_(void)
 
 @end
 
+//for snapshot.
+
+@interface _IJKSDLFBO : NSObject
+
+@property(nonatomic) CGSize textureSize;
+@property(nonatomic) GLuint fbo;
+@property(nonatomic) GLuint colorTexture;
+
+@end
+
+@implementation _IJKSDLFBO
+
+- (void)dealloc
+{
+    if (_fbo) {
+        glDeleteFramebuffers(1, &_fbo);
+    }
+    
+    if (_colorTexture) {
+        glDeleteFramebuffers(1, &_colorTexture);
+    }
+    
+    _textureSize = CGSizeZero;
+}
+
+// Create texture and framebuffer objects to render and snapshot.
+- (BOOL)canReuse:(CGSize)size
+{
+    if (CGSizeEqualToSize(CGSizeZero, size)) {
+        return NO;
+    }
+    
+    if (CGSizeEqualToSize(_textureSize, size) && _fbo && _colorTexture) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+- (instancetype)initWithSize:(CGSize)size
+{
+    self = [super init];
+    if (self) {
+        // Create a texture object that you apply to the model.
+        glGenTextures(1, &_colorTexture);
+        glBindTexture(GL_TEXTURE_2D, _colorTexture);
+
+        // Set up filter and wrap modes for the texture object.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        // Allocate a texture image to which you can render to. Pass `NULL` for the data parameter
+        // becuase you don't need to load image data. You generate the image by rendering to the texture.
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.width, size.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+        glGenFramebuffers(1, &_fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _colorTexture, 0);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+            _textureSize = size;
+            return self;
+        } else {
+        #if DEBUG
+            NSAssert(NO, @"Failed to make complete framebuffer object %x.",  glCheckFramebufferStatus(GL_FRAMEBUFFER));
+        #endif
+            _textureSize = CGSizeZero;
+            return nil;
+        }
+    }
+    return nil;
+}
+
+- (void)bind
+{
+    // Bind the snapshot FBO and render the scene.
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+}
+
+@end
+
 @interface IJKSDLGLView()
 
 @property(atomic) IJKSDLGLViewAttach *currentAttach;
@@ -160,6 +243,7 @@ static IJKSDLThread * _globalThread_(void)
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
 @property(atomic) BOOL subtitlePreferenceChanged;
+@property(atomic) _IJKSDLFBO * fbo;
 
 @end
 
@@ -167,10 +251,6 @@ static IJKSDLThread * _globalThread_(void)
 {
     IJK_GLES2_Renderer *_renderer;
     int    _rendererGravity;
-    //for snapshot.
-    CGSize _FBOTextureSize;
-    GLuint _FBO;
-    GLuint _ColorTexture;
 }
 
 @synthesize scalingMode = _scalingMode;
@@ -187,7 +267,10 @@ static IJKSDLThread * _globalThread_(void)
 
 - (void)dealloc
 {
-    [self destroyFBO];
+    [_globalThread_() performSelector:@selector(setFbo:)
+                           withTarget:self
+                           withObject:nil
+                        waitUntilDone:YES];
     
     if (_renderer) {
         IJK_GLES2_Renderer_freeP(&_renderer);
@@ -617,55 +700,6 @@ static IJKSDLThread * _globalThread_(void)
 
 #pragma mark - for snapshot
 
-- (void)destroyFBO
-{
-    glDeleteFramebuffers(1, &_FBO);
-    glDeleteFramebuffers(1, &_ColorTexture);
-    _FBOTextureSize = CGSizeZero;
-}
-
-// Create texture and framebuffer objects to render and snapshot.
-- (BOOL)prepareFBOIfNeed:(CGSize)size
-{
-    if (CGSizeEqualToSize(CGSizeZero, size)) {
-        return NO;
-    }
-    
-    if (CGSizeEqualToSize(_FBOTextureSize, size)) {
-        return YES;
-    } else {
-        [self destroyFBO];
-    }
-    
-    // Create a texture object that you apply to the model.
-    glGenTextures(1, &_ColorTexture);
-    glBindTexture(GL_TEXTURE_2D, _ColorTexture);
-
-    // Set up filter and wrap modes for the texture object.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    // Allocate a texture image to which you can render to. Pass `NULL` for the data parameter
-    // becuase you don't need to load image data. You generate the image by rendering to the texture.
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.width, size.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-    glGenFramebuffers(1, &_FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, _FBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _ColorTexture, 0);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
-        _FBOTextureSize = size;
-        return YES;
-    } else {
-    #if DEBUG
-        NSAssert(NO, @"Failed to make complete framebuffer object %x.",  glCheckFramebufferStatus(GL_FRAMEBUFFER));
-    #endif
-        return NO;
-    }
-}
-
 - (void)_snapshotEffectOriginWithSubtitle:(NSDictionary *)params
 {
     BOOL containSub = [params[@"containSub"] boolValue];
@@ -712,14 +746,15 @@ static IJKSDLThread * _globalThread_(void)
             picSize = CGSizeMake(pic_width, pic_height);
         }
         
-        if ([self prepareFBOIfNeed:picSize]) {
+        if (![self.fbo canReuse:picSize]) {
+            self.fbo = [[_IJKSDLFBO alloc] initWithSize:picSize];
+        }
+        
+        if (self.fbo) {
             if (attach.currentVideoPic) {
-                // Bind the snapshot FBO and render the scene.
-                glBindFramebuffer(GL_FRAMEBUFFER, _FBO);
+                [self.fbo bind];
                 glViewport(0, 0, picSize.width, picSize.height);
                 glClear(GL_COLOR_BUFFER_BIT);
-                // Bind the texture that you previously render to (i.e. the snapshot texture).
-                glBindTexture(GL_TEXTURE_2D, _ColorTexture);
                 
                 if (!IJK_GLES2_Renderer_resetVao(_renderer))
                     ALOGE("[GL] Renderer_resetVao failed\n");
@@ -734,6 +769,8 @@ static IJKSDLThread * _globalThread_(void)
                 [self doUploadSubtitle:attach];
             }
             img = [self _snapshotTheContextWithSize:picSize];
+        } else {
+            ALOGE("[GL] create fbo failed\n");
         }
         [[self openGLContext]flushBuffer];
     }
