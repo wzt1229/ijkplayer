@@ -235,6 +235,52 @@
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>dsf</string>
+                <string>flac</string>
+                <string>wav</string>
+                <string>ape</string>
+                <string>dff</string>
+                <string>dts</string>
+                <string>aac</string>
+                <string>ac3</string>
+                <string>amr</string>
+                <string>wma</string>
+                <string>mp2</string>
+                <string>mp3</string>
+                <string>m4a</string>
+                <string>m4r</string>
+                <string>caf</string>
+                <string>ogg</string>
+                <string>oga</string>
+                <string>opus</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Other Audio Document</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>srt</string>
+                <string>ass</string>
+                <string>ssa</string>
+                <string>vtt</string>
+                <string>webvtt</string>
+                <string>lrc</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Other Subtitle Document</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
 	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
