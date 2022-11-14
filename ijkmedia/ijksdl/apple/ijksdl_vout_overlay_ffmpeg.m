@@ -161,7 +161,12 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
     
     if (poolRef) {
         result = CVPixelBufferPoolCreatePixelBuffer(NULL, poolRef, &pixelBuffer);
-    } else {
+        if (result != kCVReturnSuccess) {
+            ALOGE("CVPixelBufferPoolCreatePixelBuffer Failed:%d\n", result);
+        }
+    }
+    
+    if (kCVReturnSuccess != result) {
         //AVCOL_RANGE_MPEG对应tv，AVCOL_RANGE_JPEG对应pc
         //Y′ values are conventionally shifted and scaled to the range [16, 235] (referred to as studio swing or "TV levels") rather than using the full range of [0, 255] (referred to as full swing or "PC levels").
         //https://en.wikipedia.org/wiki/YUV#Numerical_approximations
@@ -170,6 +175,8 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
         NSDictionary * attributes = prepareCVPixelBufferAttibutes(format, fullRange, h, w);
         
         if (!attributes) {
+            ALOGE("CVPixelBufferCreate Failed: no attributes\n");
+            assert(0);
             return NULL;
         }
         const int pixelFormatType = [attributes[(NSString*)kCVPixelBufferPixelFormatTypeKey] intValue];
