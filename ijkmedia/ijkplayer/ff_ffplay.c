@@ -1116,9 +1116,16 @@ static void alloc_picture(FFPlayer *ffp, int frame_format)
     video_open(is, vp);
 #endif
 
+#ifdef __APPLE__
+    vp->bmp = SDL_Vout_CreateOverlay_Apple(vp->width, vp->height,
+                                           frame_format,
+                                           ffp->cvpixelbufferpool,
+                                           ffp->vout);
+#else
     vp->bmp = SDL_Vout_CreateOverlay(vp->width, vp->height,
                                    frame_format,
                                    ffp->vout);
+#endif
 #ifdef FFP_MERGE
     if (vp->format == AV_PIX_FMT_YUV420P)
         sdl_format = SDL_PIXELFORMAT_YV12;

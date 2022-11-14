@@ -512,7 +512,7 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
 #endif
 
 #ifndef __clang_analyzer__
-SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_format, SDL_Vout *display)
+SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *display)
 {
     Uint32 overlay_format = display->overlay_format;
     if (SDL_FCC__GLES2 == overlay_format) {
@@ -670,7 +670,7 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
         opaque->planes = 2;
     }
     
-    if (!display->cvPixelBufferPool) {
+    if (cvpixelbufferpool && !display->cvPixelBufferPool) {
         CVPixelBufferPoolRef cvPixelBufferPool = NULL;
         createCVPixelBufferPoolFromAVFrame(&cvPixelBufferPool, width, height,ff_format);
         display->cvPixelBufferPool = cvPixelBufferPool;

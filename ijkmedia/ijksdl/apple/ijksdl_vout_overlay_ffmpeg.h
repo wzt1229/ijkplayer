@@ -37,7 +37,7 @@
 
 
 // TODO: 9 alignment to speed up memcpy when display
-SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_format, SDL_Vout *vout);
+SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *vout);
 #if USE_FF_VTB
 CVPixelBufferRef SDL_VoutFFmpeg_GetCVPixelBufferRef(SDL_VoutOverlay *overlay);
 #endif

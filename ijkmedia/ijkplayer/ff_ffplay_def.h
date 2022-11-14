@@ -655,6 +655,7 @@ typedef struct FFPlayer {
     int startup_volume;
 
     int videotoolbox;
+    int cvpixelbufferpool;
     int vtb_max_frame_width;
     int vtb_async;
     int vtb_wait_async;
@@ -802,6 +803,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->max_fps                        = 31; // option
 
     ffp->videotoolbox                   = 0; // option
+    ffp->cvpixelbufferpool          = 1; // option
     ffp->vtb_max_frame_width            = 0; // option
     ffp->vtb_async                      = 0; // option
     ffp->vtb_handle_resolution_change   = 0; // option

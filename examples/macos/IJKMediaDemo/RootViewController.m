@@ -576,6 +576,16 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     if ([url isFileURL]) {
         [options setPlayerOptionIntValue:10*1024*1024      forKey:@"max-buffer-size"];
+        //一张图片不使用 cvpixelbufferpool
+        NSString *ext = [[[url path] pathExtension] lowercaseString];
+        if ([[MRUtil pictureType] containsObject:ext]) {
+            if ([@"gif" isEqualToString:ext]) {
+                [options setPlayerOptionIntValue:1      forKey:@"enable-cvpixelbufferpool"];
+                [options setPlayerOptionIntValue:-1      forKey:@"loop"];
+            } else {
+                [options setPlayerOptionIntValue:0      forKey:@"enable-cvpixelbufferpool"];
+            }
+        }
     }
     
     BOOL isLive = NO;

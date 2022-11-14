@@ -177,9 +177,11 @@ static const AVOption ffp_context_options[] = {
     { "video-mime-type",                    "default video mime type",
         OPTION_OFFSET(video_mime_type),     OPTION_STR(NULL) },
 
-        // iOS only options
+        // Apple only options
     { "videotoolbox",                       "1:enable ijk VideoToolbox; 2:enable ffmpeg hwaccel",
         OPTION_OFFSET(videotoolbox),        OPTION_INT(0, 0, 2) },
+    { "enable-cvpixelbufferpool",           "1:enable cvpixelbufferpool improve performance for ffmpeg software decoder avframe -> CVPixelBufferRef;",
+        OPTION_OFFSET(cvpixelbufferpool),OPTION_INT(1, 0, 1) },
     { "videotoolbox-max-frame-width",       "VideoToolbox: max width of output frame",
         OPTION_OFFSET(vtb_max_frame_width), OPTION_INT(0, 0, INT_MAX) },
     { "videotoolbox-async",                 "VideoToolbox: use kVTDecodeFrame_EnableAsynchronousDecompression()",
