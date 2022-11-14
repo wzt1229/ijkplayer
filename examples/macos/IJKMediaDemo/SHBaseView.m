@@ -89,7 +89,6 @@
                                                                     options:(NSTrackingMouseEnteredAndExited |
                                                                              NSTrackingMouseMoved |
                                                                              NSTrackingActiveInActiveApp |
-                                                                             NSTrackingInVisibleRect |
                                                                              NSTrackingAssumeInside |
                                                                              NSTrackingCursorUpdate)
                                                                       owner:self

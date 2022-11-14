@@ -226,6 +226,7 @@
 				<string>webp</string>
 				<string>tif</string>
 				<string>pcx</string>
+				<string>gif</string>
 			</array>
 			<key>CFBundleTypeName</key>
 			<string>Other Picture Document</string>

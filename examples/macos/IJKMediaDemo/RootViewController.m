@@ -165,6 +165,11 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     self.playedTimeLb.stringValue = @"--:--";
     self.durationTimeLb.stringValue = @"--:--";
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self toggleAdvancedViewShow];
+    });
+
 }
 
 - (void)prepareRightMenu
@@ -192,8 +197,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             [menu addItemWithTitle:@"下一集" action:@selector(playNext:)keyEquivalent:@""];
             [menu addItemWithTitle:@"上一集" action:@selector(playPrevious:)keyEquivalent:@""];
             
-            [menu addItemWithTitle:@"前进50s" action:@selector(fastForward:)keyEquivalent:@""];
-            [menu addItemWithTitle:@"后退50s" action:@selector(fastRewind:)keyEquivalent:@""];
+            [menu addItemWithTitle:@"前进10s" action:@selector(fastForward:)keyEquivalent:@""];
+            [menu addItemWithTitle:@"后退10s" action:@selector(fastRewind:)keyEquivalent:@""];
             
             NSMenuItem *speedItem = [menu addItemWithTitle:@"倍速" action:nil keyEquivalent:@""];
             
@@ -1216,14 +1221,14 @@ static IOPMAssertionID g_displaySleepAssertionID;
 - (IBAction)fastRewind:(NSButton *)sender
 {
     float cp = self.player.currentPlaybackTime;
-    cp -= 50;
+    cp -= 10;
     [self seekTo:cp];
 }
 
 - (IBAction)fastForward:(NSButton *)sender
 {
     float cp = self.player.currentPlaybackTime;
-    cp += 50;
+    cp += 10;
     [self seekTo:cp];
 }
 
