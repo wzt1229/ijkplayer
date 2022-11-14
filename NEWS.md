@@ -1,3 +1,10 @@
+tag 0.9.3
+--------------------------------
+- use global single thread display fix SIGSEGV crash
+- support enable-cvpixelbufferpool option disable cvpixelbufferpool
+- enable indeo5 decoder
+- support Xcode 14.1
+
 tag 0.9.2
 --------------------------------
 
