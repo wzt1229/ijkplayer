@@ -17,8 +17,8 @@
 
 set -e
 
-EDITION=$1
-PLAT=$2
+PLAT=$1
+EDITION='ijk'
 VER='V1.0-85ada21'
 
 if test -z $PLAT ;then
@@ -53,13 +53,13 @@ function download() {
 if [[ "$EDITION" != 'ijk' && "$EDITION" != 'github' ]]; then
     echo 'wrong edition,use ijk or github!'
     usage
-    exit
+    exit 1
 fi
 
 if [[ "$PLAT" != 'ios' && "$PLAT" != 'macos' && "$PLAT" != 'all' ]]; then
     echo 'wrong plat,use ios or macos or all!'
     usage
-    exit
+    exit 2
 fi
 
 if test -z $VER ;then
@@ -76,4 +76,5 @@ elif [[ "$PLAT" == 'all' ]]; then
     done
 else
     usage
+    exit 3
 fi
