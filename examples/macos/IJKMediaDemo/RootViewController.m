@@ -696,6 +696,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     NSLog(@"seek cost time:%@ms",notifi.userInfo[@"du"]);
     self.seeking = NO;
     self.seekCostLb.stringValue = [NSString stringWithFormat:@"%@ms",notifi.userInfo[@"du"]];
+    //seek 完毕后仍旧是播放状态就开始播放
+    if (self.playCtrlBtn.state == NSControlStateValueOn) {
+        [self.player play];
+    }
 }
 
 - (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
@@ -1213,6 +1217,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     if (cp < 0) {
         cp = 0;
     }
+    [self.player pause];
     self.seekCostLb.stringValue = @"";
     if (self.player.monitor.duration > 0) {
         if (cp >= self.player.monitor.duration) {
