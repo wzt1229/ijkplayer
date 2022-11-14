@@ -48,8 +48,6 @@
 
 - (void)start
 {
-    __weak typeof(self) weakSelf = self;
-    
     _shouldStop = NO;
     _thread = [[NSThread alloc] initWithTarget:self selector:@selector(main) object:nil];
     if (self.name) {
