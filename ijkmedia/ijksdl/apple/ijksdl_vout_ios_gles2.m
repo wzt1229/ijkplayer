@@ -54,21 +54,21 @@ struct SDL_Vout_Opaque {
     IJKSDLSubtitle *sub;
 };
 
-static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int frame_format, SDL_Vout *vout)
+static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *vout)
 {
     switch (frame_format) {
         case AV_PIX_FMT_VIDEOTOOLBOX:
         case IJK_AV_PIX_FMT__VIDEO_TOOLBOX:
             return SDL_VoutVideoToolBox_CreateOverlay(width, height, vout);
         default:
-            return SDL_VoutFFmpeg_CreateOverlay(width, height, frame_format, vout);
+            return SDL_VoutFFmpeg_CreateOverlay(width, height, frame_format, cvpixelbufferpool, vout);
     }
 }
 
-static SDL_VoutOverlay *vout_create_overlay(int width, int height, int frame_format, SDL_Vout *vout)
+static SDL_VoutOverlay *vout_create_overlay_apple(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *vout)
 {
     SDL_LockMutex(vout->mutex);
-    SDL_VoutOverlay *overlay = vout_create_overlay_l(width, height, frame_format, vout);
+    SDL_VoutOverlay *overlay = vout_create_overlay_l(width, height, frame_format, cvpixelbufferpool, vout);
     SDL_UnlockMutex(vout->mutex);
     return overlay;
 }
@@ -249,7 +249,7 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2(Uint32 overlay_format)
     SDL_Vout_Opaque *opaque = vout->opaque;
     opaque->gl_view = nil;
     opaque->sub = NULL;
-    vout->create_overlay = vout_create_overlay;
+    vout->create_overlay_apple = vout_create_overlay_apple;
     vout->free_l = vout_free_l;
     vout->display_overlay = vout_display_overlay;
     vout->update_subtitle = vout_update_subtitle;

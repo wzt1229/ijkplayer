@@ -18,51 +18,61 @@
     //https://samplerateconverter.com/educational/dsd-dsf-dff-audio
     //https://filesamples.com/categories/audio
     //https://software-download.name/sample-amr-audio-file/download.html
-    return @[
-        @"dsf",
-        @"flac",
-        @"wav",
-        @"ape",
-        @"dff",
-        @"dts",
-        @"aac",
-        @"ac3",
-        @"amr",
-        @"wma",
-        @"mp2",
-        @"mp3",
-        @"m4a",
-        @"m4r",
-        @"caf",
-        @"ogg",
-        @"oga",
-        @"opus"
-        ];
+    static NSArray *audioTypes;
+    if (!audioTypes) {
+        NSDictionary *dic = [[NSBundle mainBundle] infoDictionary];
+        NSArray *documentTypes = dic[@"CFBundleDocumentTypes"];
+        NSMutableArray *_list = [NSMutableArray array];
+        for (NSDictionary *item in documentTypes) {
+            NSString *typeName = item[@"CFBundleTypeName"];
+            if ([typeName isEqualToString:@"Other Audio Document"]) {
+                NSArray *exts = item[@"CFBundleTypeExtensions"];
+                [_list addObjectsFromArray:exts];
+            }
+        }
+        audioTypes = [_list copy];
+    }
+    return audioTypes;
 }
 
 + (NSArray <NSString *>*)subtitleType
 {
-    return @[
-        @"srt",
-        @"ass",
-        @"ssa",
-        @"vtt",
-        @"webvtt",
-        @"lrc"
-        ];
+    static NSArray *subTypes;
+    if (!subTypes) {
+        NSDictionary *dic = [[NSBundle mainBundle] infoDictionary];
+        NSArray *documentTypes = dic[@"CFBundleDocumentTypes"];
+        NSMutableArray *_list = [NSMutableArray array];
+        for (NSDictionary *item in documentTypes) {
+            NSString *typeName = item[@"CFBundleTypeName"];
+            if ([typeName isEqualToString:@"Other Subtitle Document"]) {
+                NSArray *exts = item[@"CFBundleTypeExtensions"];
+                [_list addObjectsFromArray:exts];
+            }
+        }
+        subTypes = [_list copy];
+    }
+    return subTypes;
 }
 
 + (NSArray <NSString *>*)pictureType
 {
-    return @[
-        @"jpg",
-        @"jpeg",
-        @"png",
-        @"webp",
-        @"pcx",
-        @"tif"
-        ];
+    static NSArray *picTypes;
+    if (!picTypes) {
+        NSDictionary *dic = [[NSBundle mainBundle] infoDictionary];
+        NSArray *documentTypes = dic[@"CFBundleDocumentTypes"];
+        NSMutableArray *_list = [NSMutableArray array];
+        for (NSDictionary *item in documentTypes) {
+            NSString *typeName = item[@"CFBundleTypeName"];
+            if ([typeName isEqualToString:@"Other Picture Document"]) {
+                NSArray *exts = item[@"CFBundleTypeExtensions"];
+                [_list addObjectsFromArray:exts];
+            }
+        }
+        picTypes = [_list copy];
+    }
+    return picTypes;
 }
+
 // mov,qt,mp4,m4v,flv,f4v,webm,3gp2,3gpp,3gp,3g2,rm,rmvb,wmv,avi,asf,mpg,mpeg,mpe,ts,mkv,mod,flc,fli,ram,dirac,cpk,lavf,dat,div,dv,divx,vob
 + (NSArray <NSString *>*)videoType
 {
@@ -71,7 +81,12 @@
         NSDictionary *dic = [[NSBundle mainBundle] infoDictionary];
         NSArray *documentTypes = dic[@"CFBundleDocumentTypes"];
         NSMutableArray *_list = [NSMutableArray array];
+        
         for (NSDictionary *item in documentTypes) {
+            NSString *typeName = item[@"CFBundleTypeName"];
+            if ([typeName isEqualToString:@"Other Picture Document"] || [typeName isEqualToString:@"Other Subtitle Document"] || [typeName isEqualToString:@"Other Audio Document"]) {
+                continue;
+            }
             NSArray *exts = item[@"CFBundleTypeExtensions"];
             [_list addObjectsFromArray:exts];
         }
@@ -86,6 +101,7 @@
     [r addObjectsFromArray:[self audioType]];
     [r addObjectsFromArray:[self videoType]];
     [r addObjectsFromArray:[self subtitleType]];
+    [r addObjectsFromArray:[self pictureType]];
     return r;
 }
 

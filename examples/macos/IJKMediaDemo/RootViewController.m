@@ -170,6 +170,11 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     self.playedTimeLb.stringValue = @"--:--";
     self.durationTimeLb.stringValue = @"--:--";
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self toggleAdvancedViewShow];
+    });
+
 }
 
 - (void)prepareRightMenu
@@ -197,8 +202,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             [menu addItemWithTitle:@"下一集" action:@selector(playNext:)keyEquivalent:@""];
             [menu addItemWithTitle:@"上一集" action:@selector(playPrevious:)keyEquivalent:@""];
             
-            [menu addItemWithTitle:@"前进50s" action:@selector(fastForward:)keyEquivalent:@""];
-            [menu addItemWithTitle:@"后退50s" action:@selector(fastRewind:)keyEquivalent:@""];
+            [menu addItemWithTitle:@"前进10s" action:@selector(fastForward:)keyEquivalent:@""];
+            [menu addItemWithTitle:@"后退10s" action:@selector(fastRewind:)keyEquivalent:@""];
             
             NSMenuItem *speedItem = [menu addItemWithTitle:@"倍速" action:nil keyEquivalent:@""];
             
@@ -220,6 +225,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         [menu addItemWithTitle:@"1.25x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 125;
         [menu addItemWithTitle:@"1.5x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 150;
         [menu addItemWithTitle:@"2.0x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 200;
+        [menu addItemWithTitle:@"20x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 2000;
     }
 }
 
@@ -575,6 +581,14 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     if ([url isFileURL]) {
         [options setPlayerOptionIntValue:10*1024*1024      forKey:@"max-buffer-size"];
+        //图片不使用 cvpixelbufferpool
+        NSString *ext = [[[url path] pathExtension] lowercaseString];
+        if ([[MRUtil pictureType] containsObject:ext]) {
+            [options setPlayerOptionIntValue:0      forKey:@"enable-cvpixelbufferpool"];
+            if ([@"gif" isEqualToString:ext]) {
+                [options setPlayerOptionIntValue:-1      forKey:@"loop"];
+            }
+        }
     }
     
     BOOL isLive = NO;
@@ -684,6 +698,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     NSLog(@"seek cost time:%@ms",notifi.userInfo[@"du"]);
     self.seeking = NO;
     self.seekCostLb.stringValue = [NSString stringWithFormat:@"%@ms",notifi.userInfo[@"du"]];
+    //seek 完毕后仍旧是播放状态就开始播放
+    if (self.playCtrlBtn.state == NSControlStateValueOn) {
+        [self.player play];
+    }
 }
 
 - (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
@@ -1205,6 +1223,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     if (cp < 0) {
         cp = 0;
     }
+    [self.player pause];
     self.seekCostLb.stringValue = @"";
     if (self.player.monitor.duration > 0) {
         if (cp >= self.player.monitor.duration) {
@@ -1221,14 +1240,14 @@ static IOPMAssertionID g_displaySleepAssertionID;
 - (IBAction)fastRewind:(NSButton *)sender
 {
     float cp = self.player.currentPlaybackTime;
-    cp -= 50;
+    cp -= 10;
     [self seekTo:cp];
 }
 
 - (IBAction)fastForward:(NSButton *)sender
 {
     float cp = self.player.currentPlaybackTime;
-    cp += 50;
+    cp += 10;
     [self seekTo:cp];
 }
 

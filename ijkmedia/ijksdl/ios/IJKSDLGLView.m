@@ -27,7 +27,7 @@
 #include "ijksdl/ijksdl_timer.h"
 #include "ijksdl/apple/ijksdl_ios.h"
 #include "ijksdl/ijksdl_gles2.h"
-#import "MRTextureString.h"
+#import "IJKSDLTextureString.h"
 
 typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     IJKSDLGLViewApplicationUnknownState = 0,
@@ -516,7 +516,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
     
-    MRTextureString *textureString = [[MRTextureString alloc] initWithString:subtitle withAttributes:attributes withBoxColor:[UIColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:[UIColor colorWithWhite:1.0 alpha:0.6]];
+    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withBoxColor:[UIColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:[UIColor colorWithWhite:1.0 alpha:0.6]];
     
     float inset = subtitleFont.pointSize / 2.0;
     textureString.edgeInsets = NSEdgeInsetsMake(inset, inset, inset, inset);

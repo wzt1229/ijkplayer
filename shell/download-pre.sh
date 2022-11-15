@@ -15,36 +15,57 @@
 # limitations under the License.
 #
 
-PLAT=$1
-VER=$2
-
-if test -z $VER ;then
-    VER='V1.0-94efbf3'
-fi
-
 set -e
+
+PLAT=$1
+EDITION='ijk'
+VER='V1.0-85ada21'
+
+if test -z $PLAT ;then
+    PLAT='all'
+fi
 
 cd $(dirname "$0")
 c_dir="$PWD"
 
 function usage() {
-    echo " useage:"
-    echo " $0 [ios,macos,all]"
+    echo "=== useage ===================="
+    echo "Download precompiled ijk or github edition libs from github,The usage is as follows:"
+    echo "$0 ijk|github [ios|macos|all] [<release tag>]"
 }
 
 function download() {
     local plat=$1
-    echo "===[download $plat $VER]===================="
+    echo "===[download $plat $EDITION $VER]===================="
     mkdir -p build/pre
     cd build/pre
-    echo "https://github.com/debugly/MRFFToolChainBuildShell/releases/download/$VER/$plat-universal-$VER.zip"
-    curl -LO https://github.com/debugly/MRFFToolChainBuildShell/releases/download/$VER/$plat-universal-$VER.zip
+    local fname="$plat-universal-$VER-$EDITION.zip"
+    local url="https://github.com/debugly/MRFFToolChainBuildShell/releases/download/$VER-$EDITION/$fname"
+    echo "$url"
+    curl -LO "$url"
     mkdir -p ../product/$plat/universal
-    unzip -oq $plat-universal-$VER.zip -d ../product/$plat/universal
+    unzip -oq $fname -d ../product/$plat/universal
     tree -L 2 ../product/$plat/universal
     echo "===================================="
     cd - >/dev/null
 }
+
+if [[ "$EDITION" != 'ijk' && "$EDITION" != 'github' ]]; then
+    echo 'wrong edition,use ijk or github!'
+    usage
+    exit 1
+fi
+
+if [[ "$PLAT" != 'ios' && "$PLAT" != 'macos' && "$PLAT" != 'all' ]]; then
+    echo 'wrong plat,use ios or macos or all!'
+    usage
+    exit 2
+fi
+
+if test -z $VER ;then
+    VER=$(git describe --abbrev=0 --tag | awk -F - '{printf "%s-%s",$1,$2}')
+    echo "auto find the latest tag:${VER}"
+fi
 
 if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' ]]; then
     download $PLAT
@@ -55,4 +76,5 @@ elif [[ "$PLAT" == 'all' ]]; then
     done
 else
     usage
+    exit 3
 fi

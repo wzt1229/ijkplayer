@@ -161,6 +161,15 @@ int SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame *
     return r;
 }
 
+#ifdef __APPLE__
+SDL_VoutOverlay *SDL_Vout_CreateOverlay_Apple(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *vout)
+{
+    if (vout && vout->create_overlay_apple)
+        return vout->create_overlay_apple(width, height, frame_format, cvpixelbufferpool, vout);
+
+    return NULL;
+}
+#else
 SDL_VoutOverlay *SDL_Vout_CreateOverlay(int width, int height, int frame_format, SDL_Vout *vout)
 {
     if (vout && vout->create_overlay)
@@ -168,6 +177,7 @@ SDL_VoutOverlay *SDL_Vout_CreateOverlay(int width, int height, int frame_format,
 
     return NULL;
 }
+#endif
 
 int SDL_VoutLockYUVOverlay(SDL_VoutOverlay *overlay)
 {

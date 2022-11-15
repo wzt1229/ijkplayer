@@ -655,6 +655,7 @@ typedef struct FFPlayer {
     int startup_volume;
 
     int videotoolbox_hwaccel;
+    int cvpixelbufferpool;
 
     int mediacodec_all_videos;
     int mediacodec_avc;
@@ -798,6 +799,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->max_fps                        = 31; // option
 
     ffp->videotoolbox_hwaccel           = 1; // option
+    ffp->cvpixelbufferpool              = 1; // option
 
     ffp->mediacodec_all_videos          = 0; // option
     ffp->mediacodec_avc                 = 0; // option

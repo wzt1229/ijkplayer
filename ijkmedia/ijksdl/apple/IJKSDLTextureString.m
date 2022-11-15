@@ -1,20 +1,32 @@
-//
-// File:        MRTextureString.h
-//                (Originally Apple's GLString.h)
-//
-// Abstract:    Uses Quartz to draw a string into a CVPixelBufferRef
-//
-// Version:
-//          2.0 - use CVPixelBufferRef instead of glTexImage2D; use ARC
-//          1.1 - Minor enhancements and bug fixes.
-//          1.0 - Original release.
-//
+/*
+ * IJKSDLTextureString.m
+ *
+ * Copyright (c) 2013-2014 Bilibili
+ * Copyright (c) 2013-2014 Zhang Rui <bbcallen@gmail.com>
+ *
+ * This file is part of ijkPlayer.
+ *
+ * ijkPlayer is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * ijkPlayer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with ijkPlayer; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+
 //Download Sample Code https://developer.apple.com/library/archive/samplecode/CocoaGL/Introduction/Intro.html
 //https://developer.apple.com/library/archive/qa/qa1829/_index.html
 //https://stackoverflow.com/questions/46879895/byte-per-row-is-wrong-when-creating-a-cvpixelbuffer-with-width-multiple-of-90
 //https://github.com/johnboiles/obs-mac-virtualcam/blob/4bd585204ae220068bd55eddf7239b9c8fd8b1dc/src/dal-plugin/Stream.mm
 
-#import "MRTextureString.h"
+#import "IJKSDLTextureString.h"
 
 // The following is a NSBezierPath category to allow
 // for rounded corners of the border
@@ -64,18 +76,18 @@
 #endif
 
 #pragma mark -
-#pragma mark MRTextureString
+#pragma mark IJKSDLTextureString
 
-// MRTextureString follows
+// IJKSDLTextureString follows
 
-@interface MRTextureString ()
+@interface IJKSDLTextureString ()
 
 @property(nonatomic, strong) NSAttributedString * attributedString;
 @property(nonatomic, assign) BOOL requiresUpdate;
 
 @end
 
-@implementation MRTextureString
+@implementation IJKSDLTextureString
 
 #pragma mark -
 #pragma mark Initializers
