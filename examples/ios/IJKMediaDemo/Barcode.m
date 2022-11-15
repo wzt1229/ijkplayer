@@ -7,6 +7,7 @@
 //
 
 #import "Barcode.h"
+#import <UIKit/UIKit.h>
 
 @interface Barcode() 
 
