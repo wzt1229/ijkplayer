@@ -2,8 +2,8 @@
 
 set -e
 
-VERSION_CODE=800800
-VERSION_NAME=0.8.8
+VERSION_CODE=900300
+VERSION_NAME=0.9.3
 VERSION_TARGET=$1
 
 do_version_readme() {
@@ -59,13 +59,19 @@ do_version_gradle() {
 }
 
 do_version_xcode() {
-    # ios/IJKMediaPlayer/IJKMediaPlayer.xcodeproj/project.pbxproj
+    # examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj
 
-    cat ios/IJKMediaPlayer/IJKMediaPlayer.xcodeproj/project.pbxproj \
-    | sed "s/\(CURRENT_PROJECT_VERSION = \).*;/\1$VERSION_NAME;/g" \
-    > ios/IJKMediaPlayer/IJKMediaPlayer.xcodeproj/project.pbxproj.new
+    cat examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj \
+    | sed "s/\(MARKETING_VERSION = \).*;/\1$VERSION_NAME;/g" \
+    > examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj.new
 
-    mv -f ios/IJKMediaPlayer/IJKMediaPlayer.xcodeproj/project.pbxproj.new ios/IJKMediaPlayer/IJKMediaPlayer.xcodeproj/project.pbxproj
+    mv -f examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj.new examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj
+
+    cat examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj \
+    | sed "s/\(MARKETING_VERSION = \).*;/\1$VERSION_NAME;/g" \
+    > examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj.new
+
+    mv -f examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj.new examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj
 }
 
 if [ "$VERSION_TARGET" = "readme" ]; then
