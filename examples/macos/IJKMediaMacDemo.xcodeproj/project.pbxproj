@@ -642,13 +642,16 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = IJKMediaDemo/PrefixHeader.pch;
 				INFOPLIST_FILE = IJKMediaDemo/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = IJKMediaMacDemo;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MARKETING_VERSION = 0.9.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mr.IJKMediaMacDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -663,13 +666,16 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = IJKMediaDemo/PrefixHeader.pch;
 				INFOPLIST_FILE = IJKMediaDemo/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = IJKMediaMacDemo;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MARKETING_VERSION = 0.9.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mr.IJKMediaMacDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
