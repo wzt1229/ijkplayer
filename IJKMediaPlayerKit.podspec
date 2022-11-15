@@ -34,7 +34,6 @@ TODO: Add long description of the pod here.
     'HEADER_SEARCH_PATHS' => [
       '$(inherited)',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ffmpeg/include',
-      '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/libyuv/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0'
@@ -45,11 +44,17 @@ TODO: Add long description of the pod here.
     'HEADER_SEARCH_PATHS' => [
       '$(inherited)',
       '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
-      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/libyuv/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'EXCLUDED_ARCHS' => 'armv7',
+    # fix apple m1 building iOS Simulator platform,linking xxx built
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64',
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0'
+  }
+
+  # fix apple m1 building iOS Simulator platform,linking xxx built
+  s.ios.user_target_xcconfig = {
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64'
   }
 
   s.script_phases = [
@@ -61,47 +66,43 @@ TODO: Add long description of the pod here.
     }
   ]
 
-  s.subspec 'IJKMediaPlayerKit' do |ss|
-    ss.source_files = 'IJKMediaPlayerKit/*.{h,m}'
-    ss.public_header_files =
-      'IJKMediaPlayerKit/IJKMediaPlayback.h',
-      'IJKMediaPlayerKit/IJKFFOptions.h',
-      'IJKMediaPlayerKit/IJKFFMonitor.h',
-      'IJKMediaPlayerKit/IJKFFMoviePlayerController.h',
-      'IJKMediaPlayerKit/IJKMediaModule.h',
-      'IJKMediaPlayerKit/IJKMediaPlayer.h',
-      'IJKMediaPlayerKit/IJKNotificationManager.h',
-      'IJKMediaPlayerKit/IJKKVOController.h',
-      'IJKMediaPlayerKit/IJKSDLGLViewProtocol.h',
-      'IJKMediaPlayerKit/IJKMediaPlayerKit.h'
-    ss.osx.exclude_files = 'IJKMediaPlayerKit/IJKAudioKit.*'
-  end
+  s.source_files = 
+    'ijkmedia/ijkplayer/**/*.{h,c,m,cpp}',
+    'ijkmedia/ijksdl/**/*.{h,c,m,cpp}',
+    'ijkmedia/wrapper/apple/*.{h,m}'
+  # s.project_header_files = 'ijkmedia/**/*.{h}'
+  s.public_header_files =
+    'ijkmedia/wrapper/apple/IJKMediaPlayback.h',
+    'ijkmedia/wrapper/apple/IJKFFOptions.h',
+    'ijkmedia/wrapper/apple/IJKFFMonitor.h',
+    'ijkmedia/wrapper/apple/IJKFFMoviePlayerController.h',
+    'ijkmedia/wrapper/apple/IJKMediaModule.h',
+    'ijkmedia/wrapper/apple/IJKMediaPlayer.h',
+    'ijkmedia/wrapper/apple/IJKNotificationManager.h',
+    'ijkmedia/wrapper/apple/IJKKVOController.h',
+    'ijkmedia/wrapper/apple/IJKSDLGLViewProtocol.h',
+    'ijkmedia/wrapper/apple/IJKMediaPlayerKit.h'
+  s.exclude_files = 
+    'ijkmedia/ijksdl/ijksdl_extra_log.c',
+    'ijkmedia/ijkplayer/ijkversion.h',
+    'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
+    'ijkmedia/ijkplayer/android/**/*.*',
+    'ijkmedia/ijksdl/android/**/*.*',
+    'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}'
+    # need exclude when IJK_IO_OFF is 1.
+    #'ijkmedia/ijkplayer/ijkavformat/*.*'
+  s.osx.exclude_files = 
+    'ijkmedia/ijksdl/ijksdl_egl.*',
+    'ijkmedia/ijksdl/ios/*.*',
+    'ijkmedia/wrapper/apple/IJKAudioKit.*'
+  s.ios.exclude_files = 'ijkmedia/ijksdl/mac/*.*'
 
-  s.subspec 'ijkmedia' do |ss|
-    ss.source_files = 
-      'ijkmedia/ijkplayer/**/*.{h,c,m,cpp}',
-      'ijkmedia/ijksdl/**/*.{h,c,m,cpp}'
-    ss.project_header_files = 'ijkmedia/**/*.{h}'
-
-    ss.exclude_files = 
-      'ijkmedia/ijksdl/ijksdl_extra_log.c',
-      'ijkmedia/ijkplayer/ijkversion.h',
-      'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
-      'ijkmedia/ijkplayer/android/**/*.*',
-      'ijkmedia/ijksdl/android/**/*.*',
-      'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}'
-      # need exclude when IJK_IO_OFF is 1.
-      #'ijkmedia/ijkplayer/ijkavformat/*.*'
-    ss.osx.exclude_files = 'ijkmedia/ijksdl/ijksdl_egl.*', 'ijkmedia/ijksdl/ios/*.*'
-    ss.ios.exclude_files = 'ijkmedia/ijksdl/mac/*.*'
-
-  end
-
-  s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++', 'lzma'
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
   s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'
-  s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
   s.osx.frameworks = 'Cocoa', 'AudioUnit', 'OpenGL', 'GLKit', 'CoreImage'
   s.ios.frameworks = 'UIKit', 'OpenGLES'
+
+  s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++', 'lzma'
+  s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox'
   
 end

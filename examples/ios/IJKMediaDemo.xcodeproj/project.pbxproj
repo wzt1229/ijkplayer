@@ -54,8 +54,6 @@
 		55E809F71B15A1DB003E98A5 /* IJKDemoLocalFolderViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKDemoLocalFolderViewController.h; sourceTree = "<group>"; };
 		55E809F81B15A1DB003E98A5 /* IJKDemoLocalFolderViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJKDemoLocalFolderViewController.m; sourceTree = "<group>"; };
 		8D64D128D49B2DFFB75F3C33 /* Pods-IJKMediaDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaDemo.release.xcconfig"; path = "Target Support Files/Pods-IJKMediaDemo/Pods-IJKMediaDemo.release.xcconfig"; sourceTree = "<group>"; };
-		C96C4C8F292251F800E39716 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		C96C4C91292251FF00E39716 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		E6166C9B17EDA4A20006B956 /* IJKMediaDemo.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKMediaDemo.pch; sourceTree = "<group>"; };
 		E63FC27817F032FD003551EB /* IJKCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKCommon.h; sourceTree = "<group>"; };
 		E66F8DC917EEDD8B00354D80 /* IJKMediaControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJKMediaControl.h; sourceTree = "<group>"; };
