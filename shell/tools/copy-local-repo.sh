@@ -34,7 +34,7 @@ function main() {
     fi
 
     # clone local repo.
-    git clone "$full_src_repo_path" $dest_repo --depth=1
+    git clone -b localBranch "$full_src_repo_path" $dest_repo --depth=1
 }
 
 main $*
