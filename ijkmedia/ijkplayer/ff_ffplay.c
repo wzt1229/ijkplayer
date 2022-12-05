@@ -377,6 +377,17 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                     case AVMEDIA_TYPE_VIDEO:
                         ret = avcodec_receive_frame(d->avctx, frame);
                         if (ret >= 0) {
+                            int vdec_type = frame->format == AV_PIX_FMT_VIDEOTOOLBOX ? FFP_PROPV_DECODER_AVCODEC_HW : FFP_PROPV_DECODER_AVCODEC;
+                            
+                            if (ffp->node_vdec->vdec_type == FFP_PROPV_DECODER_UNKNOWN) {
+                                ffp->node_vdec->vdec_type = vdec_type;
+                                ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, vdec_type);
+                            } else if (ffp->node_vdec->vdec_type != vdec_type) {
+                                av_log(d->avctx, AV_LOG_ERROR, "wtf?video codec type changed from %d->%d\n",ffp->node_vdec->vdec_type,vdec_type);
+                                ffp->node_vdec->vdec_type = vdec_type;
+                                ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, vdec_type);
+                            }
+                            
                             ffp->stat.vdps = SDL_SpeedSamplerAdd(&ffp->vdps_sampler, FFP_SHOW_VDPS_AVCODEC, "vdps[avcodec]");
                             if (ffp->decoder_reorder_pts == -1) {
                                 frame->pts = frame->best_effort_timestamp;
@@ -2607,7 +2618,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         
         if (config && hw_decoder_init(avctx, config) == 0) {
             hw_config = config;
-            ALOGI("videotoolbox accel opened!\n");
+            ALOGI("use videotoolbox accel!\n");
         } else {
             ALOGW("can't use videotoolbox accel!\n");
         }

@@ -36,12 +36,7 @@ static void func_destroy(IJKFF_Pipeline *pipeline)
 
 static IJKFF_Pipenode *func_open_video_decoder(IJKFF_Pipeline *pipeline, FFPlayer *ffp)
 {
-    IJKFF_Pipenode* node = ffpipenode_create_video_decoder_from_ffplay(ffp);;
-    
-    if (node) {
-        ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, node->vdec_type);
-    }
-    return node;
+    return ffpipenode_create_video_decoder_from_ffplay(ffp);;
 }
 
 static SDL_Aout *func_open_audio_output(IJKFF_Pipeline *pipeline, FFPlayer *ffp)
