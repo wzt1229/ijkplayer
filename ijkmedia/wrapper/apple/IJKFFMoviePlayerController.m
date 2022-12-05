@@ -23,6 +23,7 @@
 
 #import "IJKFFMoviePlayerController.h"
 #import "IJKSDLGLView.h"
+#import "IJKMetalView.h"
 #import "IJKSDLHudControl.h"
 #import "IJKFFMoviePlayerDef.h"
 #import "IJKMediaPlayback.h"
@@ -248,7 +249,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         CGRect rect = [[NSScreen mainScreen]frame];
         rect.origin = CGPointZero;
     #endif
-        IJKSDLGLView *glView = [[IJKSDLGLView alloc] initWithFrame:rect];
+        IJKMetalView *glView = [[IJKMetalView alloc] initWithFrame:rect];
         glView.isThirdGLView = NO;
         [self _initWithContent:aUrl options:options glView:glView];
     }

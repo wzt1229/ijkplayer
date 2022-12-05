@@ -36,7 +36,8 @@ TODO: Add long description of the pod here.
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ffmpeg/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
-    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0'
+    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0',
+    'METAL_LIBRARY_OUTPUT_DIR' => '${TARGET_BUILD_DIR}/MetalShader.bundle/Contents/Resources/'
   }
 
   s.ios.pod_target_xcconfig = {
@@ -49,7 +50,8 @@ TODO: Add long description of the pod here.
     'EXCLUDED_ARCHS' => 'armv7',
     # fix apple m1 building iOS Simulator platform,linking xxx built
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64',
-    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0'
+    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0',
+    'METAL_LIBRARY_OUTPUT_DIR' => '${TARGET_BUILD_DIR}/MetalShader.bundle/'
   }
 
   # fix apple m1 building iOS Simulator platform,linking xxx built
@@ -68,8 +70,9 @@ TODO: Add long description of the pod here.
 
   s.source_files = 
     'ijkmedia/ijkplayer/**/*.{h,c,m,cpp}',
-    'ijkmedia/ijksdl/**/*.{h,c,m,cpp}',
+    'ijkmedia/ijksdl/**/*.{h,c,m,cpp,metal}',
     'ijkmedia/wrapper/apple/*.{h,m}'
+  s.resource_bundle = { 'MetalShader' => ['ijkmedia/ijksdl/metal/MetalShader'] }
   # s.project_header_files = 'ijkmedia/**/*.{h}'
   s.public_header_files =
     'ijkmedia/wrapper/apple/IJKMediaPlayback.h',

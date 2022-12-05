@@ -21,7 +21,7 @@
 
 #ifndef IJKSDL__IJKSDL_GLES2_H
 #define IJKSDL__IJKSDL_GLES2_H
-
+#include "ijksdl_stdinc.h"
 #ifdef __APPLE__
     #include <TargetConditionals.h>
     #if TARGET_OS_OSX
