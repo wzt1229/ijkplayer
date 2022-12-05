@@ -76,7 +76,6 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
     BOOL _keepScreenOnWhilePlaying;
     BOOL _pauseInBackground;
-    BOOL _isVideoToolboxOpen;
     BOOL _playingBeforeInterruption;
 
 #if ! IJK_IO_OFF
@@ -385,14 +384,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 - (void)setPauseInBackground:(BOOL)pause
 {
     _pauseInBackground = pause;
-}
-
-- (BOOL)isVideoToolboxOpen
-{
-    if (!_mediaPlayer)
-        return NO;
-
-    return _isVideoToolboxOpen;
 }
 
 - (BOOL)isUsingHardwareAccelerae
@@ -1345,10 +1336,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_VIDEO_DECODER_OPEN: {
-            _isVideoToolboxOpen = avmsg->arg1 > 0;
-            int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
-            [self updateMonitor4VideoDecoder:vdec];
-            
+            [self updateMonitor4VideoDecoder:avmsg->arg1];
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerVideoDecoderOpenNotification
              object:self];
