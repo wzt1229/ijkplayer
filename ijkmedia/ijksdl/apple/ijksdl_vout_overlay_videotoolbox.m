@@ -89,9 +89,7 @@ static void func_unref(SDL_VoutOverlay *overlay)
 static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
 {
     CVPixelBufferRef pixel_buffer = NULL;
-    if (frame->format == IJK_AV_PIX_FMT__VIDEO_TOOLBOX) {
-        pixel_buffer = CVPixelBufferRetain(frame->opaque);
-    } else if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+    if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
         pixel_buffer = (CVPixelBufferRef)frame->data[3];
     } else {
         assert(0);

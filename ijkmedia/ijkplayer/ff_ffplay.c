@@ -1307,20 +1307,8 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         ffp->vout->ff_format = vp->bmp->ff_format;
         const AVFrame *outFrame = src_frame;
         
-        int need_convert = 1;
-        
-        #if USE_FF_VTB
-        //硬解不需要转格式
-        if (src_frame->format == IJK_AV_PIX_FMT__VIDEO_TOOLBOX) {
-            need_convert = 0;
-        }
-        #endif
-        //硬解加速解码也不需要转格式
-        if (src_frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
-            need_convert = 0;
-        }
-        
-        if (need_convert) {
+        //硬解加速解码不需要转格式
+        if (src_frame->format != AV_PIX_FMT_VIDEOTOOLBOX) {
             if (SDL_VoutConvertFrame(ffp->vout, src_frame, &outFrame)) {
                 //convert failed.
                 return -1;
