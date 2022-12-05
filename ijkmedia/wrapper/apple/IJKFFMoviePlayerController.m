@@ -62,7 +62,7 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
 @implementation IJKFFMoviePlayerController {
     IjkMediaPlayer *_mediaPlayer;
-    GLView<IJKSDLGLViewProtocol>* _glView;
+    UIView<IJKVideoRenderingProtocol>* _glView;
     IJKFFMoviePlayerMessagePool *_msgPool;
 
     NSInteger _videoWidth;
@@ -171,7 +171,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     // [UIApplication sharedApplication].idleTimerDisabled = on;
 }
 
-- (void)_initWithContent:(NSURL *)aUrl options:(IJKFFOptions *)options glView:(GLView <IJKSDLGLViewProtocol> *)glView
+- (void)_initWithContent:(NSURL *)aUrl options:(IJKFFOptions *)options glView:(UIView <IJKVideoRenderingProtocol> *)glView
 {
     // init media resource
     _contentURL = aUrl;
@@ -257,7 +257,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
 - (id)initWithMoreContent:(NSURL *)aUrl
               withOptions:(IJKFFOptions *)options
-               withGLView:(GLView<IJKSDLGLViewProtocol> *)glView
+               withGLView:(UIView<IJKVideoRenderingProtocol> *)glView
 {
     if (aUrl == nil)
         return nil;
@@ -751,8 +751,8 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 #if TARGET_OS_IOS
 - (UIImage *)thumbnailImageAtCurrentTime
 {
-    if ([_view conformsToProtocol:@protocol(IJKSDLGLViewProtocol)]) {
-        GLView<IJKSDLGLViewProtocol>* glView = (GLView<IJKSDLGLViewProtocol>*)_view;
+    if ([_view conformsToProtocol:@protocol(IJKVideoRenderingProtocol)]) {
+        UIView<IJKVideoRenderingProtocol>* glView = (UIView<IJKVideoRenderingProtocol>*)_view;
         return [glView snapshot];
     }
 

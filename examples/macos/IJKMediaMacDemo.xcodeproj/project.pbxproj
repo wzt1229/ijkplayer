@@ -375,7 +375,7 @@
 		DD9B138022C23A79002D1D79 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1310;
+				LastUpgradeCheck = 1410;
 				ORGANIZATIONNAME = "IJK Mac";
 				TargetAttributes = {
 					DD9B138722C23A79002D1D79 = {
@@ -555,6 +555,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -615,6 +616,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -643,6 +645,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = IJKMediaDemo/PrefixHeader.pch;
 				INFOPLIST_FILE = IJKMediaDemo/Info.plist;
@@ -651,8 +654,9 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MARKETING_VERSION = 0.9.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mr.IJKMediaMacDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.debugly.IJKMediaMacDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -667,6 +671,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = IJKMediaDemo/PrefixHeader.pch;
 				INFOPLIST_FILE = IJKMediaDemo/Info.plist;
@@ -675,8 +680,9 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MARKETING_VERSION = 0.9.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mr.IJKMediaMacDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.debugly.IJKMediaMacDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

@@ -50,7 +50,7 @@ struct SDL_Vout_Opaque {
     void *cvPixelBufferPool;
     int ff_format;
 #endif
-    __strong GLView<IJKSDLGLViewProtocol> *gl_view;
+    __strong UIView<IJKVideoRenderingProtocol> *gl_view;
     IJKSDLSubtitle *sub;
 };
 
@@ -95,7 +95,7 @@ static void vout_free_l(SDL_Vout *vout)
 static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
-    GLView<IJKSDLGLViewProtocol>* gl_view = opaque->gl_view;
+    UIView<IJKVideoRenderingProtocol>* gl_view = opaque->gl_view;
 
     if (!gl_view) {
         ALOGE("vout_display_overlay_l: NULL gl_view\n");
@@ -256,7 +256,7 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2(Uint32 overlay_format)
     return vout;
 }
 
-static void SDL_VoutIos_SetGLView_l(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>* view)
+static void SDL_VoutIos_SetGLView_l(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
 
@@ -271,7 +271,7 @@ static void SDL_VoutIos_SetGLView_l(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>
         opaque->gl_view = view;
 }
 
-void SDL_VoutIos_SetGLView(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>* view)
+void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view)
 {
     SDL_LockMutex(vout->mutex);
     SDL_VoutIos_SetGLView_l(vout, view);

@@ -1,5 +1,5 @@
 /*
- * IJKSDLGLViewProtocol.h
+ * IJKVideoRenderingProtocol.h
  *
  * Copyright (c) 2017 Bilibili
  * Copyright (c) 2017 raymond <raymondzheng1412@gmail.com>
@@ -21,19 +21,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef IJKSDLGLViewProtocol_h
-#define IJKSDLGLViewProtocol_h
+#ifndef IJKVideoRenderingProtocol_h
+#define IJKVideoRenderingProtocol_h
 #import <TargetConditionals.h>
 #if TARGET_OS_OSX
 #import <AppKit/AppKit.h>
 #import <CoreGraphics/CGImage.h>
 typedef NSFont UIFont;
 typedef NSColor UIColor;
-typedef NSOpenGLView GLView;
 typedef NSImage UIImage;
+typedef NSView UIView;
 #else
 #import <UIKit/UIKit.h>
-typedef UIView GLView;
 #endif
 
 
@@ -107,7 +106,7 @@ typedef enum : NSUInteger {
 
 @end
 
-@protocol IJKSDLGLViewProtocol <NSObject>
+@protocol IJKVideoRenderingProtocol <NSObject>
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
 #if TARGET_OS_IOS
@@ -150,4 +149,4 @@ typedef enum : NSUInteger {
 
 @end
 
-#endif /* IJKSDLGLViewProtocol_h */
+#endif /* IJKVideoRenderingProtocol_h */

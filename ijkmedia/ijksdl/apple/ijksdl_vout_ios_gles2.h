@@ -24,17 +24,8 @@
 #include "ijksdl/ijksdl_stdinc.h"
 #include "ijksdl/ijksdl_vout.h"
 
-#import <TargetConditionals.h>
-#if TARGET_OS_OSX
-#import <AppKit/AppKit.h>
-typedef NSOpenGLView GLView;
-#else
-#import <UIKit/UIKit.h>
-typedef UIView GLView;
-#endif
-
-@protocol IJKSDLGLViewProtocol;
+#import "IJKVideoRenderingProtocol.h"
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(Uint32 overlay_format);
-void SDL_VoutIos_SetGLView(SDL_Vout *vout, GLView<IJKSDLGLViewProtocol>* view);
+void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view);
 CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay);

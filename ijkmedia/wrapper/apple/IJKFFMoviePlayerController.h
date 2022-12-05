@@ -24,7 +24,7 @@
 #import "IJKMediaPlayback.h"
 #import "IJKFFMonitor.h"
 #import "IJKFFOptions.h"
-#import "IJKSDLGLViewProtocol.h"
+#import "IJKVideoRenderingProtocol.h"
 
 // media meta
 #define k_IJKM_KEY_FORMAT         @"format"
@@ -85,7 +85,7 @@ typedef enum IJKLogLevel {
 
 - (id)initWithMoreContent:(NSURL *)aUrl
               withOptions:(IJKFFOptions *)options
-               withGLView:(GLView<IJKSDLGLViewProtocol> *)glView;
+               withGLView:(UIView<IJKVideoRenderingProtocol> *)glView;
 
 - (void)prepareToPlay;
 - (void)play;

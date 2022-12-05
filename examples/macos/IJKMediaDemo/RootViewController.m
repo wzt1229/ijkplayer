@@ -662,7 +662,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     rect.origin = CGPointZero;
     self.player.view.frame = rect;
     
-    NSView <IJKSDLGLViewProtocol>*playerView = self.player.view;
+    NSView <IJKVideoRenderingProtocol>*playerView = self.player.view;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
     //playerView.preventDisplay = YES;

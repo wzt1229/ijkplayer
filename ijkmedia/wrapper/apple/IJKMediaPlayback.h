@@ -28,7 +28,7 @@
 typedef NSView UIView;
 #import <AppKit/AppKit.h>
 #endif
-#import "IJKSDLGLViewProtocol.h"
+#import "IJKVideoRenderingProtocol.h"
 
 typedef NS_ENUM(NSInteger, IJKMPMoviePlaybackState) {
     IJKMPMoviePlaybackStateStopped,
@@ -77,7 +77,7 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 - (void)shutdown;
 - (void)setPauseInBackground:(BOOL)pause;
 
-@property(nonatomic, readonly)  UIView <IJKSDLGLViewProtocol>*view;
+@property(nonatomic, readonly)  UIView <IJKVideoRenderingProtocol>*view;
 @property(nonatomic)            NSTimeInterval currentPlaybackTime;
 @property(nonatomic, readonly)  NSTimeInterval duration;
 @property(nonatomic, readonly)  NSTimeInterval playableDuration;

@@ -23,8 +23,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#import "IJKSDLGLViewProtocol.h"
+#import "IJKVideoRenderingProtocol.h"
 
-@interface IJKSDLGLView : GLView <IJKSDLGLViewProtocol>
+@interface IJKSDLGLView : NSOpenGLView <IJKVideoRenderingProtocol>
 
 @end
