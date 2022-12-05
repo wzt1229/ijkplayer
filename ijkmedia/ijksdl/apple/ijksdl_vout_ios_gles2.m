@@ -46,6 +46,10 @@
 @end
 
 struct SDL_Vout_Opaque {
+#if USE_FF_VTB
+    void *cvPixelBufferPool;
+    int ff_format;
+#endif
     __strong GLView<IJKSDLGLViewProtocol> *gl_view;
     IJKSDLSubtitle *sub;
 };
@@ -73,17 +77,16 @@ static void vout_free_l(SDL_Vout *vout)
     if (!vout)
         return;
     
-#if USE_FF_VTB
-    if (vout->cvPixelBufferPool) {
-        CVPixelBufferPoolRelease(vout->cvPixelBufferPool);
-        vout->cvPixelBufferPool = NULL;
-    }
-#endif
-    
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (opaque) {
         opaque->gl_view = nil;
         opaque->sub = nil;
+        #if USE_FF_VTB
+        if (opaque->cvPixelBufferPool) {
+            CVPixelBufferPoolRelease(opaque->cvPixelBufferPool);
+            opaque->cvPixelBufferPool = NULL;
+        }
+        #endif
     }
 
     SDL_Vout_FreeInternal(vout);
@@ -242,8 +245,8 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2(Uint32 overlay_format)
         return NULL;
 
     SDL_Vout_Opaque *opaque = vout->opaque;
-    opaque->gl_view = nil;
-    opaque->sub = NULL;
+    opaque->ff_format = -1;
+    
     vout->create_overlay_apple = vout_create_overlay_apple;
     vout->free_l = vout_free_l;
     vout->display_overlay = vout_display_overlay;

@@ -84,9 +84,6 @@ struct SDL_Vout {
     int z_rotate_degrees;
     //convert image
     void *image_converter;
-#if USE_FF_VTB
-    void *cvPixelBufferPool;
-#endif
 };
 
 void SDL_VoutFree(SDL_Vout *vout);
