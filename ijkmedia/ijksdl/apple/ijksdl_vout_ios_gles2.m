@@ -45,10 +45,6 @@
 
 @end
 
-typedef struct SDL_VoutSurface_Opaque {
-    SDL_Vout *vout;
-} SDL_VoutSurface_Opaque;
-
 struct SDL_Vout_Opaque {
     __strong GLView<IJKSDLGLViewProtocol> *gl_view;
     IJKSDLSubtitle *sub;
