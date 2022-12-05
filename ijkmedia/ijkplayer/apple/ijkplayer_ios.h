@@ -28,4 +28,3 @@
 IjkMediaPlayer *ijkmp_ios_create(int (*msg_loop)(void*));
 
 void            ijkmp_ios_set_glview(IjkMediaPlayer *mp, UIView<IJKVideoRenderingProtocol>* glView);
-bool            ijkmp_ios_is_videotoolbox_open(IjkMediaPlayer *mp);
