@@ -15,10 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface IJKMetalView : MTKView <IJKVideoRenderingProtocol>
 
-- (void)displayPixelBuffer:(CVPixelBufferRef)img;
-- (void)displayNV21PixelBuffer:(CVPixelBufferRef)img;
-- (CGImageRef)snapshot;
-
 @end
 
 NS_ASSUME_NONNULL_END

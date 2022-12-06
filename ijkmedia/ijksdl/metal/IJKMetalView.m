@@ -17,7 +17,6 @@
 #import "IJKMathUtilities.h"
 #import "IJKMetalBGRAPipeline.h"
 #import "IJKMetalNV12Pipeline.h"
-#import "IJKMetalNV21Pipeline.h"
 #import "IJKMetalYUV420PPipeline.h"
 #import "IJKMetalUYVY422Pipeline.h"
 #import "IJKMetalYUYV422Pipeline.h"
@@ -28,6 +27,7 @@
 #import "ijksdl_vout_ios_gles2.h"
 #import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
+#import "IJKMetalAttach.h"
 
 @interface IJKMetalView ()
 {
@@ -38,8 +38,6 @@
     id<MTLCommandQueue> _commandQueue;
 
     CVMetalTextureCacheRef _metalTextureCache;
-    /// These are the view and projection transforms.
-    matrix_float4x4 _viewMatrix;
     int    _rendererGravity;
 }
 
@@ -48,10 +46,12 @@
 @property (nonatomic, strong) id<MTLBuffer> mvp;
 @property (atomic, assign) CGPoint ratio;//vector
 @property (nonatomic, strong) IJKMetalOffscreenRendering * offscreenRendering;
-
+@property (atomic) IJKMetalAttach *currentAttach;
 
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
+@property(atomic) BOOL modelMatrixChanged;
+
 //display window size / screen
 @property(atomic) float displayScreenScale;
 //display window size / video size
@@ -103,15 +103,9 @@
     }
     // Create the command queue
     _commandQueue = [self.device newCommandQueue]; // CommandQueue是渲染指令队列，保证渲染指令有序地提交到GPU
-    //设置模型矩阵，逆时针旋转 90 度。
-#warning 随机旋转
-    int angle = 0;
-    _viewMatrix = matrix4x4_rotation(2 * 3.14 * angle / 360, 0.0, 0.0, 1.0);
-    
-    IJKMVPMatrix mvp = {_viewMatrix};
-    self.mvp = [self.device newBufferWithBytes:&mvp
-                                        length:sizeof(IJKMVPMatrix)
-                                       options:MTLResourceStorageModeShared];
+    //设置模型矩阵，实现旋转
+    _modelMatrixChanged = YES;
+    [self updateMVPIfNeed];
     self.autoResizeDrawable = NO;
     self.enableSetNeedsDisplay = YES;
     return YES;
@@ -212,11 +206,6 @@
     }
 }
 
-- (void)setupNV21PipelineIfNeed
-{
-    [self setupPipelineWithClazz:[IJKMetalNV21Pipeline class]];
-}
-
 - (void)setupPipelineWithClazz:(Class)clazz
 {
     if (self.metalPipeline) {
@@ -229,8 +218,9 @@
     self.metalPipeline = [clazz new];
 }
 
-- (void)_display:(CVPixelBufferRef)pixelBuffer isNV21:(BOOL)isNV21
+- (void)displayAttach:(IJKMetalAttach *)attach
 {
+    CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
     CGSize normalizedSize = [self computeNormalizedSize:pixelBuffer];
     CGPoint ratio = CGPointMake(normalizedSize.width, normalizedSize.height);
     
@@ -239,25 +229,12 @@
         if (self.pixelBuffer) {
             CVPixelBufferRelease(self.pixelBuffer);
         }
-        if (isNV21) {
-            [self setupNV21PipelineIfNeed];
-        } else {
-            [self setupPipelineIfNeed:pixelBuffer];
-        }
+        [self setupPipelineIfNeed:pixelBuffer];
+        [self updateMVPIfNeed];
         self.ratio = ratio;
         self.pixelBuffer = pixelBuffer;
         [self setNeedsDisplay:YES];
     });
-}
-
-- (void)displayPixelBuffer:(CVPixelBufferRef)img
-{
-    [self _display:img isNV21:NO];
-}
-
-- (void)displayNV21PixelBuffer:(CVPixelBufferRef)img
-{
-    [self _display:img isNV21:YES];
 }
 
 /// Called whenever the view needs to render a frame.
@@ -378,22 +355,22 @@
         NSAssert(NO, @"wtf?");
     }
     
-//    _IJKSDLGLViewAttach *attach = [[_IJKSDLGLViewAttach alloc] init];
-//
-//    attach.ffFormat = ff_format;
-//    attach.overlayFormat = overlay_format;
-//    attach.zRotateDegrees = overlay->auto_z_rotate_degrees;
-//    attach.overlayW = overlay->w;
-//    attach.overlayH = overlay->h;
-//    attach.bufferW = SDL_VoutGetBufferWidth(overlay);
-//    //update video sar.
-//    if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-//        attach.sar_num = overlay->sar_num;
-//        attach.sar_den = overlay->sar_den;
-//    }
+    IJKMetalAttach *attach = [[IJKMetalAttach alloc] init];
+
+    attach.ffFormat = ff_format;
+    attach.overlayFormat = overlay_format;
+    attach.zRotateDegrees = overlay->auto_z_rotate_degrees;
+    attach.overlayW = overlay->w;
+    attach.overlayH = overlay->h;
+    attach.bufferW = SDL_VoutGetBufferWidth(overlay);
+    //update video sar.
+    if (overlay->sar_num > 0 && overlay->sar_den > 0) {
+        attach.sar_num = overlay->sar_num;
+        attach.sar_den = overlay->sar_den;
+    }
     
     CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
-//    attach.currentVideoPic = CVPixelBufferRetain(videoPic);
+    attach.currentVideoPic = CVPixelBufferRetain(videoPic);
     
 //    //generate current subtitle.
 //    CVPixelBufferRef subRef = NULL;
@@ -409,13 +386,73 @@
 //        self.subtitlePreferenceChanged = NO;
 //    }
 //    //hold the attach as current.
-//    self.currentAttach = attach;
+    
+    if (self.currentAttach.zRotateDegrees != attach.zRotateDegrees) {
+        self.modelMatrixChanged = YES;
+    }
+    self.currentAttach = attach;
     
     if (self.preventDisplay) {
         return;
     }
     
-    [self displayPixelBuffer:videoPic];
+    [self displayAttach:self.currentAttach];
+}
+
+- (void)updateMVPIfNeed
+{
+    /// These are the view and projection transforms.
+    matrix_float4x4 viewMatrix;
+    
+    if (self.modelMatrixChanged) {
+        self.modelMatrixChanged = NO;
+        float radian = radians_from_degrees(_rotatePreference.degrees);
+        switch (_rotatePreference.type) {
+            case IJKSDLRotateNone:
+            {
+                viewMatrix = matrix4x4_identity();
+            }
+                break;
+            case IJKSDLRotateX:
+            {
+                viewMatrix = matrix4x4_rotation(radian, 1.0, 0.0, 0.0);
+            }
+                break;
+            case IJKSDLRotateY:
+            {
+                viewMatrix = matrix4x4_rotation(radian, 0.0, 1.0, 0.0);
+            }
+                break;
+            case IJKSDLRotateZ:
+            {
+                viewMatrix = matrix4x4_rotation(radian, 0.0, 0.0, 1.0);
+            }
+                break;
+        }
+        
+        if (self.currentAttach.zRotateDegrees != 0) {
+            float zRadin = radians_from_degrees(self.currentAttach.zRotateDegrees);
+            viewMatrix = matrix_multiply(matrix4x4_rotation(zRadin, 0.0, 0.0, 1.0),viewMatrix);
+        }
+        IJKMVPMatrix mvp = {viewMatrix};
+        self.mvp = [self.device newBufferWithBytes:&mvp
+                                            length:sizeof(IJKMVPMatrix)
+                                           options:MTLResourceStorageModeShared];
+    }
+}
+
+- (void)videoZRotateDegrees:(NSInteger)degrees
+{
+    self.videoDegrees = degrees;
+}
+
+- (void)videoNaturalSizeChanged:(CGSize)size
+{
+    self.videoNaturalSize = size;
+    CGRect viewBounds = [self bounds];
+    if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
+        self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width, 1.0 * viewBounds.size.height / self.videoNaturalSize.height);
+    }
 }
 
 #pragma mark - override setter methods
@@ -444,10 +481,7 @@
 {
     if (_rotatePreference.type != rotatePreference.type || _rotatePreference.degrees != rotatePreference.degrees) {
         _rotatePreference = rotatePreference;
-        // TODO here
-//        if (IJK_GLES2_Renderer_isValid(_renderer)) {
-//            IJK_GLES2_Renderer_updateRotate(_renderer, _rotatePreference.type, _rotatePreference.degrees);
-//        }
+        self.modelMatrixChanged = YES;
     }
 }
 

@@ -261,3 +261,5 @@ vector_float3 AAPL_SIMD_OVERLOAD up_direction_vector_from_quaternion(quaternion_
 /// Returns a vector in the +X direction for the given quaternion (for a left-hand coordinate system,
 ///   negate for a right-hand coordinate system).
 vector_float3 AAPL_SIMD_OVERLOAD right_direction_vector_from_quaternion(quaternion_float q);
+
+matrix_float4x4 matrix_multiply(const matrix_float4x4 * m, const matrix_float4x4 * n);
