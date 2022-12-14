@@ -54,18 +54,20 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、libyuv、libopus、libblu
     └── pull-repo-ref.sh
 ```
 
-## ## Download Pre Compiled
+## Download Precompiled Edition
 
 可以跳过自己编译，直接从github上下载预编译好的库，节省时间！
+预编译库分为 ijk 版和 github 版，其区别是 ijk 版本打了 extra/patches/ffmpeg 目录下的补丁。
 
-```bash
-#下载 iOS 平台的预编译库
-./download-pre.sh ios
-#下载 macOS 平台的预编译库
-./download-pre.sh macos
-#下载 ios 和 macOS 平台的预编译库
-./download-pre.sh all
-```
+- 下载 ijk 版预编译库：./download-pre.sh ijk
+- 下载 github 版预编译库：./download-pre.sh github
+
+可指定平台:
+
+- 下载 ijk 版 iOS 平台的预编译库：./download-pre.sh ijk ios
+- 下载 ijk 版 macOS 平台的预编译库：./download-pre.sh ijk macos
+- 下载 github 版 iOS 平台的预编译库：./download-pre.sh github ios
+- 下载 github 版 macOS 平台的预编译库：./download-pre.sh github macos
 
 ## Init Lib Repo
 
@@ -87,6 +89,11 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、libyuv、libopus、libblu
 #准备 iOS 和 macOS 平台的某些库的源码
 /init-all.sh all "openssl ffmpeg"
 ```
+
+高级选项：
+
+设置环境变量 export SKIP_FFMPEG_PATHCHES=1 不打 FFmpeg 补丁；
+设置环境变量 export SKIP_PULL_BASE=1 不从远程拉取最新代码；
 
 ## Compile
 

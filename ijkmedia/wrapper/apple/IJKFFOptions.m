@@ -40,12 +40,6 @@
     [options setPlayerOptionIntValue:30     forKey:@"max-fps"];
     [options setPlayerOptionIntValue:0      forKey:@"framedrop"];
     [options setPlayerOptionIntValue:3      forKey:@"video-pictq-size"];
-    [options setPlayerOptionIntValue:0      forKey:@"videotoolbox"];
-#if TARGET_OS_IOS
-    [options setPlayerOptionIntValue:960    forKey:@"videotoolbox-max-frame-width"];
-#else
-    [options setPlayerOptionIntValue:3840    forKey:@"videotoolbox-max-frame-width"];
-#endif
     
     [options setFormatOptionIntValue:0                  forKey:@"auto_convert"];
     [options setFormatOptionIntValue:1                  forKey:@"reconnect"];

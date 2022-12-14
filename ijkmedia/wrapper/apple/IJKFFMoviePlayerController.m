@@ -212,7 +212,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_set_option(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "overlay-format", "fcc-_es2");
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"safe", 0);
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_PLAYER,"protocol_whitelist","ffconcat,file,http,https");
-    ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkhttphook,concat,http,tcp,https,tls,file,bluray,rtmp");
+    ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkhttphook,concat,http,tcp,https,tls,file,bluray,rtmp,rtsp,rtp,srtp,udp");
     
     // init hud
     _hudCtrl = [IJKSDLHudControl new];

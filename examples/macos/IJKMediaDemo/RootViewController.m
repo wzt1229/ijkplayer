@@ -52,8 +52,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (assign) float saturation;
 @property (assign) float contrast;
 
-@property (assign) int useVideoToolBox;
-@property (assign) int useAsyncVTB;
+@property (assign) BOOL videotoolbox_hwaccel;
 @property (copy) NSString *fcc;
 @property (assign) int snapshot;
 
@@ -106,8 +105,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.subtitleFontRatio = 1.0;
     self.subtitleMargin = 0.7;
     self.fcc = @"fcc-_es2";
-    self.useAsyncVTB = 0;
-    self.useVideoToolBox = 2;
+    self.videotoolbox_hwaccel = 1;
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
@@ -120,8 +118,15 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
         [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
     }
-    [self.playList addObject:[NSURL URLWithString:@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox"]];
-    [self.playList addObject:[NSURL URLWithString:@"https://kvideo01.youju.sohu.com/f559f6ad-df2f-42c9-9f47-841cf6e4086f1_0_0.mp4"]];
+    
+    NSArray *onlineArr = @[
+        @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
+        @"https://kvideo01.youju.sohu.com/f559f6ad-df2f-42c9-9f47-841cf6e4086f1_0_0.mp4",
+    ];
+    
+    for (NSString *url in onlineArr) {
+        [self.playList addObject:[NSURL URLWithString:url]];
+    }
     
     if ([self.view isKindOfClass:[SHBaseView class]]) {
         SHBaseView *baseView = (SHBaseView *)self.view;
@@ -607,8 +612,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 //    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
     
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
-    [options setPlayerOptionIntValue:self.useVideoToolBox forKey:@"videotoolbox"];
-    [options setPlayerOptionIntValue:self.useAsyncVTB forKey:@"videotoolbox-async"];
+    [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
     options.showHudView = YES;
     
     NSMutableArray *dus = [NSMutableArray array];
@@ -677,12 +681,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)ijkPlayerVideoDecoderFatal:(NSNotification *)notifi
 {
-    NSLog(@"decoder fatal:%@",notifi.userInfo[@"code"]);
-    if (self.useVideoToolBox == 2) {
-        self.useVideoToolBox = 0;
-        NSURL *playingUrl = self.playingUrl;
-        [self stopPlay:nil];
-        [self playURL:playingUrl];
+    NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo[@"code"]);
+    if (self.videotoolbox_hwaccel) {
+        self.videotoolbox_hwaccel = NO;
+        [self onChangedHWaccel:nil];
     }
 }
 
@@ -874,6 +876,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)playURL:(NSURL *)url
 {
+    if (!url) {
+        return;
+    }
+    
     [self perpareIJKPlayer:url];
     NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     
@@ -1483,6 +1489,15 @@ static IOPMAssertionID g_displaySleepAssertionID;
 }
 
 #pragma mark 解码设置
+
+- (IBAction)onChangedHWaccel:(NSButton *)sender
+{
+    NSURL *playingUrl = self.playingUrl;
+    if (playingUrl) {
+        [self stopPlay:nil];
+        [self playURL:playingUrl];
+    }
+}
 
 - (IBAction)onSelectFCC:(NSPopUpButton*)sender
 {

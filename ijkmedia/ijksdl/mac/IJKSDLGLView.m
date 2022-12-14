@@ -40,6 +40,11 @@
  use global single thread display.
  */
 
+/*
+ 2022.11.25
+ macos 10.14 later use global single thread not smooth when create multil glview.
+ */
+
 #import "IJKSDLGLView.h"
 #import <AVFoundation/AVFoundation.h>
 #import <CoreVideo/CoreVideo.h>
@@ -53,15 +58,38 @@
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
 
+static IJKSDLThread *__ijk_global_thread;
+
 static IJKSDLThread * _globalThread_(void)
 {
-    static IJKSDLThread *globalThread;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        globalThread = [[IJKSDLThread alloc] initWithName:@"ijk_global_dispaly"];
-        [globalThread start];
+        __ijk_global_thread = [[IJKSDLThread alloc] initWithName:@"ijk_global_render"];
+        [__ijk_global_thread start];
     });
-    return globalThread;
+    return __ijk_global_thread;
+}
+
+// greather than 10.14 no need dispatch to global.
+static bool _is_low_os_version(void)
+{
+    NSOperatingSystemVersion sysVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+    if (sysVersion.majorVersion > 10) {
+        return false;
+    } else if (sysVersion.minorVersion >= 14) {
+        return false;
+    }
+    return true;
+}
+
+static bool _is_need_dispath_to_global(void)
+{
+    bool low_os = _is_low_os_version();
+    if (low_os) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 @interface _IJKSDLGLViewAttach : NSObject
@@ -195,6 +223,7 @@ static IJKSDLThread * _globalThread_(void)
 @property(atomic) GLint backingHeight;
 @property(atomic) BOOL subtitlePreferenceChanged;
 @property(atomic) _IJKSDLFBO * fbo;
+@property(atomic) IJKSDLThread *renderThread;
 
 @end
 
@@ -218,22 +247,32 @@ static IJKSDLThread * _globalThread_(void)
 
 - (void)dealloc
 {
-    [_globalThread_() performSelector:@selector(setFbo:)
-                           withTarget:self
-                           withObject:nil
-                        waitUntilDone:YES];
+    [self.renderThread performSelector:@selector(setFbo:)
+                            withTarget:self
+                            withObject:nil
+                         waitUntilDone:YES];
     
     if (_renderer) {
         IJK_GLES2_Renderer_freeP(&_renderer);
     }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
+    if (self.renderThread != __ijk_global_thread) {
+        [self.renderThread stop];
+    }
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
     if (self) {
+        if (_is_need_dispath_to_global()) {
+            self.renderThread = _globalThread_();
+        } else {
+            self.renderThread = [[IJKSDLThread alloc] initWithName:@"ijk_renderer"];
+            [self.renderThread start];
+        }
         [self setup];
         _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
@@ -541,10 +580,10 @@ static IJKSDLThread * _globalThread_(void)
 - (void)setNeedsRefreshCurrentPic
 {
     //use single global thread!
-    [_globalThread_() performSelector:@selector(doRefreshCurrentAttach:)
-                           withTarget:self
-                           withObject:self.currentAttach
-                        waitUntilDone:NO];
+    [self.renderThread performSelector:@selector(doRefreshCurrentAttach:)
+                            withTarget:self
+                            withObject:self.currentAttach
+                         waitUntilDone:NO];
 }
 
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
@@ -607,11 +646,10 @@ static IJKSDLThread * _globalThread_(void)
         return;
     }
     
-    //use single global thread!
-    [_globalThread_() performSelector:@selector(doDisplayVideoPicAndSubtitle:)
-                           withTarget:self
-                           withObject:attach
-                        waitUntilDone:NO];
+    [self.renderThread performSelector:@selector(doDisplayVideoPicAndSubtitle:)
+                            withTarget:self
+                            withObject:attach
+                         waitUntilDone:NO];
 }
 
 - (void)initGL
@@ -866,10 +904,10 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         {
             CGImageRef reuslt = NULL;
             NSValue * address = [NSValue valueWithPointer:(void *)&reuslt];
-            [_globalThread_() performSelector:@selector(_snapshot_screen:)
-                                   withTarget:self
-                                   withObject:address
-                                waitUntilDone:YES];
+            [self.renderThread performSelector:@selector(_snapshot_screen:)
+                                    withTarget:self
+                                    withObject:address
+                                 waitUntilDone:YES];
             return reuslt ? (CGImageRef)CFAutorelease(reuslt) : NULL;
         }
         case IJKSDLSnapshot_Effect_Origin:
@@ -881,10 +919,10 @@ static CGImageRef _FlipCGImage(CGImageRef src)
                 @"attach" : attach,
                 @"outImg" : address
             };
-            [_globalThread_() performSelector:@selector(_snapshotEffectOriginWithSubtitle:)
-                                   withTarget:self
-                                   withObject:params
-                                waitUntilDone:YES];
+            [self.renderThread performSelector:@selector(_snapshotEffectOriginWithSubtitle:)
+                                    withTarget:self
+                                    withObject:params
+                                 waitUntilDone:YES];
             return reuslt ? (CGImageRef)CFAutorelease(reuslt) : NULL;
         }
         case IJKSDLSnapshot_Effect_Subtitle_Origin:
@@ -896,10 +934,10 @@ static CGImageRef _FlipCGImage(CGImageRef src)
                 @"attach" : attach,
                 @"outImg" : address
             };
-            [_globalThread_() performSelector:@selector(_snapshotEffectOriginWithSubtitle:)
-                                   withTarget:self
-                                   withObject:params
-                                waitUntilDone:YES];
+            [self.renderThread performSelector:@selector(_snapshotEffectOriginWithSubtitle:)
+                                    withTarget:self
+                                    withObject:params
+                                 waitUntilDone:YES];
             return reuslt ? (CGImageRef)CFAutorelease(reuslt) : NULL;
         }
     }

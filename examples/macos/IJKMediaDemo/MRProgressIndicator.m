@@ -8,37 +8,38 @@
 #import "MRProgressIndicator.h"
 
 IB_DESIGNABLE
+
+@interface MRProgressIndicator ()
+
+@property (nonatomic) NSImage *knobImg;
+
+@end
+
 @implementation MRProgressIndicator
 {
     BOOL _isMouseDown,_isMouseEnter;
     float _draggedValue;//拖动时使用的value
-    //正常高度
-    CGFloat _normalHeight;
+    
     CGFloat _indicatorHeight;
     CGFloat _indicatorWidth;
     CGFloat _progressHeight;
     void (^draggedIndicatorHandler)(double progress,MRProgressIndicator* indicator,BOOL isEndDrag);
     void (^hoveredBarHandler)(double progress,MRProgressIndicator* indicator);
     void (^exitHoveredBarHandler)(MRProgressIndicator* indicator);
-    NSImage *_knobImg;
 }
 
 @synthesize tag = _tag;
 
+- (NSImage *)knobImg
+{
+    if (!_knobImg) {
+        _knobImg = [NSImage imageNamed:@"knob_small"];
+    }
+    return _knobImg;
+}
+
 - (void)_init
 {
-    CGFloat height = self.bounds.size.height;
-    
-    if (height > 0.0001) {
-        _normalHeight = height;
-    } else {
-        _normalHeight = 18.0;
-    }
-    
-    _knobImg = [NSImage imageNamed:@"knob_small"];
-    
-    [self updateDrawHeight:_normalHeight];
-    
     if (!_stopColor) {
         _stopColor = [[NSColor grayColor] colorWithAlphaComponent:0.12];
     }
@@ -61,7 +62,7 @@ IB_DESIGNABLE
     
     _userInteraction = YES;
     
-   
+    [self updateDrawHeight];
 //    [self setWantsLayer:YES];
 //    self.layer.backgroundColor = [[NSColor orangeColor] CGColor];
 }
@@ -189,12 +190,12 @@ IB_DESIGNABLE
     }
 }
 
-- (void)updateDrawHeight:(CGFloat)height
+- (void)updateDrawHeight
 {
-    _indicatorHeight = height;
+    CGFloat height = self.bounds.size.height;
     _progressHeight = height * 0.4;
     _indicatorHeight = height;
-    _indicatorWidth = _indicatorHeight / _knobImg.size.height * _knobImg.size.width;
+    _indicatorWidth = _indicatorHeight / self.knobImg.size.height * self.knobImg.size.width;
     
     [self invalidateIntrinsicContentSize];
     [self setNeedsDisplay:YES];
@@ -238,7 +239,6 @@ IB_DESIGNABLE
    
     const CGFloat indicatorRadius = _indicatorWidth / 2.0;
     const CGFloat maxWidth = slideRect.size.width - 2 * indicatorRadius;
-    
     const CGFloat denominator = (_maxValue - _minValue);
     
     // stop state
@@ -251,7 +251,7 @@ IB_DESIGNABLE
     // draw unload background color
     {
         if (_rounded) {
-            NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:slideRect xRadius:_progressHeight/2 yRadius:_progressHeight/2];
+            NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:slideRect xRadius:_progressHeight / 2 yRadius:_progressHeight / 2];
             [_unLoadColor setFill];
             [path fill];
         } else {
@@ -365,7 +365,7 @@ IB_DESIGNABLE
         CGFloat indicatorY = slideRect.origin.y + slideRect.size.height / 2.0 - _indicatorHeight / 2.0;
         CGRect indicatorRect = {{indicatorX,indicatorY},{_indicatorWidth,_indicatorHeight}};
         
-        [_knobImg drawInRect:indicatorRect];
+        [self.knobImg drawInRect:indicatorRect];
     }
     
 //    CGContextRef context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
