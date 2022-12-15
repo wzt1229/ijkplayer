@@ -1,25 +1,28 @@
+tag 0.9.4
+--------------------------------
+
+- use **videotoolbox_hwaccel** instead of videotoolbox option
+- add protocol_whitelist: rtmp,rtsp,rtp,srtp,udp
+- macos 10.14 later use exclusive thread for glview.
+
 tag 0.9.3
 --------------------------------
+
 - use global single thread display fix SIGSEGV crash
-- support enable-cvpixelbufferpool option disable cvpixelbufferpool
+- support **enable-cvpixelbufferpool** option disable cvpixelbufferpool
 - enable indeo5 decoder
 - support Xcode 14.1
+- pass cocoapod lib lint
 
 tag 0.9.2
 --------------------------------
 
 - support morden picture format: jpg,jpeg,png,bmp,webp,pcx,tif,psd
-
 - enable decoders (bmp,tiff,psd,webp,targa,pcx)
-
 - extract functions from ff_play.c to some category files
-
-- auto select overlay format；yuvj420p not convert to nv12
-
+- auto select overlay format yuvj420p not convert to nv12
 - restructure subtitle logic,when change delay can display soon
-
 - support set preventDisplay for snapshop feature (macOS only)
-
 - not depends libyuv
 
 tag 0.9.1
@@ -53,19 +56,19 @@ tag 0.9.0.5
     - auto keep aspect ratio to video picture
     - support delay
     - text subtitle,eg: ass,srt,ssa,webvtt
-      - change display size、position、color in real time 
+      - change display size,position,color in real time 
     - graphic subtitle,eg: pgssub,dvdsub
-      - change display size、position in real time
+      - change display size,position in real time
   - rotation: rotate video picture along the [x,y,z]-axis
   - snapshot: support capture current window or use origin picture size capture subtitle overlay
-  - adjust brightness、saturation、constast
+  - adjust brightness,saturation,constast
   - adjust video scale
   - use opengl 3.3
   - support arm64 (Apple Silicon M1)
 
 - ios/macos:
   
-  - use universal renderer logic,support bgrx、xrgb、uyvy422、yuv420p、yuv420sp
+  - use universal renderer logic,support bgrx,xrgb,uyvy422,yuv420p,yuv420sp
   - auto use videotoolbox hwaccel by default
   - ffmpeg soft decoder also use same renderer logic as hwaccel
   - auto adjust video rotate

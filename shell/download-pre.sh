@@ -15,11 +15,13 @@
 # limitations under the License.
 #
 
+VERSION=20221214184236
+
 set -e
 
-PLAT=$1
-EDITION='ijk'
-VER='V1.0-85ada21'
+EDITION=$1
+PLAT=$2
+VER=$3
 
 if test -z $PLAT ;then
     PLAT='all'
@@ -53,18 +55,19 @@ function download() {
 if [[ "$EDITION" != 'ijk' && "$EDITION" != 'github' ]]; then
     echo 'wrong edition,use ijk or github!'
     usage
-    exit 1
+    exit
 fi
 
 if [[ "$PLAT" != 'ios' && "$PLAT" != 'macos' && "$PLAT" != 'all' ]]; then
     echo 'wrong plat,use ios or macos or all!'
     usage
-    exit 2
+    exit
 fi
 
 if test -z $VER ;then
-    VER=$(git describe --abbrev=0 --tag | awk -F - '{printf "%s-%s",$1,$2}')
-    echo "auto find the latest tag:${VER}"
+    #VER=$(git describe --abbrev=0 --tag | awk -F - '{printf "%s-%s",$1,$2}')
+    VER="$VERSION"
+    echo "use the default version:${VER}"
 fi
 
 if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' ]]; then
@@ -76,5 +79,4 @@ elif [[ "$PLAT" == 'all' ]]; then
     done
 else
     usage
-    exit 3
 fi

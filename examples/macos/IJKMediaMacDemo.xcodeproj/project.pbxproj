@@ -655,8 +655,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				MARKETING_VERSION = 0.9.3;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.debugly.IJKMediaMacDemo;
+				MARKETING_VERSION = 0.9.4;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -681,8 +681,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				MARKETING_VERSION = 0.9.3;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.debugly.IJKMediaMacDemo;
+				MARKETING_VERSION = 0.9.4;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
