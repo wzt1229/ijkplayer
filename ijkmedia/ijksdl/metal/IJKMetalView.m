@@ -252,7 +252,7 @@
     MTLRenderPassDescriptor *renderPassDescriptor = self.currentRenderPassDescriptor;
     //MTLRenderPassDescriptor描述一系列attachments的值，类似GL的FrameBuffer；同时也用来创建MTLRenderCommandEncoder
     if(renderPassDescriptor) {
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0f); // 设置默认颜色
+//        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0f); // 设置默认颜色
         
         // Create a render command encoder.
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
@@ -539,9 +539,7 @@
 
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b
 {
-    // TODO here
-//    [[self openGLContext] makeCurrentContext];
-//    glClearColor(r/255.0, g/255.0, b/255.0, 1.0f);
+    self.clearColor = (MTLClearColor){r/255.0, g/255.0, b/255.0, 1.0f};
 }
 
 - (NSView *)hitTest:(NSPoint)point
