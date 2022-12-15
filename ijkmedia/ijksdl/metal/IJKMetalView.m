@@ -32,13 +32,11 @@
 @interface IJKMetalView ()
 {
     CGRect _layerBounds;
-    IJKMPMovieScalingMode _renderingMode;
     
     // The command queue used to pass commands to the device.
     id<MTLCommandQueue> _commandQueue;
 
     CVMetalTextureCacheRef _metalTextureCache;
-    int    _rendererGravity;
 }
 
 @property (nonatomic, strong) __kindof IJKMetalBasePipeline *metalPipeline;
@@ -87,7 +85,6 @@
     _darPreference      = (IJKSDLDARPreference){0.0};
     _displayScreenScale = 1.0;
     _displayVideoScale  = 1.0;
-    _rendererGravity    = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
     
     self.device = MTLCreateSystemDefaultDevice();
     if (!self.device) {
@@ -131,16 +128,6 @@
     _layerBounds = self.bounds;
 }
 
-- (void)setRenderingMode:(IJKMPMovieScalingMode)renderingMode
-{
-    _renderingMode = renderingMode;
-}
-
-- (IJKMPMovieScalingMode)renderingMode
-{
-    return _renderingMode;
-}
-
 - (CGSize)computeNormalizedSize:(CVPixelBufferRef)img
 {
     int frameWidth = (int)CVPixelBufferGetWidth(img);
@@ -148,14 +135,14 @@
     // Compute normalized quad coordinates to draw the frame into.
     CGSize normalizedSamplingSize = CGSizeMake(1.0, 1.0);
     
-    if (_renderingMode == IJKMPMovieScalingModeAspectFit || _renderingMode == IJKMPMovieScalingModeFill) {
+    if (_scalingMode == IJKMPMovieScalingModeAspectFit || _scalingMode == IJKMPMovieScalingModeFill) {
         // Set up the quad vertices with respect to the orientation and aspect ratio of the video.
         CGRect vertexSamplingRect = AVMakeRectWithAspectRatioInsideRect(CGSizeMake(frameWidth, frameHeight), _layerBounds);
         
         CGSize cropScaleAmount = CGSizeMake(vertexSamplingRect.size.width/_layerBounds.size.width, vertexSamplingRect.size.height/_layerBounds.size.height);
         
         // hold max
-        if (_renderingMode == IJKMPMovieScalingModeAspectFit) {
+        if (_scalingMode == IJKMPMovieScalingModeAspectFit) {
             if (cropScaleAmount.width > cropScaleAmount.height) {
                 normalizedSamplingSize.width = 1.0;
                 normalizedSamplingSize.height = cropScaleAmount.height/cropScaleAmount.width;
@@ -164,7 +151,7 @@
                 normalizedSamplingSize.height = 1.0;
                 normalizedSamplingSize.width = cropScaleAmount.width/cropScaleAmount.height;
             }
-        } else if (_renderingMode == IJKMPMovieScalingModeFill) {
+        } else if (_scalingMode == IJKMPMovieScalingModeFill) {
             // hold min
             if (cropScaleAmount.width > cropScaleAmount.height) {
                 normalizedSamplingSize.height = 1.0;
@@ -473,17 +460,6 @@
 
 - (void)setScalingMode:(IJKMPMovieScalingMode)scalingMode
 {
-    switch (scalingMode) {
-        case IJKMPMovieScalingModeFill:
-            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE;
-            break;
-        case IJKMPMovieScalingModeAspectFit:
-            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
-            break;
-        case IJKMPMovieScalingModeAspectFill:
-            _rendererGravity = IJK_GLES2_GRAVITY_RESIZE_ASPECT_FILL;
-            break;
-    }
     _scalingMode = scalingMode;
     // TODO here
 //    if (IJK_GLES2_Renderer_isValid(_renderer)) {
