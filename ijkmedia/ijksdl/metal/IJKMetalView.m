@@ -43,7 +43,6 @@
 
 @property (nonatomic, strong) __kindof IJKMetalBasePipeline *metalPipeline;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
-@property (atomic, assign) CGPoint ratio;//vector
 @property (nonatomic, strong) IJKMetalOffscreenRendering * offscreenRendering;
 @property (nonatomic, strong) IJKMetalAttach *currentAttach;
 
@@ -103,7 +102,6 @@
     _commandQueue = [self.device newCommandQueue]; // CommandQueue是渲染指令队列，保证渲染指令有序地提交到GPU
     //设置模型矩阵，实现旋转
     _modelMatrixChanged = YES;
-    [self updateMVPIfNeed];
     self.autoResizeDrawable = NO;
     self.enableSetNeedsDisplay = YES;
     return YES;
@@ -266,12 +264,11 @@
         
         if (pixelBuffer) {
             [self setupPipelineIfNeed:pixelBuffer];
+            [self createMVPIfNeed];
+            [self.metalPipeline updateMVP:self.mvp];
+            
             CGSize normalizedSize = [self computeNormalizedSize:pixelBuffer];
             CGPoint ratio = CGPointMake(normalizedSize.width, normalizedSize.height);
-            [self updateMVPIfNeed];
-            self.ratio = ratio;
-            
-            [self.metalPipeline updateMVP:self.mvp];
             [self.metalPipeline updateVertexRatio:ratio device:self.device];
             //upload textures
             [self.metalPipeline uploadTextureWithEncoder:renderEncoder
@@ -322,7 +319,11 @@
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, targetSize.width, targetSize.height, -1.0, 1.0}];
     
     [self.metalPipeline updateMVP:self.mvp];
-    [self.metalPipeline updateVertexRatio:self.ratio device:self.device];
+    
+    CGSize normalizedSize = [self computeNormalizedSize:pixelBuffer];
+    CGPoint ratio = CGPointMake(normalizedSize.width, normalizedSize.height);
+    
+    [self.metalPipeline updateVertexRatio:ratio device:self.device];
     //upload textures
     [self.metalPipeline uploadTextureWithEncoder:renderEncoder
                                           buffer:pixelBuffer
@@ -412,7 +413,7 @@
     [self displayAttach:attach];
 }
 
-- (void)updateMVPIfNeed
+- (void)createMVPIfNeed
 {
     /// These are the view and projection transforms.
     matrix_float4x4 viewMatrix;
