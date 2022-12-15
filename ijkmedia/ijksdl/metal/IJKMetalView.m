@@ -41,12 +41,11 @@
     int    _rendererGravity;
 }
 
-@property (atomic, assign) CVPixelBufferRef pixelBuffer;
 @property (nonatomic, strong) __kindof IJKMetalBasePipeline *metalPipeline;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
 @property (atomic, assign) CGPoint ratio;//vector
 @property (nonatomic, strong) IJKMetalOffscreenRendering * offscreenRendering;
-@property (atomic) IJKMetalAttach *currentAttach;
+@property (nonatomic, strong) IJKMetalAttach *currentAttach;
 
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
@@ -78,7 +77,6 @@
 
 - (void)dealloc
 {
-    CVPixelBufferRelease(_pixelBuffer);
     CFRelease(_metalTextureCache);
 }
 
@@ -220,21 +218,30 @@
 
 - (void)displayAttach:(IJKMetalAttach *)attach
 {
-    CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
-    CGSize normalizedSize = [self computeNormalizedSize:pixelBuffer];
-    CGPoint ratio = CGPointMake(normalizedSize.width, normalizedSize.height);
+    if (!attach) {
+        return;
+    }
     
-    CVPixelBufferRetain(pixelBuffer);
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.pixelBuffer) {
-            CVPixelBufferRelease(self.pixelBuffer);
-        }
-        [self setupPipelineIfNeed:pixelBuffer];
-        [self updateMVPIfNeed];
-        self.ratio = ratio;
-        self.pixelBuffer = pixelBuffer;
-        [self setNeedsDisplay:YES];
-    });
+    if (![NSThread isMainThread]) {
+        [self performSelectorOnMainThread:_cmd withObject:attach waitUntilDone:NO];
+        return;
+    }
+    
+    if (self.currentAttach.zRotateDegrees != attach.zRotateDegrees) {
+        self.modelMatrixChanged = YES;
+    }
+    self.currentAttach = attach;
+    
+    if (self.preventDisplay) {
+        return;
+    }
+    
+    CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
+    if (!pixelBuffer) {
+        return;
+    }
+    
+    [self setNeedsDisplay:YES];
 }
 
 /// Called whenever the view needs to render a frame.
@@ -255,19 +262,23 @@
         
         [renderEncoder setViewport:(MTLViewport){0.0, 0.0, self.drawableSize.width, self.drawableSize.height, -1.0, 1.0 }]; // 设置显示区域
         
-        CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(self.pixelBuffer);
+        CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
         
         if (pixelBuffer) {
+            [self setupPipelineIfNeed:pixelBuffer];
+            CGSize normalizedSize = [self computeNormalizedSize:pixelBuffer];
+            CGPoint ratio = CGPointMake(normalizedSize.width, normalizedSize.height);
+            [self updateMVPIfNeed];
+            self.ratio = ratio;
+            
             [self.metalPipeline updateMVP:self.mvp];
-            [self.metalPipeline updateVertexRatio:self.ratio device:self.device];
+            [self.metalPipeline updateVertexRatio:ratio device:self.device];
             //upload textures
             [self.metalPipeline uploadTextureWithEncoder:renderEncoder
                                                   buffer:pixelBuffer
                                             textureCache:_metalTextureCache
                                                   device:self.device
                                         colorPixelFormat:self.colorPixelFormat];
-            
-            CVPixelBufferRelease(pixelBuffer);
         }
         [renderEncoder endEncoding]; // 结束
         // Schedule a present once the framebuffer is complete using the current drawable.
@@ -279,7 +290,7 @@
 
 - (CGImageRef)snapshot
 {
-    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(self.pixelBuffer);
+    CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
     if (!pixelBuffer) {
         return nil;
     }
@@ -319,11 +330,22 @@
                                           device:self.device
                                 colorPixelFormat:self.colorPixelFormat];
     
-    CVPixelBufferRelease(pixelBuffer);
     [renderEncoder endEncoding];
     [commandBuffer commit];
     
     return [self.offscreenRendering snapshot];
+}
+
+- (CGImageRef)snapshot:(IJKSDLSnapshotType)aType
+{
+    switch (aType) {
+        case IJKSDLSnapshot_Origin:
+        case IJKSDLSnapshot_Screen:
+        case IJKSDLSnapshot_Effect_Origin:
+            return nil;
+        case IJKSDLSnapshot_Effect_Subtitle_Origin:
+            return [self snapshot];
+    }
 }
 
 - (void)setNeedsRefreshCurrentPic
@@ -387,16 +409,7 @@
 //    }
 //    //hold the attach as current.
     
-    if (self.currentAttach.zRotateDegrees != attach.zRotateDegrees) {
-        self.modelMatrixChanged = YES;
-    }
-    self.currentAttach = attach;
-    
-    if (self.preventDisplay) {
-        return;
-    }
-    
-    [self displayAttach:self.currentAttach];
+    [self displayAttach:attach];
 }
 
 - (void)updateMVPIfNeed
