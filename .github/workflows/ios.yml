@@ -2,9 +2,9 @@ name: build ios
 
 on:
   push:
-    branches: [ develop ]
+    branches: [develop]
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
 
 jobs:
   build:
@@ -12,16 +12,13 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Cocoapods
-        uses: maxim-lobanov/setup-cocoapods@v1
-        with:
-          version: 1.11.2
-      - run: brew install tree
-      - name: Download Pre Compiled Dependencies
-        run: | 
-            # cd shell && ./init-any.sh ios
-            # cd ios && ./compile-any.sh build all 
-            cd shell && ./download-pre.sh ios      
-      - run: pod lib lint --allow-warnings --platforms=ios
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Setup Cocoapods
+      uses: maxim-lobanov/setup-cocoapods@v1
+      with:
+        version: 1.11.2
+    - run: brew install tree
+    - name: Download Pre Compiled Dependencies
+      run: cd shell && ./download-pre.sh ijk ios
+    - run: pod lib lint --allow-warnings --platforms=ios
