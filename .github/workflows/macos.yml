@@ -2,9 +2,9 @@ name: build macos
 
 on:
   push:
-    branches: [ develop ]
+    branches: [develop]
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
 
 jobs:
   build:
@@ -12,33 +12,31 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Cocoapods
-        uses: maxim-lobanov/setup-cocoapods@v1
-        with:
-          version: 1.11.2
-      - run: brew install tree
-      - name: Download Pre Compiled Dependencies
-        run: | 
-            # cd shell && ./init-any.sh macos
-            # cd macos && ./compile-any.sh build all 
-            cd shell && ./download-pre.sh macos
-      - name: Pod install
-        run: pod install --project-directory=examples/macos
-      - name: Set Default Scheme
-        run: |
-          cd examples/macos
-          scheme_list=$(xcodebuild -list -json | tr -d "\n")
-          default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
-          echo $default | cat >default
-          echo Using default scheme: $default
-      - name: Build
-        env:
-          scheme: ${{ 'default' }}
-        run: |
-          cd examples/macos
-          if [ $scheme = default ]; then scheme=$(cat default); fi
-          if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
-          file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
-          xcodebuild clean build analyze -configuration Release -scheme "$scheme" -"$filetype_parameter" "$file_to_build" | xcpretty && exit ${PIPESTATUS[0]}
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Setup Cocoapods
+      uses: maxim-lobanov/setup-cocoapods@v1
+      with:
+        version: 1.11.2
+    - run: brew install tree
+    - name: Download Pre Compiled Dependencies
+      run: |
+        cd shell && ./download-pre.sh ijk macos
+    - name: Pod install
+      run: pod install --project-directory=examples/macos
+    - name: Set Default Scheme
+      run: |
+        cd examples/macos
+        scheme_list=$(xcodebuild -list -json | tr -d "\n")
+        default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
+        echo $default | cat >default
+        echo Using default scheme: $default
+    - name: Build
+      env:
+        scheme: ${{ 'default' }}
+      run: |
+        cd examples/macos
+        if [ $scheme = default ]; then scheme=$(cat default); fi
+        if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
+        file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
+        xcodebuild clean build analyze -configuration Release -scheme "$scheme" -"$filetype_parameter" "$file_to_build" | xcpretty && exit ${PIPESTATUS[0]}
