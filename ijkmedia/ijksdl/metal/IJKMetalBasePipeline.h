@@ -15,9 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface IJKMetalBasePipeline : NSObject
 
-+ (nullable id <MTLBuffer>)createMatrix:(id<MTLDevice>)device
-                             matrixType:(IJKYUVToRGBMatrixType)matrixType
-                             videoRange:(BOOL)videoRange;
+@property (nonatomic, assign) IJKYUVToRGBMatrixType convertMatrixType;
 
 //subclass override!
 + (NSString *)fragmentFuctionName;
@@ -27,7 +25,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateMVP:(id<MTLBuffer>)mvp;
 
+- (void)updateColorAdjustment:(vector_float4)c;
+
 //subclass override!
+- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
+                            buffer:(CVPixelBufferRef)pixelBuffer
+                      textureCache:(CVMetalTextureCacheRef)textureCache;
+
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer
                     textureCache:(CVMetalTextureCacheRef)textureCache

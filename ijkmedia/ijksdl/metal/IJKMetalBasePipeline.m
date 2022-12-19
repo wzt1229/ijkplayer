@@ -9,11 +9,19 @@
 #import "IJKMetalBasePipeline.h"
 
 @interface IJKMetalBasePipeline()
+{
+    vector_float4 _colorAdjustment;
+}
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
 @property (nonatomic, strong) id<MTLRenderPipelineState> pipelineState;
 @property (nonatomic, strong) id<MTLBuffer> vertices;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
+//@property (nonatomic, strong) id<MTLBuffer> rgbAdjustment;
+// The buffer that contains arguments for the fragment shader.
+@property (nonatomic, strong) id<MTLBuffer> fragmentShaderArgumentBuffer;
+@property (nonatomic, strong) id <MTLArgumentEncoder> argumentEncoder;
+
 @property (nonatomic, assign) NSUInteger numVertices;
 @property (nonatomic, assign) CGSize vertexRatio;
 
@@ -27,39 +35,60 @@
     return @"";
 }
 
-+ (nullable id <MTLBuffer>)createMatrix:(id<MTLDevice>)device
-                             matrixType:(IJKYUVToRGBMatrixType)matrixType
-                             videoRange:(BOOL)videoRange
+- (void)setConvertMatrixType:(IJKYUVToRGBMatrixType)convertMatrixType
 {
-    IJKConvertMatrix matrix;
-    
+    if (_convertMatrixType != convertMatrixType) {
+        _convertMatrixType = convertMatrixType;
+        
+    }
+}
+
+- (IJKConvertMatrix)createMatrix:(IJKYUVToRGBMatrixType)matrixType
+{
+    IJKConvertMatrix matrix = {0.0};
+    BOOL videoRange;
     switch (matrixType) {
-        case IJKYUVToRGBBT601Matrix:
+        case IJKYUVToRGBBT601FullRangeMatrix:
+        case IJKYUVToRGBBT601VideoRangeMatrix:
         {
             matrix.matrix = (matrix_float3x3){
                 (simd_float3){1.0,    1.0,    1.0},
                 (simd_float3){0.0,    -0.343, 1.765},
                 (simd_float3){1.4,    -0.711, 0.0},
             };
+            
+            videoRange = matrixType == IJKYUVToRGBBT601VideoRangeMatrix;
         }
             break;
-        case IJKYUVToRGBBT709Matrix:
+        case IJKYUVToRGBBT709FullRangeMatrix:
+        case IJKYUVToRGBBT709VideoRangeMatrix:
         {
             matrix.matrix = (matrix_float3x3){
                 (simd_float3){1.164,    1.164,  1.164},
                 (simd_float3){0.0,      -0.213, 2.112},
                 (simd_float3){1.793,    -0.533, 0.0},
             };
+            
+            videoRange = matrixType == IJKYUVToRGBBT709VideoRangeMatrix;
         }
             break;
-        case IJKUYVYToRGBMatrix:
+        case IJKUYVYToRGBFullRangeMatrix:
+        case IJKUYVYToRGBVideoRangeMatrix:
         {
             matrix.matrix = (matrix_float3x3){
                 (simd_float3){1.164,  1.164,  1.164},
                 (simd_float3){0.0,    -0.391, 2.017},
                 (simd_float3){1.596,  -0.812, 0.0},
             };
+            
+            videoRange = matrixType == IJKUYVYToRGBVideoRangeMatrix;
         }
+            break;
+        case IJKYUVToRGBNoneMatrix:
+        {
+            return matrix;
+        }
+            break;
     }
 
     vector_float3 offset;
@@ -69,18 +98,15 @@
         offset = (vector_float3){ 0.0, -0.5, -0.5};
     }
     matrix.offset = offset;
-    
-    return [device newBufferWithBytes:&matrix
-                               length:sizeof(IJKConvertMatrix)
-                              options:MTLResourceStorageModeShared];
+    return matrix;
 }
 
-+ (id<MTLRenderPipelineState>)createPipelineState:(id<MTLDevice>)device
-                                 colorPixelFormat:(MTLPixelFormat)colorPixelFormat
+- (void)createPipelineState:(id<MTLDevice>)device
+           colorPixelFormat:(MTLPixelFormat)colorPixelFormat
 {
     NSAssert(device, @"device can't be nil!");
     
-    NSString *fragmentName = [self fragmentFuctionName];
+    NSString *fragmentName = [[self class] fragmentFuctionName];
     
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
     NSURL* bundleURL = [[bundle resourceURL] URLByAppendingPathComponent:@"MetalShader.bundle"];
@@ -97,13 +123,24 @@
     NSAssert(vertexFunction, @"can't find Vertex Function:vertexShader");
     id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:fragmentName];
     NSAssert(vertexFunction, @"can't find Fragment Function:%@",fragmentName);
+    
+    id <MTLArgumentEncoder> argumentEncoder =
+        [fragmentFunction newArgumentEncoderWithBufferIndex:IJKFragmentBufferLocation0];
+    
+    NSUInteger argumentBufferLength = argumentEncoder.encodedLength;
+
+    _fragmentShaderArgumentBuffer = [device newBufferWithLength:argumentBufferLength options:0];
+
+    _fragmentShaderArgumentBuffer.label = @"Argument Buffer";
+    
+    [argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
+    
     // Configure a pipeline descriptor that is used to create a pipeline state.
     MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
     pipelineStateDescriptor.vertexFunction = vertexFunction;
     pipelineStateDescriptor.fragmentFunction = fragmentFunction;
     pipelineStateDescriptor.colorAttachments[0].pixelFormat = colorPixelFormat; // 设置颜色格式
     
-   
     id<MTLRenderPipelineState> pipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
                                                                                       error:&error]; // 创建图形渲染管道，耗性能操作不宜频繁调用
     // Pipeline State creation could fail if the pipeline descriptor isn't set up properly.
@@ -111,7 +148,8 @@
     //  went wrong.  (Metal API validation is enabled by default when a debug build is run
     //  from Xcode.)
     NSAssert(pipelineState, @"Failed to create pipeline state: %@", error);
-    return pipelineState;
+    self.argumentEncoder = argumentEncoder;
+    self.pipelineState = pipelineState;
 }
 
 - (void)updateVertexRatio:(CGSize)ratio
@@ -154,6 +192,19 @@
     self.mvp = mvp;
 }
 
+
+- (void)updateColorAdjustment:(vector_float4)c
+{
+    _colorAdjustment = c;
+}
+
+- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
+                            buffer:(CVPixelBufferRef)pixelBuffer
+                      textureCache:(CVMetalTextureCacheRef)textureCache
+{
+    
+}
+
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer
                     textureCache:(CVMetalTextureCacheRef)textureCache
@@ -174,9 +225,22 @@
     }
     
     if (!self.pipelineState) {
-        self.pipelineState = [[self class] createPipelineState:device
-                                              colorPixelFormat:colorPixelFormat];
+        [self createPipelineState:device
+                 colorPixelFormat:colorPixelFormat];
     }
+    
+    [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
+    
+    IJKConvertMatrix * convertMatrix = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentConvertMatrix];
+    *convertMatrix = [self createMatrix:self.convertMatrixType];
+    convertMatrix->adjustment = _colorAdjustment;
+    
+    [self doUploadTextureWithEncoder:_argumentEncoder buffer:pixelBuffer textureCache:textureCache];
+    
+    [encoder setFragmentBuffer:_fragmentShaderArgumentBuffer
+                        offset:0
+                       atIndex:IJKFragmentBufferLocation0];
+    
     // 设置渲染管道，以保证顶点和片元两个shader会被调用
     [encoder setRenderPipelineState:self.pipelineState];
     

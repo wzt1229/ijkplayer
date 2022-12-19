@@ -15,11 +15,9 @@
     return @"bgraFragmentShader";
 }
 
-- (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                          buffer:(CVPixelBufferRef)pixelBuffer
-                    textureCache:(CVMetalTextureCacheRef)textureCache
-                          device:(id<MTLDevice>)device
-                colorPixelFormat:(MTLPixelFormat)colorPixelFormat
+- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
+                            buffer:(CVPixelBufferRef)pixelBuffer
+                      textureCache:(CVMetalTextureCacheRef)textureCache
 {
     id<MTLTexture> textureY = nil;
     
@@ -40,12 +38,9 @@
     CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
     
     if (textureY != nil) {
-        [encoder setFragmentTexture:textureY
-                            atIndex:IJKFragmentTextureIndexTextureY]; // 设置纹理
+        [encoder setTexture:textureY
+                    atIndex:IJKFragmentTextureIndexTextureY]; // 设置纹理
     }
-    
-    //必须最后调用 super，因为内部调用了 draw triangle
-    [super uploadTextureWithEncoder:encoder buffer:pixelBuffer textureCache:textureCache device:device colorPixelFormat:colorPixelFormat];
 }
 
 @end

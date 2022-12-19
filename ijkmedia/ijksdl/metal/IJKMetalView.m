@@ -204,6 +204,9 @@
     } else {
         NSAssert(NO, @"no suopport pixel:%d",type);
     }
+    //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8_yuvs
+    //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8FullRange
+    //    Cb Y'0 Cr Y'1 kCVPixelFormatType_422YpCbCr8
     
     if (clazz) {
         [self setupPipelineWithClazz:clazz];
@@ -274,7 +277,8 @@
             [self setupPipelineIfNeed:pixelBuffer];
             [self createMVPIfNeed];
             [self.metalPipeline updateMVP:self.mvp];
-            
+            bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
+            [self.metalPipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust?1.0:0.0}];
             CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
             [self.metalPipeline updateVertexRatio:ratio device:self.device];
             //upload textures
@@ -495,10 +499,6 @@
 {
     if (_colorPreference.brightness != colorPreference.brightness || _colorPreference.saturation != colorPreference.saturation || _colorPreference.contrast != colorPreference.contrast) {
         _colorPreference = colorPreference;
-        // TODO here
-//        if (IJK_GLES2_Renderer_isValid(_renderer)) {
-//            IJK_GLES2_Renderer_updateColorConversion(_renderer, _colorPreference.brightness, _colorPreference.saturation,_colorPreference.contrast);
-//        }
     }
 }
 

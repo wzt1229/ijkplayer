@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'IJKMediaPlayerKit'
-  s.version          = '0.9.4'
+  s.version          = '0.9.5'
   s.summary          = 'IJKMediaPlayerKit for ios/macOS.'
   
 # This description is used to generate tags and improve search results.
@@ -26,8 +26,9 @@ TODO: Add long description of the pod here.
   s.author           = { 'MattReach' => 'qianlongxu@gmail.com' }
   s.source           = { :git => 'https://github.com/debugly/ijkplayer', :tag => s.version.to_s }
 
-  s.osx.deployment_target = '10.11'
-  s.ios.deployment_target = '9.0'
+  #metal 2.0 required
+  s.osx.deployment_target = '10.13'
+  s.ios.deployment_target = '11.0'
 
   s.osx.pod_target_xcconfig = {
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',

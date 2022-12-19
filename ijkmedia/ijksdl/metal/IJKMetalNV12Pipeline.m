@@ -21,11 +21,9 @@
     return @"nv12FragmentShader";
 }
 
-- (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                          buffer:(CVPixelBufferRef)pixelBuffer
-                    textureCache:(CVMetalTextureCacheRef)textureCache
-                          device:(id<MTLDevice>)device
-                colorPixelFormat:(MTLPixelFormat)colorPixelFormat
+- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
+                            buffer:(CVPixelBufferRef)pixelBuffer
+                      textureCache:(CVMetalTextureCacheRef)textureCache
 {
     id<MTLTexture> textureY = nil;
     id<MTLTexture> textureUV = nil;
@@ -62,28 +60,21 @@
     CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
     
     if (textureY != nil && textureUV != nil) {
-        [encoder setFragmentTexture:textureY
-                            atIndex:IJKFragmentTextureIndexTextureY]; // 设置纹理
-        [encoder setFragmentTexture:textureUV
-                            atIndex:IJKFragmentTextureIndexTextureU]; // 设置纹理
+        [encoder setTexture:textureY
+                    atIndex:IJKFragmentTextureIndexTextureY]; // 设置纹理
+        [encoder setTexture:textureUV
+                    atIndex:IJKFragmentTextureIndexTextureU]; // 设置纹理
     }
     
     if (!self.convertMatrix) {
         OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
         CFTypeRef color_attachments = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
         if (color_attachments && CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-            self.convertMatrix = [[self class] createMatrix:device matrixType:IJKYUVToRGBBT601Matrix videoRange:type ==  kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange];
+            self.convertMatrixType = type ==  kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange ? IJKYUVToRGBBT601VideoRangeMatrix : IJKYUVToRGBBT601FullRangeMatrix;
         } else {
-            self.convertMatrix = [[self class] createMatrix:device matrixType:IJKYUVToRGBBT709Matrix videoRange:type ==  kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange];
+            self.convertMatrixType = type ==  kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange ? IJKYUVToRGBBT709VideoRangeMatrix : IJKYUVToRGBBT709FullRangeMatrix;
         }
     }
-    
-    [encoder setFragmentBuffer:self.convertMatrix
-                        offset:0
-                       atIndex:IJKFragmentInputIndexMatrix];
-    
-    //必须最后调用 super，因为内部调用了 draw triangle
-    [super uploadTextureWithEncoder:encoder buffer:pixelBuffer textureCache:textureCache device:device colorPixelFormat:colorPixelFormat];
 }
 
 @end

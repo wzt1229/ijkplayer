@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
         <capability name="Image references" minToolsVersion="12.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -660,19 +660,22 @@
                                                                         <menuItem title="fcc-uyvy" tag="3" id="wJF-Lj-uNK">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
-                                                                        <menuItem title="fcc-bgra" tag="4" id="trp-Lv-NDc">
+                                                                        <menuItem title="fcc-yuyv" tag="4" id="dhq-Vr-AaR" userLabel="fcc-yuyv">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
-                                                                        <menuItem title="fcc-bgr0" tag="5" id="BdZ-vi-5ct">
+                                                                        <menuItem title="fcc-bgra" tag="5" id="trp-Lv-NDc">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
-                                                                        <menuItem title="fcc-argb" tag="6" id="lzb-pC-bWM">
+                                                                        <menuItem title="fcc-bgr0" tag="6" id="BdZ-vi-5ct">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
-                                                                        <menuItem title="fcc-0rgb" tag="7" id="tcY-P5-BRd">
+                                                                        <menuItem title="fcc-argb" tag="7" id="lzb-pC-bWM">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
-                                                                        <menuItem title="fcc-rv16" tag="8" id="WUN-74-gCN">
+                                                                        <menuItem title="fcc-0rgb" tag="8" id="tcY-P5-BRd">
+                                                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                                                        </menuItem>
+                                                                        <menuItem title="fcc-rv16" tag="9" id="WUN-74-gCN">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
                                                                     </items>
@@ -836,7 +839,7 @@
                                             </middleViews>
                                             <endViews>
                                                 <button verticalHuggingPriority="750" id="hez-32-c2g">
-                                                    <rect key="frame" x="1005" y="17" width="20" height="20"/>
+                                                    <rect key="frame" x="1007" y="17.5" width="19" height="19"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="overlaps" alignment="center" imageScaling="proportionallyDown" inset="2" id="ogH-tj-D8E">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -848,7 +851,7 @@
                                                     </connections>
                                                 </button>
                                                 <button verticalHuggingPriority="750" id="Ksb-3H-5aR">
-                                                    <rect key="frame" x="1030" y="18" width="20.5" height="17"/>
+                                                    <rect key="frame" x="1031" y="18.5" width="19.5" height="16"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="overlaps" alignment="center" imageScaling="proportionallyDown" inset="2" id="NmY-tN-fI9">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -987,8 +990,8 @@
         <userDefaultsController representsSharedInstance="YES" id="OCk-Q5-1dK"/>
     </objects>
     <resources>
-        <image name="chevron.forward.2" catalog="system" width="20" height="17"/>
-        <image name="info.circle.fill" catalog="system" width="20" height="20"/>
+        <image name="chevron.forward.2" catalog="system" width="19" height="16"/>
+        <image name="info.circle.fill" catalog="system" width="19" height="19"/>
         <image name="next" width="52" height="52"/>
         <image name="pause" width="52" height="52"/>
         <image name="play" width="52" height="52"/>

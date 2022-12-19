@@ -37,26 +37,33 @@ typedef struct
 typedef struct {
     matrix_float3x3 matrix;
     vector_float3 offset;
+    vector_float4 adjustment;
 } IJKConvertMatrix;
 
-typedef enum IJKFragmentBufferIndex
+typedef enum IJKFragmentBufferArguments
 {
-    IJKFragmentInputIndexMatrix     = 0,
-} IJKFragmentBufferIndex;
+    IJKFragmentTextureIndexType,
+    IJKFragmentTextureIndexTextureY,
+    IJKFragmentTextureIndexTextureU,
+    IJKFragmentTextureIndexTextureV,
+    IJKFragmentConvertMatrix,
+    IJKFragmentColorAdjust
+} IJKFragmentBufferArguments;
 
-typedef enum IJKFragmentTextureIndex
+typedef enum IJKFragmentBufferLocation
 {
-    IJKFragmentTextureIndexTextureY  = 0,
-    IJKFragmentTextureIndexTextureU  = 1,
-    IJKFragmentTextureIndexTextureV  = 2,
-} IJKFragmentTextureIndex;
+    IJKFragmentBufferLocation0,
+} IJKFragmentBufferLocation;
 
 typedef enum IJKYUVToRGBMatrixType
 {
-    IJKYUVToRGBBT709Matrix = 0,
-    IJKYUVToRGBBT601Matrix = 1,
-    IJKUYVYToRGBMatrix = 2,
+    IJKYUVToRGBNoneMatrix,
+    IJKYUVToRGBBT709FullRangeMatrix,
+    IJKYUVToRGBBT709VideoRangeMatrix,
+    IJKYUVToRGBBT601FullRangeMatrix,
+    IJKYUVToRGBBT601VideoRangeMatrix,
+    IJKUYVYToRGBFullRangeMatrix,
+    IJKUYVYToRGBVideoRangeMatrix,
 } IJKYUVToRGBMatrixType;
-
 
 #endif /* IJKMetalShaderTypes_h */
