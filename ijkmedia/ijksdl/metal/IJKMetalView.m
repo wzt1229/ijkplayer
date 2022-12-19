@@ -478,11 +478,9 @@
 
 - (void)setScalingMode:(IJKMPMovieScalingMode)scalingMode
 {
-    _scalingMode = scalingMode;
-    // TODO here
-//    if (IJK_GLES2_Renderer_isValid(_renderer)) {
-//        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
-//    }
+    if (_scalingMode != scalingMode) {
+        _scalingMode = scalingMode;
+    }
 }
 
 - (void)setRotatePreference:(IJKSDLRotatePreference)rotatePreference
@@ -508,10 +506,6 @@
 {
     if (_darPreference.ratio != darPreference.ratio) {
         _darPreference = darPreference;
-        // TODO here
-//        if (IJK_GLES2_Renderer_isValid(_renderer)) {
-//            IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, _darPreference.ratio);
-//        }
     }
 }
 
