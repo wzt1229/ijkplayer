@@ -128,12 +128,33 @@
     _layerBounds = self.bounds;
 }
 
-- (CGSize)computeNormalizedSize:(CVPixelBufferRef)img
+- (CGSize)computeNormalizedRatio:(CVPixelBufferRef)img
 {
     int frameWidth = (int)CVPixelBufferGetWidth(img);
     int frameHeight = (int)CVPixelBufferGetHeight(img);
     // Compute normalized quad coordinates to draw the frame into.
     CGSize normalizedSamplingSize = CGSizeMake(1.0, 1.0);
+    
+    //apply user dar
+    if (self.darPreference.ratio > 0.001) {
+        int zDegrees = 0;
+        if (_rotatePreference.type == IJKSDLRotateZ) {
+            zDegrees += _rotatePreference.degrees;
+        }
+        zDegrees += self.currentAttach.zRotateDegrees;
+        
+        float darRatio = self.darPreference.ratio;
+        //when video's z rotate degrees is 90 odd multiple need swap user's ratio
+        if (abs(zDegrees) / 90 % 2 == 1) {
+            darRatio = 1.0 / darRatio;
+        }
+        
+        if (self.currentAttach.overlayW / self.currentAttach.overlayH > darRatio) {
+            frameHeight = frameWidth * 1.0 / darRatio;
+        } else {
+            frameWidth = frameHeight * darRatio;
+        }
+    }
     
     if (_scalingMode == IJKMPMovieScalingModeAspectFit || _scalingMode == IJKMPMovieScalingModeFill) {
         // Set up the quad vertices with respect to the orientation and aspect ratio of the video.
@@ -254,8 +275,7 @@
             [self createMVPIfNeed];
             [self.metalPipeline updateMVP:self.mvp];
             
-            CGSize normalizedSize = [self computeNormalizedSize:pixelBuffer];
-            CGPoint ratio = CGPointMake(normalizedSize.width, normalizedSize.height);
+            CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
             [self.metalPipeline updateVertexRatio:ratio device:self.device];
             //upload textures
             [self.metalPipeline uploadTextureWithEncoder:renderEncoder
@@ -307,9 +327,7 @@
     
     [self.metalPipeline updateMVP:self.mvp];
     
-    CGSize normalizedSize = [self computeNormalizedSize:pixelBuffer];
-    CGPoint ratio = CGPointMake(normalizedSize.width, normalizedSize.height);
-    
+    CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
     [self.metalPipeline updateVertexRatio:ratio device:self.device];
     //upload textures
     [self.metalPipeline uploadTextureWithEncoder:renderEncoder

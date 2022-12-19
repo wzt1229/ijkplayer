@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 //subclass override!
 + (NSString *)fragmentFuctionName;
 
-- (void)updateVertexRatio:(CGPoint)ratio
+- (void)updateVertexRatio:(CGSize)ratio
                    device:(id<MTLDevice>)device;
 
 - (void)updateMVP:(id<MTLBuffer>)mvp;

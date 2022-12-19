@@ -15,7 +15,7 @@
 @property (nonatomic, strong) id<MTLBuffer> vertices;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
 @property (nonatomic, assign) NSUInteger numVertices;
-@property (nonatomic, assign) CGPoint vertexRatio;
+@property (nonatomic, assign) CGSize vertexRatio;
 
 @end
 
@@ -114,17 +114,17 @@
     return pipelineState;
 }
 
-- (void)updateVertexRatio:(CGPoint)ratio
+- (void)updateVertexRatio:(CGSize)ratio
                    device:(id<MTLDevice>)device
 {
-    if (self.vertices && CGPointEqualToPoint(self.vertexRatio, ratio)) {
+    if (self.vertices && CGSizeEqualToSize(self.vertexRatio, ratio)) {
         return;
     }
     
     self.vertexRatio = ratio;
     
-    float x = ratio.x;
-    float y = ratio.y;
+    float x = ratio.width;
+    float y = ratio.height;
     /*
      triangle strip
        ^+
