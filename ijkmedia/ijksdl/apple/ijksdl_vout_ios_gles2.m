@@ -238,7 +238,7 @@ static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *r
     opaque->sub = sub;
 }
 
-SDL_Vout *SDL_VoutIos_CreateForGLES2(Uint32 overlay_format)
+SDL_Vout *SDL_VoutIos_CreateForGLES2()
 {
     SDL_Vout *vout = SDL_Vout_CreateInternal(sizeof(SDL_Vout_Opaque));
     if (!vout)
@@ -252,7 +252,6 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2(Uint32 overlay_format)
     vout->display_overlay = vout_display_overlay;
     vout->update_subtitle = vout_update_subtitle;
     vout->update_subtitle_picture = vout_update_subtitle_picture;
-    vout->overlay_format = overlay_format;
     return vout;
 }
 

@@ -1127,6 +1127,7 @@ static void alloc_picture(FFPlayer *ffp, int frame_format)
     video_open(is, vp);
 #endif
 
+    SDL_VoutSetOverlayFormat(ffp->vout, ffp->overlay_format);
 #ifdef __APPLE__
     vp->bmp = SDL_Vout_CreateOverlay_Apple(vp->width, vp->height,
                                            frame_format,

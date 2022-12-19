@@ -551,8 +551,6 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int frame_f
             overlay_format = SDL_FCC_NV12;
         }
 #endif
-        //set as specific format. because one video maybe has more than a format, but glview's shader must be single.
-        display->overlay_format = overlay_format;
     }
 
     SDL_VoutOverlay *overlay = SDL_VoutOverlay_CreateInternal(sizeof(SDL_VoutOverlay_Opaque));

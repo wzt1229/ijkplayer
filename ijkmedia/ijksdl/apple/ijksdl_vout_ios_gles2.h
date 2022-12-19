@@ -26,6 +26,6 @@
 
 #import "IJKVideoRenderingProtocol.h"
 
-SDL_Vout *SDL_VoutIos_CreateForGLES2(Uint32 overlay_format);
+SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view);
 CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay);
