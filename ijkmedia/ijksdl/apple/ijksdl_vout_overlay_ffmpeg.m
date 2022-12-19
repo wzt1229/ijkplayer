@@ -81,8 +81,13 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
     } else if (format == AV_PIX_FMT_YUVJ420P) {
         pixelFormatType = kCVPixelFormatType_420YpCbCr8Planar;
     } else if (format == AV_PIX_FMT_UYVY422) {
-        pixelFormatType = fullRange ? kCVPixelFormatType_422YpCbCr8FullRange : kCVPixelFormatType_422YpCbCr8;
+        pixelFormatType = kCVPixelFormatType_422YpCbCr8;
+    } else if (format == AV_PIX_FMT_YUYV422) {
+        pixelFormatType = fullRange ? kCVPixelFormatType_422YpCbCr8FullRange : kCVPixelFormatType_422YpCbCr8_yuvs;
     }
+//    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8_yuvs
+//    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8FullRange
+//    Cb Y'0 Cr Y'1 kCVPixelFormatType_422YpCbCr8
 //    ffmpeg only;
 //    else if (format == AV_PIX_FMT_YUYV422) {
 //        pixelFormatType = kCVPixelFormatType_422YpCbCr8_yuvs;
