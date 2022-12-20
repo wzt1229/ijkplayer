@@ -1,5 +1,5 @@
 PODS:
-  - IJKMediaPlayerKit (0.9.4)
+  - IJKMediaPlayerKit (0.9.5)
 
 DEPENDENCIES:
   - IJKMediaPlayerKit (from `../../`)
@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../../"
 
 SPEC CHECKSUMS:
-  IJKMediaPlayerKit: 578704f346de59b8bc3ff3d181f19cab56e5d96d
+  IJKMediaPlayerKit: f2873dfd71d68795907a3843459547912e7e5cf7
 
 PODFILE CHECKSUM: 68b3c9d9141a9605bebe65328e1541c4aedaed99
 

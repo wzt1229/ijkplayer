@@ -6,10 +6,8 @@
 //  Copyright © 2022 Matt Reach's Awesome FFmpeg Tutotial. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
 #import "IJKVideoRenderingProtocol.h"
 @import MetalKit;
-@import CoreGraphics;
 
 NS_ASSUME_NONNULL_BEGIN
 

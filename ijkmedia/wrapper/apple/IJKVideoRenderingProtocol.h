@@ -125,6 +125,9 @@ typedef enum : NSUInteger {
 @property(nonatomic) IJKSDLColorConversionPreference colorPreference;
 // user defined display aspect ratio
 @property(nonatomic) IJKSDLDARPreference darPreference;
+// not render picture and subtitle,but holder overlay content.
+@property(atomic) BOOL preventDisplay;
+
 // refresh current video picture and subtitle (when player paused change video pic preference, you can invoke this method)
 - (void)setNeedsRefreshCurrentPic;
 
@@ -135,8 +138,6 @@ typedef enum : NSUInteger {
 - (UIImage *)snapshot;
 #else
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
-// not render picture and subtitle,but holder overlay content.
-@property(atomic) BOOL preventDisplay;
 #endif
 
 @optional;//when isThirdGLView,will call display_pixels method.

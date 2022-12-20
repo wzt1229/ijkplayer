@@ -70,7 +70,8 @@
 @synthesize colorPreference = _colorPreference;
 // user defined display aspect ratio
 @synthesize darPreference = _darPreference;
-@synthesize preventDisplay;
+
+@synthesize preventDisplay = _preventDisplay;
 
 - (void)dealloc
 {
@@ -113,6 +114,10 @@
     return self;
 }
 
+#if TARGET_OS_IPHONE
+typedef CGRect NSRect;
+#endif
+
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
     self = [super initWithFrame:frameRect];
@@ -122,11 +127,19 @@
     return self;
 }
 
+#if TARGET_OS_IPHONE
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    _layerBounds = self.bounds;
+}
+#else
 - (void)layout
 {
     [super layout];
     _layerBounds = self.bounds;
 }
+#endif
 
 - (CGSize)computeNormalizedRatio:(CVPixelBufferRef)img
 {
@@ -255,8 +268,11 @@
     if (!pixelBuffer) {
         return;
     }
-    
+#if TARGET_OS_IPHONE
+    [self setNeedsDisplay];
+#else
     [self setNeedsDisplay:YES];
+#endif
 }
 
 - (void)encoderPictureAndSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder viewport:(CGSize)viewport
@@ -309,7 +325,7 @@
     [commandBuffer commit]; //
 }
 
-- (CGImageRef)snapshot
+- (CGImageRef)_snapshot
 {
     CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
     if (!pixelBuffer) {
@@ -335,7 +351,7 @@
         case IJKSDLSnapshot_Effect_Origin:
             return nil;
         case IJKSDLSnapshot_Effect_Subtitle_Origin:
-            return [self snapshot];
+            return [self _snapshot];
     }
 }
 
@@ -357,8 +373,11 @@
     int32_t bgrValue = sp.color;
     //以800为标准，定义出字幕字体默认大小为30pt
     float scale = 1.0;
+#if TARGET_OS_IPHONE
+    CGSize screenSize = [[UIScreen mainScreen]bounds].size;
+#else
     CGSize screenSize = [[NSScreen mainScreen]frame].size;
-    
+#endif
     NSInteger degrees = self.videoDegrees;
     if (degrees / 90 % 2 == 1) {
         scale = screenSize.height / 800.0;
@@ -575,6 +594,7 @@
     //renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0f);
 }
 
+#if TARGET_OS_OSX
 - (NSView *)hitTest:(NSPoint)point
 {
     return nil;
@@ -589,5 +609,10 @@
 {
     return YES;
 }
-
+#else
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
+{
+    return NO;
+}
+#endif
 @end

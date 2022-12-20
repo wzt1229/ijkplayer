@@ -19,8 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic) int  sar_num;
 @property(nonatomic) int  sar_den;
-@property(nonatomic) uint32 overlayFormat;
-@property(nonatomic) uint32 ffFormat;
+@property(nonatomic) unsigned int overlayFormat;
+@property(nonatomic) unsigned int ffFormat;
 @property(nonatomic) int zRotateDegrees;
 @property(nonatomic) int overlayH;
 @property(nonatomic) int overlayW;
