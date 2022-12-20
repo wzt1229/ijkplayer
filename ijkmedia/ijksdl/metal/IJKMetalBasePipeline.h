@@ -16,7 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface IJKMetalBasePipeline : NSObject
 
 @property (nonatomic, assign) IJKYUVToRGBMatrixType convertMatrixType;
+//current viewport,may not equal to drawable size.
 @property (nonatomic, assign) CGSize viewport;
+@property (nonatomic, assign) CGSize drawableSize;
 @property (nonatomic, assign) float subtitleBottomMargin;
 
 //subclass override!

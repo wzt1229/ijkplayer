@@ -193,7 +193,6 @@
     self.mvp = mvp;
 }
 
-
 - (void)updateColorAdjustment:(vector_float4)c
 {
     _colorAdjustment = c;
@@ -298,17 +297,23 @@
     
     [encoder setTexture:_subTexture
                 atIndex:IJKFragmentTextureIndexTextureSub]; // 设置纹理
-    //
-    float width = self.viewport.width;
+    //截图的时候，按照画面实际大小截取的，显示的时候通常是 retain 屏幕，所以 scale 通常会小于 1；
+    //没有这个scale的话，字幕可能会超出画面，位置跟观看时不一致。
+    float scale = self.viewport.width / self.drawableSize.width;
+    float swidth  = _subTexture.width  * scale;
+    float sheight = _subTexture.height * scale;
+    
+    float width  = self.viewport.width;
     float height = self.viewport.height;
-    float y = self.subtitleBottomMargin * (height - _subTexture.height) / height;
+    float y = self.subtitleBottomMargin * (height - sheight) / height;
+    
     if (width != 0 && height != 0) {
         IJKSubtitleArguments subRect = {
             1,
-            (float)((width - _subTexture.width) / width / 2.0),
+            (float)((width - swidth) / width / 2.0),
             y,
-            (float)(_subTexture.width / width),
-            (float)(_subTexture.height / height)
+            (float)(swidth / width),
+            (float)(sheight / height)
         };
         *rect = subRect;
     }

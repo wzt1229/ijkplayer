@@ -9,18 +9,15 @@
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
-@protocol MTLDevice;
-@class MTLRenderPassDescriptor;
+@protocol MTLDevice,MTLCommandBuffer,MTLRenderCommandEncoder;
 @import CoreGraphics;
 
 @interface IJKMetalOffscreenRendering : NSObject
 
-- (BOOL)canReuse:(CGSize)size;
-
-- (MTLRenderPassDescriptor *)offscreenRender:(CGSize)size
-                                      device:(id<MTLDevice>)device;
-
-- (CGImageRef)snapshot;
+- (CGImageRef)snapshot:(CVPixelBufferRef)pixelBuffer
+                device:(id <MTLDevice>)device
+         commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+       doUploadPicture:(void(^)(id<MTLRenderCommandEncoder>,CGSize viewport))block;
 
 @end
 

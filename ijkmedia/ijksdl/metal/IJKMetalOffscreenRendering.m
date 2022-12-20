@@ -11,21 +11,22 @@
 @import CoreVideo;
 @import CoreImage;
 
-@interface IJKMetalOffscreenRendering ()
+
+@interface IJKRenderPassDescriptor : NSObject
 {
     CVPixelBufferRef _pixelBuffer;
     MTLRenderPassDescriptor* _passDescriptor;
 }
 @end
 
-@implementation IJKMetalOffscreenRendering
+@implementation IJKRenderPassDescriptor
 
 - (void)dealloc
 {
     CVPixelBufferRelease(_pixelBuffer);
 }
 
-- (CVPixelBufferRef)createCVPixelBufferWithSize:(CGSize)size
++ (CVPixelBufferRef)createCVPixelBufferWithSize:(CGSize)size
 {
     CVPixelBufferRef pixelBuffer;
     NSDictionary* cvBufferProperties = @{
@@ -50,7 +51,7 @@
 /**
  Create a Metal texture from the CoreVideo pixel buffer using the following steps, and as annotated in the code listings below:
  */
-- (id <MTLTexture>)createMetalTextureFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
++ (id <MTLTexture>)createMetalTextureFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                 device:(id<MTLDevice>)device
 {
     CVMetalTextureCacheRef textureCache;
@@ -99,9 +100,33 @@
     return metalTexture;
 }
 
++ (MTLRenderPassDescriptor *)renderPassDescriptor:(id<MTLDevice>)device
+                                      pixelBuffer:(CVPixelBufferRef)pixelBuffer
+{
+    id<MTLTexture> renderTargetTexture = [self createMetalTextureFromCVPixelBuffer:pixelBuffer device:device];
+    MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor new];
+    passDescriptor.colorAttachments[0].texture = renderTargetTexture;
+    passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+    passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(1, 1, 1, 1);
+    passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+    return passDescriptor;
+}
+
+- (MTLRenderPassDescriptor *)preparePassDescriptor:(CGSize)size device:(id<MTLDevice>)device
+{
+    if (!_passDescriptor) {
+        // Texture to render to and then sample from.
+        if (!_pixelBuffer) {
+            _pixelBuffer = [[self class] createCVPixelBufferWithSize:size];
+        }
+        _passDescriptor = [[self class]renderPassDescriptor:device pixelBuffer:_pixelBuffer];
+    }
+    return _passDescriptor;
+}
+
 - (BOOL)canReuse:(CGSize)size
 {
-    if (_pixelBuffer) {
+    if (_pixelBuffer && _passDescriptor) {
         int width  = (int)CVPixelBufferGetWidth(_pixelBuffer);
         int height = (int)CVPixelBufferGetHeight(_pixelBuffer);
         if (width == (int)size.width && height == (int)size.height) {
@@ -111,33 +136,24 @@
     return NO;
 }
 
-- (MTLRenderPassDescriptor *)offscreenRender:(CGSize)size
-                                      device:(id<MTLDevice>)device
+- (CVPixelBufferRef)pixelBuffer
 {
-    if (!_passDescriptor) {
-        
-        // Texture to render to and then sample from.
-        
-        if (!_pixelBuffer) {
-            _pixelBuffer = [self createCVPixelBufferWithSize:size];
-        }
-        
-        id<MTLTexture> renderTargetTexture = [self createMetalTextureFromCVPixelBuffer:_pixelBuffer device:device];
-        
-        MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor new];
-        passDescriptor.colorAttachments[0].texture = renderTargetTexture;
-        passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-        passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(1, 1, 1, 1);
-        passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-        
-        _passDescriptor = passDescriptor;
-    }
-    return _passDescriptor;
+    return _pixelBuffer;
 }
+
+@end
+
+@interface IJKMetalOffscreenRendering ()
+{
+    IJKRenderPassDescriptor* _passDescriptor;
+}
+@end
+
+@implementation IJKMetalOffscreenRendering
 
 - (CGImageRef)snapshot
 {
-    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(_pixelBuffer);
+    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain([_passDescriptor pixelBuffer]);
     CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
     
     static CIContext *context = nil;
@@ -152,4 +168,43 @@
     return imageRef ? (CGImageRef)CFAutorelease(imageRef) : NULL;
 }
 
+- (CGImageRef)snapshot:(CVPixelBufferRef)pixelBuffer
+                device:(id <MTLDevice>)device
+         commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+       doUploadPicture:(void(^)(id<MTLRenderCommandEncoder>,CGSize viewport))block
+{
+    if (!pixelBuffer) {
+        return NULL;
+    }
+    
+    int width  = (int)CVPixelBufferGetWidth(pixelBuffer);
+    int height = (int)CVPixelBufferGetHeight(pixelBuffer);
+    
+    CGSize targetSize = CGSizeMake(width, height);
+    
+    if (![_passDescriptor canReuse:targetSize]) {
+        _passDescriptor = [IJKRenderPassDescriptor alloc];
+    }
+    
+    MTLRenderPassDescriptor * passDescriptor = [_passDescriptor preparePassDescriptor:targetSize device:device];
+    
+    if (!passDescriptor) {
+        return NULL;
+    }
+    
+    id<MTLRenderCommandEncoder> renderEncoder =
+        [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+    
+    if (!renderEncoder) {
+        return NULL;
+    }
+    
+    if (block) {
+        block(renderEncoder,targetSize);
+    }
+
+    [commandBuffer commit];
+    
+    return [self snapshot];
+}
 @end

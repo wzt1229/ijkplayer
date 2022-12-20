@@ -187,8 +187,11 @@
     return normalizedSamplingSize;
 }
 
-- (void)setupPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
+- (BOOL)setupPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
 {
+    if (!pixelBuffer) {
+        return NO;
+    }
     Class clazz = NULL;
     OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
     if (type == kCVPixelFormatType_32BGRA) {
@@ -209,20 +212,23 @@
     //    Cb Y'0 Cr Y'1 kCVPixelFormatType_422YpCbCr8
     
     if (clazz) {
-        [self setupPipelineWithClazz:clazz];
+        return [self setupPipelineWithClazz:clazz];
     }
+    return NO;
 }
 
-- (void)setupPipelineWithClazz:(Class)clazz
+- (BOOL)setupPipelineWithClazz:(Class)clazz
 {
     if (self.metalPipeline) {
         if ([self.metalPipeline class] != clazz) {
             NSAssert(NO, @"wrong pixel format:%@",NSStringFromClass(clazz));
+            return NO;
         } else {
-            return;
+            return YES;
         }
     }
     self.metalPipeline = [clazz new];
+    return !!self.metalPipeline;
 }
 
 - (void)displayAttach:(IJKMetalAttach *)attach
@@ -253,101 +259,72 @@
     [self setNeedsDisplay:YES];
 }
 
+- (void)encoderPictureAndSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder viewport:(CGSize)viewport
+{
+    // Set the region of the drawable to draw into.
+    [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}]; // 设置显示区域
+    
+    CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
+    
+    if ([self setupPipelineIfNeed:pixelBuffer]) {
+        self.metalPipeline.viewport = viewport;
+        self.metalPipeline.drawableSize = self.drawableSize;
+        self.metalPipeline.subtitleBottomMargin = self.subtitlePreference.bottomMargin;
+        [self createMVPIfNeed];
+        [self.metalPipeline updateMVP:self.mvp];
+        bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
+        [self.metalPipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust?1.0:0.0}];
+        CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
+        [self.metalPipeline updateVertexRatio:ratio device:self.device];
+        //upload textures
+        [self.metalPipeline uploadTextureWithEncoder:renderEncoder
+                                              buffer:pixelBuffer
+                                        textureCache:_metalTextureCache
+                                              device:self.device
+                                    colorPixelFormat:self.colorPixelFormat
+                                      subPixelBuffer:self.currentAttach.currentSubtitle];
+    }
+    [renderEncoder endEncoding];
+}
+
 /// Called whenever the view needs to render a frame.
 - (void)drawRect:(NSRect)dirtyRect
 {
-    // Create a new command buffer for each render pass to the current drawable.
-    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    commandBuffer.label = @"MyCommand";
     // Obtain a renderPassDescriptor generated from the view's drawable textures.
     MTLRenderPassDescriptor *renderPassDescriptor = self.currentRenderPassDescriptor;
     //MTLRenderPassDescriptor描述一系列attachments的值，类似GL的FrameBuffer；同时也用来创建MTLRenderCommandEncoder
-    if(renderPassDescriptor) {
-//        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0f); // 设置默认颜色
-        
-        // Create a render command encoder.
-        id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-        // Set the region of the drawable to draw into.
-        
-        [renderEncoder setViewport:(MTLViewport){0.0, 0.0, self.drawableSize.width, self.drawableSize.height, -1.0, 1.0 }]; // 设置显示区域
-        
-        CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
-        
-        if (pixelBuffer) {
-            [self setupPipelineIfNeed:pixelBuffer];
-            self.metalPipeline.viewport = self.drawableSize;
-            self.metalPipeline.subtitleBottomMargin = self.subtitlePreference.bottomMargin;
-            [self createMVPIfNeed];
-            [self.metalPipeline updateMVP:self.mvp];
-            bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
-            [self.metalPipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust?1.0:0.0}];
-            CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
-            [self.metalPipeline updateVertexRatio:ratio device:self.device];
-            //upload textures
-            [self.metalPipeline uploadTextureWithEncoder:renderEncoder
-                                                  buffer:pixelBuffer
-                                            textureCache:_metalTextureCache
-                                                  device:self.device
-                                        colorPixelFormat:self.colorPixelFormat
-                                          subPixelBuffer:self.currentAttach.currentSubtitle];
-        }
-        [renderEncoder endEncoding]; // 结束
-        // Schedule a present once the framebuffer is complete using the current drawable.
-        [commandBuffer presentDrawable:self.currentDrawable]; // 显示
+    if(!renderPassDescriptor) {
+        return;
     }
+        
+    // Create a new command buffer for each render pass to the current drawable.
+    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+    commandBuffer.label = @"MyCommand";
+    // Create a render command encoder.
+    id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    [self encoderPictureAndSubtitle:renderEncoder viewport:self.drawableSize];
+    // Schedule a present once the framebuffer is complete using the current drawable.
+    [commandBuffer presentDrawable:self.currentDrawable];
     // Finalize rendering here & push the command buffer to the GPU.
-    [commandBuffer commit]; // 提交；
+    [commandBuffer commit]; //
 }
 
 - (CGImageRef)snapshot
 {
     CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
     if (!pixelBuffer) {
-        return nil;
-    }
-    
-    int width  = (int)CVPixelBufferGetWidth(pixelBuffer);
-    int height = (int)CVPixelBufferGetHeight(pixelBuffer);
-    
-    CGSize targetSize = CGSizeMake(width, height);
-    
-    if (![self.offscreenRendering canReuse:targetSize]) {
-        self.offscreenRendering = [IJKMetalOffscreenRendering alloc];
-    }
-    
-    MTLRenderPassDescriptor * passDescriptor = [self.offscreenRendering offscreenRender:CGSizeMake(width, height) device:self.device];
-    if (!passDescriptor) {
         return NULL;
+    }
+    
+    if (!self.offscreenRendering) {
+        self.offscreenRendering = [IJKMetalOffscreenRendering alloc];
     }
     
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     
-    id<MTLRenderCommandEncoder> renderEncoder =
-        [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
-    
-    if (!renderEncoder) {
-        return NULL;
-    }
-    
-    // Set the region of the drawable to draw into.
-    [renderEncoder setViewport:(MTLViewport){0.0, 0.0, targetSize.width, targetSize.height, -1.0, 1.0}];
-    
-    [self.metalPipeline updateMVP:self.mvp];
-    
-    CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
-    [self.metalPipeline updateVertexRatio:ratio device:self.device];
-    //upload textures
-    [self.metalPipeline uploadTextureWithEncoder:renderEncoder
-                                          buffer:pixelBuffer
-                                    textureCache:_metalTextureCache
-                                          device:self.device
-                                colorPixelFormat:self.colorPixelFormat
-                                  subPixelBuffer:self.currentAttach.currentSubtitle];
-    
-    [renderEncoder endEncoding];
-    [commandBuffer commit];
-    
-    return [self.offscreenRendering snapshot];
+    return [self.offscreenRendering snapshot:pixelBuffer device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder, CGSize viewport) {
+        [self encoderPictureAndSubtitle:renderEncoder viewport:viewport];
+    }];
 }
 
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType
@@ -595,6 +572,7 @@
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b
 {
     self.clearColor = (MTLClearColor){r/255.0, g/255.0, b/255.0, 1.0f};
+    //renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0f);
 }
 
 - (NSView *)hitTest:(NSPoint)point
@@ -611,6 +589,5 @@
 {
     return YES;
 }
-
 
 @end
