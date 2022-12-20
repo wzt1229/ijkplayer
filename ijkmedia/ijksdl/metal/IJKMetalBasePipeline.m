@@ -11,6 +11,8 @@
 @interface IJKMetalBasePipeline()
 {
     vector_float4 _colorAdjustment;
+    // The Metal texture object to reference with an argument buffer.
+    id<MTLTexture> _subTexture;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
@@ -39,7 +41,6 @@
 {
     if (_convertMatrixType != convertMatrixType) {
         _convertMatrixType = convertMatrixType;
-        
     }
 }
 
@@ -210,6 +211,7 @@
                     textureCache:(CVMetalTextureCacheRef)textureCache
                           device:(id<MTLDevice>)device
                 colorPixelFormat:(MTLPixelFormat)colorPixelFormat
+                  subPixelBuffer:(CVPixelBufferRef)subPixelBuffer
 {
     NSAssert(self.vertices, @"you must update vertex ratio before call me.");
     // Pass in the parameter data.
@@ -231,11 +233,16 @@
     
     [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
     
-    IJKConvertMatrix * convertMatrix = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentConvertMatrix];
-    *convertMatrix = [self createMatrix:self.convertMatrixType];
-    convertMatrix->adjustment = _colorAdjustment;
-    
     [self doUploadTextureWithEncoder:_argumentEncoder buffer:pixelBuffer textureCache:textureCache];
+    
+    IJKSubtitleArguments subRect = {0};
+    [self uploadSubTextureWithEncoder:_argumentEncoder buffer:subPixelBuffer device:device rect:&subRect];
+    
+    IJKFragmentShaderData * data = (IJKFragmentShaderData *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
+    IJKConvertMatrix convertMatrix = [self createMatrix:self.convertMatrixType];
+    convertMatrix.adjustment = _colorAdjustment;
+    
+    *data = (IJKFragmentShaderData) {convertMatrix,subRect};
     
     [encoder setFragmentBuffer:_fragmentShaderArgumentBuffer
                         offset:0
@@ -248,6 +255,63 @@
     [encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip
                 vertexStart:0
                 vertexCount:self.numVertices]; // 绘制
+}
+
+- (void)uploadSubTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
+                             buffer:(CVPixelBufferRef)pixelBuff
+                             device:(id<MTLDevice>)device
+                               rect:(IJKSubtitleArguments *)rect
+{
+    if (!pixelBuff) {
+        return;
+    }
+    
+    CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
+    void *src = CVPixelBufferGetBaseAddress(pixelBuff);
+    
+    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+
+    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
+    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
+    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    
+    // Set the pixel dimensions of the texture
+    
+    textureDescriptor.width  = CVPixelBufferGetWidth(pixelBuff);
+    textureDescriptor.height = CVPixelBufferGetHeight(pixelBuff);
+    
+    // Create the texture from the device by using the descriptor
+    _subTexture = [device newTextureWithDescriptor:textureDescriptor];
+    
+    MTLRegion region = {
+        { 0, 0, 0 },                   // MTLOrigin
+        {CVPixelBufferGetWidth(pixelBuff), CVPixelBufferGetHeight(pixelBuff), 1} // MTLSize
+    };
+    
+    NSUInteger bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuff);
+    
+    [_subTexture replaceRegion:region
+                   mipmapLevel:0
+                     withBytes:src
+                   bytesPerRow:bytesPerRow];
+    CVPixelBufferUnlockBaseAddress(pixelBuff,  kCVPixelBufferLock_ReadOnly);
+    
+    [encoder setTexture:_subTexture
+                atIndex:IJKFragmentTextureIndexTextureSub]; // 设置纹理
+    //
+    float width = self.viewport.width;
+    float height = self.viewport.height;
+    float y = self.subtitleBottomMargin * (height - _subTexture.height) / height;
+    if (width != 0 && height != 0) {
+        IJKSubtitleArguments subRect = {
+            1,
+            (float)((width - _subTexture.width) / width / 2.0),
+            y,
+            (float)(_subTexture.width / width),
+            (float)(_subTexture.height / height)
+        };
+        *rect = subRect;
+    }
 }
 
 @end

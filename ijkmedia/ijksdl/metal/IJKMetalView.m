@@ -275,6 +275,8 @@
         
         if (pixelBuffer) {
             [self setupPipelineIfNeed:pixelBuffer];
+            self.metalPipeline.viewport = self.drawableSize;
+            self.metalPipeline.subtitleBottomMargin = self.subtitlePreference.bottomMargin;
             [self createMVPIfNeed];
             [self.metalPipeline updateMVP:self.mvp];
             bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
@@ -286,7 +288,8 @@
                                                   buffer:pixelBuffer
                                             textureCache:_metalTextureCache
                                                   device:self.device
-                                        colorPixelFormat:self.colorPixelFormat];
+                                        colorPixelFormat:self.colorPixelFormat
+                                          subPixelBuffer:self.currentAttach.currentSubtitle];
         }
         [renderEncoder endEncoding]; // 结束
         // Schedule a present once the framebuffer is complete using the current drawable.
@@ -338,7 +341,8 @@
                                           buffer:pixelBuffer
                                     textureCache:_metalTextureCache
                                           device:self.device
-                                colorPixelFormat:self.colorPixelFormat];
+                                colorPixelFormat:self.colorPixelFormat
+                                  subPixelBuffer:self.currentAttach.currentSubtitle];
     
     [renderEncoder endEncoding];
     [commandBuffer commit];
@@ -362,6 +366,75 @@
 {
     //use single global thread!
     // TODO here
+}
+
+- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle
+{
+    if (subtitle.length == 0) {
+        return NULL;
+    }
+    
+    IJKSDLSubtitlePreference sp = self.subtitlePreference;
+        
+    float ratio = sp.ratio;
+    int32_t bgrValue = sp.color;
+    //以800为标准，定义出字幕字体默认大小为30pt
+    float scale = 1.0;
+    CGSize screenSize = [[NSScreen mainScreen]frame].size;
+    
+    NSInteger degrees = self.videoDegrees;
+    if (degrees / 90 % 2 == 1) {
+        scale = screenSize.height / 800.0;
+    } else {
+        scale = screenSize.width / 800.0;
+    }
+    //字幕默认配置
+    NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
+    
+    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 60];
+    [attributes setObject:subtitleFont forKey:NSFontAttributeName];
+    
+    NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
+    
+    [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
+    
+    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes];
+    
+    return [textureString createPixelBuffer];
+}
+
+- (CVPixelBufferRef)_generateSubtitlePixelFromPicture:(IJKSDLSubtitle*)pict
+{
+    CVPixelBufferRef pixelBuffer = NULL;
+    NSDictionary *options = @{
+        (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
+        (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
+    };
+    
+    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict.w, pict.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
+    
+    NSParameterAssert(ret == kCVReturnSuccess && pixelBuffer != NULL);
+    
+    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
+    
+    uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
+    int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
+
+    uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
+    int dst_linesizes[4] = {linesize,0,0,0};
+
+    const uint8_t *src_data[4] = {pict.pixels,NULL,NULL,NULL};
+    const int src_linesizes[4] = {pict.w * 4,0,0,0};
+
+    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict.w, pict.h);
+    
+    CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
+    
+    if (kCVReturnSuccess == ret) {
+        return pixelBuffer;
+    } else {
+        return NULL;
+    }
 }
 
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
@@ -404,20 +477,20 @@
     CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
     attach.currentVideoPic = CVPixelBufferRetain(videoPic);
     
-//    //generate current subtitle.
-//    CVPixelBufferRef subRef = NULL;
-//    if (sub.text.length > 0) {
-//        subRef = [self _generateSubtitlePixel:sub.text];
-//    } else if (sub.pixels != NULL) {
-//        subRef = [self _generateSubtitlePixelFromPicture:sub];
-//    }
-//    attach.sub = sub;
-//    attach.currentSubtitle = subRef;
-//
-//    if (self.subtitlePreferenceChanged) {
-//        self.subtitlePreferenceChanged = NO;
-//    }
-//    //hold the attach as current.
+    //generate current subtitle.
+    CVPixelBufferRef subRef = NULL;
+    if (sub.text.length > 0) {
+        subRef = [self _generateSubtitlePixel:sub.text];
+    } else if (sub.pixels != NULL) {
+        subRef = [self _generateSubtitlePixelFromPicture:sub];
+    }
+    attach.sub = sub;
+    attach.currentSubtitle = subRef;
+
+    if (self.subtitlePreferenceChanged) {
+        self.subtitlePreferenceChanged = NO;
+    }
+    //hold the attach as current.
     
     [self displayAttach:attach];
 }
@@ -511,15 +584,9 @@
 
 - (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
 {
-    if (_subtitlePreference.bottomMargin != subtitlePreference.bottomMargin) {
-        _subtitlePreference = subtitlePreference;
-        // TODO here
-//        if (IJK_GLES2_Renderer_isValid(_renderer)) {
-//            IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
-//        }
-    }
-    
-    if (_subtitlePreference.ratio != subtitlePreference.ratio || _subtitlePreference.color != subtitlePreference.color) {
+    if (_subtitlePreference.ratio != subtitlePreference.ratio ||
+        _subtitlePreference.color != subtitlePreference.color ||
+        _subtitlePreference.bottomMargin != subtitlePreference.bottomMargin) {
         _subtitlePreference = subtitlePreference;
         self.subtitlePreferenceChanged = YES;
     }

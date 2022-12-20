@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface IJKMetalBasePipeline : NSObject
 
 @property (nonatomic, assign) IJKYUVToRGBMatrixType convertMatrixType;
+@property (nonatomic, assign) CGSize viewport;
+@property (nonatomic, assign) float subtitleBottomMargin;
 
 //subclass override!
 + (NSString *)fragmentFuctionName;
@@ -36,8 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
                           buffer:(CVPixelBufferRef)pixelBuffer
                     textureCache:(CVMetalTextureCacheRef)textureCache
                           device:(id<MTLDevice>)device
-                colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
-
+                colorPixelFormat:(MTLPixelFormat)colorPixelFormat
+                  subPixelBuffer:(CVPixelBufferRef)subPixelBuffer;
 @end
 
 NS_ASSUME_NONNULL_END

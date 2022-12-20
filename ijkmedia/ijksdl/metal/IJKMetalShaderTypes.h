@@ -40,14 +40,28 @@ typedef struct {
     vector_float4 adjustment;
 } IJKConvertMatrix;
 
+typedef struct IJKSubtitleArguments
+{
+    int on;
+    float x;
+    float y;
+    float w;
+    float h;
+}IJKSubtitleArguments;
+
+typedef struct IJKFragmentShaderData {
+    IJKConvertMatrix convertMatrix;
+    IJKSubtitleArguments subRect;
+}IJKFragmentShaderData;
+
 typedef enum IJKFragmentBufferArguments
 {
-    IJKFragmentTextureIndexType,
     IJKFragmentTextureIndexTextureY,
     IJKFragmentTextureIndexTextureU,
     IJKFragmentTextureIndexTextureV,
-    IJKFragmentConvertMatrix,
-    IJKFragmentColorAdjust
+    IJKFragmentTextureIndexTextureSub,
+    IJKFragmentDataIndex,
+    IJKFragmentSubtitleRect
 } IJKFragmentBufferArguments;
 
 typedef enum IJKFragmentBufferLocation
