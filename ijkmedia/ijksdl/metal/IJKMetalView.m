@@ -143,29 +143,42 @@ typedef CGRect NSRect;
 
 - (CGSize)computeNormalizedRatio:(CVPixelBufferRef)img
 {
+    CGRect layerRect = _layerBounds;
+    
     int frameWidth = (int)CVPixelBufferGetWidth(img);
     int frameHeight = (int)CVPixelBufferGetHeight(img);
     // Compute normalized quad coordinates to draw the frame into.
     CGSize normalizedSamplingSize = CGSizeMake(1.0, 1.0);
     
-    //apply user dar
-    if (self.darPreference.ratio > 0.001) {
-        int zDegrees = 0;
-        if (_rotatePreference.type == IJKSDLRotateZ) {
-            zDegrees += _rotatePreference.degrees;
-        }
-        zDegrees += self.currentAttach.zRotateDegrees;
-        
-        float darRatio = self.darPreference.ratio;
-        //when video's z rotate degrees is 90 odd multiple need swap user's ratio
-        if (abs(zDegrees) / 90 % 2 == 1) {
     //keep video AVRational
     if (self.currentAttach.sar_num > 0 && self.currentAttach.sar_den > 0) {
         frameWidth = 1.0 * self.currentAttach.sar_num / self.currentAttach.sar_den * frameWidth;
     }
+    
+    int zDegrees = 0;
+    if (_rotatePreference.type == IJKSDLRotateZ) {
+        zDegrees += _rotatePreference.degrees;
+    }
+    zDegrees += self.currentAttach.zRotateDegrees;
+    
+    float darRatio = self.darPreference.ratio;
+    
+    //when video's z rotate degrees is 90 odd multiple
+    if (abs(zDegrees) / 90 % 2 == 1) {
+        //need swap user's ratio
+        if (darRatio > 0.001) {
             darRatio = 1.0 / darRatio;
         }
-        
+        //need swap display size
+        CGSize layerSize = layerRect.size;
+        int tmp = layerSize.width;
+        layerSize.width = layerSize.height;
+        layerSize.height = tmp;
+        layerRect.size = layerSize;
+    }
+    
+    //apply user dar
+    if (darRatio > 0.001) {
         if (self.currentAttach.overlayW / self.currentAttach.overlayH > darRatio) {
             frameHeight = frameWidth * 1.0 / darRatio;
         } else {
@@ -175,9 +188,9 @@ typedef CGRect NSRect;
     
     if (_scalingMode == IJKMPMovieScalingModeAspectFit || _scalingMode == IJKMPMovieScalingModeFill) {
         // Set up the quad vertices with respect to the orientation and aspect ratio of the video.
-        CGRect vertexSamplingRect = AVMakeRectWithAspectRatioInsideRect(CGSizeMake(frameWidth, frameHeight), _layerBounds);
+        CGRect vertexSamplingRect = AVMakeRectWithAspectRatioInsideRect(CGSizeMake(frameWidth, frameHeight), layerRect);
         
-        CGSize cropScaleAmount = CGSizeMake(vertexSamplingRect.size.width/_layerBounds.size.width, vertexSamplingRect.size.height/_layerBounds.size.height);
+        CGSize cropScaleAmount = CGSizeMake(vertexSamplingRect.size.width/layerRect.size.width, vertexSamplingRect.size.height/layerRect.size.height);
         
         // hold max
         if (_scalingMode == IJKMPMovieScalingModeAspectFit) {

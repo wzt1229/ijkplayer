@@ -387,7 +387,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                     preference.degrees = 0;
                 }
                 self.player.view.rotatePreference = preference;
-                
+                if (!self.player.isPlaying) {
+                    [self.player.view setNeedsRefreshCurrentPic];
+                }
                 NSLog(@"rotate:%@ %d",@[@"X",@"Y",@"Z"][preference.type-1],(int)preference.degrees);
             }
                 break;
