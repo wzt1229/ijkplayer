@@ -110,9 +110,7 @@
     NSString *fragmentName = [[self class] fragmentFuctionName];
     
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
-    NSURL* bundleURL = [[bundle resourceURL] URLByAppendingPathComponent:@"IJKMetalShader.bundle"];
-    NSBundle* currentBundle = [NSBundle bundleWithURL: bundleURL];
-    NSURL * libURL = [currentBundle URLForResource:@"default" withExtension:@"metallib"];
+    NSURL * libURL = [bundle URLForResource:@"default" withExtension:@"metallib"];
     
     NSError *error;
     
