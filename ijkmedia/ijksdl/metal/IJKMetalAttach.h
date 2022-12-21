@@ -22,9 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic) unsigned int overlayFormat;
 @property(nonatomic) unsigned int ffFormat;
 @property(nonatomic) int zRotateDegrees;
-@property(nonatomic) int overlayH;
-@property(nonatomic) int overlayW;
-@property(nonatomic) int bufferW;
 @property(nonatomic) IJKSDLSubtitle *sub;
 
 @end

@@ -22,8 +22,6 @@
 #import "IJKMetalYUYV422Pipeline.h"
 #import "IJKMetalOffscreenRendering.h"
 
-#import "ijksdl_gles2.h"
-#import "ijksdl_vout_overlay_videotoolbox.h"
 #import "ijksdl_vout_ios_gles2.h"
 #import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
@@ -52,8 +50,6 @@
 @property(atomic) float displayScreenScale;
 //display window size / video size
 @property(atomic) float displayVideoScale;
-@property(atomic) GLint backingWidth;
-@property(atomic) GLint backingHeight;
 @property(atomic) BOOL subtitlePreferenceChanged;
 
 @end
@@ -179,7 +175,7 @@ typedef CGRect NSRect;
     
     //apply user dar
     if (darRatio > 0.001) {
-        if (self.currentAttach.overlayW / self.currentAttach.overlayH > darRatio) {
+        if (1.0 * CVPixelBufferGetWidth(img) / CVPixelBufferGetHeight(img) > darRatio) {
             frameHeight = frameWidth * 1.0 / darRatio;
         } else {
             frameWidth = frameHeight * darRatio;
@@ -197,8 +193,7 @@ typedef CGRect NSRect;
             if (cropScaleAmount.width > cropScaleAmount.height) {
                 normalizedSamplingSize.width = 1.0;
                 normalizedSamplingSize.height = cropScaleAmount.height/cropScaleAmount.width;
-            }
-            else {
+            } else {
                 normalizedSamplingSize.height = 1.0;
                 normalizedSamplingSize.width = cropScaleAmount.width/cropScaleAmount.height;
             }
@@ -207,8 +202,7 @@ typedef CGRect NSRect;
             if (cropScaleAmount.width > cropScaleAmount.height) {
                 normalizedSamplingSize.height = 1.0;
                 normalizedSamplingSize.width = cropScaleAmount.width/cropScaleAmount.height;
-            }
-            else {
+            } else {
                 normalizedSamplingSize.width = 1.0;
                 normalizedSamplingSize.height = cropScaleAmount.height/cropScaleAmount.width;
             }
@@ -501,9 +495,6 @@ typedef CGRect NSRect;
     attach.ffFormat = ff_format;
     attach.overlayFormat = overlay_format;
     attach.zRotateDegrees = overlay->auto_z_rotate_degrees;
-    attach.overlayW = overlay->w;
-    attach.overlayH = overlay->h;
-    attach.bufferW = SDL_VoutGetBufferWidth(overlay);
     //update video sar.
     if (overlay->sar_num > 0 && overlay->sar_den > 0) {
         attach.sar_num = overlay->sar_num;
