@@ -159,6 +159,10 @@ typedef CGRect NSRect;
         float darRatio = self.darPreference.ratio;
         //when video's z rotate degrees is 90 odd multiple need swap user's ratio
         if (abs(zDegrees) / 90 % 2 == 1) {
+    //keep video AVRational
+    if (self.currentAttach.sar_num > 0 && self.currentAttach.sar_den > 0) {
+        frameWidth = 1.0 * self.currentAttach.sar_num / self.currentAttach.sar_den * frameWidth;
+    }
             darRatio = 1.0 / darRatio;
         }
         
@@ -335,8 +339,12 @@ typedef CGRect NSRect;
     }
     
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    
-    return [self.offscreenRendering snapshot:pixelBuffer device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder, CGSize viewport) {
+    float dar = 1.0;
+    //keep video AVRational
+    if (self.currentAttach.sar_num > 0 && self.currentAttach.sar_den > 0) {
+        dar = 1.0 * self.currentAttach.sar_num / self.currentAttach.sar_den;
+    }
+    return [self.offscreenRendering snapshot:pixelBuffer dar:dar device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder, CGSize viewport) {
         [self encoderPictureAndSubtitle:renderEncoder viewport:viewport];
     }];
 }

@@ -169,6 +169,7 @@
 }
 
 - (CGImageRef)snapshot:(CVPixelBufferRef)pixelBuffer
+                   dar:(float)dar
                 device:(id <MTLDevice>)device
          commandBuffer:(id<MTLCommandBuffer>)commandBuffer
        doUploadPicture:(void(^)(id<MTLRenderCommandEncoder>,CGSize viewport))block
@@ -180,6 +181,7 @@
     int width  = (int)CVPixelBufferGetWidth(pixelBuffer);
     int height = (int)CVPixelBufferGetHeight(pixelBuffer);
     
+    width = width * dar;
     CGSize targetSize = CGSizeMake(width, height);
     
     if (![_passDescriptor canReuse:targetSize]) {
