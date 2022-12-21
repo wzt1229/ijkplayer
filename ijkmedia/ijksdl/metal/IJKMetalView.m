@@ -240,7 +240,7 @@ typedef CGRect NSRect;
             return YES;
         }
     }
-    self.metalPipeline = [clazz new];
+    self.metalPipeline = [[clazz alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
     return !!self.metalPipeline;
 }
 
@@ -291,13 +291,11 @@ typedef CGRect NSRect;
         bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
         [self.metalPipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust?1.0:0.0}];
         CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
-        [self.metalPipeline updateVertexRatio:ratio device:self.device];
+        [self.metalPipeline updateVertexRatio:ratio];
         //upload textures
         [self.metalPipeline uploadTextureWithEncoder:renderEncoder
                                               buffer:pixelBuffer
                                         textureCache:_metalTextureCache
-                                              device:self.device
-                                    colorPixelFormat:self.colorPixelFormat
                                       subPixelBuffer:self.currentAttach.currentSubtitle];
     }
     [renderEncoder endEncoding];
@@ -357,6 +355,10 @@ typedef CGRect NSRect;
 
 - (void)setNeedsRefreshCurrentPic
 {
+    if (self.subtitlePreferenceChanged) {
+        self.subtitlePreferenceChanged = NO;
+        [self generateSub:self.currentAttach];
+    }
 #if TARGET_OS_IPHONE
     [self setNeedsDisplay];
 #else
@@ -436,6 +438,20 @@ typedef CGRect NSRect;
     }
 }
 
+- (void)generateSub:(IJKMetalAttach *)attach
+{
+    CVPixelBufferRef subRef = NULL;
+    IJKSDLSubtitle *sub = attach.sub;
+    if (sub) {
+        if (sub.text.length > 0) {
+            subRef = [self _generateSubtitlePixel:sub.text];
+        } else if (sub.pixels != NULL) {
+            subRef = [self _generateSubtitlePixelFromPicture:sub];
+        }
+    }
+    attach.currentSubtitle = subRef;
+}
+
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
 {
     if (!overlay) {
@@ -477,20 +493,13 @@ typedef CGRect NSRect;
     attach.currentVideoPic = CVPixelBufferRetain(videoPic);
     
     //generate current subtitle.
-    CVPixelBufferRef subRef = NULL;
-    if (sub.text.length > 0) {
-        subRef = [self _generateSubtitlePixel:sub.text];
-    } else if (sub.pixels != NULL) {
-        subRef = [self _generateSubtitlePixelFromPicture:sub];
-    }
     attach.sub = sub;
-    attach.currentSubtitle = subRef;
+    [self generateSub:attach];
 
     if (self.subtitlePreferenceChanged) {
         self.subtitlePreferenceChanged = NO;
     }
     //hold the attach as current.
-    
     [self displayAttach:attach];
 }
 

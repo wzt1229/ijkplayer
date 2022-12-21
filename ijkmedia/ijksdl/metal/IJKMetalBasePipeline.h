@@ -24,8 +24,10 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 //subclass override!
 + (NSString *)fragmentFuctionName;
 
-- (void)updateVertexRatio:(CGSize)ratio
-                   device:(id<MTLDevice>)device;
+- (instancetype)initWithDevice:(id<MTLDevice>)device
+              colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
+
+- (void)updateVertexRatio:(CGSize)ratio;
 
 - (void)updateMVP:(id<MTLBuffer>)mvp;
 
@@ -38,8 +40,6 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer
                     textureCache:(CVMetalTextureCacheRef)textureCache
-                          device:(id<MTLDevice>)device
-                colorPixelFormat:(MTLPixelFormat)colorPixelFormat
                   subPixelBuffer:(CVPixelBufferRef)subPixelBuffer;
 @end
 
