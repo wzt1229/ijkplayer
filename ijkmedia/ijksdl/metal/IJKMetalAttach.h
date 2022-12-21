@@ -14,8 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface IJKMetalAttach : NSObject
 
-@property(atomic) CVPixelBufferRef currentVideoPic;
-@property(atomic) CVPixelBufferRef currentSubtitle;
+@property(atomic,nullable) CVPixelBufferRef currentVideoPic;
+@property(atomic,nullable) CVPixelBufferRef currentSubtitle;
 
 @property(nonatomic) int  sar_num;
 @property(nonatomic) int  sar_den;

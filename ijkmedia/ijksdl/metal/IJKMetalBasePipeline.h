@@ -12,7 +12,7 @@
 #import "IJKMetalShaderTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
+NS_CLASS_AVAILABLE(10_13, 11_0)
 @interface IJKMetalBasePipeline : NSObject
 
 @property (nonatomic, assign) IJKYUVToRGBMatrixType convertMatrixType;
@@ -32,9 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)updateColorAdjustment:(vector_float4)c;
 
 //subclass override!
-- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
-                            buffer:(CVPixelBufferRef)pixelBuffer
-                      textureCache:(CVMetalTextureCacheRef)textureCache;
+- (NSArray<id<MTLTexture>>*)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
+                                 textureCache:(CVMetalTextureCacheRef)textureCache;
 
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer

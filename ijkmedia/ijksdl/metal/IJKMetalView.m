@@ -357,8 +357,11 @@ typedef CGRect NSRect;
 
 - (void)setNeedsRefreshCurrentPic
 {
-    //use single global thread!
-    // TODO here
+#if TARGET_OS_IPHONE
+    [self setNeedsDisplay];
+#else
+    [self setNeedsDisplay:YES];
+#endif
 }
 
 - (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle

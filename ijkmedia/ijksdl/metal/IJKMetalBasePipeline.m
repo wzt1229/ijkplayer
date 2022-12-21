@@ -196,11 +196,10 @@
     _colorAdjustment = c;
 }
 
-- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
-                            buffer:(CVPixelBufferRef)pixelBuffer
-                      textureCache:(CVMetalTextureCacheRef)textureCache
+- (NSArray<id<MTLTexture>>*)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
+                                 textureCache:(CVMetalTextureCacheRef)textureCache
 {
-    
+    return nil;
 }
 
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
@@ -230,10 +229,35 @@
     
     [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
     
-    [self doUploadTextureWithEncoder:_argumentEncoder buffer:pixelBuffer textureCache:textureCache];
+    NSArray<id<MTLTexture>>*textures = [self doGenerateTexture:pixelBuffer textureCache:textureCache];
+    
+    for (int i = 0; i < [textures count]; i++) {
+        id<MTLTexture>t = textures[i];
+        [_argumentEncoder setTexture:t
+                             atIndex:IJKFragmentTextureIndexTextureY + i]; // 设置纹理
+        
+        // Indicate to Metal that the GPU accesses these resources, so they need
+        // to map to the GPU's address space.
+        if (@available(macOS 10.15, *)) {
+            [encoder useResource:t usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
+        } else {
+            // Fallback on earlier versions
+            [encoder useResource:t usage:MTLResourceUsageRead];
+        }
+    }
     
     IJKSubtitleArguments subRect = {0};
-    [self uploadSubTextureWithEncoder:_argumentEncoder buffer:subPixelBuffer device:device rect:&subRect];
+    [self doGenerateSubTexture:subPixelBuffer device:device rect:&subRect];
+    
+    [_argumentEncoder setTexture:_subTexture
+                         atIndex:IJKFragmentTextureIndexTextureSub]; // 设置纹理
+    
+    if (@available(macOS 10.15, *)) {
+        [encoder useResource:_subTexture usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
+    } else {
+        // Fallback on earlier versions
+        [encoder useResource:_subTexture usage:MTLResourceUsageRead];
+    }
     
     IJKFragmentShaderData * data = (IJKFragmentShaderData *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
     IJKConvertMatrix convertMatrix = [self createMatrix:self.convertMatrixType];
@@ -254,10 +278,9 @@
                 vertexCount:self.numVertices]; // 绘制
 }
 
-- (void)uploadSubTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
-                             buffer:(CVPixelBufferRef)pixelBuff
-                             device:(id<MTLDevice>)device
-                               rect:(IJKSubtitleArguments *)rect
+- (void)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
+                      device:(id<MTLDevice>)device
+                        rect:(IJKSubtitleArguments *)rect
 {
     if (!pixelBuff) {
         return;
@@ -293,8 +316,6 @@
                    bytesPerRow:bytesPerRow];
     CVPixelBufferUnlockBaseAddress(pixelBuff,  kCVPixelBufferLock_ReadOnly);
     
-    [encoder setTexture:_subTexture
-                atIndex:IJKFragmentTextureIndexTextureSub]; // 设置纹理
     //截图的时候，按照画面实际大小截取的，显示的时候通常是 retain 屏幕，所以 scale 通常会小于 1；
     //没有这个scale的话，字幕可能会超出画面，位置跟观看时不一致。
     float scale = self.viewport.width / self.drawableSize.width;

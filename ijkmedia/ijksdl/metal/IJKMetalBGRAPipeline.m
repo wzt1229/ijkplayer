@@ -15,9 +15,8 @@
     return @"bgraFragmentShader";
 }
 
-- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
-                            buffer:(CVPixelBufferRef)pixelBuffer
-                      textureCache:(CVMetalTextureCacheRef)textureCache
+- (NSArray<id<MTLTexture>>*)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
+                                 textureCache:(CVMetalTextureCacheRef)textureCache
 {
     id<MTLTexture> textureY = nil;
     
@@ -38,8 +37,9 @@
     CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
     
     if (textureY != nil) {
-        [encoder setTexture:textureY
-                    atIndex:IJKFragmentTextureIndexTextureY]; // 设置纹理
+        return @[textureY];
+    } else {
+        return nil;
     }
 }
 

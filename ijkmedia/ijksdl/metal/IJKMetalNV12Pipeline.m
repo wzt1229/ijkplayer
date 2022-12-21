@@ -21,9 +21,8 @@
     return @"nv12FragmentShader";
 }
 
-- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
-                            buffer:(CVPixelBufferRef)pixelBuffer
-                      textureCache:(CVMetalTextureCacheRef)textureCache
+- (NSArray<id<MTLTexture>>*)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
+                             textureCache:(CVMetalTextureCacheRef)textureCache
 {
     id<MTLTexture> textureY = nil;
     id<MTLTexture> textureUV = nil;
@@ -59,13 +58,6 @@
     
     CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
     
-    if (textureY != nil && textureUV != nil) {
-        [encoder setTexture:textureY
-                    atIndex:IJKFragmentTextureIndexTextureY]; // 设置纹理
-        [encoder setTexture:textureUV
-                    atIndex:IJKFragmentTextureIndexTextureU]; // 设置纹理
-    }
-    
     if (!self.convertMatrix) {
         OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
         CFTypeRef color_attachments = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
@@ -75,6 +67,10 @@
             self.convertMatrixType = type ==  kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange ? IJKYUVToRGBBT709VideoRangeMatrix : IJKYUVToRGBBT709FullRangeMatrix;
         }
     }
+    if (textureY != nil && textureUV != nil) {
+        return @[textureY,textureUV];
+    }
+    return nil;
 }
 
 @end

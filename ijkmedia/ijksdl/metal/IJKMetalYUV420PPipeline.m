@@ -15,10 +15,11 @@
     return @"yuv420pFragmentShader";
 }
 
-- (void)doUploadTextureWithEncoder:(id<MTLArgumentEncoder>)encoder
-                            buffer:(CVPixelBufferRef)pixelBuffer
-                      textureCache:(CVMetalTextureCacheRef)textureCache
+- (NSArray<id<MTLTexture>>*)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
+                                 textureCache:(CVMetalTextureCacheRef)textureCache
 {
+    NSMutableArray *result = [NSMutableArray array];
+    
     OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
     NSAssert((type == kCVPixelFormatType_420YpCbCr8PlanarFullRange || type ==  kCVPixelFormatType_420YpCbCr8Planar), @"wrong pixel format type, must be yuv420p.");
     
@@ -32,11 +33,10 @@
         CVReturn status = CVMetalTextureCacheCreateTextureFromImage(NULL, textureCache, pixelBuffer, NULL, MTLPixelFormatR8Unorm, width, height, i, &textureRef);
         if (status == kCVReturnSuccess) {
             id<MTLTexture> texture = CVMetalTextureGetTexture(textureRef); // 转成Metal用的纹理
-            CFRelease(textureRef);
             if (texture != nil) {
-                [encoder setTexture:texture
-                            atIndex:IJKFragmentTextureIndexTextureY + i]; // 设置纹理
+                [result addObject:texture];
             }
+            CFRelease(textureRef);
         }
     }
 
@@ -48,6 +48,7 @@
     } else {
         self.convertMatrixType = IJKYUVToRGBBT709FullRangeMatrix;
     }
+    return result;
 }
 
 @end
