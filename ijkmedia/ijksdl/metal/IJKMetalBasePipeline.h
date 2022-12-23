@@ -18,18 +18,16 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 @property (nonatomic, assign) IJKYUVToRGBMatrixType convertMatrixType;
 //current viewport,may not equal to drawable size.
 @property (nonatomic, assign) CGSize viewport;
-@property (nonatomic, assign) CGSize drawableSize;
-@property (nonatomic, assign) float subtitleBottomMargin;
+@property (nonatomic, assign) float rotateDegrees;
+@property (nonatomic, assign) int rotateType;//x:1,y:2,z:3
+@property (nonatomic, assign) float autoZRotateDegrees;
+@property (nonatomic, assign) CGSize vertexRatio;
 
 //subclass override!
 + (NSString *)fragmentFuctionName;
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
-
-- (void)updateVertexRatio:(CGSize)ratio;
-
-- (void)updateMVP:(id<MTLBuffer>)mvp;
 
 - (void)updateColorAdjustment:(vector_float4)c;
 
@@ -39,8 +37,7 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer
-                    textureCache:(CVMetalTextureCacheRef)textureCache
-                  subPixelBuffer:(CVPixelBufferRef)subPixelBuffer;
+                    textureCache:(CVMetalTextureCacheRef)textureCache;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -107,7 +107,7 @@
     MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor new];
     passDescriptor.colorAttachments[0].texture = renderTargetTexture;
     passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-    passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(1, 1, 1, 1);
+    passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1);
     passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
     return passDescriptor;
 }
@@ -119,7 +119,7 @@
         if (!_pixelBuffer) {
             _pixelBuffer = [[self class] createCVPixelBufferWithSize:size];
         }
-        _passDescriptor = [[self class]renderPassDescriptor:device pixelBuffer:_pixelBuffer];
+        _passDescriptor = [[self class] renderPassDescriptor:device pixelBuffer:_pixelBuffer];
     }
     return _passDescriptor;
 }
@@ -169,20 +169,14 @@
 }
 
 - (CGImageRef)snapshot:(CVPixelBufferRef)pixelBuffer
-                   dar:(float)dar
+            targetSize:(CGSize)targetSize
                 device:(id <MTLDevice>)device
          commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-       doUploadPicture:(void(^)(id<MTLRenderCommandEncoder>,CGSize viewport))block
+       doUploadPicture:(void(^)(id<MTLRenderCommandEncoder>))block
 {
     if (!pixelBuffer) {
         return NULL;
     }
-    
-    int width  = (int)CVPixelBufferGetWidth(pixelBuffer);
-    int height = (int)CVPixelBufferGetHeight(pixelBuffer);
-    
-    width = width * dar;
-    CGSize targetSize = CGSizeMake(width, height);
     
     if (![_passDescriptor canReuse:targetSize]) {
         _passDescriptor = [IJKRenderPassDescriptor alloc];
@@ -202,11 +196,11 @@
     }
     
     if (block) {
-        block(renderEncoder,targetSize);
+        block(renderEncoder);
     }
-
+    [renderEncoder endEncoding];
     [commandBuffer commit];
-    
+    [commandBuffer waitUntilCompleted];
     return [self snapshot];
 }
 @end

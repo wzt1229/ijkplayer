@@ -7,6 +7,7 @@
 //
 
 #import "IJKMetalBasePipeline.h"
+#import "IJKMathUtilities.h"
 
 @interface IJKMetalBasePipeline()
 {
@@ -20,14 +21,15 @@
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
 @property (nonatomic, strong) id<MTLRenderPipelineState> renderPipeline;
 @property (nonatomic, strong) id<MTLBuffer> vertices;
+@property (nonatomic, strong) id<MTLBuffer> subVertices;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
 //@property (nonatomic, strong) id<MTLBuffer> rgbAdjustment;
 // The buffer that contains arguments for the fragment shader.
 @property (nonatomic, strong) id<MTLBuffer> fragmentShaderArgumentBuffer;
 @property (nonatomic, strong) id <MTLArgumentEncoder> argumentEncoder;
 
-@property (nonatomic, assign) NSUInteger numVertices;
-@property (nonatomic, assign) CGSize vertexRatio;
+@property (nonatomic, assign) BOOL vertexChanged;
+@property (nonatomic, assign) BOOL subtitleVertexChanged;
 
 @end
 
@@ -169,16 +171,53 @@
     self.renderPipeline = pipelineState;
 }
 
-- (void)updateVertexRatio:(CGSize)ratio
+- (void)setVertexRatio:(CGSize)vertexRatio
 {
-    if (self.vertices && CGSizeEqualToSize(self.vertexRatio, ratio)) {
+    if (!CGSizeEqualToSize(self.vertexRatio, vertexRatio)) {
+        _vertexRatio = vertexRatio;
+        self.vertexChanged = YES;
+    }
+}
+
+- (void)setRotateType:(int)rotateType
+{
+    if (_rotateType != rotateType) {
+        _rotateType = rotateType;
+        self.vertexChanged = YES;
+    }
+}
+
+- (void)setRotateDegrees:(float)rotateDegrees
+{
+    if (_rotateDegrees != rotateDegrees) {
+        _rotateDegrees = rotateDegrees;
+        self.vertexChanged = YES;
+    }
+}
+
+- (void)setAutoZRotateDegrees:(float)autoZRotateDegrees
+{
+    if (_autoZRotateDegrees != autoZRotateDegrees) {
+        _autoZRotateDegrees = autoZRotateDegrees;
+        self.vertexChanged = YES;
+    }
+}
+
+- (void)updateColorAdjustment:(vector_float4)c
+{
+    _colorAdjustment = c;
+}
+
+- (void)updateVertexIfNeed
+{
+    if (!self.vertexChanged) {
         return;
     }
     
-    self.vertexRatio = ratio;
+    self.vertexChanged = NO;
     
-    float x = ratio.width;
-    float y = ratio.height;
+    float x = self.vertexRatio.width;
+    float y = self.vertexRatio.height;
     /*
      triangle strip
        ^+
@@ -189,7 +228,7 @@
      -->V2V3V4
      */
 
-    const IJKVertex quadVertices[] =
+    IJKVertex quadVertices[4] =
     {   // 顶点坐标，分别是x、y、z、w；    纹理坐标，x、y；
         { { -1.0 * x, -1.0 * y, 0.0, 1.0 },  { 0.f, 1.f } },
         { {  1.0 * x, -1.0 * y, 0.0, 1.0 },  { 1.f, 1.f } },
@@ -197,107 +236,98 @@
         { {  1.0 * x,  1.0 * y, 0.0, 1.0 },  { 1.f, 0.f } },
     };
     
-    self.vertices = [_device newBufferWithBytes:quadVertices
-                                         length:sizeof(quadVertices)
+    /// These are the view and projection transforms.
+    matrix_float4x4 viewMatrix;
+    
+    float radian = radians_from_degrees(self.rotateDegrees);
+    switch (self.rotateType) {
+        case 1:
+        {
+            viewMatrix = matrix4x4_rotation(radian, 1.0, 0.0, 0.0);
+        }
+            break;
+        case 2:
+        {
+            viewMatrix = matrix4x4_rotation(radian, 0.0, 1.0, 0.0);
+        }
+            break;
+        case 3:
+        {
+            viewMatrix = matrix4x4_rotation(radian, 0.0, 0.0, 1.0);
+        }
+            break;
+        default:
+        {
+            viewMatrix = matrix4x4_identity();
+        }
+            break;
+    }
+    
+    if (self.autoZRotateDegrees != 0) {
+        float zRadin = radians_from_degrees(self.autoZRotateDegrees);
+        viewMatrix = matrix_multiply(matrix4x4_rotation(zRadin, 0.0, 0.0, 1.0),viewMatrix);
+    }
+    
+    IJKVertexData data = {quadVertices[0],quadVertices[1],quadVertices[2],quadVertices[3],viewMatrix};
+    self.vertices = [_device newBufferWithBytes:&data
+                                         length:sizeof(data)
                                         options:MTLResourceStorageModeShared]; // 创建顶点缓存
-    self.numVertices = sizeof(quadVertices) / sizeof(IJKVertex); // 顶点个数
 }
 
-- (void)updateMVP:(id<MTLBuffer>)mvp
+- (void)updateSubtitleVertexIfNeed:(CGRect)rect
 {
-    self.mvp = mvp;
-}
-
-- (void)updateColorAdjustment:(vector_float4)c
-{
-    _colorAdjustment = c;
-}
-
-- (NSArray<id<MTLTexture>>*)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
-                                 textureCache:(CVMetalTextureCacheRef)textureCache
-{
-    return nil;
-}
-
-- (void)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
-                      device:(id<MTLDevice>)device
-                        rect:(IJKSubtitleArguments *)rect
-{
-    if (!pixelBuff) {
+    if (!self.subtitleVertexChanged) {
         return;
     }
     
-    CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-    void *src = CVPixelBufferGetBaseAddress(pixelBuff);
+    self.subtitleVertexChanged = NO;
     
-    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+    float x = rect.origin.x;
+    float y = rect.origin.y;
+    float w = rect.size.width;
+    float h = rect.size.height;
+    /*
+     triangle strip
+       ^+
+     V3|V4
+     --|--->+
+     V1|V2
+     -->V1V2V3
+     -->V2V3V4
+     */
 
-    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
-    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
-    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
-    
-    // Set the pixel dimensions of the texture
-    
-    textureDescriptor.width  = CVPixelBufferGetWidth(pixelBuff);
-    textureDescriptor.height = CVPixelBufferGetHeight(pixelBuff);
-    
-    // Create the texture from the device by using the descriptor
-    _subTexture = [device newTextureWithDescriptor:textureDescriptor];
-    
-    MTLRegion region = {
-        { 0, 0, 0 },                   // MTLOrigin
-        {CVPixelBufferGetWidth(pixelBuff), CVPixelBufferGetHeight(pixelBuff), 1} // MTLSize
+    IJKVertex quadVertices[4] =
+    {   // 顶点坐标，分别是x、y、z、w；    纹理坐标，x、y；
+        { { x, y, 0.0, 1.0 },  { 0.f, 1.f } },
+        { { x + w, y, 0.0, 1.0 },  { 1.f, 1.f } },
+        { { x, y + h, 0.0, 1.0 },  { 0.f, 0.f } },
+        { { x + w, y, 0.0, 1.0 },  { 1.f, 0.f } },
     };
     
-    NSUInteger bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuff);
+    /// These are the view and projection transforms.
+    matrix_float4x4 viewMatrix = matrix4x4_identity();
     
-    [_subTexture replaceRegion:region
-                   mipmapLevel:0
-                     withBytes:src
-                   bytesPerRow:bytesPerRow];
-    
-    CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-    
-    //截图的时候，按照画面实际大小截取的，显示的时候通常是 retain 屏幕，所以 scale 通常会小于 1；
-    //没有这个scale的话，字幕可能会超出画面，位置跟观看时不一致。
-    float scale = self.viewport.width / self.drawableSize.width;
-    float swidth  = _subTexture.width  * scale;
-    float sheight = _subTexture.height * scale;
-    
-    float width  = self.viewport.width;
-    float height = self.viewport.height;
-    float y = self.subtitleBottomMargin * (height - sheight) / height;
-    
-    if (width != 0 && height != 0) {
-        IJKSubtitleArguments subRect = {
-            1,
-            (float)((width - swidth) / width / 2.0),
-            y,
-            (float)(swidth / width),
-            (float)(sheight / height)
-        };
-        *rect = subRect;
-    }
+    IJKVertexData data = {quadVertices[0],quadVertices[1],quadVertices[2],quadVertices[3],viewMatrix};
+    self.subVertices = [_device newBufferWithBytes:&data
+                                            length:sizeof(data)
+                                           options:MTLResourceStorageModeShared]; // 创建顶点缓存
+}
+
+- (NSArray<id<MTLTexture>> *)doGenerateTexture:(CVPixelBufferRef)pixelBuffer textureCache:(CVMetalTextureCacheRef)textureCache
+{
+    return nil;
 }
 
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer
                     textureCache:(CVMetalTextureCacheRef)textureCache
-                  subPixelBuffer:(CVPixelBufferRef)subPixelBuffer
 {
-    NSAssert(self.vertices, @"you must update vertex ratio before call me.");
+    [self updateVertexIfNeed];
     // Pass in the parameter data.
     [encoder setVertexBuffer:self.vertices
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  
-    if (self.mvp) {
-        // Pass in the parameter data.
-        [encoder setVertexBuffer:self.mvp
-                          offset:0
-                         atIndex:IJKVertexInputIndexMVP]; // 设置模型矩阵
-    }
-    
     [self createRenderPipelineIfNeed];
     
     [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
@@ -318,25 +348,12 @@
             [encoder useResource:t usage:MTLResourceUsageRead];
         }
     }
-    
-    IJKSubtitleArguments subRect = {0};
-    [self doGenerateSubTexture:subPixelBuffer device:_device rect:&subRect];
-    
-    [_argumentEncoder setTexture:_subTexture
-                         atIndex:IJKFragmentTextureIndexTextureSub]; // 设置纹理
-    
-    if (@available(macOS 10.15, *)) {
-        [encoder useResource:_subTexture usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
-    } else {
-        // Fallback on earlier versions
-        [encoder useResource:_subTexture usage:MTLResourceUsageRead];
-    }
-    
-    IJKFragmentShaderData * data = (IJKFragmentShaderData *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
+
+    IJKConvertMatrix * data = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
     IJKConvertMatrix convertMatrix = [self createMatrix:self.convertMatrixType];
     convertMatrix.adjustment = _colorAdjustment;
     
-    *data = (IJKFragmentShaderData) {convertMatrix,subRect};
+    *data = convertMatrix;
     
     [encoder setFragmentBuffer:_fragmentShaderArgumentBuffer
                         offset:0
@@ -348,7 +365,7 @@
     // Draw the triangle.
     [encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip
                 vertexStart:0
-                vertexCount:self.numVertices]; // 绘制
+                vertexCount:4]; // 绘制
 }
 
 @end

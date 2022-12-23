@@ -14,12 +14,12 @@
 // Header shared between C code here, which executes Metal API commands, and .metal files, which
 // uses these types as inputs to the shaders.
 #import "IJKMetalShaderTypes.h"
-#import "IJKMathUtilities.h"
 #import "IJKMetalBGRAPipeline.h"
 #import "IJKMetalNV12Pipeline.h"
 #import "IJKMetalYUV420PPipeline.h"
 #import "IJKMetalUYVY422Pipeline.h"
 #import "IJKMetalYUYV422Pipeline.h"
+#import "IJKMetalSubtitlePipeline.h"
 #import "IJKMetalOffscreenRendering.h"
 
 #import "ijksdl_vout_ios_gles2.h"
@@ -38,8 +38,8 @@
 }
 
 @property (nonatomic, strong) __kindof IJKMetalBasePipeline *metalPipeline;
-@property (nonatomic, strong) id<MTLBuffer> mvp;
-@property (nonatomic, strong) IJKMetalOffscreenRendering * offscreenRendering;
+@property (nonatomic, strong) IJKMetalSubtitlePipeline *subPipeline;
+@property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
 @property (nonatomic, strong) IJKMetalAttach *currentAttach;
 
 @property(nonatomic) NSInteger videoDegrees;
@@ -211,10 +211,10 @@ typedef CGRect NSRect;
     return normalizedSamplingSize;
 }
 
-- (BOOL)setupPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
+- (Class)pipelineClass:(CVPixelBufferRef)pixelBuffer
 {
     if (!pixelBuffer) {
-        return NO;
+        return NULL;
     }
     Class clazz = NULL;
     OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
@@ -235,24 +235,46 @@ typedef CGRect NSRect;
     //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8FullRange
     //    Cb Y'0 Cr Y'1 kCVPixelFormatType_422YpCbCr8
     
-    if (clazz) {
-        return [self setupPipelineWithClazz:clazz];
-    }
-    return NO;
+    return clazz;
 }
 
-- (BOOL)setupPipelineWithClazz:(Class)clazz
+- (BOOL)setupSubPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
 {
-    if (self.metalPipeline) {
-        if ([self.metalPipeline class] != clazz) {
-            NSAssert(NO, @"wrong pixel format:%@",NSStringFromClass(clazz));
-            return NO;
-        } else {
-            return YES;
-        }
+    if (!pixelBuffer) {
+        return NO;
     }
-    self.metalPipeline = [[clazz alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
-    return !!self.metalPipeline;
+    
+    OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
+    if (type != kCVPixelFormatType_32BGRA) {
+        return NO;
+    }
+    
+    if (!self.subPipeline) {
+        self.subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
+    }
+    return !!self.subPipeline;
+}
+
+- (BOOL)setupPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
+{
+    if (!pixelBuffer) {
+        return NO;
+    }
+    Class clazz = [self pipelineClass:pixelBuffer];
+    
+    if (clazz) {
+        if (self.metalPipeline) {
+            if ([self.metalPipeline class] != clazz) {
+                NSAssert(NO, @"wrong pixel format:%@",NSStringFromClass(clazz));
+                return NO;
+            } else {
+                return YES;
+            }
+        }
+        self.metalPipeline = [[clazz alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
+        return !!self.metalPipeline;
+    }
+    return NO;
 }
 
 - (void)displayAttach:(IJKMetalAttach *)attach
@@ -286,30 +308,49 @@ typedef CGRect NSRect;
 #endif
 }
 
-- (void)encoderPictureAndSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder viewport:(CGSize)viewport
+- (void)encoderPicture:(id<MTLRenderCommandEncoder>)renderEncoder viewport:(CGSize)viewport ratio:(CGSize)ratio
 {
     // Set the region of the drawable to draw into.
-    [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}]; // 设置显示区域
+    [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
     
     CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
     
     if ([self setupPipelineIfNeed:pixelBuffer]) {
         self.metalPipeline.viewport = viewport;
-        self.metalPipeline.drawableSize = self.drawableSize;
-        self.metalPipeline.subtitleBottomMargin = self.subtitlePreference.bottomMargin;
-        [self createMVPIfNeed];
-        [self.metalPipeline updateMVP:self.mvp];
+        self.metalPipeline.autoZRotateDegrees = self.currentAttach.zRotateDegrees;
+        self.metalPipeline.rotateType = self.rotatePreference.type;
+        self.metalPipeline.rotateDegrees = self.rotatePreference.degrees;
+        
         bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
-        [self.metalPipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust?1.0:0.0}];
-        CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
-        [self.metalPipeline updateVertexRatio:ratio];
+        [self.metalPipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust ? 1.0 : 0.0}];
+        self.metalPipeline.vertexRatio = ratio;
         //upload textures
         [self.metalPipeline uploadTextureWithEncoder:renderEncoder
                                               buffer:pixelBuffer
-                                        textureCache:_metalTextureCache
-                                      subPixelBuffer:self.currentAttach.currentSubtitle];
+                                        textureCache:_metalTextureCache];
     }
-    [renderEncoder endEncoding];
+}
+
+- (BOOL)encoderSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder
+               viewport:(CGSize)viewport
+                  scale:(float)scale
+{
+    CVPixelBufferRef pixelBuffer = self.currentAttach.currentSubtitle;
+    if (!pixelBuffer) {
+        return NO;
+    }
+    // Set the region of the drawable to draw into.
+    [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
+    
+    if ([self setupSubPipelineIfNeed:pixelBuffer]) {
+        self.subPipeline.viewport = viewport;
+        self.subPipeline.scale = scale;
+        self.subPipeline.subtitleBottomMargin = self.subtitlePreference.bottomMargin;
+        //upload textures
+        [self.subPipeline uploadTextureWithEncoder:renderEncoder
+                                            buffer:pixelBuffer];
+    }
+    return YES;
 }
 
 /// Called whenever the view needs to render a frame.
@@ -321,17 +362,29 @@ typedef CGRect NSRect;
     if(!renderPassDescriptor) {
         return;
     }
-        
+    
     // Create a new command buffer for each render pass to the current drawable.
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"MyCommand";
+    
     // Create a render command encoder.
     id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-    [self encoderPictureAndSubtitle:renderEncoder viewport:self.drawableSize];
+    
+    {
+        CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
+        if (pixelBuffer) {
+            CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
+            [self encoderPicture:renderEncoder viewport:self.drawableSize ratio:ratio];
+        }
+        [self encoderSubtitle:renderEncoder viewport:self.drawableSize scale:1.0];
+    }
+
+    [renderEncoder endEncoding];
     // Schedule a present once the framebuffer is complete using the current drawable.
     [commandBuffer presentDrawable:self.currentDrawable];
     // Finalize rendering here & push the command buffer to the GPU.
     [commandBuffer commit]; //
+    
 }
 
 - (CGImageRef)_snapshot
@@ -346,13 +399,38 @@ typedef CGRect NSRect;
     }
     
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    float dar = 1.0;
+    
+    int width  = (int)CVPixelBufferGetWidth(pixelBuffer);
+    int height = (int)CVPixelBufferGetHeight(pixelBuffer);
+    
     //keep video AVRational
     if (self.currentAttach.sar_num > 0 && self.currentAttach.sar_den > 0) {
-        dar = 1.0 * self.currentAttach.sar_num / self.currentAttach.sar_den;
+        width = 1.0 * self.currentAttach.sar_num / self.currentAttach.sar_den * width;
     }
-    return [self.offscreenRendering snapshot:pixelBuffer dar:dar device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder, CGSize viewport) {
-        [self encoderPictureAndSubtitle:renderEncoder viewport:viewport];
+    CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
+    float scale = width / (ratio.width * self.drawableSize.width);
+    
+    int zDegrees = 0;
+    if (_rotatePreference.type == IJKSDLRotateZ) {
+        zDegrees += _rotatePreference.degrees;
+    }
+    zDegrees += self.currentAttach.zRotateDegrees;
+    float darRatio = self.darPreference.ratio;
+    //when video's z rotate degrees is 90 odd multiple
+    if (abs(zDegrees) / 90 % 2 == 1) {
+        //need swap user's ratio
+        if (darRatio > 0.001) {
+            darRatio = 1.0 / darRatio;
+        }
+        int tmp = width;
+        width = height;
+        height = tmp;
+    }
+    
+    CGSize viewport = CGSizeMake(width, height);
+    return [self.offscreenRendering snapshot:pixelBuffer targetSize:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
+        [self encoderPicture:renderEncoder viewport:viewport ratio:CGSizeMake(1.0, 1.0)];
+        [self encoderSubtitle:renderEncoder viewport:viewport scale:scale];
     }];
 }
 
@@ -513,48 +591,6 @@ typedef CGRect NSRect;
     }
     //hold the attach as current.
     [self displayAttach:attach];
-}
-
-- (void)createMVPIfNeed
-{
-    /// These are the view and projection transforms.
-    matrix_float4x4 viewMatrix;
-    
-    if (self.modelMatrixChanged) {
-        self.modelMatrixChanged = NO;
-        float radian = radians_from_degrees(_rotatePreference.degrees);
-        switch (_rotatePreference.type) {
-            case IJKSDLRotateNone:
-            {
-                viewMatrix = matrix4x4_identity();
-            }
-                break;
-            case IJKSDLRotateX:
-            {
-                viewMatrix = matrix4x4_rotation(radian, 1.0, 0.0, 0.0);
-            }
-                break;
-            case IJKSDLRotateY:
-            {
-                viewMatrix = matrix4x4_rotation(radian, 0.0, 1.0, 0.0);
-            }
-                break;
-            case IJKSDLRotateZ:
-            {
-                viewMatrix = matrix4x4_rotation(radian, 0.0, 0.0, 1.0);
-            }
-                break;
-        }
-        
-        if (self.currentAttach.zRotateDegrees != 0) {
-            float zRadin = radians_from_degrees(self.currentAttach.zRotateDegrees);
-            viewMatrix = matrix_multiply(matrix4x4_rotation(zRadin, 0.0, 0.0, 1.0),viewMatrix);
-        }
-        IJKMVPMatrix mvp = {viewMatrix};
-        self.mvp = [self.device newBufferWithBytes:&mvp
-                                            length:sizeof(IJKMVPMatrix)
-                                           options:MTLResourceStorageModeShared];
-    }
 }
 
 - (void)videoZRotateDegrees:(NSInteger)degrees

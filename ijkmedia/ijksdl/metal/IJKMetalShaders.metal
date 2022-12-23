@@ -30,7 +30,7 @@ struct RasterizerData
     float2 textureCoordinate; // 纹理坐标，会做插值处理
 };
 
-vertex RasterizerData vertexShader(uint vertexID [[vertex_id]],
+vertex RasterizerData subVertexShader(uint vertexID [[vertex_id]],
              constant IJKVertex *vertices [[buffer(IJKVertexInputIndexVertices)]])
 {
     RasterizerData out;
@@ -41,12 +41,12 @@ vertex RasterizerData vertexShader(uint vertexID [[vertex_id]],
 
 //支持mvp矩阵
 vertex RasterizerData mvpShader(uint vertexID [[vertex_id]],
-             constant IJKVertex *vertices [[buffer(IJKVertexInputIndexVertices)]],
-             constant IJKMVPMatrix &mvp   [[buffer(IJKVertexInputIndexMVP)]])
+             constant IJKVertexData & data [[buffer(IJKVertexInputIndexVertices)]])
 {
     RasterizerData out;
-    out.clipSpacePosition = mvp.modelMatrix * vertices[vertexID].position;
-    out.textureCoordinate = vertices[vertexID].textureCoordinate;
+    IJKVertex _vertex = data.vertexes[vertexID];
+    out.clipSpacePosition = data.modelMatrix * _vertex.position;
+    out.textureCoordinate = _vertex.textureCoordinate;
     return out;
 }
 
@@ -66,43 +66,56 @@ float3 rgb_adjust(float3 rgb,float4 rgbAdjustment) {
     }
 }
 
-float4 subtitle(float4 rgba,float2 texCoord,texture2d<float> subTexture,IJKSubtitleArguments subRect)
-{
-    if (!subRect.on) {
-        return rgba;
-    }
-    
-    //翻转画面坐标系，这个会影响字幕在画面上的位置；翻转后从底部往上布局
-    texCoord.y = 1 - texCoord.y;
-    
-    float sx = subRect.x;
-    float sy = subRect.y;
-    //限定字幕纹理区域
-    if (texCoord.x >= sx && texCoord.x <= (sx + subRect.w) && texCoord.y >= sy && texCoord.y <= (sy + subRect.h)) {
-        //在该区域内，将坐标缩放到 [0,1]
-        texCoord.x = (texCoord.x - sx) / subRect.w;
-        texCoord.y = (texCoord.y - sy) / subRect.h;
-        //flip the y
-        texCoord.y = 1 - texCoord.y;
-        constexpr sampler textureSampler (mag_filter::linear,
-                                          min_filter::linear);
-        // Sample the encoded texture in the argument buffer.
-        float4 textureSample = subTexture.sample(textureSampler, texCoord);
-        // Add the subtitle and color values together and return the result.
-        return float4((1.0 - textureSample.a) * rgba + textureSample);
-    }  else {
-        return rgba;
-    }
-}
+//float4 subtitle(float4 rgba,float2 texCoord,texture2d<float> subTexture,IJKSubtitleArguments subRect)
+//{
+//    if (!subRect.on) {
+//        return rgba;
+//    }
+//
+//    //翻转画面坐标系，这个会影响字幕在画面上的位置；翻转后从底部往上布局
+//    texCoord.y = 1 - texCoord.y;
+//
+//    float sx = subRect.x;
+//    float sy = subRect.y;
+//    //限定字幕纹理区域
+//    if (texCoord.x >= sx && texCoord.x <= (sx + subRect.w) && texCoord.y >= sy && texCoord.y <= (sy + subRect.h)) {
+//        //在该区域内，将坐标缩放到 [0,1]
+//        texCoord.x = (texCoord.x - sx) / subRect.w;
+//        texCoord.y = (texCoord.y - sy) / subRect.h;
+//        //flip the y
+//        texCoord.y = 1 - texCoord.y;
+//        constexpr sampler textureSampler (mag_filter::linear,
+//                                          min_filter::linear);
+//        // Sample the encoded texture in the argument buffer.
+//        float4 textureSample = subTexture.sample(textureSampler, texCoord);
+//        // Add the subtitle and color values together and return the result.
+//        return float4((1.0 - textureSample.a) * rgba + textureSample);
+//    }  else {
+//        return rgba;
+//    }
+//}
 
 struct IJKFragmentShaderArguments {
     texture2d<float> textureY [[ id(IJKFragmentTextureIndexTextureY) ]];
     texture2d<float> textureU [[ id(IJKFragmentTextureIndexTextureU) ]];
     texture2d<float> textureV [[ id(IJKFragmentTextureIndexTextureV) ]];
-    texture2d<float> subTexture [[ id(IJKFragmentTextureIndexTextureSub) ]];
-    IJKFragmentShaderData data [[ id(IJKFragmentDataIndex) ]];
+    IJKConvertMatrix convertMatrix [[ id(IJKFragmentDataIndex) ]];
 };
 
+
+/// @brief subtitle bgra fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
+fragment float4 subtileFragmentShader(RasterizerData input [[stage_in]],
+                                   texture2d<float> textureY [[ texture(IJKFragmentTextureIndexTextureY) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    //auto converted bgra -> rgba
+    float4 rgba = textureY.sample(textureSampler, input.textureCoordinate);
+    return rgba;
+}
 
 /// @brief bgra fragment shader
 /// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
@@ -117,10 +130,8 @@ fragment float4 bgraFragmentShader(RasterizerData input [[stage_in]],
     //auto converted bgra -> rgba
     float4 rgba = textureY.sample(textureSampler, input.textureCoordinate);
     //color adjustment
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.data.convertMatrix;
-    rgba = float4(rgb_adjust(rgba.rgb, convertMatrix.adjustment),rgba.a);
-    //subtitle
-    return subtitle(rgba, input.textureCoordinate, fragmentShaderArgs.subTexture, fragmentShaderArgs.data.subRect);
+    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
+    return float4(rgb_adjust(rgba.rgb, convertMatrix.adjustment),rgba.a);
 }
 
 /// @brief nv12 fragment shader
@@ -139,12 +150,10 @@ fragment float4 nv12FragmentShader(RasterizerData input [[stage_in]],
     float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
                         textureUV.sample(textureSampler, input.textureCoordinate).rg);
     
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.data.convertMatrix;
+    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
     float3 rgb = convertMatrix.matrix * (yuv + convertMatrix.offset);
     //color adjustment
-    float4 rgba = float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
-    //subtitle
-    return subtitle(rgba, input.textureCoordinate, fragmentShaderArgs.subTexture, fragmentShaderArgs.data.subRect);
+    return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
 }
 
 /// @brief nv21 fragment shader
@@ -163,12 +172,10 @@ fragment float4 nv21FragmentShader(RasterizerData input [[stage_in]],
     float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
                         textureUV.sample(textureSampler, input.textureCoordinate).gr);
     
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.data.convertMatrix;
+    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
     float3 rgb = convertMatrix.matrix * (yuv + convertMatrix.offset);
     //color adjustment
-    float4 rgba = float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
-    //subtitle
-    return subtitle(rgba, input.textureCoordinate, fragmentShaderArgs.subTexture, fragmentShaderArgs.data.subRect);
+    return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
 }
 
 /// @brief yuv420p fragment shader
@@ -189,12 +196,10 @@ fragment float4 yuv420pFragmentShader(RasterizerData input [[stage_in]],
                         textureU.sample(textureSampler, input.textureCoordinate).r,
                         textureV.sample(textureSampler, input.textureCoordinate).r);
     
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.data.convertMatrix;
+    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
     float3 rgb = convertMatrix.matrix * (yuv + convertMatrix.offset);
     //color adjustment
-    float4 rgba = float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
-    //subtitle
-    return subtitle(rgba, input.textureCoordinate, fragmentShaderArgs.subTexture, fragmentShaderArgs.data.subRect);
+    return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
 }
 
 /// @brief uyvy422 fragment shader
@@ -211,10 +216,8 @@ fragment float4 uyvy422FragmentShader(RasterizerData input [[stage_in]],
     float3 tc = textureY.sample(textureSampler, input.textureCoordinate).rgb;
     float3 yuv = float3(tc.g, tc.b, tc.r);
     
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.data.convertMatrix;
+    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
     float3 rgb = convertMatrix.matrix * (yuv + convertMatrix.offset);
     //color adjustment 
-    float4 rgba = float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
-    //subtitle
-    return subtitle(rgba, input.textureCoordinate, fragmentShaderArgs.subTexture, fragmentShaderArgs.data.subRect);
+    return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
 }

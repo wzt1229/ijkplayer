@@ -16,13 +16,13 @@
 typedef enum IJKVertexInputIndex
 {
     IJKVertexInputIndexVertices  = 0,
-    IJKVertexInputIndexMVP       = 1,
 } IJKVertexInputIndex;
 
 //  This structure defines the layout of vertices sent to the vertex
 //  shader. This header is shared between the .metal shader and C code, to guarantee that
 //  the layout of the vertex array in the C code matches the layout that the .metal
 //  vertex shader expects.
+
 typedef struct
 {
     vector_float4 position;
@@ -31,8 +31,9 @@ typedef struct
 
 typedef struct
 {
+    IJKVertex vertexes[4];
     matrix_float4x4 modelMatrix;
-} IJKMVPMatrix;
+} IJKVertexData;
 
 typedef struct {
     matrix_float3x3 matrix;
@@ -40,26 +41,11 @@ typedef struct {
     vector_float4 adjustment;
 } IJKConvertMatrix;
 
-typedef struct IJKSubtitleArguments
-{
-    int on;
-    float x;
-    float y;
-    float w;
-    float h;
-}IJKSubtitleArguments;
-
-typedef struct IJKFragmentShaderData {
-    IJKConvertMatrix convertMatrix;
-    IJKSubtitleArguments subRect;
-}IJKFragmentShaderData;
-
 typedef enum IJKFragmentBufferArguments
 {
     IJKFragmentTextureIndexTextureY,
     IJKFragmentTextureIndexTextureU,
     IJKFragmentTextureIndexTextureV,
-    IJKFragmentTextureIndexTextureSub,
     IJKFragmentDataIndex,
 } IJKFragmentBufferArguments;
 

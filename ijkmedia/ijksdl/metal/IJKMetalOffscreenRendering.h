@@ -15,10 +15,10 @@ NS_ASSUME_NONNULL_BEGIN
 @interface IJKMetalOffscreenRendering : NSObject
 
 - (CGImageRef)snapshot:(CVPixelBufferRef)pixelBuffer
-                   dar:(float)dar
+            targetSize:(CGSize)targetSize
                 device:(id <MTLDevice>)device
          commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-       doUploadPicture:(void(^)(id<MTLRenderCommandEncoder>,CGSize viewport))block;
+       doUploadPicture:(void(^)(id<MTLRenderCommandEncoder>))block;
 
 @end
 
