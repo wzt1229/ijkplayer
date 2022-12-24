@@ -741,14 +741,29 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             [self.view.window setAspectRatio:videoSize];
             CGRect rect = self.view.window.frame;
             
+            CGPoint center = CGPointMake(rect.origin.x + rect.size.width/2.0, rect.origin.y + rect.size.height/2.0);
+            
             if (videoSize.width > videoSize.height) {
                 rect.size.width = rect.size.height / videoSize.height * videoSize.width;
+                if (rect.size.width > [[NSScreen mainScreen]frame].size.width * 0.7) {
+                    float ratio = [[NSScreen mainScreen]frame].size.width * 0.7 / rect.size.width;
+                    rect.size.width *= ratio;
+                    rect.size.height *= ratio;
+                }
             } else {
                 rect.size.height = rect.size.width / videoSize.width * videoSize.height;
+                if (rect.size.height > [[NSScreen mainScreen]frame].size.height * 0.7) {
+                    float ratio = [[NSScreen mainScreen]frame].size.height * 0.7 / rect.size.height;
+                    rect.size.width *= ratio;
+                    rect.size.height *= ratio;
+                }
             }
+            //keep center.
+            rect.origin = CGPointMake(center.x - rect.size.width/2.0, center.y - rect.size.height/2.0);
             
             [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
                 [self.view.window.animator setFrame:CGRectIntegral(rect) display:YES];
+                [self.view.window center];
             }];
         }
     }
