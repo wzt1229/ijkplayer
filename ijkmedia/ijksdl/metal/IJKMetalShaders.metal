@@ -156,28 +156,6 @@ fragment float4 nv12FragmentShader(RasterizerData input [[stage_in]],
     return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
 }
 
-/// @brief nv21 fragment shader
-/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
-/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY/UV 是索引
-/// @param buffer表明是缓存数据，IJKFragmentBufferIndexMatrix是索引
-fragment float4 nv21FragmentShader(RasterizerData input [[stage_in]],
-                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
-{
-    // sampler是采样器
-    constexpr sampler textureSampler (mag_filter::linear,
-                                      min_filter::linear);
-    texture2d<float> textureY = fragmentShaderArgs.textureY;
-    texture2d<float> textureUV = fragmentShaderArgs.textureU;
-    
-    float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
-                        textureUV.sample(textureSampler, input.textureCoordinate).gr);
-    
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
-    float3 rgb = convertMatrix.matrix * (yuv + convertMatrix.offset);
-    //color adjustment
-    return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
-}
-
 /// @brief yuv420p fragment shader
 /// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
 /// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY/U/V 是索引

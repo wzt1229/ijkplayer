@@ -511,7 +511,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 }
             }
                 break;
-            case 0x24:
+            case kVK_Return:
             {
                 if (!(self.view.window.styleMask & NSWindowStyleMaskFullScreen)) {
                     [self.view.window toggleFullScreen:nil];

@@ -545,11 +545,11 @@ typedef CGRect NSRect;
 - (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
 {
     if (!overlay) {
-        ALOGW("IJKSDLGLView: overlay is nil\n");
+        ALOGW("IJKMetal: overlay is nil\n");
         return;
     }
     
-    //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
+    //overlay is not thread safe.
     Uint32 overlay_format = overlay->format;
     Uint32 ff_format;
     if (SDL_FCC__VTB == overlay_format) {
