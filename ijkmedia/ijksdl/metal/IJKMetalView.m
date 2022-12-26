@@ -34,20 +34,18 @@
     // The command queue used to pass commands to the device.
     id<MTLCommandQueue> _commandQueue;
 
-    CVMetalTextureCacheRef _metalTextureCache;
+    CVMetalTextureCacheRef _pictureTextureCache;
 }
 
-@property (nonatomic, strong) __kindof IJKMetalBasePipeline *metalPipeline;
+@property (nonatomic, strong) __kindof IJKMetalBasePipeline *picturePipeline;
 @property (nonatomic, strong) IJKMetalSubtitlePipeline *subPipeline;
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
 @property (nonatomic, strong) IJKMetalAttach *currentAttach;
 
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
-@property(atomic) BOOL modelMatrixChanged;
+@property(nonatomic) BOOL modelMatrixChanged;
 
-//display window size / screen
-@property(atomic) float displayScreenScale;
 //display window size / video size
 @property(atomic) float displayVideoScale;
 @property(atomic) BOOL subtitlePreferenceChanged;
@@ -71,7 +69,7 @@
 
 - (void)dealloc
 {
-    CFRelease(_metalTextureCache);
+    CFRelease(_pictureTextureCache);
 }
 
 - (BOOL)_setup
@@ -80,7 +78,6 @@
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
     _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     _darPreference      = (IJKSDLDARPreference){0.0};
-    _displayScreenScale = 1.0;
     _displayVideoScale  = 1.0;
     
     self.device = MTLCreateSystemDefaultDevice();
@@ -88,7 +85,7 @@
         NSLog(@"No Support Metal.");
         return NO;
     }
-    CVReturn ret = CVMetalTextureCacheCreate(kCFAllocatorDefault, NULL, self.device, NULL, &_metalTextureCache);
+    CVReturn ret = CVMetalTextureCacheCreate(kCFAllocatorDefault, NULL, self.device, NULL, &_pictureTextureCache);
     if (ret != kCVReturnSuccess) {
         NSAssert(NO, @"Create MetalTextureCache Failed:%d.",ret);
     }
@@ -263,16 +260,16 @@ typedef CGRect NSRect;
     Class clazz = [self pipelineClass:pixelBuffer];
     
     if (clazz) {
-        if (self.metalPipeline) {
-            if ([self.metalPipeline class] != clazz) {
+        if (self.picturePipeline) {
+            if ([self.picturePipeline class] != clazz) {
                 NSAssert(NO, @"wrong pixel format:%@",NSStringFromClass(clazz));
                 return NO;
             } else {
                 return YES;
             }
         }
-        self.metalPipeline = [[clazz alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
-        return !!self.metalPipeline;
+        self.picturePipeline = [[clazz alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
+        return !!self.picturePipeline;
     }
     return NO;
 }
@@ -316,18 +313,18 @@ typedef CGRect NSRect;
     CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
     
     if ([self setupPipelineIfNeed:pixelBuffer]) {
-        self.metalPipeline.viewport = viewport;
-        self.metalPipeline.autoZRotateDegrees = self.currentAttach.zRotateDegrees;
-        self.metalPipeline.rotateType = self.rotatePreference.type;
-        self.metalPipeline.rotateDegrees = self.rotatePreference.degrees;
+        self.picturePipeline.viewport = viewport;
+        self.picturePipeline.autoZRotateDegrees = self.currentAttach.zRotateDegrees;
+        self.picturePipeline.rotateType = self.rotatePreference.type;
+        self.picturePipeline.rotateDegrees = self.rotatePreference.degrees;
         
         bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
-        [self.metalPipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust ? 1.0 : 0.0}];
-        self.metalPipeline.vertexRatio = ratio;
+        [self.picturePipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust ? 1.0 : 0.0}];
+        self.picturePipeline.vertexRatio = ratio;
         //upload textures
-        [self.metalPipeline uploadTextureWithEncoder:renderEncoder
+        [self.picturePipeline uploadTextureWithEncoder:renderEncoder
                                               buffer:pixelBuffer
-                                        textureCache:_metalTextureCache];
+                                        textureCache:_pictureTextureCache];
     }
 }
 
