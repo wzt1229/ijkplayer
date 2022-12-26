@@ -504,9 +504,23 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 }
             }
                 break;
+            case kVK_Escape:
+            {
+                if (self.view.window.styleMask & NSWindowStyleMaskFullScreen) {
+                    [self.view.window toggleFullScreen:nil];
+                }
+            }
+                break;
+            case 0x24:
+            {
+                if (!(self.view.window.styleMask & NSWindowStyleMaskFullScreen)) {
+                    [self.view.window toggleFullScreen:nil];
+                }
+            }
+                break;
             default:
             {
-                NSLog(@"0x%X",[event keyCode]);
+                NSLog(@"keyCode:0x%X",[event keyCode]);
             }
                 break;
         }
