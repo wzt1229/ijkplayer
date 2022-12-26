@@ -8,19 +8,15 @@
 
 @import Foundation;
 @import CoreVideo;
-#import "IJKVideoRenderingProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
+@class IJKSDLSubtitle;
 @interface IJKMetalAttach : NSObject
 
 @property(atomic,nullable) CVPixelBufferRef currentVideoPic;
 @property(atomic,nullable) CVPixelBufferRef currentSubtitle;
 
-@property(nonatomic) int  sar_num;
-@property(nonatomic) int  sar_den;
-@property(nonatomic) unsigned int overlayFormat;
-@property(nonatomic) unsigned int ffFormat;
+@property(nonatomic) float sar;
 @property(nonatomic) int zRotateDegrees;
 @property(nonatomic) IJKSDLSubtitle *sub;
 

@@ -147,8 +147,8 @@ typedef CGRect NSRect;
     CGSize normalizedSamplingSize = CGSizeMake(1.0, 1.0);
     
     //keep video AVRational
-    if (self.currentAttach.sar_num > 0 && self.currentAttach.sar_den > 0) {
-        frameWidth = 1.0 * self.currentAttach.sar_num / self.currentAttach.sar_den * frameWidth;
+    if (self.currentAttach.sar > 0) {
+        frameWidth = self.currentAttach.sar * frameWidth;
     }
     
     int zDegrees = 0;
@@ -404,8 +404,8 @@ typedef CGRect NSRect;
     int height = (int)CVPixelBufferGetHeight(pixelBuffer);
     
     //keep video AVRational
-    if (self.currentAttach.sar_num > 0 && self.currentAttach.sar_den > 0) {
-        width = 1.0 * self.currentAttach.sar_num / self.currentAttach.sar_den * width;
+    if (self.currentAttach.sar > 0) {
+        width = self.currentAttach.sar * width;
     }
     CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
     float scale = width / (ratio.width * self.drawableSize.width);
@@ -569,14 +569,10 @@ typedef CGRect NSRect;
     }
     
     IJKMetalAttach *attach = [[IJKMetalAttach alloc] init];
-
-    attach.ffFormat = ff_format;
-    attach.overlayFormat = overlay_format;
     attach.zRotateDegrees = overlay->auto_z_rotate_degrees;
     //update video sar.
     if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-        attach.sar_num = overlay->sar_num;
-        attach.sar_den = overlay->sar_den;
+        attach.sar = 1.0 * overlay->sar_num / overlay->sar_den;
     }
     
     CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
