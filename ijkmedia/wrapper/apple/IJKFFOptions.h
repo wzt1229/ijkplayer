@@ -71,5 +71,7 @@ struct IjkMediaPlayer;
 - (void)setPlayerOptionIntValue:    (int64_t)value forKey:(NSString *)key;
 
 @property(nonatomic) BOOL showHudView;
+//default is auto; you can set to NO means force use opengl.
+@property(nonatomic) BOOL metalRenderer;
 
 @end

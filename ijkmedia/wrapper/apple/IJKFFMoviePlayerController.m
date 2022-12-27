@@ -246,18 +246,22 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         UIView<IJKVideoRenderingProtocol> *glView = nil;
     #if TARGET_OS_IOS
         CGRect rect = [[UIScreen mainScreen] bounds];
-        if ([[[UIDevice currentDevice] systemVersion] compare:@"11.0" options:NSNumericSearch] != NSOrderedAscending) {
+        if (options.metalRenderer && [[[UIDevice currentDevice] systemVersion] compare:@"11.0" options:NSNumericSearch] != NSOrderedAscending) {
             glView = [[IJKMetalView alloc] initWithFrame:rect];
-        } else {
+        }
+        
+        if (!glView) {
             glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         }
     #else
         CGRect rect = [[NSScreen mainScreen]frame];
         rect.origin = CGPointZero;
         NSOperatingSystemVersion sysVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
-        if (sysVersion.majorVersion > 10 || (sysVersion.majorVersion == 10 && sysVersion.minorVersion >= 13)) {
+        if (options.metalRenderer && (sysVersion.majorVersion > 10 || (sysVersion.majorVersion == 10 && sysVersion.minorVersion >= 13))) {
             glView = [[IJKMetalView alloc] initWithFrame:rect];
-        } else {
+        }
+        
+        if (!glView) {
             glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         }
     #endif

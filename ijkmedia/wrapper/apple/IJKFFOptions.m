@@ -48,7 +48,7 @@
     [options setFormatOptionValue:@"ijkplayer"          forKey:@"user_agent"];
 
     options.showHudView   = NO;
-
+    options.metalRenderer = YES;
     return options;
 }
 

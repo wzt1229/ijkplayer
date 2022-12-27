@@ -102,7 +102,9 @@
 {
     self = [super initWithCoder:coder];
     if (self) {
-        [self _setup];
+        if (![self _setup]) {
+            return nil;
+        }
     }
     return self;
 }
@@ -115,7 +117,9 @@ typedef CGRect NSRect;
 {
     self = [super initWithFrame:frameRect];
     if (self) {
-        [self _setup];
+        if (![self _setup]) {
+            return nil;
+        }
     }
     return self;
 }
