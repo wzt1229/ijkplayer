@@ -1123,7 +1123,6 @@ static void alloc_picture(FFPlayer *ffp, int src_format)
     video_open(is, vp);
 #endif
 
-    SDL_VoutSetOverlayFormat(ffp->vout, ffp->overlay_format);
 #ifdef __APPLE__
     vp->bmp = SDL_Vout_CreateOverlay_Apple(vp->width,
                                            vp->height,
@@ -1272,7 +1271,108 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
 #ifdef FFP_MERGE
     vp->uploaded = 0;
 #endif
-
+    
+    //TODO: windows and android plat.
+    //软解时，上层指定了明确的overlay-format时需要转格式
+    if (src_frame->format != AV_PIX_FMT_VIDEOTOOLBOX) {
+        
+        const int src_format = src_frame->format;
+        Uint32 overlay_format = ffp->vout->overlay_format;
+        if (SDL_FCC__GLES2 == overlay_format) {
+        #if defined(__ANDROID__)
+            overlay_format = SDL_FCC_YV12;
+        #elif defined(__APPLE__)
+        #if TARGET_OS_IOS
+            if (src_format == AV_PIX_FMT_YUV444P10LE) {
+                overlay_format = SDL_FCC_I444P10LE;
+            }  else
+        #else
+            if (src_format == AV_PIX_FMT_UYVY422) {
+                overlay_format = SDL_FCC_UYVY;
+            } else if (src_format == AV_PIX_FMT_YUYV422) {
+                overlay_format = SDL_FCC_YUV2;
+            } else
+        #endif
+            if (src_format == AV_PIX_FMT_YUV420P && src_frame->color_range == AVCOL_RANGE_JPEG) {
+                overlay_format = SDL_FCC_J420;
+            } else if (src_format == AV_PIX_FMT_YUV420P) {
+                overlay_format = SDL_FCC_I420;
+            } else if (src_format == AV_PIX_FMT_YUVJ420P) {
+                overlay_format = SDL_FCC_J420;
+            } else {
+                overlay_format = SDL_FCC_NV12;
+            }
+        #endif
+            //
+            ffp->vout->overlay_format = overlay_format;
+        }
+        
+        enum AVPixelFormat dst_format = AV_PIX_FMT_NONE;
+        switch (overlay_format) {
+                case SDL_FCC_J420:
+                case SDL_FCC_I420:
+                case SDL_FCC_YV12:
+                {
+                    if (overlay_format == SDL_FCC_J420) {
+                        dst_format = AV_PIX_FMT_YUVJ420P;
+                    } else {
+                        dst_format = AV_PIX_FMT_YUV420P;
+                    }
+                    break;
+                }
+        #if ! TARGET_OS_OSX
+                case SDL_FCC_I444P10LE: {
+                    dst_format = AV_PIX_FMT_YUV444P10LE;
+                    break;
+                }
+        #endif
+                case SDL_FCC_NV12: {
+                    dst_format = AV_PIX_FMT_NV12;
+                    break;
+                }
+                case SDL_FCC_BGRA: {
+                    dst_format = AV_PIX_FMT_BGRA;
+                    break;
+                }
+                case SDL_FCC_BGR0: {
+                    dst_format = AV_PIX_FMT_BGR0;
+                    break;
+                }
+                case SDL_FCC_ARGB: {
+                    dst_format = AV_PIX_FMT_ARGB;
+                    break;
+                }
+                case SDL_FCC_0RGB: {
+                    dst_format = AV_PIX_FMT_0RGB;
+                    break;
+                }
+                case SDL_FCC_UYVY: {
+                    dst_format = AV_PIX_FMT_UYVY422;
+                    break;
+                }
+                case SDL_FCC_YUV2: {
+                    dst_format = AV_PIX_FMT_YUYV422;
+                    break;
+                }
+        #if ! USE_FF_VTB
+                default:
+                    ALOGE("unknow overly format:%.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
+                    goto fail;
+        #endif
+        }
+        
+        if (src_format != dst_format) {
+            const AVFrame *outFrame = NULL;
+            if (SDL_VoutConvertFrame(ffp->vout, dst_format, src_frame, &outFrame)) {
+                //convert failed.
+                return -2;
+            }
+            src_frame = (AVFrame *)outFrame;
+        }
+    }
+    
+    //in CreateOverlay using the vout->ff_format.
+    ffp->vout->ff_format = src_frame->format;
     /* alloc or resize hardware picture buffer */
     if (!vp->bmp || !vp->allocated ||
         vp->width  != src_frame->width ||
@@ -1313,21 +1413,10 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         // sws_getCachedContext(...);
 #endif
 #endif
-        //tell vout the target format.
-        ffp->vout->ff_format = vp->bmp->ff_format;
-        const AVFrame *outFrame = src_frame;
-        
-        //硬解加速解码不需要转格式
-        if (src_frame->format != AV_PIX_FMT_VIDEOTOOLBOX) {
-            if (SDL_VoutConvertFrame(ffp->vout, src_frame, &outFrame)) {
-                //convert failed.
-                return -1;
-            }
-        }
         // FIXME: set swscale options
-        if (SDL_VoutFillFrameYUVOverlay(vp->bmp, outFrame) < 0) {
+        if (SDL_VoutFillFrameYUVOverlay(vp->bmp, src_frame) < 0) {
             av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
-            exit(1);
+            return -3;
         }
         
         if (ffp->autorotate) {
@@ -1879,6 +1968,8 @@ static int ffplay_video_thread(void *arg)
         return AVERROR(ENOMEM);
     }
 
+    SDL_VoutSetOverlayFormat(ffp->vout, ffp->overlay_format);
+    
     for (;;) {
         ret = get_video_frame(ffp, frame);
         if (ret < 0)
@@ -2004,7 +2095,7 @@ static int ffplay_video_thread(void *arg)
 #if CONFIG_AVFILTER
     avfilter_graph_free(&graph);
 #endif
-    av_log(NULL, AV_LOG_INFO, "convert image convert_frame_count = %d\n", convert_frame_count);
+    av_log(NULL, AV_LOG_INFO, "convert image convert_frame_count = %d,err = %d\n", convert_frame_count,ret);
     av_frame_free(&frame);
     return ret;
 }

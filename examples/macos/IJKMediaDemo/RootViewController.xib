@@ -660,7 +660,7 @@
                                                                         <menuItem title="fcc-uyvy" tag="3" id="wJF-Lj-uNK">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
-                                                                        <menuItem title="fcc-yuyv" tag="4" id="dhq-Vr-AaR" userLabel="fcc-yuyv">
+                                                                        <menuItem title="fcc-yuv2" tag="4" id="dhq-Vr-AaR">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
                                                                         <menuItem title="fcc-bgra" tag="5" id="trp-Lv-NDc">

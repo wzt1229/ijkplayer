@@ -60,7 +60,7 @@ static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_for
         case AV_PIX_FMT_VIDEOTOOLBOX:
             return SDL_VoutVideoToolBox_CreateOverlay(width, height, vout);
         default:
-            return SDL_VoutFFmpeg_CreateOverlay(width, height, frame_format, cvpixelbufferpool, vout);
+            return SDL_VoutFFmpeg_CreateOverlay(width, height, cvpixelbufferpool, vout);
     }
 }
 

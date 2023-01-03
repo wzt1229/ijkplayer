@@ -91,7 +91,7 @@ void SDL_VoutFreeP(SDL_Vout **pvout);
 int  SDL_VoutDisplayYUVOverlay(SDL_Vout *vout, SDL_VoutOverlay *overlay);
 int  SDL_VoutSetOverlayFormat(SDL_Vout *vout, Uint32 overlay_format);
 //convert a frame use vout. not free outFrame,when free vout the outFrame will free. if convert failed return greater then 0.
-int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame **outFrame);
+int  SDL_VoutConvertFrame(SDL_Vout *vout,int dst_format, const AVFrame *inFrame, const AVFrame **outFrame);
 
 
 #ifdef __APPLE__

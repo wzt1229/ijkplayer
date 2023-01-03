@@ -121,6 +121,7 @@ static const AVOption ffp_context_options[] = {
     { "fcc-argb",                       "", 0, OPTION_CONST(SDL_FCC_ARGB), .unit = "overlay-format" },
     { "fcc-0rgb",                       "", 0, OPTION_CONST(SDL_FCC_0RGB), .unit = "overlay-format" },
     { "fcc-uyvy",                       "", 0, OPTION_CONST(SDL_FCC_UYVY), .unit = "overlay-format" },
+    { "fcc-yuv2",                       "", 0, OPTION_CONST(SDL_FCC_YUV2), .unit = "overlay-format" },
     { "fcc-rv16",                       "", 0, OPTION_CONST(SDL_FCC_RV16), .unit = "overlay-format" },
     { "fcc-rv24",                       "", 0, OPTION_CONST(SDL_FCC_RV24), .unit = "overlay-format" },
     { "fcc-rv32",                       "", 0, OPTION_CONST(SDL_FCC_RV32), .unit = "overlay-format" },
