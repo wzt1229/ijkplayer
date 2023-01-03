@@ -266,8 +266,8 @@ typedef CGRect NSRect;
     if (clazz) {
         if (self.picturePipeline) {
             if ([self.picturePipeline class] != clazz) {
-                NSAssert(NO, @"wrong pixel format:%@",NSStringFromClass(clazz));
-                return NO;
+                NSLog(@"pixel format changed:%@",NSStringFromClass(clazz));
+                self.picturePipeline = nil;
             } else {
                 return YES;
             }
