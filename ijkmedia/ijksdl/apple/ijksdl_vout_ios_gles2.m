@@ -54,9 +54,9 @@ struct SDL_Vout_Opaque {
     IJKSDLSubtitle *sub;
 };
 
-static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *vout)
+static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout)
 {
-    switch (frame_format) {
+    switch (src_format) {
         case AV_PIX_FMT_VIDEOTOOLBOX:
             return SDL_VoutVideoToolBox_CreateOverlay(width, height, vout);
         default:
@@ -64,10 +64,10 @@ static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int frame_f
     }
 }
 
-static SDL_VoutOverlay *vout_create_overlay_apple(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *vout)
+static SDL_VoutOverlay *vout_create_overlay_apple(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout)
 {
     SDL_LockMutex(vout->mutex);
-    SDL_VoutOverlay *overlay = vout_create_overlay_l(width, height, frame_format, cvpixelbufferpool, vout);
+    SDL_VoutOverlay *overlay = vout_create_overlay_l(width, height, src_format, cvpixelbufferpool, vout);
     SDL_UnlockMutex(vout->mutex);
     return overlay;
 }

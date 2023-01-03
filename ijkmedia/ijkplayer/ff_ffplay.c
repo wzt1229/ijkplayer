@@ -1107,7 +1107,7 @@ display:
 
 /* allocate a picture (needs to do that in main thread to avoid
    potential locking problems */
-static void alloc_picture(FFPlayer *ffp, int frame_format)
+static void alloc_picture(FFPlayer *ffp, int src_format)
 {
     VideoState *is = ffp->is;
     Frame *vp;
@@ -1125,13 +1125,15 @@ static void alloc_picture(FFPlayer *ffp, int frame_format)
 
     SDL_VoutSetOverlayFormat(ffp->vout, ffp->overlay_format);
 #ifdef __APPLE__
-    vp->bmp = SDL_Vout_CreateOverlay_Apple(vp->width, vp->height,
-                                           frame_format,
+    vp->bmp = SDL_Vout_CreateOverlay_Apple(vp->width,
+                                           vp->height,
+                                           src_format,
                                            ffp->cvpixelbufferpool,
                                            ffp->vout);
 #else
-    vp->bmp = SDL_Vout_CreateOverlay(vp->width, vp->height,
-                                   frame_format,
+    vp->bmp = SDL_Vout_CreateOverlay(vp->width,
+                                     vp->height,
+                                     src_format,
                                    ffp->vout);
 #endif
 #ifdef FFP_MERGE

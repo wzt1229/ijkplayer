@@ -70,7 +70,7 @@ struct SDL_Vout {
     SDL_Class       *opaque_class;
     SDL_Vout_Opaque *opaque;
 #ifdef __APPLE__
-    SDL_VoutOverlay *(*create_overlay_apple)(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *vout);
+    SDL_VoutOverlay *(*create_overlay_apple)(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout);
 #else
     SDL_VoutOverlay *(*create_overlay)(int width, int height, int frame_format, SDL_Vout *vout);
 #endif
@@ -95,9 +95,9 @@ int  SDL_VoutConvertFrame(SDL_Vout *vout, const AVFrame *inFrame, const AVFrame 
 
 
 #ifdef __APPLE__
-SDL_VoutOverlay *SDL_Vout_CreateOverlay_Apple(int width, int height, int frame_format, int cvpixelbufferpool, SDL_Vout *vout);
+SDL_VoutOverlay *SDL_Vout_CreateOverlay_Apple(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout);
 #else
-SDL_VoutOverlay *SDL_Vout_CreateOverlay(int width, int height, int frame_format, SDL_Vout *vout);
+SDL_VoutOverlay *SDL_Vout_CreateOverlay(int width, int height, int src_format, SDL_Vout *vout);
 #endif
 
 int     SDL_VoutLockYUVOverlay(SDL_VoutOverlay *overlay);

@@ -223,7 +223,7 @@ typedef CGRect NSRect;
         clazz = [IJKMetalBGRAPipeline class];
     } else if (type == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange || type ==  kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
         clazz = [IJKMetalNV12Pipeline class];
-    } else if (type == kCVPixelFormatType_420YpCbCr8PlanarFullRange || type ==  kCVPixelFormatType_420YpCbCr8Planar) {
+    } else if (type == kCVPixelFormatType_420YpCbCr8PlanarFullRange || type == kCVPixelFormatType_420YpCbCr8Planar) {
         clazz = [IJKMetalYUV420PPipeline class];
     } else if (type == kCVPixelFormatType_422YpCbCr8) {
         clazz = [IJKMetalUYVY422Pipeline class];
