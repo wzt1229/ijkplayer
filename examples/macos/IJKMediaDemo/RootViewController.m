@@ -109,7 +109,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
-    [self reSetLoglevel:@"debug"];
+    [self reSetLoglevel:@"info"];
     self.seekCostLb.stringValue = @"";
     
     NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc.m3u8",@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];

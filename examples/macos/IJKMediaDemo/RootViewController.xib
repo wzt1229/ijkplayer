@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
         <capability name="Image references" minToolsVersion="12.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -699,15 +699,15 @@
                                                         <popUpButton verticalHuggingPriority="750" id="42b-R0-3XI">
                                                             <rect key="frame" x="976" y="6" width="78" height="25"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            <popUpButtonCell key="cell" type="push" title="debug" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="iUA-SS-njK" id="DZB-oJ-9hB">
+                                                            <popUpButtonCell key="cell" type="push" title="info" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="6MB-zo-Y9Y" id="DZB-oJ-9hB">
                                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                                 <font key="font" metaFont="menu"/>
                                                                 <menu key="menu" id="Zys-fC-z3j">
                                                                     <items>
-                                                                        <menuItem title="info" id="6MB-zo-Y9Y">
+                                                                        <menuItem title="info" state="on" id="6MB-zo-Y9Y">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
-                                                                        <menuItem title="debug" state="on" id="iUA-SS-njK">
+                                                                        <menuItem title="debug" id="iUA-SS-njK">
                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                         </menuItem>
                                                                         <menuItem title="warn" id="wBh-fY-88k">
@@ -839,7 +839,7 @@
                                             </middleViews>
                                             <endViews>
                                                 <button verticalHuggingPriority="750" id="hez-32-c2g">
-                                                    <rect key="frame" x="1007" y="17.5" width="19" height="19"/>
+                                                    <rect key="frame" x="1005" y="17" width="20" height="20"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="overlaps" alignment="center" imageScaling="proportionallyDown" inset="2" id="ogH-tj-D8E">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -851,7 +851,7 @@
                                                     </connections>
                                                 </button>
                                                 <button verticalHuggingPriority="750" id="Ksb-3H-5aR">
-                                                    <rect key="frame" x="1031" y="18.5" width="19.5" height="16"/>
+                                                    <rect key="frame" x="1030" y="18" width="20.5" height="17"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="overlaps" alignment="center" imageScaling="proportionallyDown" inset="2" id="NmY-tN-fI9">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -990,8 +990,8 @@
         <userDefaultsController representsSharedInstance="YES" id="OCk-Q5-1dK"/>
     </objects>
     <resources>
-        <image name="chevron.forward.2" catalog="system" width="19" height="16"/>
-        <image name="info.circle.fill" catalog="system" width="19" height="19"/>
+        <image name="chevron.forward.2" catalog="system" width="20" height="17"/>
+        <image name="info.circle.fill" catalog="system" width="20" height="20"/>
         <image name="next" width="52" height="52"/>
         <image name="pause" width="52" height="52"/>
         <image name="play" width="52" height="52"/>
