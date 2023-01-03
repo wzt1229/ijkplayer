@@ -359,10 +359,6 @@ fail0:
     return ret;
 }
 
-#ifdef __APPLE__
-static const AVCodecHWConfig *hw_config;
-#endif
-
 static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     int ret = AVERROR(EAGAIN);
 
@@ -2488,27 +2484,10 @@ static int audio_open(FFPlayer *opaque, int64_t wanted_channel_layout, int wante
 static enum AVPixelFormat get_hw_format(AVCodecContext *ctx,
                                         const enum AVPixelFormat *pix_fmts)
 {
-    if (hw_config) {
-        enum AVPixelFormat hw_pix_fmt = hw_config->pix_fmt;
-        for (const enum AVPixelFormat *p = pix_fmts; *p != -1; p++) {
-            if (*p == hw_pix_fmt)
-                return *p;
-        }
-    }
-
-    for (const enum AVPixelFormat *p = pix_fmts; *p != -1; p++) {
-        if (*p == AV_PIX_FMT_NV12)
-            return *p;
-    }
-
-    for (const enum AVPixelFormat *p = pix_fmts; *p != -1; p++) {
-        if (*p == AV_PIX_FMT_YUV420P)
-            return *p;
-    }
-
-    const enum AVPixelFormat supported_fmts[] = {AV_PIX_FMT_UYVY422,AV_PIX_FMT_RGB24,AV_PIX_FMT_ARGB,AV_PIX_FMT_0RGB,AV_PIX_FMT_BGRA,AV_PIX_FMT_BGR0};
+#warning metal todo rbg24,argb,0rgb,
+    const enum AVPixelFormat supported_fmts[] = {AV_PIX_FMT_VIDEOTOOLBOX,AV_PIX_FMT_NV12,AV_PIX_FMT_YUV420P,AV_PIX_FMT_UYVY422,AV_PIX_FMT_RGB24,AV_PIX_FMT_ARGB,AV_PIX_FMT_0RGB,AV_PIX_FMT_BGRA,AV_PIX_FMT_BGR0};
     
-    for (const enum AVPixelFormat *p = pix_fmts; *p != -1; p++) {
+    for (const enum AVPixelFormat *p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
         for (int i = 0; i < sizeof(supported_fmts) / sizeof(enum AVPixelFormat); i++) {
             if (*p == supported_fmts[i])
                 return *p;
@@ -2600,7 +2579,6 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         av_dict_set_int(&opts, "lowres", stream_lowres, 0);
     
 #ifdef __APPLE__
-    hw_config = NULL;
     if (ffp->videotoolbox_hwaccel && avctx->codec_type == AVMEDIA_TYPE_VIDEO && !(st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
         enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");
         const AVCodecHWConfig *config = NULL;
@@ -2618,7 +2596,6 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         }
         
         if (config && hw_decoder_init(avctx, config) == 0) {
-            hw_config = config;
             ALOGI("use videotoolbox accel!\n");
         } else {
             ALOGW("can't use videotoolbox accel!\n");
