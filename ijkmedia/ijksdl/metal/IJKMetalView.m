@@ -29,8 +29,6 @@
 
 @interface IJKMetalView ()
 {
-    CGRect _layerBounds;
-    
     // The command queue used to pass commands to the device.
     id<MTLCommandQueue> _commandQueue;
 
@@ -93,7 +91,7 @@
     _commandQueue = [self.device newCommandQueue]; // CommandQueue是渲染指令队列，保证渲染指令有序地提交到GPU
     //设置模型矩阵，实现旋转
     _modelMatrixChanged = YES;
-    self.autoResizeDrawable = NO;
+    self.autoResizeDrawable = YES;
     self.enableSetNeedsDisplay = YES;
     return YES;
 }
@@ -124,26 +122,10 @@ typedef CGRect NSRect;
     return self;
 }
 
-#if TARGET_OS_IPHONE
-- (void)layoutSubviews
+- (CGSize)computeNormalizedRatio:(const int)w frameHeight:(const int)h
 {
-    [super layoutSubviews];
-    _layerBounds = self.bounds;
-}
-#else
-- (void)layout
-{
-    [super layout];
-    _layerBounds = self.bounds;
-}
-#endif
-
-- (CGSize)computeNormalizedRatio:(CVPixelBufferRef)img
-{
-    CGRect layerRect = _layerBounds;
-    
-    int frameWidth = (int)CVPixelBufferGetWidth(img);
-    int frameHeight = (int)CVPixelBufferGetHeight(img);
+    int frameWidth = w;
+    int frameHeight = h;
     // Compute normalized quad coordinates to draw the frame into.
     CGSize normalizedSamplingSize = CGSizeMake(1.0, 1.0);
     
@@ -160,6 +142,7 @@ typedef CGRect NSRect;
     
     float darRatio = self.darPreference.ratio;
     
+    CGSize drawableSize = self.drawableSize;
     //when video's z rotate degrees is 90 odd multiple
     if (abs(zDegrees) / 90 % 2 == 1) {
         //need swap user's ratio
@@ -167,16 +150,14 @@ typedef CGRect NSRect;
             darRatio = 1.0 / darRatio;
         }
         //need swap display size
-        CGSize layerSize = layerRect.size;
-        int tmp = layerSize.width;
-        layerSize.width = layerSize.height;
-        layerSize.height = tmp;
-        layerRect.size = layerSize;
+        int tmp = drawableSize.width;
+        drawableSize.width = drawableSize.height;
+        drawableSize.height = tmp;
     }
     
     //apply user dar
     if (darRatio > 0.001) {
-        if (1.0 * CVPixelBufferGetWidth(img) / CVPixelBufferGetHeight(img) > darRatio) {
+        if (1.0 * w / h > darRatio) {
             frameHeight = frameWidth * 1.0 / darRatio;
         } else {
             frameWidth = frameHeight * darRatio;
@@ -185,6 +166,7 @@ typedef CGRect NSRect;
     
     if (_scalingMode == IJKMPMovieScalingModeAspectFit || _scalingMode == IJKMPMovieScalingModeFill) {
         // Set up the quad vertices with respect to the orientation and aspect ratio of the video.
+        CGRect layerRect = CGRectMake(0, 0, drawableSize.width, drawableSize.height);
         CGRect vertexSamplingRect = AVMakeRectWithAspectRatioInsideRect(CGSizeMake(frameWidth, frameHeight), layerRect);
         
         CGSize cropScaleAmount = CGSizeMake(vertexSamplingRect.size.width/layerRect.size.width, vertexSamplingRect.size.height/layerRect.size.height);
@@ -374,7 +356,7 @@ typedef CGRect NSRect;
     {
         CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
         if (pixelBuffer) {
-            CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
+            CGSize ratio = [self computeNormalizedRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
             [self encoderPicture:renderEncoder viewport:self.drawableSize ratio:ratio];
         }
         [self encoderSubtitle:renderEncoder viewport:self.drawableSize scale:1.0];
@@ -385,7 +367,6 @@ typedef CGRect NSRect;
     [commandBuffer presentDrawable:self.currentDrawable];
     // Finalize rendering here & push the command buffer to the GPU.
     [commandBuffer commit]; //
-    
 }
 
 - (CGImageRef)_snapshot
@@ -408,7 +389,7 @@ typedef CGRect NSRect;
     if (self.currentAttach.sar > 0) {
         width = self.currentAttach.sar * width;
     }
-    CGSize ratio = [self computeNormalizedRatio:pixelBuffer];
+    CGSize ratio = [self computeNormalizedRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
     float scale = width / (ratio.width * self.drawableSize.width);
     
     int zDegrees = 0;
@@ -575,7 +556,8 @@ typedef CGRect NSRect;
     if (overlay->sar_num > 0 && overlay->sar_den > 0) {
         attach.sar = 1.0 * overlay->sar_num / overlay->sar_den;
     }
-    
+    attach.w = overlay->w;
+    attach.h = overlay->h;
     CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
     attach.currentVideoPic = CVPixelBufferRetain(videoPic);
     
@@ -672,4 +654,5 @@ typedef CGRect NSRect;
     return NO;
 }
 #endif
+
 @end

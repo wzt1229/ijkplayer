@@ -263,6 +263,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     if ([movies count] > 0) {
         [self.playList removeAllObjects];
+        [self stopPlay:nil];
         // 开始播放
         [self appendToPlayList:movies];
     }
@@ -749,36 +750,38 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 - (void)ijkPlayerNaturalSizeAvailable:(NSNotification *)notifi
 {
     if (self.player == notifi.object) {
-        CGSize videoSize = NSSizeFromString(notifi.userInfo[@"size"]);
+        CGSize const videoSize = NSSizeFromString(notifi.userInfo[@"size"]);
         if (!CGSizeEqualToSize(self.view.window.aspectRatio, videoSize)) {
             
-            [self.view.window setAspectRatio:videoSize];
+//            [self.view.window setAspectRatio:videoSize];
             CGRect rect = self.view.window.frame;
             
             CGPoint center = CGPointMake(rect.origin.x + rect.size.width/2.0, rect.origin.y + rect.size.height/2.0);
-            
-            if (videoSize.width > videoSize.height) {
+            static float kMaxRatio = 1.0;
+            if (videoSize.width < videoSize.height) {
                 rect.size.width = rect.size.height / videoSize.height * videoSize.width;
-                if (rect.size.width > [[NSScreen mainScreen]frame].size.width * 0.7) {
-                    float ratio = [[NSScreen mainScreen]frame].size.width * 0.7 / rect.size.width;
+                if (rect.size.width > [[NSScreen mainScreen]frame].size.width * kMaxRatio) {
+                    float ratio = [[NSScreen mainScreen]frame].size.width * kMaxRatio / rect.size.width;
                     rect.size.width *= ratio;
                     rect.size.height *= ratio;
                 }
             } else {
                 rect.size.height = rect.size.width / videoSize.width * videoSize.height;
-                if (rect.size.height > [[NSScreen mainScreen]frame].size.height * 0.7) {
-                    float ratio = [[NSScreen mainScreen]frame].size.height * 0.7 / rect.size.height;
+                if (rect.size.height > [[NSScreen mainScreen]frame].size.height * kMaxRatio) {
+                    float ratio = [[NSScreen mainScreen]frame].size.height * kMaxRatio / rect.size.height;
                     rect.size.width *= ratio;
                     rect.size.height *= ratio;
                 }
             }
             //keep center.
             rect.origin = CGPointMake(center.x - rect.size.width/2.0, center.y - rect.size.height/2.0);
-            
+            rect = CGRectIntegral(rect);
+            NSLog(@"窗口位置:%@;视频尺寸：%@",NSStringFromRect(rect),NSStringFromSize(videoSize));
             [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-                [self.view.window.animator setFrame:CGRectIntegral(rect) display:YES];
-                [self.view.window center];
+                [self.view.window.animator setFrame:rect display:YES];
+                [self.view.window.animator center];
             }];
+
         }
     }
 }
@@ -1116,6 +1119,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     //拖拽播放时清空原先的列表
     [self.playList removeAllObjects];
+    [self stopPlay:nil];
     [self appendToPlayList:bookmarkArr];
 }
 
@@ -1190,10 +1194,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)stopPlay:(NSButton *)sender
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    
-    [self.kvoCtrl safelyRemoveAllObservers];
     if (self.player) {
+        [self.kvoCtrl safelyRemoveAllObservers];
+        [[NSNotificationCenter defaultCenter] removeObserver:self.player];
         [self.player.view removeFromSuperview];
         [self.player pause];
         [self.player shutdown];

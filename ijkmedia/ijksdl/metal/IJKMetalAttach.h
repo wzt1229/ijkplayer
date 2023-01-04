@@ -16,6 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(atomic,nullable) CVPixelBufferRef currentVideoPic;
 @property(atomic,nullable) CVPixelBufferRef currentSubtitle;
 
+//video frame normal size not alignmetn,maybe not equal to currentVideoPic's size.
+@property(nonatomic) int w;
+@property(nonatomic) int h;
 @property(nonatomic) float sar;
 @property(nonatomic) int zRotateDegrees;
 @property(nonatomic) IJKSDLSubtitle *sub;
