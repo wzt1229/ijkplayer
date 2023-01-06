@@ -282,12 +282,11 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
         opaque->pixelBuffer = pixel_buffer;
         
         if (CVPixelBufferIsPlanar(pixel_buffer)) {
-            overlay->planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
-            for (int i = 0; i < overlay->planes; i ++) {
+            int planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+            for (int i = 0; i < planes; i ++) {
                 overlay->pitches[i] = CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
             }
         } else {
-            overlay->planes = 1;
             overlay->pitches[0] = CVPixelBufferGetWidth(pixel_buffer);
         }
         return 0;
@@ -297,11 +296,11 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
 
 struct SDL_Vout_Opaque {
     void *cvPixelBufferPool;
-    int ff_format;
+    int cv_format;
 };
 
 #ifndef __clang_analyzer__
-SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int cvpixelbufferpool, SDL_Vout *display)
+SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_format, int cvpixelbufferpool, SDL_Vout *display)
 {
     Uint32 overlay_format = display->overlay_format;
     
@@ -324,8 +323,8 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int cvpixel
     overlay->unlock             = func_unlock;
     overlay->func_fill_frame    = func_fill_avframe_to_cvpixelbuffer;
     
-    enum AVPixelFormat const ff_format = display->ff_format;
-    assert(ff_format != AV_PIX_FMT_NONE);
+    enum AVPixelFormat const format = src_format;
+    assert(format != AV_PIX_FMT_NONE);
 
     SDLTRACE("SDL_VoutFFmpeg_CreateOverlay(w=%d, h=%d, fmt=%.4s, dp=%p)\n",
              width, height, (const char*) &overlay_format, display);
@@ -333,17 +332,14 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int cvpixel
     SDL_Vout_Opaque * voutOpaque = display->opaque;
     if (cvpixelbufferpool && !voutOpaque->cvPixelBufferPool) {
         CVPixelBufferPoolRef cvPixelBufferPool = NULL;
-        createCVPixelBufferPoolFromAVFrame(&cvPixelBufferPool, width, height, ff_format);
+        createCVPixelBufferPoolFromAVFrame(&cvPixelBufferPool, width, height, format);
         voutOpaque->cvPixelBufferPool = cvPixelBufferPool;
-        voutOpaque->ff_format = ff_format;
+        voutOpaque->cv_format = format;
     }
     
-    if (voutOpaque->ff_format == ff_format) {
+    if (voutOpaque->cv_format == format) {
         opaque->pixelBufferPool = (CVPixelBufferPoolRef)voutOpaque->cvPixelBufferPool;
     }
-
-    //record ff_format
-    overlay->ff_format = ff_format;
 
     return overlay;
 }

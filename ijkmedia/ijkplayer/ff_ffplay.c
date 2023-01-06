@@ -1369,8 +1369,6 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         }
     }
     
-    //in CreateOverlay using the vout->ff_format.
-    ffp->vout->ff_format = src_frame->format;
     /* alloc or resize hardware picture buffer */
     if (!vp->bmp || !vp->allocated ||
         vp->width  != src_frame->width ||

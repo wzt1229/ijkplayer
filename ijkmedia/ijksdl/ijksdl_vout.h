@@ -35,15 +35,13 @@
 typedef struct SDL_VoutOverlay_Opaque SDL_VoutOverlay_Opaque;
 typedef struct SDL_VoutOverlay SDL_VoutOverlay;
 struct SDL_VoutOverlay {
-    int w; /**< Read-only */
-    int h; /**< Read-only */
-    Uint32 format; /**< Read-only such as SDL_FCC__VTB */
-#ifdef __APPLE__
-    Uint32 ff_format;/**< FFmpeg AV_PIXEL_FORMAT ; when format is SDL_FCC__VTB the value is CVPixelFormatType*/
-#else
+    int w; /**< Read-only, avframe's width */
+    int h; /**< Read-only, avframe's height */
+    Uint32 format; /**< Read-only,Apple plat is SDL_FCC__VTB or  SDL_FCC__FFVTB*/
+#ifndef __APPLE__
     Uint8 **pixels; /**< Read-write */
-#endif
     int planes; /**< Read-only */
+#endif
     Uint16 *pitches; /**< in bytes, Read-only */
     
     int is_private;
@@ -79,7 +77,6 @@ struct SDL_Vout {
     void (*update_subtitle_picture)(SDL_Vout *vout, const AVSubtitleRect *rect);
     
     Uint32 overlay_format;
-    Uint32 ff_format;//(Read Only)same as SDL_VoutOverlay's ff_format.
     int z_rotate_degrees;
     //convert image
     void *image_converter;

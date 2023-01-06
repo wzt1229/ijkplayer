@@ -97,15 +97,13 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
     }
     opaque->pixel_buffer = CVPixelBufferRetain(pixel_buffer);
     overlay->format = SDL_FCC__VTB;
-    overlay->ff_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
 
     if (CVPixelBufferIsPlanar(pixel_buffer)) {
-        overlay->planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
-        for (int i = 0; i < overlay->planes; i ++) {
+        int planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+        for (int i = 0; i < planes; i ++) {
             overlay->pitches[i] = CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
         }
     } else {
-        overlay->planes = 1;
         overlay->pitches[0] = CVPixelBufferGetWidth(pixel_buffer);
     }
     

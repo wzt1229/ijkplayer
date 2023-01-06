@@ -47,7 +47,7 @@
 
 struct SDL_Vout_Opaque {
     void *cvPixelBufferPool;
-    int ff_format;
+    int cv_format;
     __strong UIView<IJKVideoRenderingProtocol> *gl_view;
     IJKSDLSubtitle *sub;
 };
@@ -58,7 +58,7 @@ static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_for
         case AV_PIX_FMT_VIDEOTOOLBOX:
             return SDL_VoutVideoToolBox_CreateOverlay(width, height, vout);
         default:
-            return SDL_VoutFFmpeg_CreateOverlay(width, height, cvpixelbufferpool, vout);
+            return SDL_VoutFFmpeg_CreateOverlay(width, height, src_format, cvpixelbufferpool, vout);
     }
 }
 
@@ -114,7 +114,6 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         ijk_overlay.w = overlay->w;
         ijk_overlay.h = overlay->h;
         ijk_overlay.format = overlay->format;
-        ijk_overlay.planes = overlay->planes;
         ijk_overlay.pitches = overlay->pitches;
         ijk_overlay.sar_num = overlay->sar_num;
         ijk_overlay.sar_den = overlay->sar_den;
@@ -236,7 +235,7 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2()
         return NULL;
 
     SDL_Vout_Opaque *opaque = vout->opaque;
-    opaque->ff_format = -1;
+    opaque->cv_format = -1;
     
     vout->create_overlay_apple = vout_create_overlay_apple;
     vout->free_l = vout_free_l;

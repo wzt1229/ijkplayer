@@ -33,7 +33,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
 
-SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int cvpixelbufferpool, SDL_Vout *vout);
+SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout);
 CVPixelBufferRef SDL_VoutFFmpeg_GetCVPixelBufferRef(SDL_VoutOverlay *overlay);
 
 #endif
