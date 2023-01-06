@@ -302,8 +302,6 @@ struct SDL_Vout_Opaque {
 #ifndef __clang_analyzer__
 SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_format, int cvpixelbufferpool, SDL_Vout *display)
 {
-    Uint32 overlay_format = display->overlay_format;
-    
     SDL_VoutOverlay *overlay = SDL_VoutOverlay_CreateInternal(sizeof(SDL_VoutOverlay_Opaque));
     if (!overlay) {
         ALOGE("overlay allocation failed");
@@ -325,9 +323,9 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_form
     
     enum AVPixelFormat const format = src_format;
     assert(format != AV_PIX_FMT_NONE);
-
-    SDLTRACE("SDL_VoutFFmpeg_CreateOverlay(w=%d, h=%d, fmt=%.4s, dp=%p)\n",
-             width, height, (const char*) &overlay_format, display);
+    const AVPixFmtDescriptor *pd = av_pix_fmt_desc_get(format);
+    SDLTRACE("SDL_VoutFFmpeg_CreateOverlay(w=%d, h=%d, fmt=%s, dp=%p)\n",
+             width, height, (const char*) pd->name, display);
     
     SDL_Vout_Opaque * voutOpaque = display->opaque;
     if (cvpixelbufferpool && !voutOpaque->cvPixelBufferPool) {

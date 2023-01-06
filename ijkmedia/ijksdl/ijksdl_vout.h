@@ -37,7 +37,7 @@ typedef struct SDL_VoutOverlay SDL_VoutOverlay;
 struct SDL_VoutOverlay {
     int w; /**< Read-only, avframe's width */
     int h; /**< Read-only, avframe's height */
-    Uint32 format; /**< Read-only,Apple plat is SDL_FCC__VTB or  SDL_FCC__FFVTB*/
+    Uint32 format; /**< Read-only,on Apple plat is SDL_FCC__VTB or  SDL_FCC__FFVTB; other plat SDL_FCC_I420 */
 #ifndef __APPLE__
     Uint8 **pixels; /**< Read-write */
     int planes; /**< Read-only */
