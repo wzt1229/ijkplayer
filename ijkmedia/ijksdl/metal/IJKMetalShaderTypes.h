@@ -25,7 +25,7 @@ typedef enum IJKVertexInputIndex
 
 typedef struct
 {
-    vector_float4 position;
+    vector_float2 position;
     vector_float2 textureCoordinate;
 } IJKVertex;
 

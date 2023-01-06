@@ -776,7 +776,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             }
             //keep center.
             rect.origin = CGPointMake(center.x - rect.size.width/2.0, center.y - rect.size.height/2.0);
-            rect = CGRectIntegral(rect);
+            rect.size = CGSizeMake((int)rect.size.width, (int)rect.size.height);
             NSLog(@"窗口位置:%@;视频尺寸：%@",NSStringFromRect(rect),NSStringFromSize(videoSize));
             [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
                 [self.view.window.animator setFrame:rect display:YES];

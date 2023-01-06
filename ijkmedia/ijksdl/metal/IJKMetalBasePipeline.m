@@ -179,6 +179,14 @@
     }
 }
 
+- (void)setTextureCrop:(CGSize)textureCrop
+{
+    if (!CGSizeEqualToSize(self.textureCrop, textureCrop)) {
+        _textureCrop = textureCrop;
+        self.vertexChanged = YES;
+    }
+}
+
 - (void)setRotateType:(int)rotateType
 {
     if (_rotateType != rotateType) {
@@ -220,20 +228,27 @@
     float y = self.vertexRatio.height;
     /*
      triangle strip
-       ^+
+       ↑y
      V3|V4
-     --|--->+
+     --|--→x
      V1|V2
-     -->V1V2V3
-     -->V2V3V4
+     📐-->V1V2V3
+     📐-->V2V3V4
+     
+     texture
+     |---->x
+     |V3 V4
+     |V1 V2
+     ↓y
      */
-
+    float max_t_y = 1.0 * (1 - self.textureCrop.height);
+    float max_t_x = 1.0 * (1 - self.textureCrop.width);
     IJKVertex quadVertices[4] =
-    {   // 顶点坐标，分别是x、y、z、w；    纹理坐标，x、y；
-        { { -1.0 * x, -1.0 * y, 0.0, 1.0 },  { 0.f, 1.f } },
-        { {  1.0 * x, -1.0 * y, 0.0, 1.0 },  { 1.f, 1.f } },
-        { { -1.0 * x,  1.0 * y, 0.0, 1.0 },  { 0.f, 0.f } },
-        { {  1.0 * x,  1.0 * y, 0.0, 1.0 },  { 1.f, 0.f } },
+    {   //顶点坐标；                纹理坐标；
+        { { -1.0 * x, -1.0 * y }, { 0.f, max_t_y } },
+        { {  1.0 * x, -1.0 * y }, { max_t_x, max_t_y } },
+        { { -1.0 * x,  1.0 * y }, { 0.f, 0.f } },
+        { {  1.0 * x,  1.0 * y }, { max_t_x, 0.f } },
     };
     
     /// These are the view and projection transforms.

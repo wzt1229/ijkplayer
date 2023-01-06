@@ -22,6 +22,7 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 @property (nonatomic, assign) int rotateType;//x:1,y:2,z:3
 @property (nonatomic, assign) float autoZRotateDegrees;
 @property (nonatomic, assign) CGSize vertexRatio;
+@property (nonatomic, assign) CGSize textureCrop;
 
 //subclass override!
 + (NSString *)fragmentFuctionName;

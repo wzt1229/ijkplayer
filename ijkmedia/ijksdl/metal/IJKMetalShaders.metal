@@ -34,7 +34,7 @@ vertex RasterizerData subVertexShader(uint vertexID [[vertex_id]],
              constant IJKVertex *vertices [[buffer(IJKVertexInputIndexVertices)]])
 {
     RasterizerData out;
-    out.clipSpacePosition = vertices[vertexID].position;
+    out.clipSpacePosition = float4(vertices[vertexID].position, 0.0, 1.0);
     out.textureCoordinate = vertices[vertexID].textureCoordinate;
     return out;
 }
@@ -45,7 +45,8 @@ vertex RasterizerData mvpShader(uint vertexID [[vertex_id]],
 {
     RasterizerData out;
     IJKVertex _vertex = data.vertexes[vertexID];
-    out.clipSpacePosition = data.modelMatrix * _vertex.position;
+    float4 position = float4(_vertex.position, 0.0, 1.0);
+    out.clipSpacePosition = data.modelMatrix * position;
     out.textureCoordinate = _vertex.textureCoordinate;
     return out;
 }

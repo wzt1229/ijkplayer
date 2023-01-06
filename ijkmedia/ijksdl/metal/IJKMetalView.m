@@ -122,12 +122,14 @@ typedef CGRect NSRect;
     return self;
 }
 
-- (CGSize)computeNormalizedRatio:(const int)w frameHeight:(const int)h
+- (CGSize)computeNormalizedVerticesRatio:(const int)w frameHeight:(const int)h
 {
+    if (_scalingMode == IJKMPMovieScalingModeFill) {
+        return CGSizeMake(1.0, 1.0);
+    }
+    
     int frameWidth = w;
     int frameHeight = h;
-    // Compute normalized quad coordinates to draw the frame into.
-    CGSize normalizedSamplingSize = CGSizeMake(1.0, 1.0);
     
     //keep video AVRational
     if (self.currentAttach.sar > 0) {
@@ -164,34 +166,18 @@ typedef CGRect NSRect;
         }
     }
     
-    if (_scalingMode == IJKMPMovieScalingModeAspectFit || _scalingMode == IJKMPMovieScalingModeFill) {
-        // Set up the quad vertices with respect to the orientation and aspect ratio of the video.
-        CGRect layerRect = CGRectMake(0, 0, drawableSize.width, drawableSize.height);
-        CGRect vertexSamplingRect = AVMakeRectWithAspectRatioInsideRect(CGSizeMake(frameWidth, frameHeight), layerRect);
-        
-        CGSize cropScaleAmount = CGSizeMake(vertexSamplingRect.size.width/layerRect.size.width, vertexSamplingRect.size.height/layerRect.size.height);
-        
-        // hold max
-        if (_scalingMode == IJKMPMovieScalingModeAspectFit) {
-            if (cropScaleAmount.width > cropScaleAmount.height) {
-                normalizedSamplingSize.width = 1.0;
-                normalizedSamplingSize.height = cropScaleAmount.height/cropScaleAmount.width;
-            } else {
-                normalizedSamplingSize.height = 1.0;
-                normalizedSamplingSize.width = cropScaleAmount.width/cropScaleAmount.height;
-            }
-        } else if (_scalingMode == IJKMPMovieScalingModeFill) {
-            // hold min
-            if (cropScaleAmount.width > cropScaleAmount.height) {
-                normalizedSamplingSize.height = 1.0;
-                normalizedSamplingSize.width = cropScaleAmount.width/cropScaleAmount.height;
-            } else {
-                normalizedSamplingSize.width = 1.0;
-                normalizedSamplingSize.height = cropScaleAmount.height/cropScaleAmount.width;
-            }
-        }
+    float wRatio = drawableSize.width / frameWidth;
+    float hRatio = drawableSize.height / frameHeight;
+    float ratio  = 1.0f;
+    
+    if (_scalingMode == IJKMPMovieScalingModeAspectFit) {
+        ratio = FFMIN(wRatio, hRatio);
+    } else if (_scalingMode == IJKMPMovieScalingModeFill) {
+        ratio = FFMAX(wRatio, hRatio);
     }
-    return normalizedSamplingSize;
+    float nW = (frameWidth * ratio / drawableSize.width);
+    float nH = (frameHeight * ratio / drawableSize.height);
+    return CGSizeMake(nW, nH);
 }
 
 - (Class)pipelineClass:(CVPixelBufferRef)pixelBuffer
@@ -291,7 +277,9 @@ typedef CGRect NSRect;
 #endif
 }
 
-- (void)encoderPicture:(id<MTLRenderCommandEncoder>)renderEncoder viewport:(CGSize)viewport ratio:(CGSize)ratio
+- (void)encoderPicture:(id<MTLRenderCommandEncoder>)renderEncoder
+              viewport:(CGSize)viewport
+                 ratio:(CGSize)ratio
 {
     // Set the region of the drawable to draw into.
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
@@ -307,6 +295,8 @@ typedef CGRect NSRect;
         bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
         [self.picturePipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust ? 1.0 : 0.0}];
         self.picturePipeline.vertexRatio = ratio;
+        
+        self.picturePipeline.textureCrop = CGSizeMake(1.0 * (CVPixelBufferGetWidth(pixelBuffer) - self.currentAttach.w) / CVPixelBufferGetWidth(pixelBuffer), 1.0 * (CVPixelBufferGetHeight(pixelBuffer) - self.currentAttach.h) / CVPixelBufferGetHeight(pixelBuffer));
         //upload textures
         [self.picturePipeline uploadTextureWithEncoder:renderEncoder
                                               buffer:pixelBuffer
@@ -352,11 +342,10 @@ typedef CGRect NSRect;
     
     // Create a render command encoder.
     id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-    
     {
         CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
         if (pixelBuffer) {
-            CGSize ratio = [self computeNormalizedRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
+            CGSize ratio = [self computeNormalizedVerticesRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
             [self encoderPicture:renderEncoder viewport:self.drawableSize ratio:ratio];
         }
         [self encoderSubtitle:renderEncoder viewport:self.drawableSize scale:1.0];
@@ -389,7 +378,7 @@ typedef CGRect NSRect;
     if (self.currentAttach.sar > 0) {
         width = self.currentAttach.sar * width;
     }
-    CGSize ratio = [self computeNormalizedRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
+    CGSize ratio = [self computeNormalizedVerticesRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
     float scale = width / (ratio.width * self.drawableSize.width);
     
     int zDegrees = 0;

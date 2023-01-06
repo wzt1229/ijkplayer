@@ -115,11 +115,11 @@
      */
 
     IJKVertex quadVertices[4] =
-    {   // 顶点坐标，分别是x、y、z、w；    纹理坐标，x、y；
-        { { x, y, 0.0, 1.0 },  { 0.f, 1.f } },
-        { { x + w, y, 0.0, 1.0 },  { 1.f, 1.f } },
-        { { x, y + h, 0.0, 1.0 },  { 0.f, 0.f } },
-        { { x + w, y + h, 0.0, 1.0 },  { 1.f, 0.f } },
+    {   //顶点坐标；          纹理坐标；
+        { { x,     y },     { 0.f, 1.f } },
+        { { x + w, y },     { 1.f, 1.f } },
+        { { x, y + h },     { 0.f, 0.f } },
+        { { x + w, y + h }, { 1.f, 0.f } },
     };
     
     self.vertices = [_device newBufferWithBytes:quadVertices
