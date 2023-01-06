@@ -922,4 +922,9 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     }
 }
 
+- (NSString *)name
+{
+    return @"OpenGL-ES";
+}
+
 @end

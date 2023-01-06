@@ -139,7 +139,7 @@ typedef enum : NSUInteger {
 #else
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
 #endif
-
+- (NSString *)name;
 @optional;//when isThirdGLView,will call display_pixels method.
 - (void)display_pixels:(IJKOverlay *)overlay;
 //when video size changed will call videoNaturalSizeChanged.

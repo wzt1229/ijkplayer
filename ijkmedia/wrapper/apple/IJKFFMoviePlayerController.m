@@ -313,6 +313,9 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         return;
 
     [self setScreenOn:_keepScreenOnWhilePlaying];
+    NSString *render = [self.view name];
+    [self setHudValue:render forKey:@"v-renderer"];
+    
     if (![_contentURL isFileURL]) {
         [self setHudValue:nil forKey:@"scheme"];
         [self setHudValue:nil forKey:@"host"];

@@ -1015,6 +1015,11 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     glClearColor(r/255.0, g/255.0, b/255.0, 1.0f);
 }
 
+- (NSString *)name
+{
+    return @"OpenGL";
+}
+
 - (NSView *)hitTest:(NSPoint)point
 {
     return nil;

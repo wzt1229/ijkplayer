@@ -633,6 +633,11 @@ typedef CGRect NSRect;
     //renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0f);
 }
 
+- (NSString *)name
+{
+    return @"Metal";
+}
+
 #if TARGET_OS_OSX
 - (NSView *)hitTest:(NSPoint)point
 {
