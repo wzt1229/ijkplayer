@@ -217,7 +217,8 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format,
 }
 #endif
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create2(Uint32 overlay_format,Uint32 ff_format,int openglVer)
+#ifdef __APPLE__
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 overlay_format,Uint32 cv_format,int openglVer)
 {
     IJK_GLES2_printString("Version", GL_VERSION);
     IJK_GLES2_printString("Vendor", GL_VENDOR);
@@ -252,31 +253,14 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create2(Uint32 overlay_format,Uint32 ff_f
     
     IJK_GLES2_Renderer *renderer = NULL;
     
-#ifdef __APPLE__
     if (SDL_FCC__VTB == overlay_format) {
-        renderer = _smart_create_renderer_appple(overlay_format, ff_format, openglVer);
+        renderer = _smart_create_renderer_appple(overlay_format, cv_format, openglVer);
+    } else if (SDL_FCC__FFVTB == overlay_format) {
+        renderer = _smart_create_renderer_appple(overlay_format, cv_format, openglVer);
+    } else {
+        return NULL;
     }
-    else if (SDL_FCC__FFVTB == overlay_format) {
-        renderer = _smart_create_renderer_appple(overlay_format, ff_format, openglVer);
-    }
-#else
-    switch (overlay->format) {
-            case SDL_FCC_RV16:      renderer = IJK_GLES2_Renderer_create_rgb565(); break;
-            case SDL_FCC_RV24:      renderer = IJK_GLES2_Renderer_create_rgb888(); break;
-            case SDL_FCC_RV32:      renderer = IJK_GLES2_Renderer_create_rgbx8888(); break;
-    #ifdef __APPLE__
-            case SDL_FCC_NV12:      renderer = IJK_GLES2_Renderer_create_yuv420sp(); break;
-            case SDL_FCC__VTB:      renderer = IJK_GLES2_Renderer_create_yuv420sp_vtb(overlay); break;
-    #endif
-            case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
-            case SDL_FCC_I420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
-            case SDL_FCC_J420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
-            case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le(); break;
-            default:
-                ALOGE("[GLES2] unknown format %4s(%d)\n", (char *)&overlay->format, overlay->format);
-                return NULL;
-        }
-#endif
+
     if (renderer) {
         renderer->format = overlay_format;
         
@@ -292,27 +276,62 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create2(Uint32 overlay_format,Uint32 ff_f
     return renderer;
 }
 
+#else
+
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openglVer)
 {
-    if (!overlay)
-        return NULL;
+    IJK_GLES2_printString("Version", GL_VERSION);
+    IJK_GLES2_printString("Vendor", GL_VENDOR);
+    IJK_GLES2_printString("Renderer", GL_RENDERER);
+//    GLint m_nMaxTextureSize;
+//    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_nMaxTextureSize);
+//    IJK_GLES2_printString("Extensions", GL_EXTENSIONS);
+//    IJK_GLES2_checkError("Extensions");
+    if (openglVer == 0) {
+        const char *version_string = (const char *) glGetString(GL_VERSION);
+        int major = 0, minor = 0;
+        if (sscanf(version_string, "OpenGL ES %d.%d", &major, &minor) == 2) {
+            if (major == 2) {
+                openglVer = 100;
+            } else if (major == 3) {
+                openglVer = 300;
+            }
+        } else {
+            //use legacy opengl?
+            openglVer = 100;
+        }
+    }
     
-    Uint32 overlay_format = overlay->format;
-    Uint32 ff_format = 0;
-#ifdef __APPLE__
-    if (SDL_FCC__VTB == overlay_format) {
-        ff_format = overlay->ff_format;
-    }
-    else if (SDL_FCC__FFVTB == overlay_format) {
-        ff_format = overlay->cv_format;
-    }
-    else {
-        assert(0);
-    }
-#endif
+    IJK_GLES2_Renderer *renderer = NULL;
     
-    return IJK_GLES2_Renderer_create2(overlay_format, ff_format, openglVer);
+    switch (overlay->format) {
+        case SDL_FCC_RV16:      renderer = IJK_GLES2_Renderer_create_rgb565(); break;
+        case SDL_FCC_RV24:      renderer = IJK_GLES2_Renderer_create_rgb888(); break;
+        case SDL_FCC_RV32:      renderer = IJK_GLES2_Renderer_create_rgbx8888(); break;
+        case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
+        case SDL_FCC_I420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
+        case SDL_FCC_J420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
+        case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le(); break;
+        default:
+            ALOGE("[GLES2] unknown format %4s(%d)\n", (char *)&overlay->format, overlay->format);
+            return NULL;
+    }
+
+    if (renderer) {
+        renderer->format = overlay->format;
+        
+        glGenVertexArrays(1, &renderer->vao);
+        /// 创建顶点缓存对象
+        glGenBuffers(1, &renderer->vbo);
+        
+        glBindVertexArray(renderer->vao);
+        /// 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
+        /// 同时也指定了_VBO的对象类型是一个顶点数据对象
+        glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
+    }
+    return renderer;
 }
+#endif
 
 GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer)
 {

@@ -355,7 +355,7 @@ static bool _is_need_dispath_to_global(void)
         openglVer = 120;
     #endif
         
-        _renderer = IJK_GLES2_Renderer_create2(attach.overlayFormat,attach.ffFormat,openglVer);
+        _renderer = IJK_GLES2_Renderer_createApple(attach.overlayFormat,attach.ffFormat,openglVer);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
@@ -595,21 +595,10 @@ static bool _is_need_dispath_to_global(void)
     
     //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
     Uint32 overlay_format = overlay->format;
-    Uint32 ff_format;
-    if (SDL_FCC__VTB == overlay_format) {
-        ff_format = overlay->ff_format;
-    }
-    else if (SDL_FCC__FFVTB == overlay_format) {
-        ff_format = overlay->cv_format;
-    }
-    else {
-        ff_format = 0;
-        NSAssert(NO, @"wtf?");
-    }
+    NSAssert(SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format, @"wtf?");
     
     _IJKSDLGLViewAttach *attach = [[_IJKSDLGLViewAttach alloc] init];
     
-    attach.ffFormat = ff_format;
     attach.overlayFormat = overlay_format;
     attach.zRotateDegrees = overlay->auto_z_rotate_degrees;
     attach.overlayW = overlay->w;
@@ -623,7 +612,7 @@ static bool _is_need_dispath_to_global(void)
     
     CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
     attach.currentVideoPic = CVPixelBufferRetain(videoPic);
-    
+    attach.ffFormat = CVPixelBufferGetPixelFormatType(videoPic);
     //generate current subtitle.
     CVPixelBufferRef subRef = NULL;
     if (sub.text.length > 0) {

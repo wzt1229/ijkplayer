@@ -525,17 +525,8 @@ typedef CGRect NSRect;
     
     //overlay is not thread safe.
     Uint32 overlay_format = overlay->format;
-    Uint32 ff_format;
-    if (SDL_FCC__VTB == overlay_format) {
-        ff_format = overlay->ff_format;
-    }
-    else if (SDL_FCC__FFVTB == overlay_format) {
-        ff_format = overlay->cv_format;
-    }
-    else {
-        ff_format = 0;
-        NSAssert(NO, @"wtf?");
-    }
+    
+    NSAssert(SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format, @"wtf?");
     
     IJKMetalAttach *attach = [[IJKMetalAttach alloc] init];
     attach.zRotateDegrees = overlay->auto_z_rotate_degrees;

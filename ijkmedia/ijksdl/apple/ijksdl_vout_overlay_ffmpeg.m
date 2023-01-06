@@ -280,7 +280,6 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
     CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, poolRef);
     if (pixel_buffer) {
         opaque->pixelBuffer = pixel_buffer;
-        overlay->cv_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
         
         if (CVPixelBufferIsPlanar(pixel_buffer)) {
             overlay->planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
