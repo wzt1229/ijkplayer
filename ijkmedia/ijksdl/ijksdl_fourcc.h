@@ -60,23 +60,18 @@
 #define SDL_FCC_NV12        SDL_FOURCC('N', 'V', '1', '2')
 #define SDL_FCC_UYVY        SDL_FOURCC('U', 'Y', 'V', 'Y')
 // RGB formats
-#define SDL_FCC_BGR0        SDL_FOURCC('B', 'G', 'R', 0)          /**< bpp=32, BGRXBGRX */
-#define SDL_FCC_BGRA        SDL_FOURCC('B', 'G', 'R', 'A')        /**< bpp=32, BGRABGRA */
-#define SDL_FCC_ARGB        SDL_FOURCC('A', 'R', 'G', 'B')        /**< bpp=32, ARGBARGB */
-#define SDL_FCC_0RGB        SDL_FOURCC('0', 'R', 'G', 'B')        /**< bpp=32, XRGBXRGB */
-#ifdef __APPLE__
-#define USE_FF_VTB 1
-#else
-#define USE_FF_VTB 0
-#endif
-#define SDL_FCC_RV16    SDL_FOURCC('R', 'V', '1', '6')    /**< bpp=16, RGB565 */
-#define SDL_FCC_RV24    SDL_FOURCC('R', 'V', '2', '4')    /**< bpp=24, RGB888 */
-#define SDL_FCC_RV32    SDL_FOURCC('R', 'V', '3', '2')    /**< bpp=32, RGBX8888 */
+#define SDL_FCC_BGR0        SDL_FOURCC('B', 'G', 'R', 0)      /**< bpp=32, BGRXBGRX */
+#define SDL_FCC_BGRA        SDL_FOURCC('B', 'G', 'R', 'A')    /**< bpp=32, BGRABGRA */
+#define SDL_FCC_ARGB        SDL_FOURCC('A', 'R', 'G', 'B')    /**< bpp=32, ARGBARGB */
+#define SDL_FCC_0RGB        SDL_FOURCC('0', 'R', 'G', 'B')    /**< bpp=32, XRGBXRGB */
+#define SDL_FCC_RV16        SDL_FOURCC('R', 'V', '1', '6')    /**< bpp=16, RGB565 */
+#define SDL_FCC_RV24        SDL_FOURCC('R', 'V', '2', '4')    /**< bpp=24, RGB888 */
+#define SDL_FCC_RV32        SDL_FOURCC('R', 'V', '3', '2')    /**< bpp=32, RGBX8888 */
 
 // opaque formats
 #define SDL_FCC__AMC        SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */
 #define SDL_FCC__VTB        SDL_FOURCC('V', 'T', 'B', 0xFF)   /**< Apple VideoToolbox */
-#define SDL_FCC__FFVTB      SDL_FOURCC('F', 'F', 'V', 'T')   /**< USE FFmpeg decode video,But use Apple VideoToolbox Buffer, So video render same as VTB */
+#define SDL_FCC__FFVTB      SDL_FOURCC('F', 'F', 'V', 'T')    /**< USE FFmpeg decode video,But use Apple VideoToolbox Buffer, So video render same as VTB */
 #define SDL_FCC__GLES2      SDL_FOURCC('_', 'E', 'S', '2')    /**< let Vout choose format */
 
 // undefine

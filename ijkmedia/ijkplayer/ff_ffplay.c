@@ -1354,11 +1354,9 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                     dst_format = AV_PIX_FMT_YUYV422;
                     break;
                 }
-        #if ! USE_FF_VTB
                 default:
                     ALOGE("unknow overly format:%.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
-                    goto fail;
-        #endif
+                    break;
         }
         
         if (src_format != dst_format) {

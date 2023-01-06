@@ -256,11 +256,9 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create2(Uint32 overlay_format,Uint32 ff_f
     if (SDL_FCC__VTB == overlay_format) {
         renderer = _smart_create_renderer_appple(overlay_format, ff_format, openglVer);
     }
-    #if USE_FF_VTB
     else if (SDL_FCC__FFVTB == overlay_format) {
         renderer = _smart_create_renderer_appple(overlay_format, ff_format, openglVer);
     }
-    #endif
 #else
     switch (overlay->format) {
             case SDL_FCC_RV16:      renderer = IJK_GLES2_Renderer_create_rgb565(); break;
@@ -305,11 +303,9 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
     if (SDL_FCC__VTB == overlay_format) {
         ff_format = overlay->ff_format;
     }
-    #if USE_FF_VTB
     else if (SDL_FCC__FFVTB == overlay_format) {
         ff_format = overlay->cv_format;
     }
-    #endif
     else {
         assert(0);
     }

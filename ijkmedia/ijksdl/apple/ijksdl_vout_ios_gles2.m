@@ -46,10 +46,8 @@
 @end
 
 struct SDL_Vout_Opaque {
-#if USE_FF_VTB
     void *cvPixelBufferPool;
     int ff_format;
-#endif
     __strong UIView<IJKVideoRenderingProtocol> *gl_view;
     IJKSDLSubtitle *sub;
 };
@@ -81,12 +79,10 @@ static void vout_free_l(SDL_Vout *vout)
     if (opaque) {
         opaque->gl_view = nil;
         opaque->sub = nil;
-        #if USE_FF_VTB
         if (opaque->cvPixelBufferPool) {
             CVPixelBufferPoolRelease(opaque->cvPixelBufferPool);
             opaque->cvPixelBufferPool = NULL;
         }
-        #endif
     }
 
     SDL_Vout_FreeInternal(vout);
@@ -124,11 +120,6 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         ijk_overlay.sar_den = overlay->sar_den;
 #ifdef __APPLE__
         ijk_overlay.pixel_buffer = SDL_Overlay_getCVPixelBufferRef(overlay);
-        if (!ijk_overlay.pixel_buffer) {
-            #if ! USE_FF_VTB
-            ijk_overlay.pixels = overlay->pixels;
-            #endif
-        }
 #else
         ijk_overlay.pixels = overlay->pixels;
 #endif
@@ -282,10 +273,8 @@ CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay)
     switch (overlay->format) {
         case SDL_FCC__VTB:
             return SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
-        #if USE_FF_VTB
         case SDL_FCC__FFVTB:
             return SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
-        #endif
         default:
             return NULL;
     }

@@ -30,15 +30,10 @@
 #include "ijksdl_inc_ffmpeg.h"
 #include "internal.h"
 
-#if USE_FF_VTB
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
-#endif
-
 
 SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int cvpixelbufferpool, SDL_Vout *vout);
-#if USE_FF_VTB
 CVPixelBufferRef SDL_VoutFFmpeg_GetCVPixelBufferRef(SDL_VoutOverlay *overlay);
-#endif
 
 #endif

@@ -38,8 +38,8 @@ struct SDL_VoutOverlay {
     int w; /**< Read-only */
     int h; /**< Read-only */
     Uint32 format; /**< Read-only such as SDL_FCC__VTB */
+#ifdef __APPLE__
     Uint32 ff_format;/**< FFmpeg AV_PIXEL_FORMAT ; when format is SDL_FCC__VTB the value is CVPixelFormatType*/
-#if USE_FF_VTB
     Uint32 cv_format;/**< when format is SDL_FCC__FFVTB the value is CVPixelFormatType*/
 #else
     Uint8 **pixels; /**< Read-write */

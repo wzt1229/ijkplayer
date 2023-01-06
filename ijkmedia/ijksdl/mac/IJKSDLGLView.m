@@ -599,11 +599,9 @@ static bool _is_need_dispath_to_global(void)
     if (SDL_FCC__VTB == overlay_format) {
         ff_format = overlay->ff_format;
     }
-    #if USE_FF_VTB
     else if (SDL_FCC__FFVTB == overlay_format) {
         ff_format = overlay->cv_format;
     }
-    #endif
     else {
         ff_format = 0;
         NSAssert(NO, @"wtf?");
