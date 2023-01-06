@@ -51,7 +51,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (assign) float brightness;
 @property (assign) float saturation;
 @property (assign) float contrast;
-
+@property (assign) BOOL use_openGL;
 @property (assign) BOOL videotoolbox_hwaccel;
 @property (copy) NSString *fcc;
 @property (assign) int snapshot;
@@ -651,6 +651,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
+    options.metalRenderer = !self.use_openGL;
     options.showHudView = YES;
     
     NSMutableArray *dus = [NSMutableArray array];

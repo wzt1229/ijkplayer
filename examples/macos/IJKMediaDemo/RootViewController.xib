@@ -202,7 +202,7 @@
                                                     </customSpacing>
                                                 </stackView>
                                                 <stackView distribution="fillProportionally" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tvh-Jh-v0C" userLabel="Pic Ctrl">
-                                                    <rect key="frame" x="0.0" y="90" width="521" height="154"/>
+                                                    <rect key="frame" x="0.0" y="90" width="611" height="154"/>
                                                     <subviews>
                                                         <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xJN-HC-Odz">
                                                             <rect key="frame" x="8" y="69" width="68" height="16"/>
@@ -213,36 +213,56 @@
                                                             </textFieldCell>
                                                         </textField>
                                                         <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="esm-Fm-2pL">
-                                                            <rect key="frame" x="82" y="0.0" width="429" height="154"/>
+                                                            <rect key="frame" x="82" y="0.0" width="519" height="154"/>
                                                             <subviews>
                                                                 <stackView distribution="fill" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="D1K-px-dU4">
-                                                                    <rect key="frame" x="0.0" y="124" width="429" height="20"/>
+                                                                    <rect key="frame" x="0.0" y="124" width="519" height="20"/>
                                                                     <subviews>
                                                                         <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Fkr-Pv-ro5">
-                                                                            <rect key="frame" x="-3" y="-4" width="139" height="25"/>
-                                                                            <popUpButtonCell key="cell" type="push" title="Scale Aspect Fit" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="Wgn-q4-zHY" id="7vM-AK-6Yb">
+                                                                            <rect key="frame" x="-3" y="-4" width="89" height="25"/>
+                                                                            <popUpButtonCell key="cell" type="push" title="Metal" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="3KY-eS-aj3" id="7vM-AK-6Yb">
                                                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                                                 <font key="font" metaFont="menu"/>
                                                                                 <menu key="menu" id="iXo-QA-Ffs">
                                                                                     <items>
-                                                                                        <menuItem title="Scale To Fill" tag="1" id="3KY-eS-aj3">
+                                                                                        <menuItem title="Metal" state="on" id="3KY-eS-aj3">
                                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                                         </menuItem>
-                                                                                        <menuItem title="Scale Aspect Fill" tag="2" id="hQX-Zy-9OC">
-                                                                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                                                                        </menuItem>
-                                                                                        <menuItem title="Scale Aspect Fit" state="on" tag="3" id="Wgn-q4-zHY">
+                                                                                        <menuItem title="OpenGL" tag="1" id="Wgn-q4-zHY">
                                                                                             <modifierMask key="keyEquivalentModifierMask"/>
                                                                                         </menuItem>
                                                                                     </items>
                                                                                 </menu>
                                                                             </popUpButtonCell>
                                                                             <connections>
-                                                                                <action selector="onChangeScaleMode:" target="-2" id="BgE-ym-5Lh"/>
+                                                                                <binding destination="-2" name="selectedTag" keyPath="use_openGL" id="VhU-oh-Xgw"/>
+                                                                            </connections>
+                                                                        </popUpButton>
+                                                                        <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="yxK-5Q-PfM">
+                                                                            <rect key="frame" x="87" y="-4" width="139" height="25"/>
+                                                                            <popUpButtonCell key="cell" type="push" title="Scale Aspect Fit" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="jNq-Hh-NIh" id="yGX-b1-MD2">
+                                                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                                                <font key="font" metaFont="menu"/>
+                                                                                <menu key="menu" id="hOb-iS-aHT">
+                                                                                    <items>
+                                                                                        <menuItem title="Scale To Fill" tag="1" id="bnO-40-eju">
+                                                                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                                                                        </menuItem>
+                                                                                        <menuItem title="Scale Aspect Fill" tag="2" id="YTa-Zh-K6g">
+                                                                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                                                                        </menuItem>
+                                                                                        <menuItem title="Scale Aspect Fit" state="on" tag="3" id="jNq-Hh-NIh">
+                                                                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                                                                        </menuItem>
+                                                                                    </items>
+                                                                                </menu>
+                                                                            </popUpButtonCell>
+                                                                            <connections>
+                                                                                <action selector="onChangeScaleMode:" target="-2" id="ENi-pg-X7V"/>
                                                                             </connections>
                                                                         </popUpButton>
                                                                         <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fPx-r6-MZr" userLabel="旋转角度">
-                                                                            <rect key="frame" x="137" y="-4" width="106" height="25"/>
+                                                                            <rect key="frame" x="227" y="-4" width="106" height="25"/>
                                                                             <popUpButtonCell key="cell" type="push" title="不旋转" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="5wb-cg-dng" id="I8p-Fa-5si">
                                                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                                                 <font key="font" metaFont="menu"/>
@@ -274,7 +294,7 @@
                                                                             </connections>
                                                                         </popUpButton>
                                                                         <button wantsLayer="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0Kk-xX-VGu">
-                                                                            <rect key="frame" x="240" y="-7" width="61" height="32"/>
+                                                                            <rect key="frame" x="330" y="-7" width="61" height="32"/>
                                                                             <buttonCell key="cell" type="push" title="截屏" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="4RE-kw-fsY">
                                                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                                                 <font key="font" metaFont="system"/>
@@ -284,7 +304,7 @@
                                                                             </connections>
                                                                         </button>
                                                                         <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Eds-VU-xaJ">
-                                                                            <rect key="frame" x="299" y="-4" width="134" height="25"/>
+                                                                            <rect key="frame" x="389" y="-4" width="134" height="25"/>
                                                                             <popUpButtonCell key="cell" type="push" title="origin size" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="BUt-ew-yML" id="umM-55-EIT">
                                                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                                                 <font key="font" metaFont="menu"/>
@@ -315,8 +335,10 @@
                                                                         <integer value="1000"/>
                                                                         <integer value="1000"/>
                                                                         <integer value="1000"/>
+                                                                        <integer value="1000"/>
                                                                     </visibilityPriorities>
                                                                     <customSpacing>
+                                                                        <real value="3.4028234663852886e+38"/>
                                                                         <real value="3.4028234663852886e+38"/>
                                                                         <real value="3.4028234663852886e+38"/>
                                                                         <real value="3.4028234663852886e+38"/>
