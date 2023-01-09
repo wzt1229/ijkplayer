@@ -15,7 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) CGSize viewport;
 @property (nonatomic, assign) float scale;
 @property (nonatomic, assign) float subtitleBottomMargin;
-@property (nonatomic, assign) CGSize vertexRatio;
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat;

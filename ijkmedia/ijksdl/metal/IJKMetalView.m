@@ -40,7 +40,10 @@
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
 @property (nonatomic, strong) IJKMetalAttach *currentAttach;
 @property(atomic) BOOL subtitlePreferenceChanged;
-
+//display window size / video size
+@property(atomic) float displayVideoScale;
+//display window size / screen size
+@property(atomic) float displayScreenScale;
 @end
 
 @implementation IJKMetalView
@@ -69,6 +72,8 @@
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
     _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     _darPreference      = (IJKSDLDARPreference){0.0};
+    _displayVideoScale  = 1.0;
+    _displayScreenScale = 1.0;
     
     self.device = MTLCreateSystemDefaultDevice();
     if (!self.device) {
@@ -110,6 +115,18 @@ typedef CGRect NSRect;
         }
     }
     return self;
+}
+
+- (void)videoNaturalSizeChanged:(CGSize)size
+{
+    CGSize viewSize = [self bounds].size;
+    self.displayVideoScale = FFMIN(1.0 * viewSize.width / size.width, 1.0 * viewSize.height / size.height);
+#if TARGET_OS_OSX
+    CGSize screenSize = [[NSScreen mainScreen]frame].size;
+#else
+    CGSize screenSize = [[UIScreen mainScreen]bounds].size;
+#endif
+    self.displayScreenScale = FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
 }
 
 - (CGSize)computeNormalizedVerticesRatio:(const int)w frameHeight:(const int)h
@@ -335,7 +352,17 @@ typedef CGRect NSRect;
             CGSize ratio = [self computeNormalizedVerticesRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
             [self encoderPicture:renderEncoder viewport:self.drawableSize ratio:ratio];
         }
-        [self encoderSubtitle:renderEncoder viewport:self.drawableSize scale:1.0];
+        
+        if (self.currentAttach.sub) {
+            float ratio = 1.0;
+            if (self.currentAttach.sub.pixels) {
+                ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+            } else {
+                //for text subtitle scale display_scale.
+                ratio *= self.displayScreenScale;
+            }
+            [self encoderSubtitle:renderEncoder viewport:self.drawableSize scale:ratio];
+        }
     }
 
     [renderEncoder endEncoding];
