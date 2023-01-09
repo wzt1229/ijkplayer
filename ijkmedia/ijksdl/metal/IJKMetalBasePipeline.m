@@ -227,6 +227,8 @@
     float x = self.vertexRatio.width;
     float y = self.vertexRatio.height;
     /*
+     //https://stackoverflow.com/questions/58702023/what-is-the-coordinate-system-used-in-metal
+     
      triangle strip
        ↑y
      V3|V4
@@ -253,17 +255,18 @@
     
     /// These are the view and projection transforms.
     matrix_float4x4 viewMatrix;
-    
     float radian = radians_from_degrees(self.rotateDegrees);
     switch (self.rotateType) {
         case 1:
         {
             viewMatrix = matrix4x4_rotation(radian, 1.0, 0.0, 0.0);
+            viewMatrix = matrix_multiply(viewMatrix, matrix4x4_translation(0.0, 0.0, -0.5));
         }
             break;
         case 2:
         {
             viewMatrix = matrix4x4_rotation(radian, 0.0, 1.0, 0.0);
+            viewMatrix = matrix_multiply(viewMatrix, matrix4x4_translation(0.0, 0.0, -0.5));
         }
             break;
         case 3:
@@ -313,10 +316,10 @@
 
     IJKVertex quadVertices[4] =
     {   // 顶点坐标，分别是x、y、z、w；    纹理坐标，x、y；
-        { { x, y, 0.0, 1.0 },  { 0.f, 1.f } },
-        { { x + w, y, 0.0, 1.0 },  { 1.f, 1.f } },
-        { { x, y + h, 0.0, 1.0 },  { 0.f, 0.f } },
-        { { x + w, y, 0.0, 1.0 },  { 1.f, 0.f } },
+        { { x, y },  { 0.f, 1.f } },
+        { { x + w, y },  { 1.f, 1.f } },
+        { { x, y + h },  { 0.f, 0.f } },
+        { { x + w, y },  { 1.f, 0.f } },
     };
     
     /// These are the view and projection transforms.
