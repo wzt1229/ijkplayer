@@ -371,34 +371,40 @@ typedef CGRect NSRect;
     
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     
-    int width  = (int)CVPixelBufferGetWidth(pixelBuffer);
-    int height = (int)CVPixelBufferGetHeight(pixelBuffer);
+    float width  = (float)CVPixelBufferGetWidth(pixelBuffer);
+    float height = (float)CVPixelBufferGetHeight(pixelBuffer);
     
     //keep video AVRational
     if (self.currentAttach.sar > 0) {
         width = self.currentAttach.sar * width;
     }
+    
     CGSize ratio = [self computeNormalizedVerticesRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
     float scale = width / (ratio.width * self.drawableSize.width);
+    float darRatio = self.darPreference.ratio;
     
     int zDegrees = 0;
     if (_rotatePreference.type == IJKSDLRotateZ) {
         zDegrees += _rotatePreference.degrees;
     }
     zDegrees += self.currentAttach.zRotateDegrees;
-    float darRatio = self.darPreference.ratio;
     //when video's z rotate degrees is 90 odd multiple
     if (abs(zDegrees) / 90 % 2 == 1) {
-        //need swap user's ratio
-        if (darRatio > 0.001) {
-            darRatio = 1.0 / darRatio;
-        }
         int tmp = width;
         width = height;
         height = tmp;
     }
     
-    CGSize viewport = CGSizeMake(width, height);
+    //apply user dar
+    if (darRatio > 0.001) {
+        if (1.0 * width / height > darRatio) {
+            height = width * 1.0 / darRatio;
+        } else {
+            width = height * darRatio;
+        }
+    }
+    
+    CGSize viewport = CGSizeMake(floorf(width), floorf(height));
     return [self.offscreenRendering snapshot:pixelBuffer targetSize:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
         [self encoderPicture:renderEncoder viewport:viewport ratio:CGSizeMake(1.0, 1.0)];
         [self encoderSubtitle:renderEncoder viewport:viewport scale:scale];
