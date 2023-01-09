@@ -39,13 +39,6 @@
 @property (nonatomic, strong) IJKMetalSubtitlePipeline *subPipeline;
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
 @property (nonatomic, strong) IJKMetalAttach *currentAttach;
-
-@property(nonatomic) NSInteger videoDegrees;
-@property(nonatomic) CGSize videoNaturalSize;
-@property(nonatomic) BOOL modelMatrixChanged;
-
-//display window size / video size
-@property(atomic) float displayVideoScale;
 @property(atomic) BOOL subtitlePreferenceChanged;
 
 @end
@@ -76,7 +69,6 @@
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
     _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     _darPreference      = (IJKSDLDARPreference){0.0};
-    _displayVideoScale  = 1.0;
     
     self.device = MTLCreateSystemDefaultDevice();
     if (!self.device) {
@@ -88,9 +80,7 @@
         NSAssert(NO, @"Create MetalTextureCache Failed:%d.",ret);
     }
     // Create the command queue
-    _commandQueue = [self.device newCommandQueue]; // CommandQueue是渲染指令队列，保证渲染指令有序地提交到GPU
-    //设置模型矩阵，实现旋转
-    _modelMatrixChanged = YES;
+    _commandQueue = [self.device newCommandQueue];
     self.autoResizeDrawable = YES;
     self.enableSetNeedsDisplay = YES;
     return YES;
@@ -172,7 +162,7 @@ typedef CGRect NSRect;
     
     if (_scalingMode == IJKMPMovieScalingModeAspectFit) {
         ratio = FFMIN(wRatio, hRatio);
-    } else if (_scalingMode == IJKMPMovieScalingModeFill) {
+    } else if (_scalingMode == IJKMPMovieScalingModeAspectFill) {
         ratio = FFMAX(wRatio, hRatio);
     }
     float nW = (frameWidth * ratio / drawableSize.width);
@@ -256,10 +246,7 @@ typedef CGRect NSRect;
         [self performSelectorOnMainThread:_cmd withObject:attach waitUntilDone:NO];
         return;
     }
-    
-    if (self.currentAttach.zRotateDegrees != attach.zRotateDegrees) {
-        self.modelMatrixChanged = YES;
-    }
+
     self.currentAttach = attach;
     
     if (self.preventDisplay) {
@@ -299,8 +286,8 @@ typedef CGRect NSRect;
         self.picturePipeline.textureCrop = CGSizeMake(1.0 * (CVPixelBufferGetWidth(pixelBuffer) - self.currentAttach.w) / CVPixelBufferGetWidth(pixelBuffer), 1.0 * (CVPixelBufferGetHeight(pixelBuffer) - self.currentAttach.h) / CVPixelBufferGetHeight(pixelBuffer));
         //upload textures
         [self.picturePipeline uploadTextureWithEncoder:renderEncoder
-                                              buffer:pixelBuffer
-                                        textureCache:_pictureTextureCache];
+                                                buffer:pixelBuffer
+                                          textureCache:_pictureTextureCache];
     }
 }
 
@@ -436,7 +423,7 @@ typedef CGRect NSRect;
 #endif
 }
 
-- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle
+- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle videoDegrees:(int)degrees
 {
     if (subtitle.length == 0) {
         return NULL;
@@ -453,7 +440,6 @@ typedef CGRect NSRect;
 #else
     CGSize screenSize = [[NSScreen mainScreen]frame].size;
 #endif
-    NSInteger degrees = self.videoDegrees;
     if (degrees / 90 % 2 == 1) {
         scale = screenSize.height / 800.0;
     } else {
@@ -514,7 +500,7 @@ typedef CGRect NSRect;
     IJKSDLSubtitle *sub = attach.sub;
     if (sub) {
         if (sub.text.length > 0) {
-            subRef = [self _generateSubtitlePixel:sub.text];
+            subRef = [self _generateSubtitlePixel:sub.text videoDegrees:attach.zRotateDegrees];
         } else if (sub.pixels != NULL) {
             subRef = [self _generateSubtitlePixelFromPicture:sub];
         }
@@ -556,20 +542,6 @@ typedef CGRect NSRect;
     [self displayAttach:attach];
 }
 
-- (void)videoZRotateDegrees:(NSInteger)degrees
-{
-    self.videoDegrees = degrees;
-}
-
-- (void)videoNaturalSizeChanged:(CGSize)size
-{
-    self.videoNaturalSize = size;
-    CGRect viewBounds = [self bounds];
-    if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
-        self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width, 1.0 * viewBounds.size.height / self.videoNaturalSize.height);
-    }
-}
-
 #pragma mark - override setter methods
 
 - (void)setScalingMode:(IJKMPMovieScalingMode)scalingMode
@@ -583,7 +555,6 @@ typedef CGRect NSRect;
 {
     if (_rotatePreference.type != rotatePreference.type || _rotatePreference.degrees != rotatePreference.degrees) {
         _rotatePreference = rotatePreference;
-        self.modelMatrixChanged = YES;
     }
 }
 

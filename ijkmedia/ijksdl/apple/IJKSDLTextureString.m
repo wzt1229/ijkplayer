@@ -317,6 +317,10 @@
     width  += self.edgeInsets.left + self.edgeInsets.right; // add padding
     height += self.edgeInsets.top  + self.edgeInsets.bottom; // add padding
     
+    if (height == 0 || height == 0) {
+        return NULL;
+    }
+    
     CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, width,
             height, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options,
             &pxbuffer);

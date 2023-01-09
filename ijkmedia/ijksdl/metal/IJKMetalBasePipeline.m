@@ -359,7 +359,7 @@
         
         // Indicate to Metal that the GPU accesses these resources, so they need
         // to map to the GPU's address space.
-        if (@available(macOS 10.15, *)) {
+        if (@available(macOS 10.15, ios 13.0, *)) {
             [encoder useResource:t usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
         } else {
             // Fallback on earlier versions
