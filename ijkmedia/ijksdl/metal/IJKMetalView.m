@@ -28,22 +28,20 @@
 #import "IJKMetalAttach.h"
 
 @interface IJKMetalView ()
-{
-    // The command queue used to pass commands to the device.
-    id<MTLCommandQueue> _commandQueue;
 
-    CVMetalTextureCacheRef _pictureTextureCache;
-}
-
+// The command queue used to pass commands to the device.
+@property (nonatomic, strong) id<MTLCommandQueue>commandQueue;
+@property (nonatomic, assign) CVMetalTextureCacheRef pictureTextureCache;
 @property (nonatomic, strong) __kindof IJKMetalBasePipeline *picturePipeline;
 @property (nonatomic, strong) IJKMetalSubtitlePipeline *subPipeline;
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
-@property (nonatomic, strong) IJKMetalAttach *currentAttach;
+@property (atomic, strong) IJKMetalAttach *currentAttach;
 @property(atomic) BOOL subtitlePreferenceChanged;
 //display window size / video size
 @property(atomic) float displayVideoScale;
 //display window size / screen size
 @property(atomic) float displayScreenScale;
+
 @end
 
 @implementation IJKMetalView
@@ -66,7 +64,7 @@
     CFRelease(_pictureTextureCache);
 }
 
-- (BOOL)_setup
+- (BOOL)prepareMetal
 {
     _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
@@ -80,14 +78,20 @@
         NSLog(@"No Support Metal.");
         return NO;
     }
+    
     CVReturn ret = CVMetalTextureCacheCreate(kCFAllocatorDefault, NULL, self.device, NULL, &_pictureTextureCache);
     if (ret != kCVReturnSuccess) {
-        NSAssert(NO, @"Create MetalTextureCache Failed:%d.",ret);
+        NSLog(@"Create MetalTextureCache Failed:%d.",ret);
+        self.device = nil;
+        return NO;
     }
+    
     // Create the command queue
-    _commandQueue = [self.device newCommandQueue];
+    self.commandQueue = [self.device newCommandQueue];
     self.autoResizeDrawable = YES;
-    self.enableSetNeedsDisplay = YES;
+    // important;then use draw method drive rendering.
+    self.enableSetNeedsDisplay = NO;
+    self.paused = YES;
     return YES;
 }
 
@@ -95,7 +99,7 @@
 {
     self = [super initWithCoder:coder];
     if (self) {
-        if (![self _setup]) {
+        if (![self prepareMetal]) {
             return nil;
         }
     }
@@ -110,7 +114,7 @@ typedef CGRect NSRect;
 {
     self = [super initWithFrame:frameRect];
     if (self) {
-        if (![self _setup]) {
+        if (![self prepareMetal]) {
             return nil;
         }
     }
@@ -131,35 +135,36 @@ typedef CGRect NSRect;
 
 - (void)cleanSubtitle
 {
-    if (self.currentAttach.sub) {
+    IJKMetalAttach * attach = self.currentAttach;
+    if (attach && attach.sub) {
         self.currentAttach.sub = nil;
-        if (self.currentAttach.currentSubtitle) {
-            CVPixelBufferRelease(self.currentAttach.currentSubtitle);
+        if (attach.currentSubtitle) {
+            CVPixelBufferRelease(attach.currentSubtitle);
             self.currentAttach.currentSubtitle = NULL;
         }
         [self setNeedsRefreshCurrentPic];
     }
 }
 
-- (CGSize)computeNormalizedVerticesRatio:(const int)w frameHeight:(const int)h
+- (CGSize)computeNormalizedVerticesRatio:(IJKMetalAttach *)attach
 {
     if (_scalingMode == IJKMPMovieScalingModeFill) {
         return CGSizeMake(1.0, 1.0);
     }
     
-    int frameWidth = w;
-    int frameHeight = h;
+    int frameWidth = attach.w;
+    int frameHeight = attach.h;
     
     //keep video AVRational
-    if (self.currentAttach.sar > 0) {
-        frameWidth = self.currentAttach.sar * frameWidth;
+    if (attach.sar > 0) {
+        frameWidth = attach.sar * frameWidth;
     }
     
     int zDegrees = 0;
     if (_rotatePreference.type == IJKSDLRotateZ) {
         zDegrees += _rotatePreference.degrees;
     }
-    zDegrees += self.currentAttach.zRotateDegrees;
+    zDegrees += attach.zRotateDegrees;
     
     float darRatio = self.darPreference.ratio;
     
@@ -178,7 +183,7 @@ typedef CGRect NSRect;
     
     //apply user dar
     if (darRatio > 0.001) {
-        if (1.0 * w / h > darRatio) {
+        if (1.0 * attach.w / attach.h > darRatio) {
             frameHeight = frameWidth * 1.0 / darRatio;
         } else {
             frameWidth = frameHeight * darRatio;
@@ -265,46 +270,19 @@ typedef CGRect NSRect;
     return NO;
 }
 
-- (void)displayAttach:(IJKMetalAttach *)attach
-{
-    if (!attach) {
-        return;
-    }
-    
-    if (![NSThread isMainThread]) {
-        [self performSelectorOnMainThread:_cmd withObject:attach waitUntilDone:NO];
-        return;
-    }
-
-    self.currentAttach = attach;
-    
-    if (self.preventDisplay) {
-        return;
-    }
-    
-    CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
-    if (!pixelBuffer) {
-        return;
-    }
-#if TARGET_OS_IPHONE
-    [self setNeedsDisplay];
-#else
-    [self setNeedsDisplay:YES];
-#endif
-}
-
-- (void)encoderPicture:(id<MTLRenderCommandEncoder>)renderEncoder
+- (void)encoderPicture:(IJKMetalAttach *)attach
+         renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
               viewport:(CGSize)viewport
                  ratio:(CGSize)ratio
 {
     // Set the region of the drawable to draw into.
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
     
-    CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
+    CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
     
     if ([self setupPipelineIfNeed:pixelBuffer]) {
         self.picturePipeline.viewport = viewport;
-        self.picturePipeline.autoZRotateDegrees = self.currentAttach.zRotateDegrees;
+        self.picturePipeline.autoZRotateDegrees = attach.zRotateDegrees;
         self.picturePipeline.rotateType = self.rotatePreference.type;
         self.picturePipeline.rotateDegrees = self.rotatePreference.degrees;
         
@@ -312,7 +290,7 @@ typedef CGRect NSRect;
         [self.picturePipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust ? 1.0 : 0.0}];
         self.picturePipeline.vertexRatio = ratio;
         
-        self.picturePipeline.textureCrop = CGSizeMake(1.0 * (CVPixelBufferGetWidth(pixelBuffer) - self.currentAttach.w) / CVPixelBufferGetWidth(pixelBuffer), 1.0 * (CVPixelBufferGetHeight(pixelBuffer) - self.currentAttach.h) / CVPixelBufferGetHeight(pixelBuffer));
+        self.picturePipeline.textureCrop = CGSizeMake(1.0 * (CVPixelBufferGetWidth(pixelBuffer) - attach.w) / CVPixelBufferGetWidth(pixelBuffer), 1.0 * (CVPixelBufferGetHeight(pixelBuffer) - attach.h) / CVPixelBufferGetHeight(pixelBuffer));
         //upload textures
         [self.picturePipeline uploadTextureWithEncoder:renderEncoder
                                                 buffer:pixelBuffer
@@ -320,11 +298,11 @@ typedef CGRect NSRect;
     }
 }
 
-- (BOOL)encoderSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder
+- (BOOL)encoderSubtitle:(CVPixelBufferRef)pixelBuffer
+          renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
                viewport:(CGSize)viewport
                   scale:(float)scale
 {
-    CVPixelBufferRef pixelBuffer = self.currentAttach.currentSubtitle;
     if (!pixelBuffer) {
         return NO;
     }
@@ -345,35 +323,40 @@ typedef CGRect NSRect;
 /// Called whenever the view needs to render a frame.
 - (void)drawRect:(NSRect)dirtyRect
 {
+    IJKMetalAttach * attach = self.currentAttach;
     // Obtain a renderPassDescriptor generated from the view's drawable textures.
     MTLRenderPassDescriptor *renderPassDescriptor = self.currentRenderPassDescriptor;
     //MTLRenderPassDescriptor描述一系列attachments的值，类似GL的FrameBuffer；同时也用来创建MTLRenderCommandEncoder
     if(!renderPassDescriptor) {
         return;
     }
-    
-    // Create a new command buffer for each render pass to the current drawable.
-    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    commandBuffer.label = @"MyCommand";
+
+    id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
     
     // Create a render command encoder.
     id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
     {
-        CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
+        CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
         if (pixelBuffer) {
-            CGSize ratio = [self computeNormalizedVerticesRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
-            [self encoderPicture:renderEncoder viewport:self.drawableSize ratio:ratio];
+            CGSize ratio = [self computeNormalizedVerticesRatio:attach];
+            [self encoderPicture:attach
+                   renderEncoder:renderEncoder
+                        viewport:self.drawableSize
+                           ratio:ratio];
         }
         
-        if (self.currentAttach.sub) {
+        if (attach.sub) {
             float ratio = 1.0;
-            if (self.currentAttach.sub.pixels) {
+            if (attach.sub.pixels) {
                 ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
             } else {
                 //for text subtitle scale display_scale.
                 ratio *= self.displayScreenScale;
             }
-            [self encoderSubtitle:renderEncoder viewport:self.drawableSize scale:ratio];
+            [self encoderSubtitle:attach.currentSubtitle
+                    renderEncoder:renderEncoder
+                         viewport:self.drawableSize
+                            scale:ratio];
         }
     }
 
@@ -381,12 +364,14 @@ typedef CGRect NSRect;
     // Schedule a present once the framebuffer is complete using the current drawable.
     [commandBuffer presentDrawable:self.currentDrawable];
     // Finalize rendering here & push the command buffer to the GPU.
-    [commandBuffer commit]; //
+    [commandBuffer commit];
 }
 
 - (CGImageRef)_snapshot
 {
-    CVPixelBufferRef pixelBuffer = self.currentAttach.currentVideoPic;
+    IJKMetalAttach *attach = self.currentAttach;
+    
+    CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
     if (!pixelBuffer) {
         return NULL;
     }
@@ -401,11 +386,11 @@ typedef CGRect NSRect;
     float height = (float)CVPixelBufferGetHeight(pixelBuffer);
     
     //keep video AVRational
-    if (self.currentAttach.sar > 0) {
-        width = self.currentAttach.sar * width;
+    if (attach.sar > 0) {
+        width = attach.sar * width;
     }
     
-    CGSize ratio = [self computeNormalizedVerticesRatio:self.currentAttach.w frameHeight:self.currentAttach.h];
+    CGSize ratio = [self computeNormalizedVerticesRatio:attach];
     float scale = width / (ratio.width * self.drawableSize.width);
     float darRatio = self.darPreference.ratio;
     
@@ -413,7 +398,7 @@ typedef CGRect NSRect;
     if (_rotatePreference.type == IJKSDLRotateZ) {
         zDegrees += _rotatePreference.degrees;
     }
-    zDegrees += self.currentAttach.zRotateDegrees;
+    zDegrees += attach.zRotateDegrees;
     //when video's z rotate degrees is 90 odd multiple
     if (abs(zDegrees) / 90 % 2 == 1) {
         int tmp = width;
@@ -432,8 +417,14 @@ typedef CGRect NSRect;
     
     CGSize viewport = CGSizeMake(floorf(width), floorf(height));
     return [self.offscreenRendering snapshot:pixelBuffer targetSize:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
-        [self encoderPicture:renderEncoder viewport:viewport ratio:CGSizeMake(1.0, 1.0)];
-        [self encoderSubtitle:renderEncoder viewport:viewport scale:scale];
+        [self encoderPicture:attach
+               renderEncoder:renderEncoder
+                    viewport:viewport
+                       ratio:CGSizeMake(1.0, 1.0)];
+        [self encoderSubtitle:attach.currentSubtitle
+                renderEncoder:renderEncoder
+                     viewport:viewport
+                        scale:scale];
     }];
 }
 
@@ -455,11 +446,7 @@ typedef CGRect NSRect;
         self.subtitlePreferenceChanged = NO;
         [self generateSub:self.currentAttach];
     }
-#if TARGET_OS_IPHONE
-    [self setNeedsDisplay];
-#else
-    [self setNeedsDisplay:YES];
-#endif
+    [self draw];
 }
 
 - (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle videoDegrees:(int)degrees
@@ -568,6 +555,11 @@ typedef CGRect NSRect;
     attach.w = overlay->w;
     attach.h = overlay->h;
     CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
+    
+    if (!videoPic) {
+        return;
+    }
+    
     attach.currentVideoPic = CVPixelBufferRetain(videoPic);
     
     //generate current subtitle.
@@ -577,8 +569,12 @@ typedef CGRect NSRect;
     if (self.subtitlePreferenceChanged) {
         self.subtitlePreferenceChanged = NO;
     }
+    
     //hold the attach as current.
-    [self displayAttach:attach];
+    self.currentAttach = attach;
+    
+    //not dispatch to main thread, use current sub thread (ff_vout) draw
+    [self draw];
 }
 
 #pragma mark - override setter methods
