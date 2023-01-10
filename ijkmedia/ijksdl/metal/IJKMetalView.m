@@ -129,6 +129,18 @@ typedef CGRect NSRect;
     self.displayScreenScale = FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
 }
 
+- (void)cleanSubtitle
+{
+    if (self.currentAttach.sub) {
+        self.currentAttach.sub = nil;
+        if (self.currentAttach.currentSubtitle) {
+            CVPixelBufferRelease(self.currentAttach.currentSubtitle);
+            self.currentAttach.currentSubtitle = NULL;
+        }
+        [self setNeedsRefreshCurrentPic];
+    }
+}
+
 - (CGSize)computeNormalizedVerticesRatio:(const int)w frameHeight:(const int)h
 {
     if (_scalingMode == IJKMPMovieScalingModeFill) {

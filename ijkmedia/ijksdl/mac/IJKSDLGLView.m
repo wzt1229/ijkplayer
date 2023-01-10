@@ -343,6 +343,18 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
+- (void)cleanSubtitle
+{
+    if (self.currentAttach.sub) {
+        self.currentAttach.sub = nil;
+        if (self.currentAttach.currentSubtitle) {
+            CVPixelBufferRelease(self.currentAttach.currentSubtitle);
+            self.currentAttach.currentSubtitle = NULL;
+        }
+        [self setNeedsRefreshCurrentPic];
+    }
+}
+
 - (BOOL)setupRendererIfNeed:(_IJKSDLGLViewAttach *)attach
 {
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||

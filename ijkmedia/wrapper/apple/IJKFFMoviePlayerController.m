@@ -1245,7 +1245,14 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         case FFP_MSG_SELECTED_STREAM_CHANGED:  {//stream changed msg
             IjkMediaMeta *rawMeta = ijkmp_get_meta_l(_mediaPlayer);
             [self traverseIJKMetaData:rawMeta];
-            
+            //clean old subtitle
+            if (!self.monitor.subtitleMeta) {
+                if ([self.view respondsToSelector:@selector(cleanSubtitle)]) {
+                    if (![self isPlaying]) {
+                        [self.view cleanSubtitle];
+                    }
+                }
+            }
             [[NSNotificationCenter defaultCenter] postNotificationName:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self];
             break;
         }

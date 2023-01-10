@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic) int h;
 @property(nonatomic) float sar;
 @property(nonatomic) int zRotateDegrees;
-@property(nonatomic) IJKSDLSubtitle *sub;
+@property(nonatomic, nullable) IJKSDLSubtitle *sub;
 
 @end
 
