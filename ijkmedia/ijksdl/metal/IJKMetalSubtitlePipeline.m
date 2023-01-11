@@ -69,17 +69,9 @@
     //important! set subtitle need blending.
     //https://developer.apple.com/documentation/metal/mtlblendfactor/oneminussourcealpha
     pipelineStateDescriptor.colorAttachments[0].blendingEnabled = YES;
-    /*
-     Source MTLBlendFactor 缩写为 SBF
-     Destination MTLBlendFactor 缩写为 DBF
-     */
-    // RGB = Source.rgb * SBF + Dest.rgb * DBF
-    pipelineStateDescriptor.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
-    // Alpha = Source.a * SBF + Dest.a * DBF
-    pipelineStateDescriptor.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
-    // F(rgb) = 1 - Source.rgb F(a) = 1 - Source.a
+    pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
     pipelineStateDescriptor.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-    //
+    pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
     pipelineStateDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     
     id<MTLRenderPipelineState> pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
