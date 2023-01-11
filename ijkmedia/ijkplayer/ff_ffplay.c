@@ -743,7 +743,7 @@ static void set_clock_at(Clock *c, double pts, int serial, double time)
     c->pts_drift = c->pts - time;
     c->serial = serial;
 #if FFP_SHOW_SYNC_CLOCK
-    av_log(NULL,AV_LOG_INFO,"xql clock %s %0.3f\n",c->name,c->pts);
+    av_log(NULL,AV_LOG_INFO,"clock %s %0.3f\n",c->name,c->pts);
 #endif
 }
 
@@ -941,7 +941,7 @@ static double compute_target_delay(FFPlayer *ffp, double delay, VideoState *is)
         ffp->stat.vmdiff  = diff;
     }
 #ifdef FFP_SHOW_AUDIO_DELAY
-    av_log(NULL, AV_LOG_TRACE, "video: delay=%0.3f A-V=%f\n",
+    av_log(NULL, AV_LOG_INFO, "video: delay=%0.3f A-V=%f\n",
             delay, -diff);
 #endif
 
@@ -1464,7 +1464,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                 ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
             }
         } else {
-            ALOGD("push old frame:%d\n",serial);
+            ALOGD("push old video frame:%d\n",serial);
         }
     }
     return 0;
@@ -1928,7 +1928,9 @@ static int audio_thread(void *arg)
 
                 av_frame_move_ref(af->frame, frame);
                 frame_queue_push(&is->sampq);
-
+                if (is->audioq.serial != af->serial) {
+                    ALOGD("push old audio frame:%d\n",af->serial);
+                }
 #if CONFIG_AVFILTER
                 if (is->audioq.serial != is->auddec.pkt_serial)
                     break;
@@ -2264,6 +2266,7 @@ reload:
         if (!(af = frame_queue_peek_readable(&is->sampq)))
             return -1;
         frame_queue_next(&is->sampq);
+        //skip old audio frames.
     } while (af->serial != is->audioq.serial);
 
     data_size = av_samples_get_buffer_size(NULL, af->frame->channels,
