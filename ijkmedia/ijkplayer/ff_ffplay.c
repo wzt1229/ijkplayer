@@ -988,7 +988,16 @@ static void video_refresh(FFPlayer *opaque, double *remaining_time)
     if (is->video_st) {
 retry:
         if (frame_queue_nb_remaining(&is->pictq) == 0) {
-            // nothing to do, no picture to display in the queue
+            /*
+             fix fix after seek near the end of the video, not play problem.
+             when no picture to display in the queue and video is finished,
+             need send AFTER_SEEK notifi,because top level is paused.
+             */
+            if (is->viddec.finished == is->videoq.serial && is->viddec.after_seek_frame) {
+                int du = (int)(SDL_GetTickHR() - is->viddec.start_seek_time);
+                is->viddec.after_seek_frame = 0;
+                ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
+            }
         } else {
             double last_duration, duration, delay;
             Frame *vp, *lastvp;
