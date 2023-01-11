@@ -392,6 +392,17 @@ typedef CGRect NSRect;
     
     CGSize ratio = [self computeNormalizedVerticesRatio:attach];
     float scale = width / (ratio.width * self.drawableSize.width);
+    float subScale = 1.0;
+    
+    if (attach.sub.pixels) {
+        subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+    } else {
+        //for text subtitle scale display_scale.
+        subScale *= self.displayScreenScale;
+    }
+    
+    subScale *= scale;
+    
     float darRatio = self.darPreference.ratio;
     
     int zDegrees = 0;
@@ -424,7 +435,7 @@ typedef CGRect NSRect;
         [self encoderSubtitle:attach.currentSubtitle
                 renderEncoder:renderEncoder
                      viewport:viewport
-                        scale:scale];
+                        scale:subScale];
     }];
 }
 
