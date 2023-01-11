@@ -742,6 +742,9 @@ static void set_clock_at(Clock *c, double pts, int serial, double time)
     c->last_updated = time;
     c->pts_drift = c->pts - time;
     c->serial = serial;
+#if FFP_SHOW_SYNC_CLOCK
+    av_log(NULL,AV_LOG_INFO,"xql clock %s %0.3f\n",c->name,c->pts);
+#endif
 }
 
 static void set_clock(Clock *c, double pts, int serial)
@@ -756,11 +759,12 @@ static void set_clock_speed(Clock *c, double speed)
     c->speed = speed;
 }
 
-static void init_clock(Clock *c, int *queue_serial)
+static void init_clock(Clock *c, int *queue_serial, char *name)
 {
     c->speed = 1.0;
     c->paused = 0;
     c->queue_serial = queue_serial;
+    strcpy(c->name, name);
     set_clock(c, NAN, -1);
 }
 
@@ -3566,9 +3570,9 @@ static VideoState *stream_open(FFPlayer *ffp, const char *filename, AVInputForma
         ffp->enable_accurate_seek = 0;
     }
 
-    init_clock(&is->vidclk, &is->videoq.serial);
-    init_clock(&is->audclk, &is->audioq.serial);
-    init_clock(&is->extclk, &is->extclk.serial);
+    init_clock(&is->vidclk, &is->videoq.serial, "video");
+    init_clock(&is->audclk, &is->audioq.serial, "audio");
+    init_clock(&is->extclk, &is->extclk.serial, "etx");
     is->audio_clock_serial = -1;
     is->audio_clock = NAN;
     if (ffp->startup_volume < 0)
@@ -4504,7 +4508,7 @@ void ffp_check_buffering_l(FFPlayer *ffp)
     }
     if (buf_percent) {
 #ifdef FFP_SHOW_BUF_POS
-        av_log(ffp, AV_LOG_DEBUG, "buf pos=%"PRId64", %%%d\n", buf_time_position, buf_percent);
+        av_log(ffp, AV_LOG_INFO, "buf pos=%"PRId64", %%%d\n", buf_time_position, buf_percent);
 #endif
         ffp_notify_msg3(ffp, FFP_MSG_BUFFERING_UPDATE, (int)buf_time_position, buf_percent);
     }

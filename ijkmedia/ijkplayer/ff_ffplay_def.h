@@ -198,6 +198,7 @@ typedef struct AudioParams {
 } AudioParams;
 
 typedef struct Clock {
+    char name[10];
     double pts;           /* clock base */
     double pts_drift;     /* clock base minus time at which we updated the clock */
     double last_updated;
