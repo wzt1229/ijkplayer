@@ -742,7 +742,7 @@ static void set_clock_at(Clock *c, double pts, int serial, double time)
     c->last_updated = time;
     c->pts_drift = c->pts - time;
     c->serial = serial;
-#if FFP_SHOW_SYNC_CLOCK
+#ifdef FFP_SHOW_SYNC_CLOCK
     av_log(NULL,AV_LOG_INFO,"clock %s %0.3f\n",c->name,c->pts);
 #endif
 }
@@ -1016,7 +1016,18 @@ retry:
 
             if (is->paused)
                 goto display;
-
+            /*
+             fix after finish seek, video picture display slowly a few seconds bug.
+             video and audio pts are NAN,usually video is firstly display,at this time video picture delay is zero, so we wait until audio clock right,because we need use auido sync video.
+             */
+            if (!is->step && get_master_sync_type(is) == AV_SYNC_AUDIO_MASTER) {
+                if (is->audio_stream >= 0 && isnan(get_master_clock(is)) && is->auddec.finished != is->audioq.serial && vp->pts > 0) {
+                    av_usleep(1000);
+                    av_log(NULL,AV_LOG_INFO,"wait mater clock:%0.3f,%d\n",vp->pts,vp->serial);
+                    goto display;
+                }
+            }
+            
             /* compute nominal last_duration */
             last_duration = vp_duration(is, lastvp, vp);
             delay = compute_target_delay(ffp, last_duration, is);
@@ -2403,7 +2414,10 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
 {
     FFPlayer *ffp = opaque;
     VideoState *is = ffp->is;
-    int audio_size, rest_len, len_want = len;
+    int audio_size, rest_len;
+    const int len_want = len;
+    const Uint8 *steam_header = stream;
+    
     if (!ffp || !is) {
         memset(stream, 0, len);
         return;
@@ -2468,13 +2482,27 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
     /* Let's assume the audio driver that is used by SDL has two periods. */
     if (!isnan(is->audio_clock)) {
         double pts = 0.0;
-        if (!gotFrame && !isnan(is->audclk.pts)) {
-            //none audio frame,already used out. is->audio_clock is the lastest audio frame pts and audio_write_buf_size is audio_buf_size(512 = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size).
-            //use last pts and increase by audio callback eated bytes.
-            pts = is->audclk.pts + (double)(len_want) / is->audio_tgt.bytes_per_sec;
+        if (!gotFrame) {
+            if (!isnan(is->audclk.pts)) {
+                //none audio frame,already used out. is->audio_clock is the lastest audio frame pts and audio_write_buf_size is audio_buf_size(512 = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size).
+                //use last pts and increase by audio callback eated bytes.
+                pts = is->audclk.pts + (double)(len_want) / is->audio_tgt.bytes_per_sec;
+            }
         } else {
             int audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
             pts = is->audio_clock - (double)(audio_write_buf_size) / is->audio_tgt.bytes_per_sec - SDL_AoutGetLatencySeconds(ffp->aout);
+            
+            if (is->video_stream >= 0 && is->viddec.finished != is->videoq.serial) {
+                double video_pts = get_clock(&is->vidclk);
+                //audio pts is ahead,need fast forwad,otherwise cause video picture dealy and not smoothly!
+                if (!isnan(video_pts) && video_pts - pts > AV_SYNC_THRESHOLD_MAX) {
+                    av_log(NULL, AV_LOG_INFO, "audio is ahead:%0.3f\n", video_pts - pts);
+                    set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
+                    sync_clock_to_slave(&is->extclk, &is->audclk);
+                    sdl_audio_callback(opaque, (Uint8 *)steam_header, len_want);
+                    return;
+                }
+            }
         }
         set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
         sync_clock_to_slave(&is->extclk, &is->audclk);
