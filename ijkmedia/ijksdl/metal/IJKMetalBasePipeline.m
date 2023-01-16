@@ -23,13 +23,17 @@
 @property (nonatomic, strong) id<MTLBuffer> vertices;
 @property (nonatomic, strong) id<MTLBuffer> subVertices;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
-//@property (nonatomic, strong) id<MTLBuffer> rgbAdjustment;
+#if IJK_USE_METAL_2
 // The buffer that contains arguments for the fragment shader.
 @property (nonatomic, strong) id<MTLBuffer> fragmentShaderArgumentBuffer;
-@property (nonatomic, strong) id <MTLArgumentEncoder> argumentEncoder;
+@property (nonatomic, strong) id<MTLArgumentEncoder> argumentEncoder;
+#else
+@property (nonatomic, strong) id<MTLBuffer> convertMatrix;
+#endif
 
 @property (nonatomic, assign) BOOL vertexChanged;
 @property (nonatomic, assign) BOOL subtitleVertexChanged;
+@property (nonatomic, assign) BOOL convertMatrixChanged;
 
 @end
 
@@ -49,6 +53,7 @@
         NSAssert(device, @"device can't be nil!");
         _device = device;
         _colorPixelFormat = colorPixelFormat;
+        _colorAdjustment = (vector_float4){0.0};
     }
     return self;
 }
@@ -57,6 +62,7 @@
 {
     if (_convertMatrixType != convertMatrixType) {
         _convertMatrixType = convertMatrixType;
+        self.convertMatrixChanged = YES;
     }
 }
 
@@ -142,7 +148,7 @@
     NSAssert(vertexFunction, @"can't find Vertex Function:vertexShader");
     id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:fragmentName];
     NSAssert(vertexFunction, @"can't find Fragment Function:%@",fragmentName);
-    
+#if IJK_USE_METAL_2
     id <MTLArgumentEncoder> argumentEncoder =
         [fragmentFunction newArgumentEncoderWithBufferIndex:IJKFragmentBufferLocation0];
     
@@ -153,7 +159,7 @@
     _fragmentShaderArgumentBuffer.label = @"Argument Buffer";
     
     [argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
-    
+#endif
     // Configure a pipeline descriptor that is used to create a pipeline state.
     MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
     pipelineStateDescriptor.vertexFunction = vertexFunction;
@@ -167,7 +173,9 @@
     //  went wrong.  (Metal API validation is enabled by default when a debug build is run
     //  from Xcode.)
     NSAssert(pipelineState, @"Failed to create pipeline state: %@", error);
+#if IJK_USE_METAL_2
     self.argumentEncoder = argumentEncoder;
+#endif
     self.renderPipeline = pipelineState;
 }
 
@@ -211,9 +219,23 @@
     }
 }
 
-- (void)updateColorAdjustment:(vector_float4)c
+- (void)updateColorAdjustment:(vector_float4)s
 {
-    _colorAdjustment = c;
+    float s0 = s[0];
+    float s1 = s[1];
+    float s2 = s[2];
+    float s3 = s[3];
+    
+    vector_float4 d = _colorAdjustment;
+    float d0 = d[0];
+    float d1 = d[1];
+    float d2 = d[2];
+    float d3 = d[3];
+    
+    if (s0 != d0 || s1 != d1 || s2 != d2 || s3 != d3) {
+        _colorAdjustment = s;
+        self.convertMatrixChanged = YES;
+    }
 }
 
 - (void)updateVertexIfNeed
@@ -336,6 +358,7 @@
     return nil;
 }
 
+#if IJK_USE_METAL_2
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer
                     textureCache:(CVMetalTextureCacheRef)textureCache
@@ -347,8 +370,6 @@
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  
     [self createRenderPipelineIfNeed];
-    
-    [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
     
     NSArray<id<MTLTexture>>*textures = [self doGenerateTexture:pixelBuffer textureCache:textureCache];
     
@@ -366,13 +387,14 @@
             [encoder useResource:t usage:MTLResourceUsageRead];
         }
     }
+    
+    if (self.convertMatrixChanged) {
+        IJKConvertMatrix * data = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
+        IJKConvertMatrix convertMatrix = [self createMatrix:self.convertMatrixType];
+        convertMatrix.adjustment = _colorAdjustment;
+        *data = convertMatrix;
+    }
 
-    IJKConvertMatrix * data = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
-    IJKConvertMatrix convertMatrix = [self createMatrix:self.convertMatrixType];
-    convertMatrix.adjustment = _colorAdjustment;
-    
-    *data = convertMatrix;
-    
     [encoder setFragmentBuffer:_fragmentShaderArgumentBuffer
                         offset:0
                        atIndex:IJKFragmentBufferLocation0];
@@ -386,4 +408,52 @@
                 vertexCount:4]; // 绘制
 }
 
+#else
+
+- (void)updateConvertMatrixBufferIfNeed
+{
+    if (self.convertMatrixChanged || !self.convertMatrix) {
+        self.convertMatrixChanged = NO;
+        IJKConvertMatrix convertMatrix = [self createMatrix:self.convertMatrixType];
+        convertMatrix.adjustment = _colorAdjustment;
+        self.convertMatrix = [_device newBufferWithBytes:&convertMatrix
+                                                  length:sizeof(IJKConvertMatrix)
+                                                 options:MTLResourceStorageModeShared];
+    }
+}
+
+- (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
+                          buffer:(CVPixelBufferRef)pixelBuffer
+                    textureCache:(CVMetalTextureCacheRef)textureCache
+{
+    [self updateVertexIfNeed];
+    // Pass in the parameter data.
+    [encoder setVertexBuffer:self.vertices
+                      offset:0
+                     atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
+ 
+    [self createRenderPipelineIfNeed];
+    
+    NSArray<id<MTLTexture>>*textures = [self doGenerateTexture:pixelBuffer textureCache:textureCache];
+    
+    for (int i = 0; i < [textures count]; i++) {
+        id<MTLTexture>t = textures[i];
+        [encoder setFragmentTexture:t atIndex:IJKFragmentTextureIndexTextureY + i];
+    }
+    
+    [self updateConvertMatrixBufferIfNeed];
+    
+    [encoder setFragmentBuffer:self.convertMatrix
+                        offset:0
+                       atIndex:IJKFragmentMatrixIndexConvert];
+    
+    // 设置渲染管道，以保证顶点和片元两个shader会被调用
+    [encoder setRenderPipelineState:self.renderPipeline];
+    
+    // Draw the triangle.
+    [encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip
+                vertexStart:0
+                vertexCount:4]; // 绘制
+}
+#endif
 @end
