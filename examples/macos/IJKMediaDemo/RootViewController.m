@@ -55,6 +55,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (assign) BOOL videotoolbox_hwaccel;
 @property (copy) NSString *fcc;
 @property (assign) int snapshot;
+@property (assign) BOOL shouldShowHudView;
 
 //for cocoa binding end
 
@@ -652,7 +653,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
     options.metalRenderer = !self.use_openGL;
-    options.showHudView = YES;
+    options.showHudView = self.shouldShowHudView;
     
     NSMutableArray *dus = [NSMutableArray array];
     if ([url.scheme isEqualToString:@"file"] && [url.absoluteString.pathExtension isEqualToString:@"m3u8"]) {
@@ -1185,7 +1186,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (IBAction)toggleHUD:(id)sender
 {
-    self.player.shouldShowHudView = !self.player.shouldShowHudView;
+    self.shouldShowHudView = !self.shouldShowHudView;
+    self.player.shouldShowHudView = self.shouldShowHudView;
 }
 
 - (IBAction)onMoreFunc:(id)sender
