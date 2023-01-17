@@ -25,7 +25,6 @@
 #import "ijksdl_vout_ios_gles2.h"
 #import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
-#import "IJKMetalAttach.h"
 
 @interface IJKMetalView ()
 
@@ -35,7 +34,7 @@
 @property (nonatomic, strong) __kindof IJKMetalBasePipeline *picturePipeline;
 @property (nonatomic, strong) IJKMetalSubtitlePipeline *subPipeline;
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
-@property (atomic, strong) IJKMetalAttach *currentAttach;
+@property (atomic, strong) IJKOverlayAttach *currentAttach;
 @property(atomic) BOOL subtitlePreferenceChanged;
 //display window size / video size
 @property(atomic) float displayVideoScale;
@@ -47,7 +46,6 @@
 @implementation IJKMetalView
 
 @synthesize scalingMode = _scalingMode;
-@synthesize isThirdGLView = _isThirdGLView;
 // subtitle preference
 @synthesize subtitlePreference = _subtitlePreference;
 // rotate preference
@@ -135,18 +133,18 @@ typedef CGRect NSRect;
 
 - (void)cleanSubtitle
 {
-    IJKMetalAttach * attach = self.currentAttach;
+    IJKOverlayAttach * attach = self.currentAttach;
     if (attach && attach.sub) {
         self.currentAttach.sub = nil;
-        if (attach.currentSubtitle) {
-            CVPixelBufferRelease(attach.currentSubtitle);
-            self.currentAttach.currentSubtitle = NULL;
+        if (attach.subPicture) {
+            CVPixelBufferRelease(attach.subPicture);
+            self.currentAttach.subPicture = NULL;
         }
         [self setNeedsRefreshCurrentPic];
     }
 }
 
-- (CGSize)computeNormalizedVerticesRatio:(IJKMetalAttach *)attach
+- (CGSize)computeNormalizedVerticesRatio:(IJKOverlayAttach *)attach
 {
     if (_scalingMode == IJKMPMovieScalingModeFill) {
         return CGSizeMake(1.0, 1.0);
@@ -156,15 +154,15 @@ typedef CGRect NSRect;
     int frameHeight = attach.h;
     
     //keep video AVRational
-    if (attach.sar > 0) {
-        frameWidth = attach.sar * frameWidth;
+    if (attach.sarNum > 0 && attach.sarDen > 0) {
+        frameWidth = 1.0 * attach.sarNum / attach.sarDen * frameWidth;
     }
     
     int zDegrees = 0;
     if (_rotatePreference.type == IJKSDLRotateZ) {
         zDegrees += _rotatePreference.degrees;
     }
-    zDegrees += attach.zRotateDegrees;
+    zDegrees += attach.autoZRotate;
     
     float darRatio = self.darPreference.ratio;
     
@@ -270,7 +268,7 @@ typedef CGRect NSRect;
     return NO;
 }
 
-- (void)encoderPicture:(IJKMetalAttach *)attach
+- (void)encoderPicture:(IJKOverlayAttach *)attach
          renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
               viewport:(CGSize)viewport
                  ratio:(CGSize)ratio
@@ -278,11 +276,11 @@ typedef CGRect NSRect;
     // Set the region of the drawable to draw into.
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
     
-    CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
+    CVPixelBufferRef pixelBuffer = attach.videoPicture;
     
     if ([self setupPipelineIfNeed:pixelBuffer]) {
         self.picturePipeline.viewport = viewport;
-        self.picturePipeline.autoZRotateDegrees = attach.zRotateDegrees;
+        self.picturePipeline.autoZRotateDegrees = attach.autoZRotate;
         self.picturePipeline.rotateType = self.rotatePreference.type;
         self.picturePipeline.rotateDegrees = self.rotatePreference.degrees;
         
@@ -323,7 +321,7 @@ typedef CGRect NSRect;
 /// Called whenever the view needs to render a frame.
 - (void)drawRect:(NSRect)dirtyRect
 {
-    IJKMetalAttach * attach = self.currentAttach;
+    IJKOverlayAttach * attach = self.currentAttach;
     // Obtain a renderPassDescriptor generated from the view's drawable textures.
     MTLRenderPassDescriptor *renderPassDescriptor = self.currentRenderPassDescriptor;
     //MTLRenderPassDescriptor描述一系列attachments的值，类似GL的FrameBuffer；同时也用来创建MTLRenderCommandEncoder
@@ -336,7 +334,7 @@ typedef CGRect NSRect;
     // Create a render command encoder.
     id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
     {
-        CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
+        CVPixelBufferRef pixelBuffer = attach.videoPicture;
         if (pixelBuffer) {
             CGSize ratio = [self computeNormalizedVerticesRatio:attach];
             [self encoderPicture:attach
@@ -353,7 +351,7 @@ typedef CGRect NSRect;
                 //for text subtitle scale display_scale.
                 ratio *= self.displayScreenScale;
             }
-            [self encoderSubtitle:attach.currentSubtitle
+            [self encoderSubtitle:attach.subPicture
                     renderEncoder:renderEncoder
                          viewport:self.drawableSize
                             scale:ratio];
@@ -369,9 +367,9 @@ typedef CGRect NSRect;
 
 - (CGImageRef)_snapshot
 {
-    IJKMetalAttach *attach = self.currentAttach;
+    IJKOverlayAttach *attach = self.currentAttach;
     
-    CVPixelBufferRef pixelBuffer = attach.currentVideoPic;
+    CVPixelBufferRef pixelBuffer = attach.videoPicture;
     if (!pixelBuffer) {
         return NULL;
     }
@@ -386,10 +384,9 @@ typedef CGRect NSRect;
     float height = (float)CVPixelBufferGetHeight(pixelBuffer);
     
     //keep video AVRational
-    if (attach.sar > 0) {
-        width = attach.sar * width;
+    if (attach.sarNum > 0 && attach.sarDen > 0) {
+        width = 1.0 * attach.sarNum / attach.sarDen * width;
     }
-    
     CGSize ratio = [self computeNormalizedVerticesRatio:attach];
     float scale = width / (ratio.width * self.drawableSize.width);
     float subScale = 1.0;
@@ -409,7 +406,7 @@ typedef CGRect NSRect;
     if (_rotatePreference.type == IJKSDLRotateZ) {
         zDegrees += _rotatePreference.degrees;
     }
-    zDegrees += attach.zRotateDegrees;
+    zDegrees += attach.autoZRotate;
     //when video's z rotate degrees is 90 odd multiple
     if (abs(zDegrees) / 90 % 2 == 1) {
         int tmp = width;
@@ -432,7 +429,7 @@ typedef CGRect NSRect;
                renderEncoder:renderEncoder
                     viewport:viewport
                        ratio:CGSizeMake(1.0, 1.0)];
-        [self encoderSubtitle:attach.currentSubtitle
+        [self encoderSubtitle:attach.subPicture
                 renderEncoder:renderEncoder
                      viewport:viewport
                         scale:subScale];
@@ -531,50 +528,33 @@ typedef CGRect NSRect;
     }
 }
 
-- (void)generateSub:(IJKMetalAttach *)attach
+- (void)generateSub:(IJKOverlayAttach *)attach
 {
     CVPixelBufferRef subRef = NULL;
     IJKSDLSubtitle *sub = attach.sub;
     if (sub) {
         if (sub.text.length > 0) {
-            subRef = [self _generateSubtitlePixel:sub.text videoDegrees:attach.zRotateDegrees];
+            subRef = [self _generateSubtitlePixel:sub.text videoDegrees:attach.autoZRotate];
         } else if (sub.pixels != NULL) {
             subRef = [self _generateSubtitlePixelFromPicture:sub];
         }
     }
-    attach.currentSubtitle = subRef;
+    attach.subPicture = subRef;
 }
 
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
+- (BOOL)displayAttach:(IJKOverlayAttach *)attach
 {
-    if (!overlay) {
-        ALOGW("IJKMetal: overlay is nil\n");
-        return;
+    if (!attach) {
+        ALOGW("IJKMetalView: overlay is nil\n");
+        return NO;
     }
     
     //overlay is not thread safe.
-    Uint32 overlay_format = overlay->format;
+    Uint32 overlay_format = attach.format;
     
     NSAssert(SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format, @"wtf?");
     
-    IJKMetalAttach *attach = [[IJKMetalAttach alloc] init];
-    attach.zRotateDegrees = overlay->auto_z_rotate_degrees;
-    //update video sar.
-    if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-        attach.sar = 1.0 * overlay->sar_num / overlay->sar_den;
-    }
-    attach.w = overlay->w;
-    attach.h = overlay->h;
-    CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
-    
-    if (!videoPic) {
-        return;
-    }
-    
-    attach.currentVideoPic = CVPixelBufferRetain(videoPic);
-    
     //generate current subtitle.
-    attach.sub = sub;
     [self generateSub:attach];
 
     if (self.subtitlePreferenceChanged) {
@@ -584,8 +564,14 @@ typedef CGRect NSRect;
     //hold the attach as current.
     self.currentAttach = attach;
     
+    if (self.preventDisplay) {
+        return YES;
+    }
+    
     //not dispatch to main thread, use current sub thread (ff_vout) draw
     [self draw];
+    
+    return YES;
 }
 
 #pragma mark - override setter methods

@@ -265,7 +265,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
             glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         }
     #endif
-        glView.isThirdGLView = NO;
         [self _initWithContent:aUrl options:options glView:glView];
     }
     return self;
@@ -281,7 +280,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     self = [super init];
     if (self) {
         // init video sink
-        glView.isThirdGLView = YES;
         [self _initWithContent:aUrl options:options glView:glView];
     }
     return self;

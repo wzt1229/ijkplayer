@@ -42,19 +42,36 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeFill        // Non-uniform scale. Both render dimensions will exactly match the visible bounds
 };
 
-typedef struct SDL_VoutOverlay SDL_VoutOverlay;
-typedef struct IJKOverlay IJKOverlay;
-struct IJKOverlay {
-    int w;
-    int h;
-    UInt32 format;
-    int planes;
-    UInt16 *pitches;
-    UInt8 **pixels;
-    int sar_num;
-    int sar_den;
-    CVPixelBufferRef pixel_buffer;
-};
+@interface IJKSDLSubtitle : NSObject
+
+@property(nonatomic, copy) NSString * text;
+//bitmap
+@property(nonatomic) int w;
+@property(nonatomic) int h;
+@property(nonatomic) uint8_t *pixels; //pixels with length w * h, in BGRA pixel format
+
+@end
+
+@interface IJKOverlayAttach : NSObject
+
+//video frame normal size not alignmetn,maybe not equal to currentVideoPic's size.
+@property(nonatomic) int w;
+@property(nonatomic) int h;
+
+@property(nonatomic) UInt32 format;
+@property(nonatomic) int planes;
+@property(nonatomic) UInt16 *pitches;
+@property(nonatomic) UInt8 **pixels;
+@property(nonatomic) int sarNum;
+@property(nonatomic) int sarDen;
+//degrees
+@property(nonatomic) int autoZRotate;
+@property(nonatomic) int bufferW;
+@property(nonatomic) CVPixelBufferRef videoPicture;
+@property(atomic) CVPixelBufferRef subPicture;
+@property(nonatomic) IJKSDLSubtitle *sub;
+
+@end
 
 typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
 struct _IJKSDLSubtitlePreference {
@@ -96,23 +113,12 @@ typedef enum : NSUInteger {
     IJKSDLSnapshot_Effect_Subtitle_Origin //keep original video size,with subtitle and video effect
 } IJKSDLSnapshotType;
 
-@interface IJKSDLSubtitle : NSObject
-
-@property(nonatomic, copy) NSString * text;
-//bitmap
-@property(nonatomic) int w;
-@property(nonatomic) int h;
-@property(nonatomic) uint8_t *pixels; //pixels with length w * h, in BGRA pixel format
-
-@end
-
 @protocol IJKVideoRenderingProtocol <NSObject>
 
 @property(nonatomic) IJKMPMovieScalingMode scalingMode;
 #if TARGET_OS_IOS
 @property(nonatomic) CGFloat scaleFactor;
 #endif
-@property(nonatomic) BOOL isThirdGLView;
 /*
  if you update these preference blow, when player paused,
  you can call -[setNeedsRefreshCurrentPic] method let current picture refresh right now.
@@ -131,8 +137,8 @@ typedef enum : NSUInteger {
 // refresh current video picture and subtitle (when player paused change video pic preference, you can invoke this method)
 - (void)setNeedsRefreshCurrentPic;
 
-// private method for jik internal.
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub;
+// display the overlay.
+- (BOOL)displayAttach:(IJKOverlayAttach *)attach;
 
 #if !TARGET_OS_OSX
 - (UIImage *)snapshot;
@@ -140,8 +146,7 @@ typedef enum : NSUInteger {
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
 #endif
 - (NSString *)name;
-@optional;//when isThirdGLView,will call display_pixels method.
-- (void)display_pixels:(IJKOverlay *)overlay;
+@optional;
 //when video size changed will call videoNaturalSizeChanged.
 - (void)videoNaturalSizeChanged:(CGSize)size;
 //when video z rotate degrees changed will call videoZRotateDegrees.

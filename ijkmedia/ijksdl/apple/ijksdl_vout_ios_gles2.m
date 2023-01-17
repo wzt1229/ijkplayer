@@ -45,6 +45,23 @@
 
 @end
 
+@implementation IJKOverlayAttach
+
+- (void)dealloc
+{
+    if (self.videoPicture) {
+        CVPixelBufferRelease(self.videoPicture);
+        self.videoPicture = NULL;
+    }
+    
+    if (self.subPicture) {
+        CVPixelBufferRelease(self.subPicture);
+        self.subPicture = NULL;
+    }
+}
+
+@end
+
 struct SDL_Vout_Opaque {
     void *cvPixelBufferPool;
     int cv_format;
@@ -88,6 +105,18 @@ static void vout_free_l(SDL_Vout *vout)
     SDL_Vout_FreeInternal(vout);
 }
 
+static CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay)
+{
+    switch (overlay->format) {
+        case SDL_FCC__VTB:
+            return SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
+        case SDL_FCC__FFVTB:
+            return SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
+        default:
+            return NULL;
+    }
+}
+
 static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
@@ -100,35 +129,34 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
 
     if (!overlay) {
         ALOGE("vout_display_overlay_l: NULL overlay\n");
-        return -1;
+        return -2;
     }
 
     if (overlay->w <= 0 || overlay->h <= 0) {
         ALOGE("vout_display_overlay_l: invalid overlay dimensions(%d, %d)\n", overlay->w, overlay->h);
-        return -1;
+        return -3;
     }
 
-    if (gl_view.isThirdGLView) {
-        IJKOverlay ijk_overlay;
+    CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
+    if (videoPic) {
+        IJKOverlayAttach *attach = [[IJKOverlayAttach alloc] init];
 
-        ijk_overlay.w = overlay->w;
-        ijk_overlay.h = overlay->h;
-        ijk_overlay.format = overlay->format;
-        ijk_overlay.pitches = overlay->pitches;
-        ijk_overlay.sar_num = overlay->sar_num;
-        ijk_overlay.sar_den = overlay->sar_den;
-#ifdef __APPLE__
-        ijk_overlay.pixel_buffer = SDL_Overlay_getCVPixelBufferRef(overlay);
-#else
-        ijk_overlay.pixels = overlay->pixels;
-#endif
-        if ([gl_view respondsToSelector:@selector(display_pixels:)]) {
-            [gl_view display_pixels:&ijk_overlay];
-        }
+        attach.w = overlay->w;
+        attach.h = overlay->h;
+        attach.format = overlay->format;
+        attach.pitches = overlay->pitches;
+        attach.sarNum = overlay->sar_num;
+        attach.sarDen = overlay->sar_den;
+        attach.autoZRotate = overlay->auto_z_rotate_degrees;
+        attach.bufferW = overlay->pitches[0];
+        attach.videoPicture = CVPixelBufferRetain(videoPic);
+        attach.sub = opaque->sub;
+        
+        return [gl_view displayAttach:attach];
     } else {
-        [gl_view display:overlay subtitle:opaque->sub];
+        ALOGE("vout_display_overlay_l: no video picture.\n");
+        return -4;
     }
-    return 0;
 }
 
 static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
@@ -265,16 +293,4 @@ void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* vi
     SDL_LockMutex(vout->mutex);
     SDL_VoutIos_SetGLView_l(vout, view);
     SDL_UnlockMutex(vout->mutex);
-}
-
-CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay)
-{
-    switch (overlay->format) {
-        case SDL_FCC__VTB:
-            return SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
-        case SDL_FCC__FFVTB:
-            return SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
-        default:
-            return NULL;
-    }
 }

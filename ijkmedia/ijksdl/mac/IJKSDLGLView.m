@@ -53,7 +53,6 @@
 #import "ijksdl_timer.h"
 #import "ijksdl_gles2.h"
 #import "ijksdl_vout_overlay_videotoolbox.h"
-#import "ijksdl_vout_ios_gles2.h"
 #import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
@@ -91,40 +90,6 @@ static bool _is_need_dispath_to_global(void)
         return false;
     }
 }
-
-@interface _IJKSDLGLViewAttach : NSObject
-
-@property(atomic) CVPixelBufferRef currentVideoPic;
-@property(atomic) CVPixelBufferRef currentSubtitle;
-
-@property(nonatomic) int  sar_num;
-@property(nonatomic) int  sar_den;
-@property(nonatomic) Uint32 overlayFormat;
-@property(nonatomic) Uint32 ffFormat;
-@property(nonatomic) int zRotateDegrees;
-@property(nonatomic) int overlayH;
-@property(nonatomic) int overlayW;
-@property(nonatomic) int bufferW;
-@property(nonatomic) IJKSDLSubtitle *sub;
-
-@end
-
-@implementation _IJKSDLGLViewAttach
-
-- (void)dealloc
-{
-    if (self.currentVideoPic) {
-        CVPixelBufferRelease(self.currentVideoPic);
-        self.currentVideoPic = NULL;
-    }
-    
-    if (self.currentSubtitle) {
-        CVPixelBufferRelease(self.currentSubtitle);
-        self.currentSubtitle = NULL;
-    }
-}
-
-@end
 
 //for snapshot.
 
@@ -211,7 +176,7 @@ static bool _is_need_dispath_to_global(void)
 
 @interface IJKSDLGLView()
 
-@property(atomic) _IJKSDLGLViewAttach *currentAttach;
+@property(atomic) IJKOverlayAttach *currentAttach;
 
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
@@ -234,7 +199,6 @@ static bool _is_need_dispath_to_global(void)
 }
 
 @synthesize scalingMode = _scalingMode;
-@synthesize isThirdGLView = _isThirdGLView;
 // subtitle preference
 @synthesize subtitlePreference = _subtitlePreference;
 // rotate preference
@@ -347,18 +311,18 @@ static bool _is_need_dispath_to_global(void)
 {
     if (self.currentAttach.sub) {
         self.currentAttach.sub = nil;
-        if (self.currentAttach.currentSubtitle) {
-            CVPixelBufferRelease(self.currentAttach.currentSubtitle);
-            self.currentAttach.currentSubtitle = NULL;
+        if (self.currentAttach.subPicture) {
+            CVPixelBufferRelease(self.currentAttach.subPicture);
+            self.currentAttach.subPicture = NULL;
         }
         [self setNeedsRefreshCurrentPic];
     }
 }
 
-- (BOOL)setupRendererIfNeed:(_IJKSDLGLViewAttach *)attach
+- (BOOL)setupRendererIfNeed:(IJKOverlayAttach *)attach
 {
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
-        !IJK_GLES2_Renderer_isFormat(_renderer, attach.overlayFormat)) {
+        !IJK_GLES2_Renderer_isFormat(_renderer, attach.format)) {
         
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
@@ -366,8 +330,8 @@ static bool _is_need_dispath_to_global(void)
     #if USE_LEGACY_OPENGL
         openglVer = 120;
     #endif
-        
-        _renderer = IJK_GLES2_Renderer_createApple(attach.overlayFormat,attach.ffFormat,openglVer);
+        Uint32 cv_format = CVPixelBufferGetPixelFormatType(attach.videoPicture);
+        _renderer = IJK_GLES2_Renderer_createApple(attach.format, cv_format, openglVer);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
@@ -378,7 +342,7 @@ static bool _is_need_dispath_to_global(void)
         
         IJK_GLES2_Renderer_updateRotate(_renderer, _rotatePreference.type, _rotatePreference.degrees);
         
-        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, attach.zRotateDegrees);
+        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, attach.autoZRotate);
         
         IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
         
@@ -502,9 +466,9 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-- (void)doUploadSubtitle:(_IJKSDLGLViewAttach *)attach
+- (void)doUploadSubtitle:(IJKOverlayAttach *)attach
 {
-    if (attach.currentSubtitle) {
+    if (attach.subPicture) {
         float ratio = 1.0;
         if (attach.sub.pixels) {
             ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
@@ -514,8 +478,8 @@ static bool _is_need_dispath_to_global(void)
         }
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-        IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(attach.currentSubtitle), ratio * CVPixelBufferGetHeight(attach.currentSubtitle));
-        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)attach.currentSubtitle)) {
+        IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(attach.subPicture), ratio * CVPixelBufferGetHeight(attach.subPicture));
+        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)attach.subPicture)) {
             IJK_GLES2_Renderer_drawArrays();
         } else {
             ALOGE("[GL] GLES2 Render Subtitle failed\n");
@@ -524,11 +488,11 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-- (void)doUploadVideoPicture:(_IJKSDLGLViewAttach *)attach
+- (void)doUploadVideoPicture:(IJKOverlayAttach *)attach
 {
-    if (attach.currentVideoPic) {
-        if (IJK_GLES2_Renderer_updateVetex2(_renderer, attach.overlayH, attach.overlayW, attach.bufferW, attach.sar_num, attach.sar_den)) {
-            if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.currentVideoPic)) {
+    if (attach.videoPicture) {
+        if (IJK_GLES2_Renderer_updateVetex2(_renderer, attach.h, attach.w, attach.bufferW, attach.sarNum, attach.sarDen)) {
+            if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture)) {
                 IJK_GLES2_Renderer_drawArrays();
             } else {
                 ALOGE("[GL] Renderer_updateVetex failed\n");
@@ -539,7 +503,7 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-- (void)doRefreshCurrentAttach:(_IJKSDLGLViewAttach *)currentAttach
+- (void)doRefreshCurrentAttach:(IJKOverlayAttach *)currentAttach
 {
     if (!currentAttach) {
         return;
@@ -548,11 +512,11 @@ static bool _is_need_dispath_to_global(void)
     //update subtitle if need
     if (self.subtitlePreferenceChanged) {
         if (currentAttach.sub.text) {
-            if (currentAttach.currentSubtitle) {
-                CVPixelBufferRelease(currentAttach.currentSubtitle);
-                currentAttach.currentSubtitle = NULL;
+            if (currentAttach.subPicture) {
+                CVPixelBufferRelease(currentAttach.subPicture);
+                currentAttach.subPicture = NULL;
             }
-            currentAttach.currentSubtitle = [self _generateSubtitlePixel:currentAttach.sub.text];
+            currentAttach.subPicture = [self _generateSubtitlePixel:currentAttach.sub.text];
         }
         self.subtitlePreferenceChanged = NO;
     }
@@ -560,7 +524,7 @@ static bool _is_need_dispath_to_global(void)
     [self doDisplayVideoPicAndSubtitle:currentAttach];
 }
 
-- (void)doDisplayVideoPicAndSubtitle:(_IJKSDLGLViewAttach *)attach
+- (void)doDisplayVideoPicAndSubtitle:(IJKOverlayAttach *)attach
 {
     if (!attach) {
         return;
@@ -598,33 +562,18 @@ static bool _is_need_dispath_to_global(void)
                          waitUntilDone:NO];
 }
 
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
+- (BOOL)displayAttach:(IJKOverlayAttach *)attach
 {
-    if (!overlay) {
+    if (!attach) {
         ALOGW("IJKSDLGLView: overlay is nil\n");
-        return;
+        return NO;
     }
     
     //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
-    Uint32 overlay_format = overlay->format;
+    Uint32 overlay_format = attach.format;
     NSAssert(SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format, @"wtf?");
     
-    _IJKSDLGLViewAttach *attach = [[_IJKSDLGLViewAttach alloc] init];
-    
-    attach.overlayFormat = overlay_format;
-    attach.zRotateDegrees = overlay->auto_z_rotate_degrees;
-    attach.overlayW = overlay->w;
-    attach.overlayH = overlay->h;
-    attach.bufferW = SDL_VoutGetBufferWidth(overlay);
-    //update video sar.
-    if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-        attach.sar_num = overlay->sar_num;
-        attach.sar_den = overlay->sar_den;
-    }
-    
-    CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
-    attach.currentVideoPic = CVPixelBufferRetain(videoPic);
-    attach.ffFormat = CVPixelBufferGetPixelFormatType(videoPic);
+    IJKSDLSubtitle *sub = attach.sub;
     //generate current subtitle.
     CVPixelBufferRef subRef = NULL;
     if (sub.text.length > 0) {
@@ -632,8 +581,7 @@ static bool _is_need_dispath_to_global(void)
     } else if (sub.pixels != NULL) {
         subRef = [self _generateSubtitlePixelFromPicture:sub];
     }
-    attach.sub = sub;
-    attach.currentSubtitle = subRef;
+    attach.subPicture = subRef;
     
     if (self.subtitlePreferenceChanged) {
         self.subtitlePreferenceChanged = NO;
@@ -642,13 +590,14 @@ static bool _is_need_dispath_to_global(void)
     self.currentAttach = attach;
     
     if (self.preventDisplay) {
-        return;
+        return YES;
     }
     
     [self.renderThread performSelector:@selector(doDisplayVideoPicAndSubtitle:)
                             withTarget:self
                             withObject:attach
                          waitUntilDone:NO];
+    return YES;
 }
 
 - (void)initGL
@@ -689,7 +638,7 @@ static bool _is_need_dispath_to_global(void)
 - (void)_snapshotEffectOriginWithSubtitle:(NSDictionary *)params
 {
     BOOL containSub = [params[@"containSub"] boolValue];
-    _IJKSDLGLViewAttach * attach = params[@"attach"];
+    IJKOverlayAttach * attach = params[@"attach"];
     NSValue *ptrValue = params[@"outImg"];
     CGImageRef *outImg = (CGImageRef *)[ptrValue pointerValue];
     if (outImg) {
@@ -705,10 +654,10 @@ static bool _is_need_dispath_to_global(void)
     CGImageRef img = NULL;
     if (IJK_GLES2_Renderer_isValid(_renderer)) {
         float videoSar = 1.0;
-        if (attach.sar_num > 0 && attach.sar_den > 0) {
-            videoSar = 1.0 * attach.sar_num / attach.sar_den;
+        if (attach.sarNum > 0 && attach.sarDen > 0) {
+            videoSar = 1.0 * attach.sarNum / attach.sarDen;
         }
-        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(attach.currentVideoPic) * videoSar, CVPixelBufferGetHeight(attach.currentVideoPic));
+        CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(attach.videoPicture) * videoSar, CVPixelBufferGetHeight(attach.videoPicture));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
         if (IJK_GLES2_Renderer_isZRotate90oddMultiple(_renderer)) {
             float pic_width = picSize.width;
@@ -737,7 +686,7 @@ static bool _is_need_dispath_to_global(void)
         }
         
         if (self.fbo) {
-            if (attach.currentVideoPic) {
+            if (attach.videoPicture) {
                 [self.fbo bind];
                 glViewport(0, 0, picSize.width, picSize.height);
                 glClear(GL_COLOR_BUFFER_BIT);
@@ -745,7 +694,7 @@ static bool _is_need_dispath_to_global(void)
                 if (!IJK_GLES2_Renderer_resetVao(_renderer))
                     ALOGE("[GL] Renderer_resetVao failed\n");
                 
-                if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.currentVideoPic))
+                if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture))
                     ALOGE("[GL] Renderer_updateVetex failed\n");
                 
                 IJK_GLES2_Renderer_drawArrays();
@@ -767,9 +716,9 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-- (CGImageRef)_snapshot_origin:(_IJKSDLGLViewAttach *)attach
+- (CGImageRef)_snapshot_origin:(IJKOverlayAttach *)attach
 {
-    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(attach.currentVideoPic);
+    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(attach.videoPicture);
     CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
     
     static CIContext *context = nil;
@@ -891,7 +840,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
 
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType
 {
-    _IJKSDLGLViewAttach *attach = self.currentAttach;
+    IJKOverlayAttach *attach = self.currentAttach;
     if (!attach) {
         return NULL;
     }

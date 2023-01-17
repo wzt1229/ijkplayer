@@ -101,5 +101,4 @@ int     SDL_VoutUnlockYUVOverlay(SDL_VoutOverlay *overlay);
 void    SDL_VoutFreeYUVOverlay(SDL_VoutOverlay *overlay);
 void    SDL_VoutUnrefYUVOverlay(SDL_VoutOverlay *overlay);
 int     SDL_VoutFillFrameYUVOverlay(SDL_VoutOverlay *overlay, const AVFrame *frame);
-int     SDL_VoutGetBufferWidth(SDL_VoutOverlay *overlay);
 #endif

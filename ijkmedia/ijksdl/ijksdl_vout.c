@@ -227,15 +227,3 @@ int SDL_VoutFillFrameYUVOverlay(SDL_VoutOverlay *overlay, const AVFrame *frame)
 
     return overlay->func_fill_frame(overlay, frame);
 }
-
-int SDL_VoutGetBufferWidth(SDL_VoutOverlay *overlay)
-{
-    if (!overlay)
-        return 0;
-
-    if (overlay->format == SDL_FCC__VTB || overlay->format == SDL_FCC__FFVTB) {
-        return overlay->pitches[0];
-    } else {
-        assert(0);
-    }
-}
