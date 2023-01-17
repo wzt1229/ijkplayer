@@ -394,7 +394,7 @@
         convertMatrix.adjustment = _colorAdjustment;
         *data = convertMatrix;
     }
-
+    [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
     [encoder setFragmentBuffer:_fragmentShaderArgumentBuffer
                         offset:0
                        atIndex:IJKFragmentBufferLocation0];
