@@ -394,7 +394,9 @@
         convertMatrix.adjustment = _colorAdjustment;
         *data = convertMatrix;
     }
+    //Fragment Function(nv12FragmentShader): missing buffer binding at index 0 for fragmentShaderArgs[0].
     [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
+    
     [encoder setFragmentBuffer:_fragmentShaderArgumentBuffer
                         offset:0
                        atIndex:IJKFragmentBufferLocation0];
