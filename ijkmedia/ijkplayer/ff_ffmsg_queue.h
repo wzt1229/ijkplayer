@@ -166,7 +166,7 @@ inline static void msg_queue_put_str(MessageQueue *q, int what, const char *str)
 {
     size_t len = strlen(str);
     if (len > 0) {
-        msg_queue_put_simple4(q, what, 0, 0, (void *)str, (int)strlen(str));
+        msg_queue_put_simple4(q, what, 0, 0, (void *)str, (int)strlen(str) + 1);
     } else {
         msg_queue_put_simple1(q, what);
     }
