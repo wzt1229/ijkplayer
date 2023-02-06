@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
-
+#include <libavutil/time.h>
 #if defined(__APPLE__)
 #include <mach/mach_time.h>
 
@@ -44,17 +44,19 @@ int nanosleep(const struct timespec *, struct timespec *) __DARWIN_ALIAS_C(nanos
 
 void SDL_Delay(Uint32 ms)
 {
-    int was_error;
-    struct timespec elapsed, tv;
-
-    /* Set the timeout interval */
-    elapsed.tv_sec = ms / 1000;
-    elapsed.tv_nsec = (ms % 1000) * 1000000;
-    do {
-        tv.tv_sec = elapsed.tv_sec;
-        tv.tv_nsec = elapsed.tv_nsec;
-        was_error = nanosleep(&tv, &elapsed);
-    } while (was_error);
+    av_usleep((unsigned int)(ms * 1000));
+//    cost 3% cpu; av_usleep's tv_nsec is (ms % 1000) * 1000;
+//    int was_error;
+//    struct timespec elapsed, tv;
+//
+//    /* Set the timeout interval */
+//    elapsed.tv_sec = ms / 1000;
+//    elapsed.tv_nsec = (ms % 1000) * 1000000;
+//    do {
+//        tv.tv_sec = elapsed.tv_sec;
+//        tv.tv_nsec = elapsed.tv_nsec;
+//        was_error = nanosleep(&tv, &elapsed);
+//    } while (was_error);
 }
 
 Uint64 SDL_GetTickHR(void)
