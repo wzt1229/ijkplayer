@@ -83,7 +83,8 @@
         self.device = nil;
         return NO;
     }
-    
+    //set default bg color.
+    [self setBackgroundColor:0 g:0 b:0];
     // Create the command queue
     self.commandQueue = [self.device newCommandQueue];
     self.autoResizeDrawable = YES;
