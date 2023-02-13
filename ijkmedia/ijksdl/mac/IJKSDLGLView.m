@@ -110,7 +110,7 @@ static bool _is_need_dispath_to_global(void)
     }
     
     if (_colorTexture) {
-        glDeleteFramebuffers(1, &_colorTexture);
+        glDeleteTextures(1, &_colorTexture);
     }
     
     _textureSize = CGSizeZero;
