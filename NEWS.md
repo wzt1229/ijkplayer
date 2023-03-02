@@ -1,9 +1,20 @@
+tag 0.9.5
+--------------------------------
+
+- support apple metal display video picture
+- add metalRenderer option,default is auto; you can set to NO means force use opengl
+- enable libavdevice & libavfilter
+- cut down 3% cpu usage
+- fix after finish seek, video picture display slowly a few seconds bug
+- fix after seek near the end of the video, not play problem
+- 
+
 tag 0.9.4
 --------------------------------
 
 - use **videotoolbox_hwaccel** instead of videotoolbox option
 - add protocol_whitelist: rtmp,rtsp,rtp,srtp,udp
-- macos 10.14 later use exclusive thread for glview.
+- macos 10.14 later use exclusive thread for glview
 
 tag 0.9.3
 --------------------------------
