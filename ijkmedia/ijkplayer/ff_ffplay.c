@@ -1019,9 +1019,10 @@ retry:
             /*
              fix after finish seek, video picture display slowly a few seconds bug.
              video and audio pts are NAN,usually video is firstly display,at this time video picture delay is zero, so we wait until audio clock right,because we need use auido sync video.
+             check audioq.duration avoid video picture wait audio forever.
              */
             if (!is->step && get_master_sync_type(is) == AV_SYNC_AUDIO_MASTER) {
-                if (is->audio_stream >= 0 && isnan(get_master_clock(is)) && is->auddec.finished != is->audioq.serial && vp->pts > 0) {
+                if (is->audio_stream >= 0 && isnan(get_master_clock(is)) && is->auddec.finished != is->audioq.serial && vp->pts > 0 && is->audioq.duration > 1) {
                     av_usleep(1000);
                     av_log(NULL,AV_LOG_INFO,"wait mater clock:%0.3f,%d\n",vp->pts,vp->serial);
                     goto display;
