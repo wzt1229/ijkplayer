@@ -36,11 +36,10 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 };
 
 @interface IJKSDLGLView()
+
+@property(atomic) IJKOverlayAttach *currentAttach;
 @property(atomic,strong) NSRecursiveLock *glActiveLock;
 @property(atomic) BOOL glActivePaused;
-@property(atomic) CVPixelBufferRef currentVideoPic;
-@property(atomic) CVPixelBufferRef currentSubtitle;
-@property(atomic) IJKSDLSubtitle *sub;
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
 //display window size / screen
@@ -77,10 +76,8 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     NSMutableArray *_registeredNotifications;
 
     IJKSDLGLViewApplicationState _applicationState;
-    float  _videoSar;
 }
 
-@synthesize isThirdGLView              = _isThirdGLView;
 @synthesize scaleFactor                = _scaleFactor;
 @synthesize scalingMode                = _scalingMode;
 // subtitle preference
@@ -91,6 +88,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 @synthesize colorPreference = _colorPreference;
 // user defined display aspect ratio
 @synthesize darPreference = _darPreference;
+@synthesize preventDisplay;
 
 + (Class) layerClass
 {
@@ -282,16 +280,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         glDeleteRenderbuffers(1, &_renderbuffer);
         _renderbuffer = 0;
     }
-
-    if (self.currentVideoPic) {
-        CVPixelBufferRelease(self.currentVideoPic);
-        self.currentVideoPic = NULL;
-    }
-    
-    if (self.currentSubtitle) {
-        CVPixelBufferRelease(self.currentSubtitle);
-        self.currentSubtitle = NULL;
-    }
     
     glFinish();
 
@@ -343,22 +331,19 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     self.renderBufferInvalidated = YES;
 }
 
-- (BOOL)setupRenderer: (SDL_VoutOverlay *) overlay
+- (BOOL)setupRendererIfNeed:(IJKOverlayAttach *)attach
 {
-    if (overlay == nil)
+    if (attach == nil)
         return _renderer != nil;
-
-    if (overlay->sar_num > 0 && overlay->sar_den > 0) {
-        _videoSar = 1.0 * overlay->sar_num / overlay->sar_den;
-    }
     
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
-        !IJK_GLES2_Renderer_isFormat(_renderer, overlay->format)) {
+        !IJK_GLES2_Renderer_isFormat(_renderer, attach.format)) {
 
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
-
-        _renderer = IJK_GLES2_Renderer_create(overlay, 0);
+        
+        Uint32 cv_format = CVPixelBufferGetPixelFormatType(attach.videoPicture);
+        _renderer = IJK_GLES2_Renderer_createApple(attach.format, cv_format, 0);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
 
@@ -369,7 +354,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         
         IJK_GLES2_Renderer_updateRotate(_renderer, _rotatePreference.type, _rotatePreference.degrees);
         
-        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, overlay->auto_z_rotate_degrees);
+        IJK_GLES2_Renderer_updateAutoZRotate(_renderer, attach.autoZRotate);
         
         IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
         
@@ -381,48 +366,20 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     return YES;
 }
 
-- (void)display:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
+- (void)doUploadSubtitle:(IJKOverlayAttach *)attach
 {
-    if (_didSetupGL == NO)
-        return;
-
-    if ([self isApplicationActive] == NO)
-        return;
-
-    if (![self tryLockGLActive]) {
-        if (0 == (_tryLockErrorCount % 100)) {
-            NSLog(@"IJKSDLGLView:display: unable to tryLock GL active: %d\n", _tryLockErrorCount);
-        }
-        _tryLockErrorCount++;
-        return;
-    }
-
-    _tryLockErrorCount = 0;
-    if (_context && !_didStopGL) {
-        EAGLContext *prevContext = [EAGLContext currentContext];
-        [EAGLContext setCurrentContext:_context];
-        [self displayInternal:overlay subtitle:sub];
-        [EAGLContext setCurrentContext:prevContext];
-    }
-
-    [self unlockGLActive];
-}
-
-- (void)doUploadSubtitle
-{
-    if (self.currentSubtitle) {
+    if (attach.subPicture) {
         float ratio = 1.0;
-        if (self.sub.pixels) {
-            //default x2
-            ratio = self.subtitlePreference.ratio * self.displayVideoScale * 2;
+        if (attach.sub.pixels) {
+            ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
         } else {
             //for text subtitle scale display_scale.
             ratio *= self.displayScreenScale;
         }
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-        IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(self.currentSubtitle), ratio * CVPixelBufferGetHeight(self.currentSubtitle));
-        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)self.currentSubtitle)) {
+        IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(attach.subPicture), ratio * CVPixelBufferGetHeight(attach.subPicture));
+        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)attach.subPicture)) {
             IJK_GLES2_Renderer_drawArrays();
         } else {
             ALOGE("[GL] GLES2 Render Subtitle failed\n");
@@ -431,11 +388,11 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     }
 }
 
-- (void)doUploadVideoPicture:(SDL_VoutOverlay *)overlay
+- (void)doUploadVideoPicture:(IJKOverlayAttach *)attach
 {
-    if (self.currentVideoPic) {
-        if (IJK_GLES2_Renderer_updateVetex(_renderer, overlay)) {
-            if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)self.currentVideoPic)) {
+    if (attach.videoPicture) {
+        if (IJK_GLES2_Renderer_updateVetex2(_renderer, attach.h, attach.w, attach.bufferW, attach.sarNum, attach.sarDen)) {
+            if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture)) {
                 IJK_GLES2_Renderer_drawArrays();
             } else {
                 ALOGE("[GL] Renderer_updateVetex failed\n");
@@ -446,50 +403,36 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     }
 }
 
-- (void)setNeedsRefreshCurrentPic
+- (void)doRefreshCurrentAttach:(IJKOverlayAttach *)currentAttach
 {
-    if (_didSetupGL == NO)
-        return;
-
-    if ([self isApplicationActive] == NO)
-        return;
-
-    if (![self tryLockGLActive]) {
-        if (0 == (_tryLockErrorCount % 100)) {
-            NSLog(@"IJKSDLGLView:display: unable to tryLock GL active: %d\n", _tryLockErrorCount);
-        }
-        _tryLockErrorCount++;
+    if (!currentAttach) {
         return;
     }
-
-    _tryLockErrorCount = 0;
-    if (_context && !_didStopGL) {
-        EAGLContext *prevContext = [EAGLContext currentContext];
-        [EAGLContext setCurrentContext:_context];
-        
-        //for video
-        [self doUploadVideoPicture:NULL];
-        
-        //for subtitle
-        if (self.subtitlePreferenceChanged) {
-            if (self.sub.text) {
-                [self _generateSubtitlePixel:self.sub.text];
+    
+    //update subtitle if need
+    if (self.subtitlePreferenceChanged) {
+        if (currentAttach.sub.text) {
+            if (currentAttach.subPicture) {
+                CVPixelBufferRelease(currentAttach.subPicture);
+                currentAttach.subPicture = NULL;
             }
-            self.subtitlePreferenceChanged = NO;
+            currentAttach.subPicture = [self _generateSubtitlePixel:currentAttach.sub.text];
         }
-        
-        [self doUploadSubtitle];
-        
-        [EAGLContext setCurrentContext:prevContext];
+        self.subtitlePreferenceChanged = NO;
     }
-
-    [self unlockGLActive];
+    
+    [self doDisplayVideoPicAndSubtitle:currentAttach];
 }
 
-- (void)_generateSubtitlePixel:(NSString *)subtitle
+- (void)setNeedsRefreshCurrentPic
+{
+    [self doRefreshCurrentAttach:self.currentAttach];
+}
+
+- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle
 {
     if (subtitle.length == 0) {
-        return;
+        return NULL;
     }
     
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
@@ -516,21 +459,12 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
     
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withBoxColor:[UIColor colorWithRed:0.5f green:0.5f blue:0.5f alpha:0.5f] withBorderColor:[UIColor colorWithWhite:1.0 alpha:0.6]];
+    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes];
     
-    float inset = subtitleFont.pointSize / 2.0;
-    textureString.edgeInsets = NSEdgeInsetsMake(inset, inset, inset, inset);
-    textureString.cRadius = inset / 2.0;
-    
-    if (self.currentSubtitle) {
-        CVPixelBufferRelease(self.currentSubtitle);
-        self.currentSubtitle = NULL;
-    }
-    
-    self.currentSubtitle = [textureString createPixelBuffer];
+    return [textureString createPixelBuffer];
 }
 
-- (void)_generateSubtitlePixelFromPicture:(IJKSDLSubtitle*)pict
+- (CVPixelBufferRef)_generateSubtitlePixelFromPicture:(IJKSDLSubtitle*)pict
 {
     CVPixelBufferRef pixelBuffer = NULL;
     NSDictionary *options = @{
@@ -557,78 +491,100 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
             
-    if (self.currentSubtitle) {
-        CVPixelBufferRelease(self.currentSubtitle);
-        self.currentSubtitle = NULL;
-    }
-    
     if (kCVReturnSuccess == ret) {
-        self.currentSubtitle = pixelBuffer;
+        return pixelBuffer;
+    } else {
+        return NULL;
     }
 }
 
-- (void)_handleSubtitle:(IJKSDLSubtitle *)sub
+- (BOOL)doDisplayVideoPicAndSubtitle:(IJKOverlayAttach *)attach
 {
-    if (sub.text.length > 0) {
-        if (self.subtitlePreferenceChanged || ![self.sub.text isEqualToString:sub.text]) {
-            [self _generateSubtitlePixel:sub.text];
-            self.subtitlePreferenceChanged = NO;
-        }
-    } else if (sub.pixels != NULL) {
-        if (self.subtitlePreferenceChanged || sub.pixels != self.sub.pixels) {
-            [self _generateSubtitlePixelFromPicture:sub];
-            self.subtitlePreferenceChanged = NO;
-        }
-    } else {
-        if (self.currentSubtitle) {
-            CVPixelBufferRelease(self.currentSubtitle);
-            self.currentSubtitle = NULL;
-        }
+    if (!attach) {
+        return NO;
     }
     
-    self.sub = sub;
+    if (_didSetupGL == NO)
+        return NO;
+
+    if ([self isApplicationActive] == NO)
+        return NO;
+
+    if (![self tryLockGLActive]) {
+        if (0 == (_tryLockErrorCount % 100)) {
+            NSLog(@"IJKSDLGLView:display: unable to tryLock GL active: %d\n", _tryLockErrorCount);
+        }
+        _tryLockErrorCount++;
+        return NO;
+    }
+
+    BOOL ok = YES;
+    _tryLockErrorCount = 0;
+    if (_context && !_didStopGL) {
+        EAGLContext *prevContext = [EAGLContext currentContext];
+        [EAGLContext setCurrentContext:_context];
+        {
+            [[self eaglLayer] setContentsScale:_scaleFactor];
+            if ([self setupRendererIfNeed:attach] && IJK_GLES2_Renderer_isValid(_renderer)) {
+                
+                glBindRenderbuffer(GL_RENDERBUFFER, _renderbuffer);
+                
+                if (self.isRenderBufferInvalidated) {
+                    self.renderBufferInvalidated = NO;
+                    [_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer];
+                    glViewport(0, 0, _backingWidth, _backingHeight);
+                }
+                
+                //for video
+                [self doUploadVideoPicture:attach];
+                //for subtitle
+                [self doUploadSubtitle:attach];
+            } else {
+                ALOGW("IJKSDLGLView: not ready.\n");
+                ok = NO;
+            }
+            
+            [_context presentRenderbuffer:GL_RENDERBUFFER];
+        }
+        [EAGLContext setCurrentContext:prevContext];
+    }
+
+    [self unlockGLActive];
+    return ok;
 }
 
-// NOTE: overlay could be NULl
-- (void)displayInternal:(SDL_VoutOverlay *)overlay subtitle:(IJKSDLSubtitle *)sub
+- (BOOL)displayAttach:(IJKOverlayAttach *)attach
 {
-    if (!overlay) {
+    if (!attach) {
         ALOGW("IJKSDLGLView: overlay is nil\n");
-        return;
+        return NO;
     }
 
-    [[self eaglLayer] setContentsScale:_scaleFactor];
-
-    [self _handleSubtitle:sub];
+    Uint32 overlay_format = attach.format;
+    NSAssert(SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format, @"wtf?");
     
-    if ([self setupRenderer:overlay] && _renderer) {
-        
-        glBindRenderbuffer(GL_RENDERBUFFER, _renderbuffer);
-        
-        if (self.isRenderBufferInvalidated) {
-            self.renderBufferInvalidated = NO;
-            [_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer];
-            glViewport(0, 0, _backingWidth, _backingHeight);
-        }
-        
-        //for video
-        if (self.currentVideoPic) {
-            CVPixelBufferRelease(self.currentVideoPic);
-            self.currentVideoPic = NULL;
-        }
-        CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
-        if (videoPic) {
-            self.currentVideoPic = CVPixelBufferRetain(videoPic);
-            [self doUploadVideoPicture:overlay];
-        }
-        
-        //for subtitle
-        [self doUploadSubtitle];
-    } else {
-        ALOGW("IJKSDLGLView: not ready.\n");
+    IJKSDLSubtitle *sub = attach.sub;
+    //generate current subtitle.
+    CVPixelBufferRef subRef = NULL;
+    if (sub.text.length > 0) {
+        subRef = [self _generateSubtitlePixel:sub.text];
+    } else if (sub.pixels != NULL) {
+        subRef = [self _generateSubtitlePixelFromPicture:sub];
     }
-
-    [_context presentRenderbuffer:GL_RENDERBUFFER];
+    attach.subPicture = subRef;
+    
+    if (self.subtitlePreferenceChanged) {
+        self.subtitlePreferenceChanged = NO;
+    }
+    
+    //hold the attach as current.
+    self.currentAttach = attach;
+    
+    if (self.preventDisplay) {
+        return YES;
+    }
+    
+    return [self doDisplayVideoPicAndSubtitle:self.currentAttach];
 }
 
 #pragma mark AppDelegate

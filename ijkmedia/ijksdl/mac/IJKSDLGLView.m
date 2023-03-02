@@ -321,6 +321,9 @@ static bool _is_need_dispath_to_global(void)
 
 - (BOOL)setupRendererIfNeed:(IJKOverlayAttach *)attach
 {
+    if (attach == nil)
+        return _renderer != nil;
+    
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
         !IJK_GLES2_Renderer_isFormat(_renderer, attach.format)) {
         
@@ -532,9 +535,7 @@ static bool _is_need_dispath_to_global(void)
     
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
-    [self setupRendererIfNeed:attach];
-    
-    if (IJK_GLES2_Renderer_isValid(_renderer)) {
+    if ([self setupRendererIfNeed:attach] && IJK_GLES2_Renderer_isValid(_renderer)) {
         // Bind the FBO to screen.
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, self.backingWidth, self.backingHeight);

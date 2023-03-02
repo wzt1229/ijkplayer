@@ -52,7 +52,7 @@ TODO: Add long description of the pod here.
     # fix apple m1 building iOS Simulator platform,linking xxx built
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64',
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=0 IJK_USE_METAL_2=1',
-    'METAL_LIBRARY_OUTPUT_DIR' => '${TARGET_BUILD_DIR}/'
+    'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework'
   }
 
   # fix apple m1 building iOS Simulator platform,linking xxx built
