@@ -1217,7 +1217,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                 is->drop_vframe_count++;
 
                 while (is->audio_accurate_seek_req && !is->abort_request) {
-                    int64_t apts = is->accurate_seek_aframe_pts ;
+                    int64_t apts = is->accurate_seek_aframe_pts;
                     deviation2 = apts - pts * 1000 * 1000;
                     deviation3 = apts - is->seek_pos;
 
@@ -1809,7 +1809,7 @@ static int audio_thread(void *arg)
                         is->accurate_seek_aframe_pts = audio_clock * 1000 * 1000;
                         audio_seek_pos = is->seek_pos;
                         deviation = llabs((int64_t)(audio_clock * 1000 * 1000) - is->seek_pos);
-                        if ((audio_clock * 1000 * 1000 < is->seek_pos ) || deviation > MAX_DEVIATION) {
+                        if ((audio_clock * 1000 * 1000 < is->seek_pos) || deviation > MAX_DEVIATION) {
                             if (is->drop_aframe_count == 0) {
                                 SDL_LockMutex(is->accurate_seek_mutex);
                                 if (is->accurate_seek_start_time <= 0 && (is->video_stream < 0 || is->video_accurate_seek_req)) {
@@ -1821,8 +1821,8 @@ static int audio_thread(void *arg)
                             is->drop_aframe_count++;
                             while (is->video_accurate_seek_req && !is->abort_request) {
                                 int64_t vpts = is->accurate_seek_vframe_pts;
-                                deviation2 = vpts  - audio_clock * 1000 * 1000;
-                                deviation3 = vpts  - is->seek_pos;
+                                deviation2 = vpts - audio_clock * 1000 * 1000;
+                                deviation3 = vpts - is->seek_pos;
                                 if (deviation2 > -100 * 1000 && deviation3 < 0) {
 
                                     break;
