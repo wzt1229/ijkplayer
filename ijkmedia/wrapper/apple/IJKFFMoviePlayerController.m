@@ -1028,6 +1028,11 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     }
 }
 
+- (void)stepToNextFrame
+{
+    ijk_step_to_next_frame(_mediaPlayer);
+}
+
 - (BOOL)shouldShowHudView
 {
     return _shouldShowHudView;

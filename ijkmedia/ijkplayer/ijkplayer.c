@@ -843,3 +843,8 @@ void ijk_set_enable_accurate_seek(IjkMediaPlayer *mp,int open)
     ffp_set_enable_accurate_seek(mp->ffplayer, open);
 }
 
+void ijk_step_to_next_frame(IjkMediaPlayer *mp)
+{
+    assert(mp);
+    ffp_step_to_next_frame(mp->ffplayer);
+}

@@ -907,6 +907,13 @@ static void step_to_next_frame_l(FFPlayer *ffp)
         stream_toggle_pause_l(ffp, 0);
 }
 
+void ffp_step_to_next_frame(FFPlayer *ffp)
+{
+    SDL_LockMutex(ffp->is->play_mutex);
+    step_to_next_frame_l(ffp);
+    SDL_UnlockMutex(ffp->is->play_mutex);
+}
+
 static double compute_target_delay(FFPlayer *ffp, double delay, VideoState *is)
 {
     double sync_threshold, diff = 0;

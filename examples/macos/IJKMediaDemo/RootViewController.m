@@ -1307,10 +1307,14 @@ static IOPMAssertionID g_displaySleepAssertionID;
 }
 
 - (IBAction)fastForward:(NSButton *)sender
-{
-    float cp = self.player.currentPlaybackTime;
-    cp += 10;
-    [self seekTo:cp];
+{    
+    if (self.player.playbackState == IJKMPMoviePlaybackStatePaused) {
+        [self.player stepToNextFrame];
+    } else {
+        float cp = self.player.currentPlaybackTime;
+        cp += 10;
+        [self seekTo:cp];
+    }
 }
 
 - (IBAction)onVolumeChange:(NSSlider *)sender

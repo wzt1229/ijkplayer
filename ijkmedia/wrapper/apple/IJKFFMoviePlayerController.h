@@ -154,6 +154,7 @@ typedef enum IJKLogLevel {
 - (void)updateSubtitleExtraDelay:(const float)delay;
 - (float)currentSubtitleExtraDelay;
 - (void)enableAccurateSeek:(BOOL)open;
+- (void)stepToNextFrame;
 
 @end
 
