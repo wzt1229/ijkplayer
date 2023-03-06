@@ -3323,6 +3323,23 @@ static int read_thread(void *arg)
             SDL_UnlockMutex(ffp->is->play_mutex);
 
             if (ffp->enable_accurate_seek) {
+                /*
+                 pop old audio frames is necessary.
+                 when enable accurate seek,video decoder thread waiting until the accurate seek timeout！
+                 because the audio is paused,nobody cunsume the samples in sampq,and audio thread is waiting
+                 sampq empty condition,can't drop any audio frmame,so video decoder thread wait forever.
+                 */
+                while (frame_queue_nb_remaining(&is->sampq) > 0) {
+                    Frame *af = frame_queue_peek_readable(&is->sampq);
+                    if (af && af->serial != is->audioq.serial) {
+                        frame_queue_next(&is->sampq);
+                    } else {
+                        break;
+                    }
+                }
+                is->audio_buf_index = 0;
+                is->audio_buf_size = 0;
+                
                 is->drop_aframe_count = 0;
                 is->drop_vframe_count = 0;
                 SDL_LockMutex(is->accurate_seek_mutex);
