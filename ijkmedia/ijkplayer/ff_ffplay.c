@@ -5013,3 +5013,15 @@ void ffp_set_audio_sample_observer(FFPlayer *ffp, ijk_audio_samples_callback cb)
     }
     ffp->audio_samples_callback = cb;
 }
+
+void ffp_set_enable_accurate_seek(FFPlayer *ffp,int open)
+{
+    if (!ffp || !ffp->is) {
+        return;
+    }
+    SDL_LockMutex(ffp->is->accurate_seek_mutex);
+    if (!ffp->is->video_accurate_seek_req && !ffp->is->audio_accurate_seek_req &&!ffp->is->seek_req) {
+        ffp->enable_accurate_seek = open;
+    }
+    SDL_UnlockMutex(ffp->is->accurate_seek_mutex);
+}

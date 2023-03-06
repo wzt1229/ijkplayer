@@ -836,3 +836,10 @@ void ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callb
     assert(mp);
     ffp_set_audio_sample_observer(mp->ffplayer, cb);
 }
+
+void ijk_set_enable_accurate_seek(IjkMediaPlayer *mp,int open)
+{
+    assert(mp);
+    ffp_set_enable_accurate_seek(mp->ffplayer, open);
+}
+

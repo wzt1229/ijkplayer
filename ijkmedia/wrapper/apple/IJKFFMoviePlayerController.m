@@ -87,6 +87,7 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 #if TARGET_OS_IOS
     IJKNotificationManager *_notificationManager;
 #endif
+    int _enableAccurateSeek;
 }
 
 @synthesize view = _view;
@@ -1016,6 +1017,17 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     }
 }
 
+- (void)enableAccurateSeek:(BOOL)open
+{
+    if (_seeking) {
+        //record it
+        _enableAccurateSeek = open ? 1 : 2;
+    } else {
+        _enableAccurateSeek = 0;
+        ijk_set_enable_accurate_seek(_mediaPlayer, open);
+    }
+}
+
 - (BOOL)shouldShowHudView
 {
     return _shouldShowHudView;
@@ -1356,7 +1368,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
              object:self
              userInfo:@{IJKMPMoviePlayerDidSeekCompleteTargetKey: @(avmsg->arg1),
                         IJKMPMoviePlayerDidSeekCompleteErrorKey: @(avmsg->arg2)}];
-            _seeking = NO;
+//            _seeking = NO;
             break;
         }
         case FFP_MSG_VIDEO_DECODER_OPEN: {
@@ -1463,9 +1475,14 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         }
         case FFP_MSG_AFTER_SEEK_FIRST_FRAME: {
             int du = avmsg->arg1;
+            if (_enableAccurateSeek > 0) {
+                ijk_set_enable_accurate_seek(_mediaPlayer, _enableAccurateSeek == 1);
+                _enableAccurateSeek = 0;
+            }
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification
              object:self userInfo:@{@"du" : @(du)}];
+            _seeking = NO;
             break;
         }
         case FFP_MSG_VIDEO_DECODER_FATAL: {

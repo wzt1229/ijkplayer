@@ -652,6 +652,27 @@
                                                                 <binding destination="-2" name="value" keyPath="videotoolbox_hwaccel" id="0tT-Rs-bEa"/>
                                                             </connections>
                                                         </button>
+                                                        <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="pTf-h9-9RE">
+                                                            <rect key="frame" x="102" y="12" width="64" height="16"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                            <textFieldCell key="cell" lineBreakMode="clipping" title="精准seek:" id="lYX-tY-Xr6">
+                                                                <font key="font" size="13" name=".PingFangSC-Regular"/>
+                                                                <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                            </textFieldCell>
+                                                        </textField>
+                                                        <button verticalHuggingPriority="750" id="htU-dX-SDW">
+                                                            <rect key="frame" x="170" y="11" width="18" height="18"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                            <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="only" inset="2" id="aIs-BD-OKX">
+                                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                                <font key="font" metaFont="system"/>
+                                                            </buttonCell>
+                                                            <connections>
+                                                                <action selector="onChangedAccurateSeek:" target="-2" id="WKn-7z-cVl"/>
+                                                                <binding destination="-2" name="value" keyPath="accurateSeek" id="6xK-JT-6gv"/>
+                                                            </connections>
+                                                        </button>
                                                     </beginningViews>
                                                     <middleViews>
                                                         <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="UVt-uL-Rtb">
@@ -762,8 +783,12 @@
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
+                                                        <integer value="1000"/>
+                                                        <integer value="1000"/>
                                                     </visibilityPriorities>
                                                     <customSpacing>
+                                                        <real value="3.4028234663852886e+38"/>
+                                                        <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
@@ -805,7 +830,7 @@
                                                         <binding destination="-2" name="value" keyPath="volume" id="fDs-YK-DYM"/>
                                                     </connections>
                                                 </slider>
-                                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ltm-77-UmI">
+                                                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ltm-77-UmI" userLabel="seek cost">
                                                     <rect key="frame" x="411" y="19" width="33" height="16"/>
                                                     <textFieldCell key="cell" lineBreakMode="clipping" title="seek" id="yZ9-Ye-iMz">
                                                         <font key="font" usesAppearanceFont="YES"/>

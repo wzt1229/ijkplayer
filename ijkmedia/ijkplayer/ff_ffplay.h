@@ -119,4 +119,6 @@ int       ffp_get_video_frame_cache_remaining(FFPlayer *ffp);
 
 /* audio samples realtime observer callback, callback can be NULL */
 void      ffp_set_audio_sample_observer(FFPlayer *ffp, ijk_audio_samples_callback cb);
+/* toggle accurate seek*/
+void      ffp_set_enable_accurate_seek(FFPlayer *ffp,int open);
 #endif

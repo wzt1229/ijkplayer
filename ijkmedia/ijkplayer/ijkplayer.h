@@ -228,5 +228,7 @@ int             ijkmp_addOnly_external_subtitle(IjkMediaPlayer* mp, const char* 
 int             ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp);
 /* register audio samples observer*/
 void            ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callback cb);
+/* toggle accurate seek */
+void ijk_set_enable_accurate_seek(IjkMediaPlayer *mp,int open);
 
 #endif

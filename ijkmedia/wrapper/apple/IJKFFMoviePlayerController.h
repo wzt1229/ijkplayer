@@ -153,6 +153,7 @@ typedef enum IJKLogLevel {
 - (void)closeCurrentStream:(NSString *)streamType;
 - (void)updateSubtitleExtraDelay:(const float)delay;
 - (float)currentSubtitleExtraDelay;
+- (void)enableAccurateSeek:(BOOL)open;
 
 @end
 

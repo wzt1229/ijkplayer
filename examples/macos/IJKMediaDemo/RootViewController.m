@@ -56,7 +56,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (copy) NSString *fcc;
 @property (assign) int snapshot;
 @property (assign) BOOL shouldShowHudView;
-
+@property (assign) BOOL accurateSeek;
 //for cocoa binding end
 
 @property (assign) BOOL seeking;
@@ -113,7 +113,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self reSetLoglevel:@"info"];
     self.seekCostLb.stringValue = @"";
     
-    NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc.m3u8",@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
+//    @"2e0fb226-d7c3-4672-a4bc.m3u8"
+    NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
     
     for (NSString *fileName in bundleNameArr) {
         NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
@@ -652,6 +653,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
+    [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
+    [options setPlayerOptionIntValue:2000 forKey:@"accurate-seek-timeout"];
+    
     options.metalRenderer = !self.use_openGL;
     options.showHudView = self.shouldShowHudView;
     
@@ -1555,6 +1559,11 @@ static IOPMAssertionID g_displaySleepAssertionID;
         [self stopPlay:nil];
         [self playURL:playingUrl];
     }
+}
+
+- (IBAction)onChangedAccurateSeek:(NSButton *)sender
+{
+    [self.player enableAccurateSeek:self.accurateSeek];
 }
 
 - (IBAction)onSelectFCC:(NSPopUpButton*)sender
