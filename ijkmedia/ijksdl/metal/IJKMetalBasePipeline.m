@@ -139,7 +139,7 @@
     
     NSError *error;
     
-    id<MTLLibrary> defaultLibrary = [_device newLibraryWithURL:libURL error:&error];
+    id<MTLLibrary> defaultLibrary = [_device newLibraryWithFile:libURL.path error:&error];
     
     NSParameterAssert(defaultLibrary);
     // Load all the shader files with a .metal file extension in the project.
@@ -165,6 +165,7 @@
     pipelineStateDescriptor.vertexFunction = vertexFunction;
     pipelineStateDescriptor.fragmentFunction = fragmentFunction;
     pipelineStateDescriptor.colorAttachments[0].pixelFormat = _colorPixelFormat; // 设置颜色格式
+    pipelineStateDescriptor.sampleCount = 1;
     
     id<MTLRenderPipelineState> pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
                                                                                       error:&error]; // 创建图形渲染管道，耗性能操作不宜频繁调用
