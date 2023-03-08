@@ -998,16 +998,17 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)onTick:(NSTimer *)sender
 {
+    long interval = (long)self.player.currentPlaybackTime;
+    long duration = self.player.monitor.duration / 1000;
+    self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
+    self.durationTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(duration/60),(int)(duration%60)];
+    self.playerSlider.playedValue = interval;
+    self.playerSlider.minValue = 0;
+    self.playerSlider.maxValue = duration;
+    self.playerSlider.preloadValue = interval + self.player.playableDuration / 1000;
+    
     if ([self.player isPlaying]) {
         self.tickCount ++;
-        long interval = (long)self.player.currentPlaybackTime;
-        long duration = self.player.monitor.duration / 1000;
-        self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
-        self.durationTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(duration/60),(int)(duration%60)];
-        self.playerSlider.playedValue = interval;
-        self.playerSlider.minValue = 0;
-        self.playerSlider.maxValue = duration;
-        self.playerSlider.preloadValue = interval + self.player.playableDuration / 1000;
         if (self.autoTest) {
             //auto seek
             if (duration > 0) {
