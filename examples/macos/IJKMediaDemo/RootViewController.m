@@ -243,6 +243,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         }
     } else if ([menu.title isEqualToString:@"倍速"]) {
         [menu removeAllItems];
+        [menu addItemWithTitle:@"0.01x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 1;
         [menu addItemWithTitle:@"0.8x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 80;
         [menu addItemWithTitle:@"1.0x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 100;
         [menu addItemWithTitle:@"1.25x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 125;
@@ -740,12 +741,12 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 - (void)ijkPlayerAfterSeekFirstVideoFrameDisplay:(NSNotification *)notifi
 {
     NSLog(@"seek cost time:%@ms",notifi.userInfo[@"du"]);
-    self.seeking = NO;
+//    self.seeking = NO;
     self.seekCostLb.stringValue = [NSString stringWithFormat:@"%@ms",notifi.userInfo[@"du"]];
-    //seek 完毕后仍旧是播放状态就开始播放
-    if (self.playCtrlBtn.state == NSControlStateValueOn) {
-        [self.player play];
-    }
+//    //seek 完毕后仍旧是播放状态就开始播放
+//    if (self.playCtrlBtn.state == NSControlStateValueOn) {
+//        [self.player play];
+//    }
 }
 
 - (void)ijkPlayerCouldNotFindCodec:(NSNotification *)notifi
@@ -1278,15 +1279,15 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)seekTo:(float)cp
 {
-    if (self.seeking) {
-        NSLog(@"xql ignore seek.");
-        return;
-    }
-    self.seeking = YES;
+//    if (self.seeking) {
+//        NSLog(@"xql ignore seek.");
+//        return;
+//    }
+//    self.seeking = YES;
     if (cp < 0) {
         cp = 0;
     }
-    [self.player pause];
+//    [self.player pause];
     self.seekCostLb.stringValue = @"";
     if (self.player.monitor.duration > 0) {
         if (cp >= self.player.monitor.duration) {

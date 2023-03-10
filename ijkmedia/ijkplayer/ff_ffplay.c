@@ -542,9 +542,10 @@ static void video_image_display2(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
     Frame *vp = frame_queue_peek_last(&is->pictq);
-
     if (vp->bmp) {
-        if (is->ffSub) {
+        if (is->force_step) {
+            update_subtitle_text(ffp, "");
+        } else if (is->ffSub) {
             char *text = NULL;
             AVSubtitleRect *bmp = NULL;
             if (ff_sub_fetch_frame(is->ffSub, vp->pts, &text, &bmp) >= 0) {
@@ -1007,6 +1008,13 @@ retry:
                 ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
             }
         } else {
+            
+            if (is->force_step) {
+                is->force_refresh = 1;
+                frame_queue_next(&is->pictq);
+                goto display;
+            }
+            
             double last_duration, duration, delay;
             Frame *vp, *lastvp;
 
@@ -1105,6 +1113,7 @@ display:
             video_display2(ffp);
     }
     is->force_refresh = 0;
+    is->force_step = 0;
     if (ffp->show_status == 1 && AV_LOG_INFO > av_log_get_level()) {
         AVBPrint buf;
         static int64_t last_time;
@@ -1224,7 +1233,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
     int64_t deviation2 = 0;
     int64_t deviation3 = 0;
 
-    if (ffp->enable_accurate_seek && is->video_accurate_seek_req && !is->seek_req) {
+    if (ffp->enable_accurate_seek && is->video_accurate_seek_req && !is->seek_req && !is->force_step) {
         if (!isnan(pts)) {
             video_seek_pos = is->seek_pos;
             is->accurate_seek_vframe_pts = pts * 1000 * 1000;
@@ -1524,7 +1533,7 @@ static int get_video_frame(FFPlayer *ffp, AVFrame *frame)
 
         frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(is->ic, is->video_st, frame);
 
-        if (ffp->framedrop>0 || (ffp->framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER)) {
+        if (!is->force_step && (ffp->framedrop > 0 || (ffp->framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER))) {
             ffp->stat.decode_frame_count++;
             if (frame->pts != AV_NOPTS_VALUE) {
                 double diff = dpts - get_master_clock(is);
@@ -3284,8 +3293,9 @@ static int read_thread(void *arg)
             continue;
         }
 #endif
-        
+        int has_seeked = 0;
         if (is->seek_req) {
+            has_seeked = 1;
             int64_t seek_target = is->seek_pos;
             int64_t seek_min    = is->seek_rel > 0 ? seek_target - is->seek_rel + 2: INT64_MIN;
             int64_t seek_max    = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
@@ -3559,6 +3569,12 @@ static int read_thread(void *arg)
             av_packet_unref(pkt);
         }
 
+        //after seek file and not step next,just try force step next video frame.
+        if (has_seeked && !is->step) {
+            is->force_step = 1;
+            has_seeked = 0;
+        }
+        
         ffp_statistic_l(ffp);
 
         if (ffp->ijkmeta_delay_init && !init_ijkmeta &&
@@ -3740,7 +3756,7 @@ static int video_refresh_thread(void *arg)
         if (remaining_time > 0.0)
             av_usleep((int)(int64_t)(remaining_time * 1000000.0));
         remaining_time = REFRESH_RATE;
-        if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh))
+        if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->force_step))
             video_refresh(ffp, &remaining_time);
     }
 
