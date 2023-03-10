@@ -9,6 +9,7 @@
 #import "IJKMetalView.h"
 #import <QuartzCore/QuartzCore.h>
 #import <AVFoundation/AVUtilities.h>
+#import <CoreImage/CIContext.h>
 #import <mach/mach_time.h>
 
 // Header shared between C code here, which executes Metal API commands, and .metal files, which
@@ -366,7 +367,7 @@ typedef CGRect NSRect;
     [commandBuffer commit];
 }
 
-- (CGImageRef)_snapshot
+- (CGImageRef)_snapshotWithSubtitle:(BOOL)drawSub
 {
     IJKOverlayAttach *attach = self.currentAttach;
     
@@ -425,15 +426,76 @@ typedef CGRect NSRect;
     }
     
     CGSize viewport = CGSizeMake(floorf(width), floorf(height));
-    return [self.offscreenRendering snapshot:pixelBuffer targetSize:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
+    return [self.offscreenRendering snapshot:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
         [self encoderPicture:attach
                renderEncoder:renderEncoder
                     viewport:viewport
                        ratio:CGSizeMake(1.0, 1.0)];
-        [self encoderSubtitle:attach.subPicture
-                renderEncoder:renderEncoder
-                     viewport:viewport
-                        scale:subScale];
+        if (drawSub) {
+            [self encoderSubtitle:attach.subPicture
+                    renderEncoder:renderEncoder
+                         viewport:viewport
+                            scale:subScale];
+        }
+    }];
+}
+
+- (CGImageRef)_snapshotOrigin:(IJKOverlayAttach *)attach
+{
+    CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(attach.videoPicture);
+    CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
+    
+    static CIContext *context = nil;
+    if (!context) {
+        context = [CIContext contextWithOptions:NULL];
+    }
+    CGRect rect = CGRectMake(0,0,
+                             CVPixelBufferGetWidth(pixelBuffer),
+                             CVPixelBufferGetHeight(pixelBuffer));
+    CGImageRef imageRef = [context createCGImage:ciImage fromRect:rect];
+    CVPixelBufferRelease(pixelBuffer);
+    return imageRef ? (CGImageRef)CFAutorelease(imageRef) : NULL;
+}
+
+- (CGImageRef)_snapshotScreen
+{
+    IJKOverlayAttach *attach = self.currentAttach;
+    
+    CVPixelBufferRef pixelBuffer = attach.videoPicture;
+    if (!pixelBuffer) {
+        return NULL;
+    }
+    
+    if (!self.offscreenRendering) {
+        self.offscreenRendering = [IJKMetalOffscreenRendering alloc];
+    }
+    
+    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+    CGSize viewport = self.drawableSize;
+    
+    return [self.offscreenRendering snapshot:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
+        CVPixelBufferRef pixelBuffer = attach.videoPicture;
+        if (pixelBuffer) {
+            CGSize ratio = [self computeNormalizedVerticesRatio:attach];
+            [self encoderPicture:attach
+                   renderEncoder:renderEncoder
+                        viewport:viewport
+                           ratio:ratio];
+        }
+        
+        if (attach.sub) {
+            float ratio = 1.0;
+            if (attach.sub.pixels) {
+                ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+            } else {
+                //for text subtitle scale display_scale.
+                ratio *= self.displayScreenScale;
+            }
+            [self encoderSubtitle:attach.subPicture
+                    renderEncoder:renderEncoder
+                         viewport:viewport
+                            scale:ratio];
+        }
     }];
 }
 
@@ -441,11 +503,13 @@ typedef CGRect NSRect;
 {
     switch (aType) {
         case IJKSDLSnapshot_Origin:
+            return [self _snapshotOrigin:self.currentAttach];
         case IJKSDLSnapshot_Screen:
+            return [self _snapshotScreen];
         case IJKSDLSnapshot_Effect_Origin:
-            return nil;
+            return [self _snapshotWithSubtitle:NO];
         case IJKSDLSnapshot_Effect_Subtitle_Origin:
-            return [self _snapshot];
+            return [self _snapshotWithSubtitle:YES];
     }
 }
 

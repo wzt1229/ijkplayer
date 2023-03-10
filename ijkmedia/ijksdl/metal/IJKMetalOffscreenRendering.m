@@ -151,7 +151,7 @@
 
 @implementation IJKMetalOffscreenRendering
 
-- (CGImageRef)snapshot
+- (CGImageRef)_snapshot
 {
     CVPixelBufferRef pixelBuffer = CVPixelBufferRetain([_passDescriptor pixelBuffer]);
     CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
@@ -168,16 +168,11 @@
     return imageRef ? (CGImageRef)CFAutorelease(imageRef) : NULL;
 }
 
-- (CGImageRef)snapshot:(CVPixelBufferRef)pixelBuffer
-            targetSize:(CGSize)targetSize
+- (CGImageRef)snapshot:(CGSize)targetSize
                 device:(id <MTLDevice>)device
          commandBuffer:(id<MTLCommandBuffer>)commandBuffer
        doUploadPicture:(void(^)(id<MTLRenderCommandEncoder>))block
 {
-    if (!pixelBuffer) {
-        return NULL;
-    }
-    
     if (![_passDescriptor canReuse:targetSize]) {
         _passDescriptor = [IJKRenderPassDescriptor alloc];
     }
@@ -201,6 +196,7 @@
     [renderEncoder endEncoding];
     [commandBuffer commit];
     [commandBuffer waitUntilCompleted];
-    return [self snapshot];
+    return [self _snapshot];
 }
+
 @end
