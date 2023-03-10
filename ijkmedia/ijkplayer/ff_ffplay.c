@@ -1076,8 +1076,23 @@ retry:
 
             SDL_LockMutex(ffp->is->play_mutex);
             if (is->step) {
-                Uint8 bytes[1024];
-                sdl_audio_callback(ffp, bytes, sizeof(bytes));
+//                int len = 0.04 * is->audio_src.freq * av_get_bytes_per_sample(is->audio_src.fmt);
+//                if (len < 1024) {
+//                    len = 1024;
+//                }
+                if (is->audio_st) {
+                    //video is ahead, need drop more frames
+                    if (ffp->stat.vmdiff > AV_SYNC_THRESHOLD_MIN) {
+                        Uint8 bytes[8192];
+                        sdl_audio_callback(ffp, bytes, sizeof(bytes));
+                    }
+                    //video is behind, need drop less frames
+                    else {
+                        Uint8 bytes[1024];
+                        sdl_audio_callback(ffp, bytes, sizeof(bytes));
+                    }
+                }
+                
                 is->step = 0;
                 if (!is->paused)
                     stream_update_pause_l(ffp);
@@ -2506,7 +2521,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
             if (is->video_stream >= 0 && is->viddec.finished != is->videoq.serial) {
                 //when use step play mode,we use video pts sync audio,so drop the behind audio.
                 double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
-                //audio pts is ahead,need fast forwad,otherwise cause video picture dealy and not smoothly!
+                //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
                 double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
                 if (!isnan(video_pts) && video_pts - pts > threshold) {
                     av_log(NULL, AV_LOG_INFO, "audio is behind:%0.3f\n", video_pts - pts);
