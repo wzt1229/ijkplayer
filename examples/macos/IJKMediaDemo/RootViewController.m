@@ -658,7 +658,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
-    [options setPlayerOptionIntValue:2000 forKey:@"accurate-seek-timeout"];
+    [options setPlayerOptionIntValue:2500 forKey:@"accurate-seek-timeout"];
     
     options.metalRenderer = !self.use_openGL;
     options.showHudView = self.shouldShowHudView;

@@ -405,6 +405,11 @@ typedef struct VideoState {
 
     int drop_aframe_count;
     int drop_vframe_count;
+    
+    //record the frame serial
+    int drop_aframe_serial;
+    int drop_vframe_serial;
+    
     int64_t accurate_seek_start_time;
     volatile int64_t accurate_seek_vframe_pts;
     volatile int64_t accurate_seek_aframe_pts;
