@@ -614,11 +614,7 @@ long ijkmp_get_current_position(IjkMediaPlayer *mp)
 {
     assert(mp);
     pthread_mutex_lock(&mp->mutex);
-    long retval;
-    if (mp->seek_req)
-        retval = mp->seek_msec;
-    else
-        retval = ijkmp_get_current_position_l(mp);
+    long retval = ijkmp_get_current_position_l(mp);
     pthread_mutex_unlock(&mp->mutex);
     return retval;
 }
