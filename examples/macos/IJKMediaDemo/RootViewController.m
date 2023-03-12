@@ -112,16 +112,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self onReset:nil];
     [self reSetLoglevel:@"info"];
     self.seekCostLb.stringValue = @"";
-    
-//    @"2e0fb226-d7c3-4672-a4bc.m3u8"
-    NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
-    
-    for (NSString *fileName in bundleNameArr) {
-        NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
-        [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
-    }
-    
+    self.accurateSeek = 1;
+
     NSArray *onlineArr = @[
+@"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
 @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
 @"https://kvideo01.youju.sohu.com/f559f6ad-df2f-42c9-9f47-841cf6e4086f1_0_0.mp4",
 @"https://cdn8.vipbf-video.com/20221002/22649_2c3f2fc7/index.m3u8",
@@ -150,6 +144,15 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     for (NSString *url in onlineArr) {
         [self.playList addObject:[NSURL URLWithString:url]];
     }
+   
+//    @"2e0fb226-d7c3-4672-a4bc.m3u8"
+    NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
+    
+    for (NSString *fileName in bundleNameArr) {
+        NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
+        [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
+    }
+        
     
     if ([self.view isKindOfClass:[SHBaseView class]]) {
         SHBaseView *baseView = (SHBaseView *)self.view;
@@ -1279,6 +1282,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)seekTo:(float)cp
 {
+    NSLog(@"seek to:%g",cp);
 //    if (self.seeking) {
 //        NSLog(@"xql ignore seek.");
 //        return;
