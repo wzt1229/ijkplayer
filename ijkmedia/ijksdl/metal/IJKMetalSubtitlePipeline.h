@@ -18,7 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
-
+- (void)lock;
+- (void)unlock;
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)subPixelBuffer;
 

@@ -34,7 +34,7 @@
 @property (nonatomic, assign) BOOL vertexChanged;
 @property (nonatomic, assign) BOOL subtitleVertexChanged;
 @property (nonatomic, assign) BOOL convertMatrixChanged;
-
+@property (nonatomic, strong) NSLock *pilelineLock;
 @end
 
 @implementation IJKMetalBasePipeline
@@ -54,8 +54,19 @@
         _device = device;
         _colorPixelFormat = colorPixelFormat;
         _colorAdjustment = (vector_float4){0.0};
+        _pilelineLock = [[NSLock alloc]init];
     }
     return self;
+}
+
+- (void)lock
+{
+    [self.pilelineLock lock];
+}
+
+- (void)unlock
+{
+    [self.pilelineLock unlock];
 }
 
 - (void)setConvertMatrixType:(IJKYUVToRGBMatrixType)convertMatrixType

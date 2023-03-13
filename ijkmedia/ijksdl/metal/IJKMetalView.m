@@ -32,8 +32,8 @@
 // The command queue used to pass commands to the device.
 @property (nonatomic, strong) id<MTLCommandQueue>commandQueue;
 @property (nonatomic, assign) CVMetalTextureCacheRef pictureTextureCache;
-@property (nonatomic, strong) __kindof IJKMetalBasePipeline *picturePipeline;
-@property (nonatomic, strong) IJKMetalSubtitlePipeline *subPipeline;
+@property (atomic, strong) __kindof IJKMetalBasePipeline *picturePipeline;
+@property (atomic, strong) IJKMetalSubtitlePipeline *subPipeline;
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
 @property (atomic, strong) IJKOverlayAttach *currentAttach;
 @property(atomic) BOOL subtitlePreferenceChanged;
@@ -281,6 +281,7 @@ typedef CGRect NSRect;
     CVPixelBufferRef pixelBuffer = attach.videoPicture;
     
     if ([self setupPipelineIfNeed:pixelBuffer]) {
+        [self.picturePipeline lock];
         self.picturePipeline.viewport = viewport;
         self.picturePipeline.autoZRotateDegrees = attach.autoZRotate;
         self.picturePipeline.rotateType = self.rotatePreference.type;
@@ -295,6 +296,7 @@ typedef CGRect NSRect;
         [self.picturePipeline uploadTextureWithEncoder:renderEncoder
                                                 buffer:pixelBuffer
                                           textureCache:_pictureTextureCache];
+        [self.picturePipeline unlock];
     }
 }
 
@@ -310,12 +312,14 @@ typedef CGRect NSRect;
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
     
     if ([self setupSubPipelineIfNeed:pixelBuffer]) {
+        [self.subPipeline lock];
         self.subPipeline.viewport = viewport;
         self.subPipeline.scale = scale;
         self.subPipeline.subtitleBottomMargin = self.subtitlePreference.bottomMargin;
         //upload textures
         [self.subPipeline uploadTextureWithEncoder:renderEncoder
                                             buffer:pixelBuffer];
+        [self.subPipeline unlock];
     }
     return YES;
 }

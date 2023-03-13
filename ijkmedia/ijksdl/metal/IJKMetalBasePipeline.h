@@ -30,6 +30,9 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
 
+- (void)lock;
+- (void)unlock;
+
 - (void)updateColorAdjustment:(vector_float4)c;
 
 //subclass override!

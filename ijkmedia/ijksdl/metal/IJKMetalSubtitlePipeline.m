@@ -22,6 +22,7 @@
 @property (nonatomic, strong) id<MTLBuffer> vertices;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
 @property (nonatomic, assign) BOOL vertexChanged;
+@property (nonatomic, strong) NSLock *pilelineLock;
 
 @end
 
@@ -35,8 +36,19 @@
         NSAssert(device, @"device can't be nil!");
         _device = device;
         _colorPixelFormat = colorPixelFormat;
+        _pilelineLock = [[NSLock alloc] init];
     }
     return self;
+}
+
+- (void)lock
+{
+    [self.pilelineLock lock];
+}
+
+- (void)unlock
+{
+    [self.pilelineLock unlock];
 }
 
 - (void)createRenderPipelineIfNeed
