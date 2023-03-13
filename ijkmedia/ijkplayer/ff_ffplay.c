@@ -828,7 +828,7 @@ static void check_external_clock_speed(VideoState *is) {
 }
 
 /* seek in the stream */
-static void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes)
+static int stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_bytes)
 {
     if (!is->seek_req) {
         is->seek_pos = pos;
@@ -839,7 +839,9 @@ static void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_by
         is->seek_req = 1;
         is->viddec.start_seek_time = SDL_GetTickHR();
         SDL_CondSignal(is->continue_read_thread);
+        return 0;
     }
+    return -1;
 }
 
 /* pause or resume the video */
@@ -1244,16 +1246,16 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                  fix fast rewind and fast forward continually,however accurate seek may not ended,cause accurate seek timeout.
                  */
                 int force_reset_accurate_seek_time = 0;
-                if (is->drop_vframe_serial != is->viddec.pkt_serial) {
+                if (is->drop_vframe_serial != is->videoq.serial) {
                     force_reset_accurate_seek_time = 1;
-                    is->drop_vframe_serial = is->viddec.pkt_serial;
+                    is->drop_vframe_serial = is->videoq.serial;
                 }
                 if (is->drop_vframe_count == 0 || force_reset_accurate_seek_time) {
                     SDL_LockMutex(is->accurate_seek_mutex);
                     is->drop_vframe_count = 0;
                     if (force_reset_accurate_seek_time) {
                         is->accurate_seek_start_time = now;
-                        av_log(NULL, AV_LOG_DEBUG,"video force reset accurate seek time\n");
+                        av_log(NULL, AV_LOG_INFO,"video force reset accurate seek time\n");
                     } else if (is->accurate_seek_start_time <= 0 && (is->audio_stream < 0 || is->audio_accurate_seek_req)) {
                         is->accurate_seek_start_time = now;
                     }
@@ -1864,16 +1866,16 @@ static int audio_thread(void *arg)
                              fix fast rewind and fast forward continually,however accurate seek may not ended,cause accurate seek timeout.
                              */
                             int force_reset_accurate_seek_time = 0;
-                            if (is->drop_aframe_serial != is->auddec.pkt_serial) {
+                            if (is->drop_aframe_serial != is->audioq.serial) {
                                 force_reset_accurate_seek_time = 1;
-                                is->drop_aframe_serial = is->auddec.pkt_serial;
+                                is->drop_aframe_serial = is->audioq.serial;
                             }
                             if (is->drop_aframe_count == 0 || force_reset_accurate_seek_time) {
                                 SDL_LockMutex(is->accurate_seek_mutex);
                                 is->drop_aframe_count = 0;
                                 if (force_reset_accurate_seek_time) {
                                     is->accurate_seek_start_time = now;
-                                    av_log(NULL, AV_LOG_DEBUG,"audio force reset accurate seek time\n");
+                                    av_log(NULL, AV_LOG_INFO,"audio force reset accurate seek time\n");
                                 } else if (is->accurate_seek_start_time <= 0 && (is->video_stream < 0 || is->video_accurate_seek_req)) {
                                     is->accurate_seek_start_time = now;
                                 }
@@ -4384,8 +4386,13 @@ int ffp_seek_to_l(FFPlayer *ffp, long msec)
     // FIXME: 9 seek by bytes
     // FIXME: 9 seek out of range
     // FIXME: 9 seekable
-    av_log(ffp, AV_LOG_DEBUG, "stream_seek %"PRId64"(%d) + %"PRId64", \n", seek_pos, (int)msec, start_time);
-    stream_seek(is, seek_pos, 0, 0);
+    
+    if (stream_seek(is, seek_pos, 0, 0) == 0) {
+        av_log(ffp, AV_LOG_DEBUG, "stream_seek %"PRId64"(%d) + %"PRId64", \n", seek_pos, (int)msec, start_time);
+    } else {
+        av_log(ffp, AV_LOG_INFO, "ignore stream_seek %"PRId64"(%d) + %"PRId64", \n", seek_pos, (int)msec, start_time);
+        return EIJK_FAILED;
+    }
     return 0;
 }
 

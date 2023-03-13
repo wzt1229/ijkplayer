@@ -1299,7 +1299,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
         }
         self.player.currentPlaybackTime = cp;
         
-        long interval = (long)self.player.currentPlaybackTime;
+        long interval = (long)cp;
         self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
         self.playerSlider.playedValue = interval;
     }
