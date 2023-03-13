@@ -118,6 +118,8 @@ static int decode_a_frame(FFSubComponent *c, Decoder *d, AVSubtitle *sub)
         } while (1);
 
         int got_frame = 0;
+        
+        //av_log(NULL, AV_LOG_DEBUG, "sub stream decoder pkt serial:%d\n",d->pkt_serial);
         ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
         if (ret < 0) {
             ret = AVERROR(EAGAIN);
@@ -153,13 +155,18 @@ static int subtitle_thread(void *arg)
             if (sp->sub.pts != AV_NOPTS_VALUE)
                 pts = sp->sub.pts / (double)AV_TIME_BASE;
             sp->pts = pts;
-            sp->serial = sub->decoder.pkt_serial;
-            sp->width = sub->decoder.avctx->width;
-            sp->height = sub->decoder.avctx->height;
-            sp->uploaded = 0;
-
-            /* now we can update the picture count */
-            frame_queue_push(sub->frameq);
+            
+            int serial = sub->decoder.pkt_serial;
+            if (sub->packetq->serial == serial) {
+                sp->serial = serial;
+                sp->width  = sub->decoder.avctx->width;
+                sp->height = sub->decoder.avctx->height;
+                sp->uploaded = 0;
+                /* now we can update the picture count */
+                frame_queue_push(sub->frameq);
+            } else {
+                av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
+            }
         }
     }
     return 0;
@@ -185,8 +192,6 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
     sub->ic = ic;
     sub->pkt = av_packet_alloc();
     sub->eof = 0;
-    //packet queue is reused.
-    packetq->serial = 0;
     int ret = decoder_init(&sub->decoder, avctx, sub->packetq, NULL);
     
     if (ret < 0) {
@@ -201,6 +206,7 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
         return ret;
     }
     sub->st_idx = stream_index;
+    av_log(NULL, AV_LOG_DEBUG, "sub stream opened:%d,serial:%d\n",stream_index,packetq->serial);
     *subp = sub;
     return 0;
 }
@@ -222,7 +228,8 @@ int subComponent_close(FFSubComponent **subp)
     av_packet_free(&sub->pkt);
     decoder_abort(&sub->decoder, sub->frameq);
     decoder_destroy(&sub->decoder);
-    
+    av_log(NULL, AV_LOG_DEBUG, "sub stream closed:%d\n",sub->st_idx);
+    sub->st_idx = -1;
     av_freep(subp);
     return 0;
 }
@@ -247,5 +254,3 @@ int subComponent_seek_to(FFSubComponent *sub, int sec)
     sub->eof = 0;
     return 0;
 }
-
-

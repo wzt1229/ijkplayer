@@ -4785,11 +4785,18 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
         }
         
         if (type == 1) {
-            stream_component_open(ffp, stream);
+            if (stream_component_open(ffp, stream) == 0) {
+                opened = 1;
+            } else {
+                av_log(NULL, AV_LOG_ERROR, "sub stream open failed:%d",stream);
+            }
         } else {
-            ff_exSub_open_stream(is->ffSub,stream);
+            if (ff_exSub_open_stream(is->ffSub,stream) == 0) {
+                opened = 1;
+            } else {
+                av_log(NULL, AV_LOG_ERROR, "ex sub stream open failed:%d",stream);
+            }
         }
-        opened = 1;
     }
     if (closed || opened) {
         int idx = opened ? stream : -1;
