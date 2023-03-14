@@ -921,17 +921,37 @@ void ffp_step_to_next_frame(FFPlayer *ffp)
 static double compute_target_delay(FFPlayer *ffp, double delay, VideoState *is)
 {
     double sync_threshold, diff = 0;
-
+    
+    /* skip or repeat frame. We take into account the
+       delay to compute the threshold. I still don't know
+       if it is the best guess */
+    sync_threshold = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(AV_SYNC_THRESHOLD_MAX, delay));
+    
     /* update delay to follow master synchronisation source */
     if (get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER) {
         /* if video is slave, we try to correct big delays by
            duplicating or deleting a frame */
-        diff = get_clock(&is->vidclk) - get_master_clock(is);
-
-        /* skip or repeat frame. We take into account the
-           delay to compute the threshold. I still don't know
-           if it is the best guess */
-        sync_threshold = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(AV_SYNC_THRESHOLD_MAX, delay));
+        
+        switch (get_master_sync_type(is)) {
+            case AV_SYNC_VIDEO_MASTER:
+                diff = get_clock(&is->vidclk) - get_clock(&is->vidclk);
+                break;
+            case AV_SYNC_AUDIO_MASTER:
+            {
+                if (is->eof && is->auddec.finished == is->audioq.serial && frame_queue_nb_remaining(&is->sampq) == 0) {
+                    //auido is done,but video has many frames,maybe the is->frame_timer + delay is greather  than current time,cause repaet current video frame forever.
+                    delay = delay / ffp->pf_playback_rate;
+                    diff = 0;
+                } else {
+                    diff = get_clock(&is->vidclk) - get_clock(&is->audclk);
+                }
+            }
+                break;
+            default:
+                diff = get_clock(&is->vidclk) - get_clock(&is->extclk);
+                break;
+        }
+    
         /* -- by bbcallen: replace is->max_frame_duration with AV_NOSYNC_THRESHOLD */
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
             if (diff <= -sync_threshold)
