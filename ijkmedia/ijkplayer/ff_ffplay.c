@@ -1009,6 +1009,14 @@ retry:
                 is->viddec.after_seek_frame = 0;
                 ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
             }
+            //when no video frame can step display,need pause play,otherwise cause FFP_MSG_COMPLETED.
+            SDL_LockMutex(ffp->is->play_mutex);
+            if (is->step) {
+                is->step = 0;
+                if (!is->paused)
+                    stream_update_pause_l(ffp);
+            }
+            SDL_UnlockMutex(ffp->is->play_mutex);
         } else {
             
             if (is->force_step) {
@@ -3468,7 +3476,8 @@ static int read_thread(void *arg)
         }
         if ((!is->paused || completed) &&
             (!is->audio_st || (is->auddec.finished == is->audioq.serial && frame_queue_nb_remaining(&is->sampq) == 0)) &&
-            (!is->video_st || (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
+            (!is->video_st || (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0)) &&
+            !is->step) {
             if (ffp->loop != 1 && (!ffp->loop || --ffp->loop)) {
                 stream_seek(is, ffp->start_time != AV_NOPTS_VALUE ? ffp->start_time : 0, 0, 0);
             } else if (ffp->autoexit) {
