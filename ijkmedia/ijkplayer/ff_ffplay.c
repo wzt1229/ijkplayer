@@ -2569,7 +2569,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
             int audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
             pts = is->audio_clock - (double)(audio_write_buf_size) / is->audio_tgt.bytes_per_sec - SDL_AoutGetLatencySeconds(ffp->aout);
             
-            if (is->video_stream >= 0 && is->viddec.finished != is->videoq.serial) {
+            if (is->video_stream >= 0 && is->viddec.finished != is->videoq.serial && is->auddec.finished != is->audioq.serial) {
                 //when use step play mode,we use video pts sync audio,so drop the behind audio.
                 double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
                 //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
