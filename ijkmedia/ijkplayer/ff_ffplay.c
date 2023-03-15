@@ -882,6 +882,11 @@ static void stream_update_pause_l(FFPlayer *ffp)
 static void toggle_pause_l(FFPlayer *ffp, int pause_on)
 {
     VideoState *is = ffp->is;
+    //when using step mode ignore pause cmd,otherwize cause stream_toggle_pause_l(ffp, 0);
+    if (is->step && pause_on) {
+        return;
+    }
+    
     if (is->pause_req && !pause_on) {
         set_clock(&is->vidclk, get_clock(&is->vidclk), is->vidclk.serial);
         set_clock(&is->audclk, get_clock(&is->audclk), is->audclk.serial);
