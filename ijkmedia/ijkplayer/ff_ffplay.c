@@ -543,7 +543,7 @@ static void video_image_display2(FFPlayer *ffp)
     VideoState *is = ffp->is;
     Frame *vp = frame_queue_peek_last(&is->pictq);
     if (vp->bmp) {
-        if (is->force_step) {
+        if (is->step_on_seeking) {
             update_subtitle_text(ffp, "");
         } else if (is->ffSub) {
             char *text = NULL;
@@ -1030,21 +1030,18 @@ retry:
                 ffp_notify_msg2(ffp, FFP_MSG_AFTER_SEEK_FIRST_FRAME, du);
             }
             //when no video frame can step display,need pause play,otherwise cause FFP_MSG_COMPLETED.
-            SDL_LockMutex(ffp->is->play_mutex);
-            if (is->step) {
-                is->step = 0;
-                if (!is->paused)
-                    stream_update_pause_l(ffp);
+            if (is->eof && is->viddec.finished == is->videoq.serial) {
+                SDL_LockMutex(ffp->is->play_mutex);
+                if (is->step) {
+                    is->step = 0;
+                    if (!is->paused)
+                        stream_update_pause_l(ffp);
+                } else if (is->step_on_seeking) {
+                    is->step_on_seeking = 0;
+                }
+                SDL_UnlockMutex(ffp->is->play_mutex);
             }
-            SDL_UnlockMutex(ffp->is->play_mutex);
         } else {
-            
-            if (is->force_step) {
-                is->force_refresh = 1;
-                frame_queue_next(&is->pictq);
-                goto display;
-            }
-            
             double last_duration, duration, delay;
             Frame *vp, *lastvp;
 
@@ -1052,6 +1049,7 @@ retry:
             lastvp = frame_queue_peek_last(&is->pictq);
             vp = frame_queue_peek(&is->pictq);
 
+            //when fast seek,we want update video frame,no drop frame.but we can't identify seek is continuously.
             if (vp->serial != is->videoq.serial) {
                 frame_queue_next(&is->pictq);
                 goto retry;
@@ -1060,14 +1058,14 @@ retry:
             if (lastvp->serial != vp->serial)
                 is->frame_timer = av_gettime_relative() / 1000000.0;
 
-            if (is->paused)
+            if (is->paused && !is->step_on_seeking)
                 goto display;
             /*
              fix after finish seek, video picture display slowly a few seconds bug.
              video and audio pts are NAN,usually video is firstly display,at this time video picture delay is zero, so we wait until audio clock right,because we need use auido sync video.
              check audioq.duration avoid video picture wait audio forever.
              */
-            if (!is->step && get_master_sync_type(is) == AV_SYNC_AUDIO_MASTER) {
+            if (!is->step_on_seeking && !is->step && get_master_sync_type(is) == AV_SYNC_AUDIO_MASTER) {
                 if (is->audio_stream >= 0 && isnan(get_master_clock(is)) && is->auddec.finished != is->audioq.serial && vp->pts > 0 && is->audioq.duration > 1) {
                     av_usleep(1000);
                     av_log(NULL,AV_LOG_INFO,"wait mater clock:%0.3f,%d\n",vp->pts,vp->serial);
@@ -1096,7 +1094,7 @@ retry:
                 update_video_pts(is, vp->pts, vp->pos, vp->serial);
             SDL_UnlockMutex(is->pictq.mutex);
 
-            if (frame_queue_nb_remaining(&is->pictq) > 1) {
+            if (!is->step_on_seeking && frame_queue_nb_remaining(&is->pictq) > 1) {
                 Frame *nextvp = frame_queue_peek_next(&is->pictq);
                 duration = vp_duration(is, vp, nextvp);
                 if(!is->step && (ffp->framedrop > 0 || (ffp->framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER)) && time > is->frame_timer + duration) {
@@ -1134,6 +1132,8 @@ retry:
                 is->step = 0;
                 if (!is->paused)
                     stream_update_pause_l(ffp);
+            } else if (is->step_on_seeking) {
+                is->step_on_seeking = 0;
             }
             SDL_UnlockMutex(ffp->is->play_mutex);
         }
@@ -1143,7 +1143,7 @@ display:
             video_display2(ffp);
     }
     is->force_refresh = 0;
-    is->force_step = 0;
+    
     if (ffp->show_status == 1 && AV_LOG_INFO > av_log_get_level()) {
         AVBPrint buf;
         static int64_t last_time;
@@ -1263,7 +1263,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
     int64_t deviation2 = 0;
     int64_t deviation3 = 0;
 
-    if (ffp->enable_accurate_seek && is->video_accurate_seek_req && !is->seek_req && !is->force_step) {
+    if (ffp->enable_accurate_seek && is->video_accurate_seek_req && !is->seek_req && !is->step_on_seeking) {
         if (!isnan(pts)) {
             video_seek_pos = is->seek_pos;
             is->accurate_seek_vframe_pts = pts * 1000 * 1000;
@@ -1579,7 +1579,7 @@ static int get_video_frame(FFPlayer *ffp, AVFrame *frame)
 
         frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(is->ic, is->video_st, frame);
 
-        if (!is->force_step && (ffp->framedrop > 0 || (ffp->framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER))) {
+        if (!is->step_on_seeking && (ffp->framedrop > 0 || (ffp->framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER))) {
             ffp->stat.decode_frame_count++;
             if (frame->pts != AV_NOPTS_VALUE) {
                 double diff = dpts - get_master_clock(is);
@@ -3355,9 +3355,7 @@ static int read_thread(void *arg)
             continue;
         }
 #endif
-        int has_seeked = 0;
         if (is->seek_req) {
-            has_seeked = 1;
             int64_t seek_target = is->seek_pos;
             int64_t seek_min    = is->seek_rel > 0 ? seek_target - is->seek_rel + 2: INT64_MIN;
             int64_t seek_max    = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
@@ -3418,8 +3416,10 @@ static int read_thread(void *arg)
                 ffp->auto_resume = 0;
                 stream_update_pause_l(ffp);
             }
-            if (is->pause_req)
-                step_to_next_frame_l(ffp);
+            //after seek file,just try force step next video frame.
+            is->step_on_seeking = 1;
+            //if (is->pause_req)
+              //  step_to_next_frame_l(ffp);
             SDL_UnlockMutex(ffp->is->play_mutex);
 
             if (ffp->enable_accurate_seek) {
@@ -3631,12 +3631,6 @@ static int read_thread(void *arg)
         } else {
             av_packet_unref(pkt);
         }
-
-        //after seek file and not step next,just try force step next video frame.
-        if (has_seeked && !is->step) {
-            is->force_step = 1;
-            has_seeked = 0;
-        }
         
         ffp_statistic_l(ffp);
 
@@ -3819,7 +3813,7 @@ static int video_refresh_thread(void *arg)
         if (remaining_time > 0.0)
             av_usleep((int)(int64_t)(remaining_time * 1000000.0));
         remaining_time = REFRESH_RATE;
-        if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->force_step))
+        if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->step_on_seeking))
             video_refresh(ffp, &remaining_time);
     }
 

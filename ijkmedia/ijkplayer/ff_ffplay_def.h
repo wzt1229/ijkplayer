@@ -370,8 +370,8 @@ typedef struct VideoState {
 
     char *filename;
     int width, height, xleft, ytop;
-    int step;
-    int force_step;//for seeking display a frame
+    int step;//for step mode
+    int step_on_seeking;//for seeking display a frame
 #if CONFIG_AVFILTER
     int vfilter_idx;
     AVFilterContext *in_video_filter;   // the first filter in the video chain
