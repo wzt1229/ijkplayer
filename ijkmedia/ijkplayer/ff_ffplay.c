@@ -141,7 +141,8 @@ int64_t get_valid_channel_layout(int64_t channel_layout, int channels)
 #endif
 
 static void free_picture(Frame *vp);
-static void sdl_audio_callback(void *opaque, Uint8 *stream, int len);
+static double consume_audio_buffer(FFPlayer *ffp, double diff);
+static void update_sample_display(FFPlayer *ffp, uint8_t *samples, int samples_size);
 
 static int packet_queue_get_or_buffering(FFPlayer *ffp, PacketQueue *q, AVPacket *pkt, int *serial, int *finished)
 {
@@ -1117,21 +1118,20 @@ retry:
 
             SDL_LockMutex(ffp->is->play_mutex);
             if (is->step) {
-//                int len = 0.04 * is->audio_src.freq * av_get_bytes_per_sample(is->audio_src.fmt);
-//                if (len < 1024) {
-//                    len = 1024;
-//                }
                 if (is->audio_st) {
-                    //video is ahead, need drop more frames
-                    if (ffp->stat.vmdiff > AV_SYNC_THRESHOLD_MIN) {
-                        Uint8 bytes[8192];
-                        sdl_audio_callback(ffp, bytes, sizeof(bytes));
+                    //when use step play mode,we use video pts sync audio,so drop the behind audio.
+                    //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
+                    double diff = 0.01;
+                    int counter = 3;
+                    while (counter--) {
+                        if (diff >= 0.01) {
+                            diff = consume_audio_buffer(ffp, diff);
+                        } else {
+                            break;
+                        }
                     }
-                    //video is behind, need drop less frames
-                    else {
-                        Uint8 bytes[1024];
-                        sdl_audio_callback(ffp, bytes, sizeof(bytes));
-                    }
+                    SDL_AoutFlushAudio(ffp->aout);
+                    update_sample_display(ffp, NULL, -1);
                 }
                 
                 is->step = 0;
@@ -2511,6 +2511,90 @@ reload:
     return resampled_data_size;
 }
 
+/* consume audio buffer */
+static double consume_audio_buffer(FFPlayer *ffp, double diff)
+{
+    VideoState *is = ffp->is;
+    
+    if (!ffp || !is) {
+        return 0.0;
+    }
+    
+    av_log(NULL, AV_LOG_DEBUG, "consume audio buffer:%0.3f\n", diff);
+    
+    const int sample = is->audio_tgt.bytes_per_sec / is->audio_tgt.freq;
+    
+    if (isnan(sample) || sample == 0) {
+        return 0.0;
+    }
+    
+    int len = diff * is->audio_tgt.bytes_per_sec;
+    len = len / sample * sample;
+    
+    int audio_size, rest_len = 0;
+    const int len_want = len;
+    
+    int gotFrame = 0;
+    while (len > 0) {
+        if (is->audio_buf_index >= is->audio_buf_size) {
+            audio_size = audio_decode_frame(ffp);
+            if (audio_size < 0) {
+                /* if error, just output silence */
+                is->audio_buf = NULL;
+                is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
+            } else {
+                gotFrame = 1;
+                is->audio_buf_size = audio_size;
+            }
+            is->audio_buf_index = 0;
+        }
+        if (is->auddec.pkt_serial != is->audioq.serial) {
+            is->audio_buf_index = is->audio_buf_size;
+            gotFrame = 0;
+            break;
+        }
+        rest_len = is->audio_buf_size - is->audio_buf_index;
+        if (rest_len > len)
+            rest_len = len;
+        
+        len -= rest_len;
+        is->audio_buf_index += rest_len;
+    }
+    
+    /* Let's assume the audio driver that is used by SDL has two periods. */
+    if (!isnan(is->audio_clock)) {
+        double pts = 0.0;
+        if (!gotFrame && rest_len == 0) {
+            if (!isnan(is->audclk.pts)) {
+                //none audio frame,already used out. is->audio_clock is the lastest audio frame pts and audio_write_buf_size is audio_buf_size(512 = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size).
+                //use last pts and increase by audio callback eated bytes.
+                pts = is->audclk.pts + (double)(len_want) / is->audio_tgt.bytes_per_sec;
+            }
+        } else {
+            int audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
+            pts = is->audio_clock - (double)(audio_write_buf_size) / is->audio_tgt.bytes_per_sec - SDL_AoutGetLatencySeconds(ffp->aout);
+        }
+        
+        set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
+        sync_clock_to_slave(&is->extclk, &is->audclk);
+        
+        //when use step play mode,we use video pts sync audio,so drop the behind audio.
+        double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
+        //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
+        double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
+        
+        if (!isnan(video_pts)) {
+            double delta = video_pts - pts;
+            if (delta > threshold) {
+                av_log(NULL, AV_LOG_INFO, "audio is behind:%0.3f\n", video_pts - pts);
+                return delta;
+            }
+        }
+        return 0.0;
+    }
+    return 0.0;
+}
+
 /* prepare a new audio buffer */
 static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
 {
@@ -2518,7 +2602,6 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
     VideoState *is = ffp->is;
     int audio_size, rest_len = 0;
     const int len_want = len;
-    const Uint8 *steam_header = stream;
     
     if (!ffp || !is) {
         memset(stream, 0, len);
@@ -2599,12 +2682,21 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
                 double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
                 //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
                 double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
-                if (!isnan(video_pts) && video_pts - pts > threshold) {
-                    av_log(NULL, AV_LOG_INFO, "audio is behind:%0.3f\n", video_pts - pts);
+                double diff = video_pts - pts;
+                if (!isnan(video_pts) && diff > threshold) {
                     set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
                     sync_clock_to_slave(&is->extclk, &is->audclk);
-                    //recursion
-                    sdl_audio_callback(opaque, (Uint8 *)steam_header, len_want);
+                    
+                    int counter = 3;
+                    while (counter--) {
+                        if (diff >= 0.01) {
+                            diff = consume_audio_buffer(ffp, diff);
+                        } else {
+                            break;
+                        }
+                    }
+                    SDL_AoutFlushAudio(ffp->aout);
+                    update_sample_display(ffp, NULL, -1);
                     return;
                 }
             }
