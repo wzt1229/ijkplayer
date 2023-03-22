@@ -1,3 +1,11 @@
+tag 0.9.6
+--------------------------------
+
+- fix accurate seek waiting time out bug.
+- support step play mode.
+- improve audio-video sync logic, especially drop audio frame.
+- metal view snapshot support origin,screen,effect origin type.
+
 tag 0.9.5
 --------------------------------
 
@@ -7,7 +15,6 @@ tag 0.9.5
 - cut down 3% cpu usage
 - fix after finish seek, video picture display slowly a few seconds bug
 - fix after seek near the end of the video, not play problem
-- 
 
 tag 0.9.4
 --------------------------------
