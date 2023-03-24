@@ -510,8 +510,9 @@ IB_DESIGNABLE
 - (NSView *)hitTest:(NSPoint)point
 {
     if (self.userInteraction) {
+        NSPoint myPoint = [self.superview convertPoint:point toView:self];
         NSRect trackingRect = [self _theTrackingRect];
-        if (NSPointInRect(point, trackingRect)) {
+        if (NSPointInRect(myPoint, trackingRect)) {
             return [super hitTest:point];
         } else {
             return nil;
