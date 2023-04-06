@@ -256,7 +256,7 @@ static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *r
     opaque->sub = sub;
 }
 
-SDL_Vout *SDL_VoutIos_CreateForGLES2()
+SDL_Vout *SDL_VoutIos_CreateForGLES2(void)
 {
     SDL_Vout *vout = SDL_Vout_CreateInternal(sizeof(SDL_Vout_Opaque));
     if (!vout)
@@ -276,16 +276,9 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2()
 static void SDL_VoutIos_SetGLView_l(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
-
-    if (opaque->gl_view == view)
-        return;
-
-    if (opaque->gl_view) {
-        opaque->gl_view = nil;
-    }
-
-    if (view)
+    if (opaque->gl_view != view) {
         opaque->gl_view = view;
+    }
 }
 
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view)
