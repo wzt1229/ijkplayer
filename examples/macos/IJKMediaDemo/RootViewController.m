@@ -19,6 +19,7 @@
 #import "MRProgressIndicator.h"
 #import "MRBaseView.h"
 #import <IOKit/pwr_mgt/IOPMLib.h>
+#import "MultiRenderSample.h"
 
 static NSString* lastPlayedKey = @"__lastPlayedKey";
 
@@ -1619,6 +1620,13 @@ static IOPMAssertionID g_displaySleepAssertionID;
 {
     NSString *title = sender.selectedItem.title;
     [self reSetLoglevel:title];
+}
+
+- (IBAction)testMultiRenderSample:(NSButton *)sender
+{
+    MultiRenderSample *multiRenderVC = [[MultiRenderSample alloc] initWithNibName:@"MultiRenderSample" bundle:nil];
+    [multiRenderVC playURL:self.playingUrl];
+    [self presentViewControllerAsModalWindow:multiRenderVC];
 }
 
 @end
