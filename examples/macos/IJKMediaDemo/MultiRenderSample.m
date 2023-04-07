@@ -78,6 +78,8 @@
     [aux addRenderView:render2];
     
     self.player = [[IJKFFMoviePlayerController alloc] initWithMoreContent:url withOptions:options withGLView:aux];
+    
+    aux.scalingMode = IJKMPMovieScalingModeAspectFill;
     self.player.shouldAutoplay = YES;
     [self.player prepareToPlay];
 }

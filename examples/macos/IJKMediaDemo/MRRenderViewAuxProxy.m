@@ -97,8 +97,9 @@
     NSArray *renderViewArr = [self.renderViewArr copy];
     [self.lock unlock];
     
-    NSValue *value = [NSValue valueWithBytes:&colorPreference objCType:@encode(IJKSDLColorConversionPreference)];
-    [renderViewArr makeObjectsPerformSelector:_cmd withObject:value];
+    for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
+        [view setColorPreference:colorPreference];
+    }
 }
 
 - (void)setDarPreference:(IJKSDLDARPreference)darPreference
@@ -109,8 +110,9 @@
     NSArray *renderViewArr = [self.renderViewArr copy];
     [self.lock unlock];
     
-    NSValue *value = [NSValue valueWithBytes:&darPreference objCType:@encode(IJKSDLDARPreference)];
-    [renderViewArr makeObjectsPerformSelector:_cmd withObject:value];
+    for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
+        [view setDarPreference:darPreference];
+    }
 }
 
 - (void)setPreventDisplay:(BOOL)preventDisplay
@@ -121,7 +123,9 @@
     NSArray *renderViewArr = [self.renderViewArr copy];
     [self.lock unlock];
     
-    [renderViewArr makeObjectsPerformSelector:_cmd withObject:@(preventDisplay)];
+    for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
+        [view setPreventDisplay:preventDisplay];
+    }
 }
 
 - (void)setRotatePreference:(IJKSDLRotatePreference)rotatePreference
@@ -132,8 +136,9 @@
     NSArray *renderViewArr = [self.renderViewArr copy];
     [self.lock unlock];
     
-    NSValue *value = [NSValue valueWithBytes:&rotatePreference objCType:@encode(IJKSDLRotatePreference)];
-    [renderViewArr makeObjectsPerformSelector:_cmd withObject:value];
+    for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
+        [view setRotatePreference:rotatePreference];
+    }
 }
 
 - (void)setScalingMode:(IJKMPMovieScalingMode)scalingMode
@@ -143,7 +148,10 @@
     [self.lock lock];
     NSArray *renderViewArr = [self.renderViewArr copy];
     [self.lock unlock];
-    [renderViewArr makeObjectsPerformSelector:_cmd withObject:@(scalingMode)];
+    
+    for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
+        [view setScalingMode:scalingMode];
+    }
 }
 
 - (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
@@ -154,9 +162,9 @@
     NSArray *renderViewArr = [self.renderViewArr copy];
     [self.lock unlock];
     
-    NSValue *value = [NSValue valueWithBytes:&subtitlePreference objCType:@encode(IJKSDLSubtitlePreference)];
-    
-    [renderViewArr makeObjectsPerformSelector:_cmd withObject:value];
+    for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
+        [view setSubtitlePreference:subtitlePreference];
+    };
 }
 
 @end
