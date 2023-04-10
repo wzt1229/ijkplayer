@@ -34,23 +34,24 @@
     BOOL _isPaused;
 }
 
-- (id)initWithAudioSpec:(const SDL_AudioSpec *)aSpec
+- (id)initWithAudioSpec:(const SDL_AudioSpec *)aSpec err:(NSError **)outErr
 {
     self = [super init];
     if (self) {
         if (aSpec == NULL) {
             self = nil;
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:1 userInfo:@{NSLocalizedDescriptionKey:@"AudioSpec is nil"}];
             return nil;
         }
         _spec = *aSpec;
         
         if (aSpec->format != AUDIO_S16SYS) {
-            NSLog(@"aout_open_audio: unsupported format %d\n", (int)aSpec->format);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:2 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"unsupported format %d", (int)aSpec->format]}];
             return nil;
         }
         
         if (aSpec->channels > 6) {
-            NSLog(@"aout_open_audio: unsupported channels %d\n", (int)aSpec->channels);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:3 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"unsupported channels %d", (int)aSpec->channels]}];
             return nil;
         }
         
@@ -59,7 +60,7 @@
         
         AudioComponent auComponent = AudioComponentFindNext(NULL, &desc);
         if (auComponent == NULL) {
-            ALOGE("AudioUnit: AudioComponentFindNext failed");
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:4 userInfo:@{NSLocalizedDescriptionKey:@"AudioComponentFindNext is NULL"}];
             self = nil;
             return nil;
         }
@@ -67,7 +68,7 @@
         AudioUnit auUnit;
         OSStatus status = AudioComponentInstanceNew(auComponent, &auUnit);
         if (status != noErr) {
-            ALOGE("AudioUnit: AudioComponentInstanceNew failed");
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:5 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"AudioComponentInstanceNew failed:%d",status]}];
             self = nil;
             return nil;
         }
@@ -80,7 +81,7 @@
                                       &flag,
                                       sizeof(flag));
         if (status != noErr) {
-            ALOGE("AudioUnit: failed to set IO mode (%d)", (int)status);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:6 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"failed to set IO mode (%d)", (int)status]}];
         }
         
         /* Get the current format */
@@ -98,7 +99,7 @@
                                       &streamDescription,
                                       i_param_size);
         if (status != noErr) {
-            ALOGE("AudioUnit: failed to set stream format (%d)", (int)status);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:7 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"failed to set stream format (%d)", (int)status]}];
             self = nil;
             return nil;
         }
@@ -122,7 +123,7 @@
                                       kAudioUnitScope_Input,
                                       0, &callback, sizeof(callback));
         if (status != noErr) {
-            ALOGE("AudioUnit: render callback setup failed (%d)\n", (int)status);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:8 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"render callback setup failed (%d)", (int)status]}];
             self = nil;
             return nil;
         }
@@ -132,7 +133,7 @@
         /* AU initiliaze */
         status = AudioUnitInitialize(auUnit);
         if (status != noErr) {
-            ALOGE("AudioUnit: AudioUnitInitialize failed (%d)\n", (int)status);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audiounit" code:9 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"AudioUnitInitialize failed (%d)", (int)status]}];
             self = nil;
             return nil;
         }

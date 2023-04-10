@@ -42,10 +42,10 @@ static int aout_open_audio(SDL_Aout *aout, const SDL_AudioSpec *desired, SDL_Aud
     assert(desired);
     SDLTRACE("aout_open_audio()\n");
     SDL_Aout_Opaque *opaque = aout->opaque;
-
-    opaque->aoutController = [[IJKSDLAudioQueueController alloc] initWithAudioSpec:desired];
+    NSError * error = nil;
+    opaque->aoutController = [[IJKSDLAudioQueueController alloc] initWithAudioSpec:desired err:&error];
     if (!opaque->aoutController) {
-        ALOGE("aout_open_audio_n: failed to new AudioTrcak()\n");
+        ALOGE("aout_open_audio:%d,%s",error.code,[error.userInfo[NSLocalizedDescriptionKey] UTF8String]);
         return -1;
     }
 

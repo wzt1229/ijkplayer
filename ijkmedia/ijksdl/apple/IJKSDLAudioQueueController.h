@@ -29,7 +29,7 @@
 
 @interface IJKSDLAudioQueueController : NSObject
 
-- (id)initWithAudioSpec:(const SDL_AudioSpec *)aSpec;
+- (id)initWithAudioSpec:(const SDL_AudioSpec *)aSpec err:(NSError **)outErr;
 
 - (void)play;
 - (void)pause;

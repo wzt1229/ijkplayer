@@ -41,23 +41,24 @@
     NSLock *_lock;
 }
 
-- (id)initWithAudioSpec:(const SDL_AudioSpec *)aSpec
+- (id)initWithAudioSpec:(const SDL_AudioSpec *)aSpec err:(NSError **)outErr
 {
     self = [super init];
     if (self) {
         if (aSpec == NULL) {
             self = nil;
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audioqueue" code:1 userInfo:@{NSLocalizedDescriptionKey:@"Spec is nil"}];
             return nil;
         }
         _spec = *aSpec;
         
         if (aSpec->format != AUDIO_S16SYS) {
-            NSLog(@"aout_open_audio: unsupported format %d\n", (int)aSpec->format);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audioqueue" code:2 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"unsupported format %d", (int)aSpec->format]}];
             return nil;
         }
         
         if (aSpec->channels > 2) {
-            NSLog(@"aout_open_audio: unsupported channels %d\n", (int)aSpec->channels);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audioqueue" code:3 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"unsupported channels %d", (int)aSpec->channels]}];
             return nil;
         }
         
@@ -68,7 +69,7 @@
         SDL_CalculateAudioSpec(&_spec);
         
         if (_spec.size == 0) {
-            NSLog(@"aout_open_audio: unexcepted audio spec size %u", _spec.size);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audioqueue" code:4 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"unexcepted audio spec size,format %d,channels %d,samples %d", (int)aSpec->format, (int)aSpec->channels,(int)aSpec->samples]}];
             return nil;
         }
         
@@ -82,7 +83,7 @@
                                               0,
                                               &audioQueueRef);
         if (status != noErr) {
-            NSLog(@"AudioQueue: AudioQueueNewOutput failed (%d)\n", (int)status);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audioqueue" code:5 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"AudioQueueNewOutput failed:%d",status]}];
             self = nil;
             return nil;
         }
@@ -96,7 +97,7 @@
         
         status = AudioQueueStart(audioQueueRef, NULL);
         if (status != noErr) {
-            NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
+            if (outErr) *outErr = [NSError errorWithDomain:@"ijk.audioqueue" code:6 userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"AudioQueueStart failed:%d",status]}];
             self = nil;
             return nil;
         }
