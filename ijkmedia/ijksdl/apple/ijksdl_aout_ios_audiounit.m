@@ -125,7 +125,7 @@ static void aout_free_l(SDL_Aout *aout)
     SDL_Aout_FreeInternal(aout);
 }
 
-SDL_Aout *SDL_AoutIos_CreateForAudioUnit()
+SDL_Aout *SDL_AoutIos_CreateForAudioUnit(void)
 {
     SDL_Aout *aout = SDL_Aout_CreateInternal(sizeof(SDL_Aout_Opaque));
     if (!aout)

@@ -1812,7 +1812,6 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
     if (_isDanmakuMediaAirPlay) {
         _glView.scaleFactor = 1.0f;
     } else {
-
         CGFloat scale = [[UIScreen mainScreen] scale];
         if (scale < 0.1f)
             scale = 1.0f;
@@ -1935,7 +1934,7 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
 {
     NSLog(@"IJKFFMoviePlayerController:applicationWillResignActive: %d", (int)[UIApplication sharedApplication].applicationState);
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_pauseInBackground) {
+        if (self->_pauseInBackground) {
             [self pause];
         }
     });
@@ -1945,7 +1944,7 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
 {
     NSLog(@"IJKFFMoviePlayerController:applicationDidEnterBackground: %d", (int)[UIApplication sharedApplication].applicationState);
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_pauseInBackground) {
+        if (self->_pauseInBackground) {
             [self pause];
         }
     });
@@ -1955,7 +1954,7 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
 {
     NSLog(@"IJKFFMoviePlayerController:applicationWillTerminate: %d", (int)[UIApplication sharedApplication].applicationState);
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (_pauseInBackground) {
+        if (self->_pauseInBackground) {
             [self pause];
         }
     });

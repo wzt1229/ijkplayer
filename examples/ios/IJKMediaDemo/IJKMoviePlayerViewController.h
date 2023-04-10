@@ -29,7 +29,7 @@
 - (id)initWithURL:(NSURL *)url;
 - (id)initWithManifest:(NSString*)manifest_string;
 
-+ (void)presentFromViewController:(UIViewController *)viewController withTitle:(NSString *)title URL:(NSURL *)url completion:(void(^)())completion;
++ (void)presentFromViewController:(UIViewController *)viewController withTitle:(NSString *)title URL:(NSURL *)url completion:(void(^)(void))completion;
 
 - (IBAction)onClickMediaControl:(id)sender;
 - (IBAction)onClickOverlay:(id)sender;

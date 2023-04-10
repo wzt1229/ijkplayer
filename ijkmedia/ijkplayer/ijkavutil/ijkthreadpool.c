@@ -28,7 +28,7 @@
 /**
  * @function void *threadpool_thread(void *threadpool)
  * @brief the worker thread
- * @param threadpool the pool which own the thread
+ * @param pool_ctx the pool which own the thread
  */
 static void *ijk_threadpool_thread(void *pool_ctx)
 {

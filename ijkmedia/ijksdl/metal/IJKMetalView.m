@@ -57,6 +57,9 @@
 @synthesize darPreference = _darPreference;
 
 @synthesize preventDisplay = _preventDisplay;
+#if TARGET_OS_IOS
+@synthesize scaleFactor                = _scaleFactor;
+#endif
 
 - (void)dealloc
 {
@@ -334,7 +337,7 @@ typedef CGRect NSRect;
     if(!renderPassDescriptor) {
         return;
     }
-
+    
     id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
     
     // Create a render command encoder.
@@ -363,7 +366,7 @@ typedef CGRect NSRect;
                             scale:ratio];
         }
     }
-
+    
     [renderEncoder endEncoding];
     // Schedule a present once the framebuffer is complete using the current drawable.
     [commandBuffer presentDrawable:self.currentDrawable];
@@ -517,6 +520,14 @@ typedef CGRect NSRect;
     }
 }
 
+#if TARGET_OS_IOS
+- (UIImage *)snapshot
+{
+    CGImageRef cgImg = [self snapshot:IJKSDLSnapshot_Screen];
+    return [[UIImage alloc]initWithCGImage:cgImg];
+}
+#endif
+
 - (void)setNeedsRefreshCurrentPic
 {
     if (self.subtitlePreferenceChanged) {
@@ -533,7 +544,7 @@ typedef CGRect NSRect;
     }
     
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
-        
+    
     float ratio = sp.ratio;
     int32_t bgrValue = sp.color;
     //以800为标准，定义出字幕字体默认大小为30pt
@@ -579,13 +590,13 @@ typedef CGRect NSRect;
     
     uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
     int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
-
+    
     uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
     int dst_linesizes[4] = {linesize,0,0,0};
-
+    
     const uint8_t *src_data[4] = {pict.pixels,NULL,NULL,NULL};
     const int src_linesizes[4] = {pict.w * 4,0,0,0};
-
+    
     av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict.w, pict.h);
     
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
@@ -622,7 +633,7 @@ typedef CGRect NSRect;
     
     //generate current subtitle.
     [self generateSub:attach];
-
+    
     if (self.subtitlePreferenceChanged) {
         self.subtitlePreferenceChanged = NO;
     }
@@ -692,6 +703,7 @@ typedef CGRect NSRect;
 }
 
 #if TARGET_OS_OSX
+
 - (NSView *)hitTest:(NSPoint)point
 {
     return nil;

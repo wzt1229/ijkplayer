@@ -3986,7 +3986,7 @@ static void ffp_log_callback_report(void *ptr, int level, const char *fmt, va_li
     ALOG(ffplv, IJK_LOG_TAG, "%s", line);
 }
 
-void ffp_global_init()
+void ffp_global_init(void)
 {
     if (g_ffmpeg_global_inited)
         return;
@@ -4001,7 +4001,7 @@ void ffp_global_init()
     g_ffmpeg_global_inited = true;
 }
 
-void ffp_global_uninit()
+void ffp_global_uninit(void)
 {
     if (!g_ffmpeg_global_inited)
         return;
@@ -4084,12 +4084,12 @@ const AVClass ffp_context_class = {
     .child_class_next = ffp_context_child_class_next,
 };
 
-static const char *ijk_version_info()
+static const char *ijk_version_info(void)
 {
     return IJKPLAYER_VERSION;
 }
 
-FFPlayer *ffp_create()
+FFPlayer *ffp_create(void)
 {
     FFPlayer* ffp = (FFPlayer*) av_mallocz(sizeof(FFPlayer));
     if (!ffp)

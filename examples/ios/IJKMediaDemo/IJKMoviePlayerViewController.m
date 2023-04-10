@@ -26,7 +26,7 @@
 {
 }
 
-+ (void)presentFromViewController:(UIViewController *)viewController withTitle:(NSString *)title URL:(NSURL *)url completion:(void (^)())completion {
++ (void)presentFromViewController:(UIViewController *)viewController withTitle:(NSString *)title URL:(NSURL *)url completion:(void (^)(void))completion {
     IJKDemoHistoryItem *historyItem = [[IJKDemoHistoryItem alloc] init];
     
     historyItem.title = title;
@@ -145,9 +145,9 @@
     [self removeMovieNotificationObservers];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation{
-    return UIInterfaceOrientationIsLandscape(toInterfaceOrientation);
-}
+//- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation{
+//    return UIInterfaceOrientationIsLandscape(toInterfaceOrientation);
+//}
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {

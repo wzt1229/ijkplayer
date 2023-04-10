@@ -38,7 +38,7 @@ struct IjkMediaMeta {
     IjkMediaMeta **children;
 };
 
-IjkMediaMeta *ijkmeta_create()
+IjkMediaMeta *ijkmeta_create(void)
 {
     IjkMediaMeta *meta = (IjkMediaMeta *)calloc(1, sizeof(IjkMediaMeta));
     if (!meta)
