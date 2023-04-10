@@ -27,7 +27,7 @@ static const GLfloat g_bt709[] = {
     0.0,   -0.213,  2.112,
     1.793, -0.533,  0.0,
 };
-const GLfloat *IJK_GLES2_getColorMatrix_bt709()
+const GLfloat *IJK_GLES2_getColorMatrix_bt709(void)
 {
     return g_bt709;
 }
@@ -37,7 +37,7 @@ static const GLfloat g_bt601[] = {
     0.0,   -0.392, 2.017,
     1.596, -0.813, 0.0,
 };
-const GLfloat *IJK_GLES2_getColorMatrix_bt601()
+const GLfloat *IJK_GLES2_getColorMatrix_bt601(void)
 {
     return g_bt601;
 }
