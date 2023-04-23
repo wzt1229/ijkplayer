@@ -361,15 +361,52 @@ fail0:
     return ret;
 }
 
+/*
+ fix crash by xql: seek continually beyound duration.
+ * thread #36, stop reason = EXC_BAD_ACCESS (code=1, address=0x3948cffd0)
+   * frame #0: 0x000000010650e31c IJKMediaPlayerKit`av_freep(arg=0x00000003948cffd0) at mem.c:231:5 [opt]
+     frame #1: 0x0000000106335878 IJKMediaPlayerKit`ff_videotoolbox_uninit(avctx=<unavailable>) at videotoolbox.c:439:9 [opt]
+     frame #2: 0x0000000106335a30 IJKMediaPlayerKit`videotoolbox_uninit(avctx=0x000000034c53bbe0) at videotoolbox.c:1008:5 [opt]
+     frame #3: 0x00000001066ec734 IJKMediaPlayerKit`avcodec_close(avctx=0x000000034c53bbe0) at utils.c:1093:13 [opt]
+     frame #4: 0x00000001062bf6a0 IJKMediaPlayerKit`avcodec_free_context(pavctx=0x0000000338297c50) at options.c:178:5 [opt]
+     frame #5: 0x0000000106019e5c IJKMediaPlayerKit`decoder_destroy(d=0x0000000338297c40) at ff_ffplay_def.c:43:5
+     frame #6: 0x0000000105fd47c8 IJKMediaPlayerKit`stream_component_close(ffp=0x0000000334267bd0, stream_index=1) at ff_ffplay.c:669:9
+     frame #7: 0x0000000105fb45e0 IJKMediaPlayerKit`stream_close(ffp=0x0000000334267bd0) at ff_ffplay.c:708:9
+     frame #8: 0x0000000105fbe5e4 IJKMediaPlayerKit`ffp_wait_stop_l(ffp=0x0000000334267bd0) at ff_ffplay.c:4523:9
+     frame #9: 0x000000010606ab6c IJKMediaPlayerKit`ijkmp_shutdown_l(mp=0x000000033425ff30) at ijkplayer.c:301:9
+     frame #10: 0x000000010606abac IJKMediaPlayerKit`ijkmp_shutdown(mp=0x000000033425ff30) at ijkplayer.c:308:12
+     frame #11: 0x00000001060381ac IJKMediaPlayerKit`-[IJKFFMoviePlayerController shutdownWaitStop:](self=0x00000003295fbeb0, _cmd="shutdownWaitStop:", mySelf=0x00000003295fbeb0) at IJKFFMoviePlayerController.m:591:5
+     frame #12: 0x000000019ff61470 Foundation`__NSThread__start__ + 716
+     frame #13: 0x00000001045d95d4 libsystem_pthread.dylib`_pthread_start + 148
+ * thread #36, stop reason = EXC_BAD_ACCESS (code=1, address=0x3948cffd0)
+   * frame #0: 0x000000010650e31c IJKMediaPlayerKit`av_freep(arg=0x00000003948cffd0) at mem.c:231:5 [opt]
+     frame #1: 0x0000000106335878 IJKMediaPlayerKit`ff_videotoolbox_uninit(avctx=<unavailable>) at videotoolbox.c:439:9 [opt]
+     frame #2: 0x0000000106335a30 IJKMediaPlayerKit`videotoolbox_uninit(avctx=0x000000034c53bbe0) at videotoolbox.c:1008:5 [opt]
+     frame #3: 0x00000001066ec734 IJKMediaPlayerKit`avcodec_close(avctx=0x000000034c53bbe0) at utils.c:1093:13 [opt]
+     frame #4: 0x00000001062bf6a0 IJKMediaPlayerKit`avcodec_free_context(pavctx=0x0000000338297c50) at options.c:178:5 [opt]
+     frame #5: 0x0000000106019e5c IJKMediaPlayerKit`decoder_destroy(d=0x0000000338297c40) at ff_ffplay_def.c:43:5
+     frame #6: 0x0000000105fd47c8 IJKMediaPlayerKit`stream_component_close(ffp=0x0000000334267bd0, stream_index=1) at ff_ffplay.c:669:9
+     frame #7: 0x0000000105fb45e0 IJKMediaPlayerKit`stream_close(ffp=0x0000000334267bd0) at ff_ffplay.c:708:9
+     frame #8: 0x0000000105fbe5e4 IJKMediaPlayerKit`ffp_wait_stop_l(ffp=0x0000000334267bd0) at ff_ffplay.c:4523:9
+     frame #9: 0x000000010606ab6c IJKMediaPlayerKit`ijkmp_shutdown_l(mp=0x000000033425ff30) at ijkplayer.c:301:9
+     frame #10: 0x000000010606abac IJKMediaPlayerKit`ijkmp_shutdown(mp=0x000000033425ff30) at ijkplayer.c:308:12
+     frame #11: 0x00000001060381ac IJKMediaPlayerKit`-[IJKFFMoviePlayerController shutdownWaitStop:](self=0x00000003295fbeb0, _cmd="shutdownWaitStop:", mySelf=0x00000003295fbeb0) at IJKFFMoviePlayerController.m:591:5
+     frame #12: 0x000000019ff61470 Foundation`__NSThread__start__ + 716
+     frame #13: 0x00000001045d95d4 libsystem_pthread.dylib`_pthread_start + 148
+ */
 static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSubtitle *sub) {
-    int ret = AVERROR(EAGAIN);
-
+    
+    int status = 0;
     for (;;) {
         
         if (d->queue->serial == d->pkt_serial) {
+            
+            int ret = AVERROR(EAGAIN);
             do {
-                if (d->queue->abort_request)
-                    return -1;
+                if (d->queue->abort_request) {
+                    status = -1;
+                    goto abort_end;
+                }
 
                 switch (d->avctx->codec_type) {
                     case AVMEDIA_TYPE_VIDEO:
@@ -423,11 +460,19 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                 if (ret == AVERROR_EOF) {
                     d->finished = d->pkt_serial;
                     avcodec_flush_buffers(d->avctx);
-                    return 0;
+                    status = 0;
+                    goto abort_end;
                 }
-                if (ret >= 0)
-                    return 1;
+                if (ret >= 0) {
+                    status = 1;
+                    goto abort_end;
+                }
             } while (ret != AVERROR(EAGAIN));
+        } else {
+            if (d->queue->abort_request) {
+                status = -1;
+                goto abort_end;
+            }
         }
         
         do {
@@ -437,8 +482,11 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                 d->packet_pending = 0;
             } else {
                 int old_serial = d->pkt_serial;
-                if (packet_queue_get_or_buffering(ffp, d->queue, d->pkt, &d->pkt_serial, &d->finished) < 0)
-                    return -1;
+                if (packet_queue_get_or_buffering(ffp, d->queue, d->pkt, &d->pkt_serial, &d->finished) < 0) {
+                    status = -1;
+                    goto abort_end;
+                }
+                    
                 if (old_serial != d->pkt_serial) {
                     avcodec_flush_buffers(d->avctx);
                     d->finished = 0;
@@ -453,7 +501,7 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
 
         if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
             int got_frame = 0;
-            ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
+            int ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
             if (ret < 0) {
                 ret = AVERROR(EAGAIN);
             } else {
@@ -464,6 +512,10 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
             }
             av_packet_unref(d->pkt);
         } else {
+            if (d->queue->abort_request){
+                status = -1;
+                goto abort_end;
+            }
             int send = avcodec_send_packet(d->avctx, d->pkt);
             if (send == AVERROR(EAGAIN)) {
                 av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
@@ -493,6 +545,13 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
             }
         }
     }
+abort_end:
+    if (d->queue->abort_request && status == -1) {
+        av_log(NULL, AV_LOG_INFO, "will destroy avcodec,flush the buffers.\n");
+        avcodec_send_packet(d->avctx, NULL);
+        avcodec_flush_buffers(d->avctx);
+    }
+    return status;
 }
 
 // FFP_MERGE: fill_rectangle
