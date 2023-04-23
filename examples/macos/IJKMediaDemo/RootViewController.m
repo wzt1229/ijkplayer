@@ -101,7 +101,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
     
     [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
-        NSLog(@"[%@] [%d] %@",tag,level,msg);
+        //NSLog(@"[%@] [%d] %@",tag,level,msg);
+        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
     }];
 
     self.subtitleFontRatio = 1.0;
