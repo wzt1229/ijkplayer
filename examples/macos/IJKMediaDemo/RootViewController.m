@@ -626,7 +626,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:6      forKey:@"video-pictq-size"];
     //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
     [options setPlayerOptionIntValue:119     forKey:@"max-fps"];
-    [options setPlayerOptionIntValue:self.loop?-1:0      forKey:@"loop"];
+    [options setPlayerOptionIntValue:self.loop?0:1      forKey:@"loop"];
 //    [options setCodecOptionValue:@"48" forKey:@"skip_loop_filter"];
 //    [options setFormatOptionValue:@"100L" forKey:@"analyzemaxduration"];
 //    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
@@ -1652,7 +1652,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (IBAction)onToggleLoopMode:(id)sender
 {
-    
+    NSURL *playingUrl = self.playingUrl;
+    [self stopPlay:nil];
+    [self playURL:playingUrl];
 }
 
 - (IBAction)openNewInstance:(id)sender
