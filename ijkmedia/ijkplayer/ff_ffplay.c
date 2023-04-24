@@ -1133,7 +1133,7 @@ retry:
             if (!is->step_on_seeking && !is->step && get_master_sync_type(is) == AV_SYNC_AUDIO_MASTER) {
                 if (is->audio_stream >= 0 && isnan(get_master_clock(is)) && is->auddec.finished != is->audioq.serial && vp->pts > 0 && is->audioq.duration > 1) {
                     av_usleep(1000);
-                    av_log(NULL,AV_LOG_INFO,"wait mater clock:%0.3f,%d\n",vp->pts,vp->serial);
+                    av_log(NULL,AV_LOG_INFO,"wait master clock,video pts is:%0.3f,serial:%d\n",vp->pts,vp->serial);
                     goto display;
                 }
             }
@@ -2645,7 +2645,7 @@ static double consume_audio_buffer(FFPlayer *ffp, double diff)
         if (!isnan(video_pts)) {
             double delta = video_pts - pts;
             if (delta > threshold) {
-                av_log(NULL, AV_LOG_INFO, "audio is behind:%0.3f\n", video_pts - pts);
+                av_log(NULL, AV_LOG_INFO, "audio is behind:%0.3f\n", delta);
                 return delta;
             }
         }
@@ -2736,7 +2736,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
             int audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
             pts = is->audio_clock - (double)(audio_write_buf_size) / is->audio_tgt.bytes_per_sec - SDL_AoutGetLatencySeconds(ffp->aout);
             
-            if (is->video_stream >= 0 && is->viddec.finished != is->videoq.serial && is->auddec.finished != is->audioq.serial) {
+            if (is->video_stream >= 0 && is->viddec.finished != is->videoq.serial && is->auddec.finished != is->audioq.serial && 0 == is->audio_accurate_seek_req) {
                 //when use step play mode,we use video pts sync audio,so drop the behind audio.
                 double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
                 //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
