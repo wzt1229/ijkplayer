@@ -673,6 +673,27 @@
                                                                 <binding destination="-2" name="value" keyPath="accurateSeek" id="6xK-JT-6gv"/>
                                                             </connections>
                                                         </button>
+                                                        <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="rTf-yz-joY" userLabel="循环播放">
+                                                            <rect key="frame" x="193" y="12" width="61" height="16"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                            <textFieldCell key="cell" lineBreakMode="clipping" title="循环播放:" id="eZS-fv-zIU">
+                                                                <font key="font" metaFont="system"/>
+                                                                <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                            </textFieldCell>
+                                                        </textField>
+                                                        <button verticalHuggingPriority="750" id="IxA-Gs-8Qb">
+                                                            <rect key="frame" x="258" y="11" width="18" height="18"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                            <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="only" inset="2" id="qLc-tS-8bT">
+                                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                                <font key="font" metaFont="system"/>
+                                                            </buttonCell>
+                                                            <connections>
+                                                                <action selector="onToggleLoopMode:" target="-2" id="tW8-Ua-jhK"/>
+                                                                <binding destination="-2" name="value" keyPath="loop" id="lYp-Je-NeH"/>
+                                                            </connections>
+                                                        </button>
                                                     </beginningViews>
                                                     <middleViews>
                                                         <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="UVt-uL-Rtb">
@@ -785,8 +806,12 @@
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
+                                                        <integer value="1000"/>
+                                                        <integer value="1000"/>
                                                     </visibilityPriorities>
                                                     <customSpacing>
+                                                        <real value="3.4028234663852886e+38"/>
+                                                        <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
@@ -886,13 +911,24 @@
                                             </middleViews>
                                             <endViews>
                                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1RJ-Y2-c36">
-                                                    <rect key="frame" x="943" y="10" width="64" height="32"/>
-                                                    <buttonCell key="cell" type="push" title="Mutil" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zgg-5b-X8b">
+                                                    <rect key="frame" x="809" y="10" width="93" height="32"/>
+                                                    <buttonCell key="cell" type="push" title="Mutil-Inst" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zgg-5b-X8b">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                         <font key="font" metaFont="system"/>
                                                     </buttonCell>
                                                     <connections>
-                                                        <action selector="testMultiRenderSample:" target="-2" id="h6w-Mm-f9j"/>
+                                                        <action selector="openNewInstance:" target="-2" id="q9b-b2-agr"/>
+                                                    </connections>
+                                                </button>
+                                                <button verticalHuggingPriority="750" id="qA3-p2-N3I">
+                                                    <rect key="frame" x="893" y="10" width="114" height="32"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                    <buttonCell key="cell" type="push" title="Mutil-Render" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Bqt-2r-oqG">
+                                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                        <font key="font" metaFont="system"/>
+                                                    </buttonCell>
+                                                    <connections>
+                                                        <action selector="testMultiRenderSample:" target="-2" id="Fwx-te-VXA"/>
                                                     </connections>
                                                 </button>
                                                 <button verticalHuggingPriority="750" id="hez-32-c2g">
@@ -930,8 +966,10 @@
                                                 <integer value="1000"/>
                                                 <integer value="1000"/>
                                                 <integer value="1000"/>
+                                                <integer value="1000"/>
                                             </visibilityPriorities>
                                             <customSpacing>
+                                                <real value="3.4028234663852886e+38"/>
                                                 <real value="3.4028234663852886e+38"/>
                                                 <real value="3.4028234663852886e+38"/>
                                                 <real value="3.4028234663852886e+38"/>
@@ -1044,7 +1082,7 @@
                     <color key="value" name="labelColor" catalog="System" colorSpace="catalog"/>
                 </userDefinedRuntimeAttribute>
             </userDefinedRuntimeAttributes>
-            <point key="canvasLocation" x="-601" y="-417.5"/>
+            <point key="canvasLocation" x="-573" y="-11"/>
         </view>
         <userDefaultsController representsSharedInstance="YES" id="OCk-Q5-1dK"/>
     </objects>

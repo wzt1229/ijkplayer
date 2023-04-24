@@ -58,6 +58,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (assign) int snapshot;
 @property (assign) BOOL shouldShowHudView;
 @property (assign) BOOL accurateSeek;
+@property (assign) BOOL loop;
 //for cocoa binding end
 
 @property (assign) BOOL seeking;
@@ -115,7 +116,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self reSetLoglevel:@"info"];
     self.seekCostLb.stringValue = @"";
     self.accurateSeek = 1;
-
+    self.loop = 1;
     NSArray *onlineArr = @[
 @"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
 @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
@@ -165,7 +166,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     __weakSelf__
     self.eventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
         __strongSelf__
-        if ([theEvent keyCode] == kVK_ANSI_Period && theEvent.modifierFlags & NSEventModifierFlagCommand){
+        if (theEvent.window == self.view.window && [theEvent keyCode] == kVK_ANSI_Period && theEvent.modifierFlags & NSEventModifierFlagCommand){
             [self stopPlay:nil];
         }
         return theEvent;
@@ -266,6 +267,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)_playExplorerMovies:(NSNotification *)notifi
 {
+    if (!self.view.window.isKeyWindow) {
+        return;
+    }
     NSDictionary *info = notifi.userInfo;
     NSArray *movies = info[@"obj"];
     
@@ -352,6 +356,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)keyDown:(NSEvent *)event
 {
+    if (event.window != self.view.window) {
+        return;
+    }
+    
     if (event.modifierFlags & NSEventModifierFlagCommand) {
         switch ([event keyCode]) {
             case kVK_LeftArrow:
@@ -618,7 +626,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:6      forKey:@"video-pictq-size"];
     //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
     [options setPlayerOptionIntValue:119     forKey:@"max-fps"];
-    
+    [options setPlayerOptionIntValue:self.loop?-1:0      forKey:@"loop"];
 //    [options setCodecOptionValue:@"48" forKey:@"skip_loop_filter"];
 //    [options setFormatOptionValue:@"100L" forKey:@"analyzemaxduration"];
 //    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
@@ -858,7 +866,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             
             if (![[MRUtil pictureType] containsObject:[[self.playingUrl lastPathComponent] pathExtension]]) {
                 NSLog(@"播放结束");
-                [self playNext:nil];
+                [self stopPlay:nil];
+//                [self playNext:nil];
             }
         }
     }
@@ -1208,6 +1217,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)stopPlay:(NSButton *)sender
 {
+    NSLog(@"stop play");
     if (self.player) {
         [self.kvoCtrl safelyRemoveAllObservers];
         [[NSNotificationCenter defaultCenter] removeObserver:self.player];
@@ -1625,9 +1635,35 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (IBAction)testMultiRenderSample:(NSButton *)sender
 {
+    NSURL *playingUrl = self.playingUrl;
+    [self stopPlay:nil];
+    
     MultiRenderSample *multiRenderVC = [[MultiRenderSample alloc] initWithNibName:@"MultiRenderSample" bundle:nil];
-    [multiRenderVC playURL:self.playingUrl];
-    [self presentViewControllerAsModalWindow:multiRenderVC];
+    
+    NSWindowStyleMask mask = NSWindowStyleMaskBorderless | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView;
+    
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:mask backing:NSBackingStoreBuffered defer:YES];
+    window.contentViewController = multiRenderVC;
+    window.movableByWindowBackground = YES;
+    [window makeKeyAndOrderFront:nil];
+    window.releasedWhenClosed = NO;
+    [multiRenderVC playURL:playingUrl];
+}
+
+- (IBAction)onToggleLoopMode:(id)sender
+{
+    
+}
+
+- (IBAction)openNewInstance:(id)sender
+{
+    NSWindowStyleMask mask = NSWindowStyleMaskBorderless | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView;
+    
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:mask backing:NSBackingStoreBuffered defer:YES];
+    window.contentViewController = [[RootViewController alloc] init];
+    window.movableByWindowBackground = YES;
+    [window makeKeyAndOrderFront:nil];
+    window.releasedWhenClosed = NO;
 }
 
 @end
