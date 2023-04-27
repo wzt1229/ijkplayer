@@ -26,6 +26,7 @@
 #define FFPLAY__FF_FFMSG_H
 
 #define FFP_MSG_FLUSH                       0
+#define FFP_MSG_WARNING                     99      /* arg1 = SALTATION_RETURN_VALUE */
 #define FFP_MSG_ERROR                       100     /* arg1 = error */
 #define FFP_MSG_PREPARED                    200
 #define FFP_MSG_COMPLETED                   300

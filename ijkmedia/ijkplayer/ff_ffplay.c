@@ -1161,6 +1161,20 @@ retry:
 
             if (!is->step_on_seeking && frame_queue_nb_remaining(&is->pictq) > 1) {
                 Frame *nextvp = frame_queue_peek_next(&is->pictq);
+                
+                int delta = 0;
+                if (nextvp->pts > 0 && vp->pts > 0) {
+                    if (nextvp->pts > vp->pts) {
+                        delta = (int)(nextvp->pts / vp->pts);
+                    } else {
+                        delta = (int)(vp->pts / nextvp->pts);
+                    }
+                }
+                
+                if (delta > 10) {
+                    ffp_notify_msg2(ffp, FFP_MSG_WARNING, SALTATION_RETURN_VALUE);
+                }
+                
                 duration = vp_duration(is, vp, nextvp);
                 if(!is->step && (ffp->framedrop > 0 || (ffp->framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER)) && time > is->frame_timer + duration) {
                     frame_queue_next(&is->pictq);
@@ -2440,7 +2454,22 @@ reload:
         frame_queue_next(&is->sampq);
         //skip old audio frames.
     } while (af->serial != is->audioq.serial);
-
+    
+    if (frame_queue_nb_remaining(&is->sampq) > 1) {
+        Frame *next_af = frame_queue_peek_next(&is->sampq);
+        int delta = 0;
+        if (next_af->pts > 0 && af->pts > 0) {
+            if (next_af->pts > af->pts) {
+                delta = (int)(next_af->pts / af->pts);
+            } else {
+                delta = (int)(af->pts / next_af->pts);
+            }
+        }
+        if (delta > 10) {
+            ffp_notify_msg2(ffp, FFP_MSG_WARNING, SALTATION_RETURN_VALUE);
+        }
+    }
+    
     data_size = av_samples_get_buffer_size(NULL, af->frame->channels,
                                            af->frame->nb_samples,
                                            af->frame->format, 1);

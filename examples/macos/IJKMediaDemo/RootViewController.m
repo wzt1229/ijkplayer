@@ -724,10 +724,26 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerVideoDecoderFatal:) name:IJKMPMoviePlayerVideoDecoderFatalNotification object:self.player];
     
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerRecvWarning:) name:IJKMPMoviePlayerPlaybackRecvWarningNotification object:self.player];
+    
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
     [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
+}
+
+- (void)ijkPlayerRecvWarning:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        int reason = [notifi.userInfo[IJKMPMoviePlayerPlaybackWarningReasonUserInfoKey] intValue];
+        if (reason == 1000) {
+            NSLog(@"recv warning:%d",reason);
+            //会收到很多次，所以立马取消掉监听
+            [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackRecvWarningNotification object:notifi.object];
+            [self retry];
+        }
+    }
 }
 
 - (void)ijkPlayerFirstVideoFrameRendered:(NSNotification *)notifi
@@ -1215,6 +1231,13 @@ static IOPMAssertionID g_displaySleepAssertionID;
     [self toggleAdvancedViewShow];
 }
 
+- (void)retry
+{
+    NSURL *playingUrl = self.playingUrl;
+    [self stopPlay:nil];
+    [self playURL:playingUrl];
+}
+
 - (void)stopPlay:(NSButton *)sender
 {
     NSLog(@"stop play");
@@ -1652,9 +1675,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (IBAction)onToggleLoopMode:(id)sender
 {
-    NSURL *playingUrl = self.playingUrl;
-    [self stopPlay:nil];
-    [self playURL:playingUrl];
+    [self retry];
 }
 
 - (IBAction)openNewInstance:(id)sender

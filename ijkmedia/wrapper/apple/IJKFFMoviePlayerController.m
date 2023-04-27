@@ -1242,6 +1242,12 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
     switch (avmsg->what) {
         case FFP_MSG_FLUSH:
             break;
+        case FFP_MSG_WARNING: {
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:IJKMPMoviePlayerPlaybackRecvWarningNotification
+             object:self userInfo:@{IJKMPMoviePlayerPlaybackWarningReasonUserInfoKey: @(avmsg->arg1)}];
+        }
+            break;
         case FFP_MSG_ERROR: {
             [self setScreenOn:NO];
 

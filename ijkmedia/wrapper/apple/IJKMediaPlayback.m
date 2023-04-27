@@ -63,6 +63,11 @@ NSString *const IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification = @"
 
 NSString *const IJKMPMoviePlayerVideoDecoderFatalNotification = @"IJKMPMoviePlayerVideoDecoderFatalNotification";
 
+NSString *const IJKMPMoviePlayerPlaybackRecvWarningNotification = @"IJKMPMoviePlayerPlaybackRecvWarningNotification";
+
+NSString *const IJKMPMoviePlayerPlaybackWarningReasonUserInfoKey = @"IJKMPMoviePlayerPlaybackWarningReasonUserInfoKey";
+
+
 @implementation IJKMediaUrlOpenData {
     NSString *_url;
     BOOL _handled;

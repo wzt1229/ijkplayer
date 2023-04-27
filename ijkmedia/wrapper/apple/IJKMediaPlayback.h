@@ -178,7 +178,8 @@ IJK_EXTERN NSString *const IJKMPMoviePlayerSelectedStreamDidChangeNotification;
 IJK_EXTERN NSString *const IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification;
 //when received this fatal notifi,need stop player,otherwize read frame and play to end.
 IJK_EXTERN NSString *const IJKMPMoviePlayerVideoDecoderFatalNotification; /*useinfo's code is decoder's err code.*/
-
+IJK_EXTERN NSString *const IJKMPMoviePlayerPlaybackRecvWarningNotification; /*warning notifi.*/
+IJK_EXTERN NSString *const IJKMPMoviePlayerPlaybackWarningReasonUserInfoKey; /*useinfo's key,value is int.*/
 @end
 
 #pragma mark IJKMediaUrlOpenDelegate

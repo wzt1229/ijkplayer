@@ -66,7 +66,7 @@
 #include "ijkmeta.h"
 
 #define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (256 * 1024)
-
+#define SALTATION_RETURN_VALUE 1000
 /*
  * START: buffering after prepared/seeked
  * NEXT:  buffering for the second time after START
