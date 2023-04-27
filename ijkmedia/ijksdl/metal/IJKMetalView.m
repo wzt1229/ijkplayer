@@ -261,7 +261,7 @@ typedef CGRect NSRect;
     if (clazz) {
         if (self.picturePipeline) {
             if ([self.picturePipeline class] != clazz) {
-                NSLog(@"pixel format changed:%@",NSStringFromClass(clazz));
+                ALOGI("pixel format changed:%@",NSStringFromClass(clazz));
                 self.picturePipeline = nil;
             } else {
                 return YES;
@@ -270,6 +270,7 @@ typedef CGRect NSRect;
         self.picturePipeline = [[clazz alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
         return !!self.picturePipeline;
     }
+    ALOGE("setup Pipeline failed with clazz:%@",NSStringFromClass(clazz));
     return NO;
 }
 
@@ -335,6 +336,7 @@ typedef CGRect NSRect;
     MTLRenderPassDescriptor *renderPassDescriptor = self.currentRenderPassDescriptor;
     //MTLRenderPassDescriptor描述一系列attachments的值，类似GL的FrameBuffer；同时也用来创建MTLRenderCommandEncoder
     if(!renderPassDescriptor) {
+        ALOGE("renderPassDescriptor can't be nil");
         return;
     }
     

@@ -547,7 +547,7 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
     }
 abort_end:
     if (d->queue->abort_request && status == -1) {
-        av_log(NULL, AV_LOG_INFO, "will destroy avcodec,flush the buffers.\n");
+        av_log(NULL, AV_LOG_INFO, "will destroy avcodec:%d,flush buffers.\n",d->avctx->codec_type);
         avcodec_send_packet(d->avctx, NULL);
         avcodec_flush_buffers(d->avctx);
     }
@@ -1114,7 +1114,7 @@ retry:
             lastvp = frame_queue_peek_last(&is->pictq);
             vp = frame_queue_peek(&is->pictq);
 
-            //when fast seek,we want update video frame,no drop frame.but we can't identify seek is continuously.
+            //when fast seek,we want update video frame,no drop frame. but we can't identify seek is continuously.
             if (vp->serial != is->videoq.serial) {
                 frame_queue_next(&is->pictq);
                 goto retry;
