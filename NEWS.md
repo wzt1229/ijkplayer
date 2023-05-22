@@ -1,3 +1,10 @@
+tag 0.9.7
+--------------------------------
+- expose internal render view.
+- support multi render view.
+- fix shutdown player crash,some video may cause.
+- when pts changed abruptly throw FFP_MSG_WARNING.
+
 tag 0.9.6
 --------------------------------
 

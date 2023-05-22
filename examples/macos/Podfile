@@ -1,8 +1,8 @@
 install! 'cocoapods', :generate_multiple_pod_projects => true
+project 'IJKMediaMacDemo.xcodeproj'
 
 target 'IJKMediaMacDemo' do
-    pod 'IJKMediaPlayerKit', :path => '../../'
-    project 'IJKMediaMacDemo.xcodeproj'
-    platform :osx, '10.11'
     use_frameworks!
+    platform :osx, '10.13'
+    pod 'IJKMediaPlayerKit', :path => '../../'
 end
