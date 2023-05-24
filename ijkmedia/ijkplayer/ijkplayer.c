@@ -150,7 +150,6 @@ void ijkmp_set_frame_at_time(IjkMediaPlayer *mp, const char *path, int64_t start
     MPTRACE("%s()=void\n", __func__);
 }
 
-#if ! IJK_IO_OFF
 void *ijkmp_set_inject_opaque(IjkMediaPlayer *mp, void *opaque)
 {
     assert(mp);
@@ -160,8 +159,6 @@ void *ijkmp_set_inject_opaque(IjkMediaPlayer *mp, void *opaque)
     MPTRACE("%s()=void\n", __func__);
     return prev_weak_thiz;
 }
-
-#endif
 
 void ijkmp_set_option(IjkMediaPlayer *mp, int opt_category, const char *name, const char *value)
 {

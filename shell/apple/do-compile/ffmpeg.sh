@@ -91,7 +91,6 @@ echo "[*] check OpenSSL"
 # https://ffmpeg.org/doxygen/4.1/md_LICENSE.html
 # https://www.openssl.org/source/license.html
 
-#----------------------
 # with openssl
 # use pkg-config fix ff4.0--ijk0.8.8--20210426--001 use openssl 1_1_1m occur can't find openssl error.
 if [[ -f "${XC_PRODUCT_ROOT}/openssl-$XC_ARCH/lib/pkgconfig/openssl.pc" ]]; then
@@ -103,12 +102,10 @@ if [[ -f "${XC_PRODUCT_ROOT}/openssl-$XC_ARCH/lib/pkgconfig/openssl.pc" ]]; then
 else
     echo "[*] --disable-openssl"
 fi
-echo "------------------------"
 
 echo "----------------------"
 echo "[*] check x264"
 
-#----------------------
 # with x264
 if [[ -f "${XC_PRODUCT_ROOT}/x264-$XC_ARCH/lib/pkgconfig/x264.pc" ]]; then
     # libx264 is gpl and --enable-gpl is not specified.
@@ -120,12 +117,10 @@ if [[ -f "${XC_PRODUCT_ROOT}/x264-$XC_ARCH/lib/pkgconfig/x264.pc" ]]; then
 else
     echo "[*] --disable-libx264"
 fi
-echo "------------------------"
 
 echo "----------------------"
 echo "[*] check fdk-aac"
 
-#----------------------
 # with fdk-aac
 if [[ -f "${XC_PRODUCT_ROOT}/fdk-aac-$XC_ARCH/lib/pkgconfig/fdk-aac.pc" ]]; then
 
@@ -137,12 +132,10 @@ if [[ -f "${XC_PRODUCT_ROOT}/fdk-aac-$XC_ARCH/lib/pkgconfig/fdk-aac.pc" ]]; then
 else
     echo "[*] --disable-libfdk-aac"
 fi
-echo "------------------------"
 
 echo "----------------------"
 echo "[*] check mp3lame"
 
-#----------------------
 # with lame
 if [[ -f "${XC_PRODUCT_ROOT}/lame-$XC_ARCH/lib/libmp3lame.a" ]]; then
     # libmp3lame is gpl and --enable-gpl is not specified.
@@ -157,12 +150,10 @@ if [[ -f "${XC_PRODUCT_ROOT}/lame-$XC_ARCH/lib/libmp3lame.a" ]]; then
 else
     echo "[*] --disable-libmp3lame"
 fi
-echo "------------------------"
 
 echo "----------------------"
 echo "[*] check opus"
 
-#----------------------
 # with opus
 if [[ -f "${XC_PRODUCT_ROOT}/opus-$XC_ARCH/lib/pkgconfig/opus.pc" ]]; then
     
@@ -174,9 +165,10 @@ if [[ -f "${XC_PRODUCT_ROOT}/opus-$XC_ARCH/lib/pkgconfig/opus.pc" ]]; then
 else
     echo "[*] --disable-libopus"
 fi
-echo "------------------------"
 
-#----------------------
+echo "----------------------"
+echo "[*] check bluray"
+
 # with bluray
 if [[ -f "${XC_PRODUCT_ROOT}/bluray-$XC_ARCH/lib/pkgconfig/libbluray.pc" ]]; then
     
@@ -188,9 +180,10 @@ if [[ -f "${XC_PRODUCT_ROOT}/bluray-$XC_ARCH/lib/pkgconfig/libbluray.pc" ]]; the
 else
     echo "[*] --disable-libbluray --disable-protocol=bluray"
 fi
-echo "------------------------"
 
-#----------------------
+echo "----------------------"
+echo "[*] check dav1d"
+
 # FFmpeg 4.2 支持AV1、AVS2等格式
 # dav1d由VideoLAN，VLC和FFmpeg联合开发，项目由AOM联盟赞助，和libaom相比，dav1d性能普遍提升100%，最高提升400%
 if [[ -f "${XC_PRODUCT_ROOT}/dav1d-$XC_ARCH/lib/pkgconfig/dav1d.pc" ]]; then
@@ -202,17 +195,14 @@ if [[ -f "${XC_PRODUCT_ROOT}/dav1d-$XC_ARCH/lib/pkgconfig/dav1d.pc" ]]; then
 else
     echo "[*] --disable-decoder=av1 --disable-libdav1d"
 fi
-echo "------------------------"
 
 #parser subtitles
 FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-demuxer=ass --enable-demuxer=webvtt --enable-demuxer=srt"
     
 CC="$XCRUN_CC"
 
-#----------------------
 echo "----------------------"
 echo "[*] configure"
-echo "------------------------"
 
 if [[ ! -d $XC_BUILD_SOURCE ]]; then
     echo ""

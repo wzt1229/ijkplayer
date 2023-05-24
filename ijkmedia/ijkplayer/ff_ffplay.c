@@ -321,7 +321,9 @@ static int convert_image(FFPlayer *ffp, AVFrame *src_frame, int64_t src_frame_pt
         goto fail2;
     }
 
-    ret = avcodec_encode_video2(img_info->frame_img_codec_ctx, &avpkt, dst_frame, &got_packet);
+    ret = -1;
+#warning TODO fix here
+    //avcodec_encode_video2(img_info->frame_img_codec_ctx, &avpkt, dst_frame, &got_packet);
 
     if (ret >= 0 && got_packet > 0) {
         strcpy(file_path, img_info->img_path);
@@ -4158,10 +4160,10 @@ static void *ffp_context_child_next(void *obj, void *prev)
     return NULL;
 }
 
-static const AVClass *ffp_context_child_class_next(const AVClass *prev)
-{
-    return NULL;
-}
+//static const AVClass *ffp_context_child_class_next(const AVClass *prev)
+//{
+//    return NULL;
+//}
 
 const AVClass ffp_context_class = {
     .class_name       = "FFPlayer",
@@ -4169,7 +4171,7 @@ const AVClass ffp_context_class = {
     .option           = ffp_context_options,
     .version          = LIBAVUTIL_VERSION_INT,
     .child_next       = ffp_context_child_next,
-    .child_class_next = ffp_context_child_class_next,
+//    .child_class_next = ffp_context_child_class_next,
 };
 
 static const char *ijk_version_info(void)
@@ -4304,8 +4306,6 @@ void ffp_set_frame_at_time(FFPlayer *ffp, const char *path, int64_t start_time, 
         ffp_notify_msg3(ffp, FFP_MSG_GET_IMG_STATE, 0, -1);
     }
 }
-
-#if ! IJK_IO_OFF
             
 void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque)
 {
@@ -4313,16 +4313,17 @@ void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque)
         return NULL;
     void *prev_weak_thiz = ffp->inject_opaque;
     ffp->inject_opaque = opaque;
-
+#if ! IJK_IO_OFF
     av_application_closep(&ffp->app_ctx);
     av_application_open(&ffp->app_ctx, ffp);
     ffp_set_option_intptr(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkapplication", (intptr_t)ffp->app_ctx);
     //can't use int, av_dict_strtoptr is NULL in libavformat/http.c
     //ffp_set_option_int(ffp, FFP_OPT_CATEGORY_FORMAT, "ijkapplication", (int64_t)(intptr_t)ffp->app_ctx);
     ffp->app_ctx->func_on_app_event = app_func_event;
+#endif
     return prev_weak_thiz;
 }
-#endif
+
             
 void ffp_set_option(FFPlayer *ffp, int opt_category, const char *name, const char *value)
 {

@@ -521,7 +521,10 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
     const char *actualVersion = av_version_info();
     char dst[128] = { 0 };
     strcpy(dst, actualVersion);
-    *strrchr(dst, '-') = '\0';
+    if (strrchr(dst, '-') != NULL) {
+        *strrchr(dst, '-') = '\0';
+    }
+    
     const char *expectVersion = kIJKFFRequiredFFmpegVersion;
     if (0 == strcmp(dst, expectVersion)) {
         return YES;
@@ -1763,6 +1766,8 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
     }
 }
 
+#endif
+
 static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int sampleSize, int sampleRate, int channels)
 {
     IJKWeakHolder *weakHolder = (__bridge IJKWeakHolder*)opaque;
@@ -1778,7 +1783,6 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
     }
 }
 
-#endif
 #pragma mark Airplay
 
 -(BOOL)allowsMediaAirPlay
