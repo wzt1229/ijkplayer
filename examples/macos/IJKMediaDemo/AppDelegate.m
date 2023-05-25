@@ -13,6 +13,7 @@
 #import "MRGlobalNotification.h"
 #import "MRUtil+SystemPanel.h"
 #import "MRActionKit.h"
+#import "MRTextInfoViewController.h"
 
 @interface AppDelegate ()
 
@@ -76,8 +77,7 @@
     [self.windowCtrl showWindow:nil];
     BOOL match = [IJKFFMoviePlayerController checkIfFFmpegVersionMatch:YES];
     NSLog(@"==FFmpegVersionMatch:%d",match);
-    
-    
+
     if ([self.waitHandleArr count] > 0) {
         [self application:NSApp openURLs:self.waitHandleArr];
         self.waitHandleArr = nil;
@@ -134,6 +134,14 @@
 {
     NSStoryboard *sb = [NSStoryboard storyboardWithName:@"Setting" bundle:nil];
     [self.windowCtrl.window.contentViewController presentViewControllerAsModalWindow:[sb instantiateInitialController]];
+}
+
+- (IBAction)showSupportedDecoder:(id)sender
+{
+    NSString *text = [[IJKFFMoviePlayerController supportedDecoders] description];
+    MRTextInfoViewController *vc = [[MRTextInfoViewController alloc] initWithText:text];
+    vc.title = @"Supported Decoder";
+    [self.windowCtrl.window.contentViewController presentViewControllerAsModalWindow:vc];
 }
 
 - (BOOL)application:(NSApplication *)sender openFile:(nonnull NSString *)filename

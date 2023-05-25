@@ -514,6 +514,55 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
     _logHandler = handler;
 }
 
++ (NSDictionary *)supportedDecoders
+{
+    void *iterate_data = NULL;
+    const AVCodec *codec = NULL;
+    NSMutableDictionary *codesByType = [NSMutableDictionary dictionary];
+    
+    while (NULL != (codec = av_codec_iterate(&iterate_data))) {
+        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+        if (NULL != codec->name) {
+            NSString *name = [[NSString alloc]initWithUTF8String:codec->name];
+            [dic setObject:name forKey:@"name"];
+        }
+        if (NULL != codec->long_name) {
+            NSString *longName = [[NSString alloc]initWithUTF8String:codec->long_name];
+            [dic setObject:longName forKey:@"longName"];
+        }
+        [dic setObject:[NSString stringWithFormat:@"%d",codec->id] forKey:@"id"];
+        
+        if (av_codec_is_encoder(codec)) {
+            if (av_codec_is_decoder(codec)) {
+                [dic setObject:@"Encoder,Decoder" forKey:@"type"];
+            } else {
+                [dic setObject:@"Encoder" forKey:@"type"];
+            }
+        } else if (av_codec_is_decoder(codec)) {
+            [dic setObject:@"Decoder" forKey:@"type"];
+        }
+        
+        NSString *typeKey = nil;
+        
+        if (codec->type == AVMEDIA_TYPE_VIDEO) {
+            typeKey = @"Video";
+        } else if (codec->type == AVMEDIA_TYPE_AUDIO) {
+            typeKey = @"Audio";
+        } else {
+            typeKey = @"Other";
+        }
+        
+        NSMutableArray *codecArr = [codesByType objectForKey:typeKey];
+        
+        if (!codecArr) {
+            codecArr = [NSMutableArray array];
+            [codesByType setObject:codecArr forKey:typeKey];
+        }
+        [codecArr addObject:dic];
+    }
+    return [codesByType copy];
+}
+
 + (BOOL)checkIfFFmpegVersionMatch:(BOOL)showAlert;
 {
     //n4.0-16-g1c96997 -> n4.0-16
