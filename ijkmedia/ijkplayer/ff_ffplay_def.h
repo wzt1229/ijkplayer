@@ -163,7 +163,7 @@ typedef struct MyAVPacketList {
 } MyAVPacketList;
 
 typedef struct PacketQueue {
-    AVFifoBuffer *pkt_list;
+    AVFifo *pkt_list;
     int nb_packets;
     int size;
     int64_t duration;
