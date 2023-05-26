@@ -102,8 +102,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
     
     [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
-        //NSLog(@"[%@] [%d] %@",tag,level,msg);
-        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
+        NSLog(@"[%@] [%d] %@",tag,level,msg);
+//        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
     }];
 
     self.subtitleFontRatio = 1.0;
@@ -120,28 +120,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     NSArray *onlineArr = @[
 @"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
 @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
-@"https://kvideo01.youju.sohu.com/f559f6ad-df2f-42c9-9f47-841cf6e4086f1_0_0.mp4",
-@"https://cdn8.vipbf-video.com/20221002/22649_2c3f2fc7/index.m3u8",
-@"https://cdn8.vipbf-video.com/20221002/22648_399c3300/index.m3u8",
-@"https://cdn8.vipbf-video.com/20221003/22790_c612aaf0/index.m3u8",
-@"https://cdn8.vipbf-video.com/20221003/22810_5ffa86ea/index.m3u8",
-@"https://cdn7.vipbf-video.com/20221009/21934_42ef47c0/index.m3u8",
-@"https://cdn7.vipbf-video.com/20221010/22023_14f2bf70/index.m3u8",
-@"https://cdn6.vipbf-video.com/20221017/20563_f2871382/index.m3u8",
-@"https://cdn6.vipbf-video.com/20221017/20562_c6e99fce/index.m3u8",
-@"https://cdn10.vipbf-video.com/20221023/2106_bfbdca5f/index.m3u8",
-@"https://cdn10.vipbf-video.com/20221024/2348_2b5c3648/index.m3u8",
-@"https://cdn11.vipbf-video.com/20221030/2275_4dc76218/index.m3u8",
-@"https://cdn9.vipbf-video.com/20221101/13252_3c5b6a89/index.m3u8",
-@"https://cdn12.vipbf-video.com/20221106/567_5cdfba2b/index.m3u8",
-@"https://cdn12.vipbf-video.com/20221107/579_892bcd3b/index.m3u8",
-@"https://cdn10.vipbf-video.com/20221114/11519_9d4d34d8/index.m3u8",
-@"https://cdn10.vipbf-video.com/20221114/11518_6de70e5a/index.m3u8",
-@"https://cdn9.vipbf-video.com/20221120/16061_8db3d587/index.m3u8",
-@"https://cdn12.vipbf-video.com/20221121/4377_44e8a882/index.m3u8",
-@"https://cdn12.vipbf-video.com/20221127/6285_7b3276ce/index.m3u8",
-@"https://cdn9.vipzyk-video.com/20221128/17617_fdc04598/index.m3u8",
-@"https://cdn10.vipbf-video.com/20221204/16949_82058dd6/index.m3u8",
 @"https://cdn10.vipbf-video.com/20221205/17013_50618fea/index.m3u8"];
     
     for (NSString *url in onlineArr) {
