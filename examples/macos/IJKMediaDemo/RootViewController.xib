@@ -235,6 +235,7 @@
                                                                                 </menu>
                                                                             </popUpButtonCell>
                                                                             <connections>
+                                                                                <action selector="onChangeRenderType:" target="-2" id="8RB-mQ-1Uq"/>
                                                                                 <binding destination="-2" name="selectedTag" keyPath="use_openGL" id="VhU-oh-Xgw"/>
                                                                             </connections>
                                                                         </popUpButton>
@@ -746,6 +747,7 @@
                                                                 </menu>
                                                             </popUpButtonCell>
                                                             <connections>
+                                                                <action selector="onSelectFCC:" target="-2" id="gfQ-xO-aRa"/>
                                                                 <binding destination="-2" name="selectedValue" keyPath="fcc" id="CBQ-Bo-nZT"/>
                                                             </connections>
                                                         </popUpButton>

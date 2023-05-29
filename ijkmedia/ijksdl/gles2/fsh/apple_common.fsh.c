@@ -62,9 +62,9 @@ static const char apple_nv12_shader[] = IJK_GLES_STRING(
 #endif
             vec3 offset;
             if (isFullRange == 1) {
-                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
-            } else {
                 offset = vec3(0.0, -0.5, -0.5);
+            } else {
+                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
             }
             yuv += offset;
             vec3 rgb = um3_ColorConversion * yuv;
@@ -90,10 +90,8 @@ static const char g_shader_rect_bgrx_1[] = IJK_GLES_STRING(
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
-            vec3 rgb;
-            
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
+            vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
             fragColor = vec4(rgb, 1.0);
@@ -117,10 +115,8 @@ static const char g_shader_rect_rgbx_1[] = IJK_GLES_STRING(
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
-            vec3 rgb;
-            
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
+            vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
             fragColor = vec4(rgb, 1.0);
@@ -144,12 +140,10 @@ static const char g_shader_rect_xrgb_1[] = IJK_GLES_STRING(
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
-            vec3 rgb;
-            
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             //bgra -> argb
             //argb -> bgra
-            rgb = texture2DRect(us2_Sampler0, recTexCoord0).gra;
+            vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).gra;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
 
             fragColor = vec4(rgb, 1.0);
@@ -201,9 +195,9 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
 #endif
             vec3 offset;
             if (isFullRange == 1) {
-                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
-            } else {
                 offset = vec3(0.0, -0.5, -0.5);
+            } else {
+                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
             }
             yuv += offset;
             vec3 rgb = um3_ColorConversion * yuv;
@@ -234,9 +228,9 @@ static const char g_shader_rect_uyvy_1[] = IJK_GLES_STRING(
             vec3 yuv = texture2DRect(us2_Sampler0, recTexCoord0).gbr;
             vec3 offset;
             if (isFullRange == 1) {
-                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
-            } else {
                 offset = vec3(0.0, -0.5, -0.5);
+            } else {
+                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
             }
             yuv += offset;
             vec3 rgb = um3_ColorConversion * yuv;

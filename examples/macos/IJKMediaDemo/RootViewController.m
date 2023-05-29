@@ -1405,6 +1405,11 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 #pragma mark 画面设置
 
+- (IBAction)onChangeRenderType:(NSPopUpButton *)sender
+{
+    [self retry];
+}
+
 - (IBAction)onChangeScaleMode:(NSPopUpButton *)sender
 {
     NSMenuItem *item = [sender selectedItem];
@@ -1577,11 +1582,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (IBAction)onChangedHWaccel:(NSButton *)sender
 {
-    NSURL *playingUrl = self.playingUrl;
-    if (playingUrl) {
-        [self stopPlay:nil];
-        [self playURL:playingUrl];
-    }
+    [self retry];
 }
 
 - (IBAction)onChangedAccurateSeek:(NSButton *)sender
@@ -1591,9 +1592,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (IBAction)onSelectFCC:(NSPopUpButton*)sender
 {
-    NSString *title = sender.selectedItem.title;
-    NSString *fcc = [@"fcc-" stringByAppendingString:title];
-    self.fcc = fcc;
+    [self retry];
 }
 
 #pragma mark 日志级别
