@@ -43,7 +43,8 @@ typedef enum : int {
     XRGB_SHADER,
     YUV_2P_SHADER,//for 420sp
     YUV_3P_SHADER,//for 420p
-    UYVY_SHADER   //for uyvy
+    UYVY_SHADER,  //for uyvy
+    YUYV_SHADER   //for yuyv
 } IJK_SHADER_TYPE;
 
 static inline const int IJK_Sample_Count_For_Shader(IJK_SHADER_TYPE type)
@@ -52,6 +53,7 @@ static inline const int IJK_Sample_Count_For_Shader(IJK_SHADER_TYPE type)
         case BGRX_SHADER:
         case XRGB_SHADER:
         case UYVY_SHADER:
+        case YUYV_SHADER:
         {
             return 1;
         }
@@ -88,6 +90,7 @@ typedef struct IJK_GLES2_Renderer
 
     GLint us2_sampler[IJK_GLES2_MAX_PLANE];
     GLint um3_color_conversion;
+    GLint isFullRange;
     GLint um3_rgb_adjustment;
     
     GLboolean (*func_use)(IJK_GLES2_Renderer *renderer);
@@ -155,8 +158,8 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
 
 #else
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(Uint32 overlay_format,IJK_SHADER_TYPE type,int openglVer);
-void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver);
+IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(Uint32 overlay_format,IJK_SHADER_TYPE type,int openglVer);
+void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver);
 
 #endif
 

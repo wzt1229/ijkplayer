@@ -73,7 +73,8 @@ enum mp_imgfmt {
 
     // Packed YUV formats (components are byte-accessed)
     IMGFMT_UYVY,                // U  Y0 V  Y1
-
+    // Packed YUV formats (components are byte-accessed)
+    IMGFMT_YUYV,                // Y0  U Y1 V
     // Y plane + packed plane for chroma
     IMGFMT_NV12,
 
@@ -176,11 +177,34 @@ static struct vt_format vt_formats[] = {
         .imgfmt = IMGFMT_UYVY,
         .planes = 1,
         .gl = {
-            //330
 #if USE_LEGACY_OPENGL
             { GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB }
-#else
+#else    //330
             { GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, GL_RGB }
+#endif
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8_yuvs,
+        .imgfmt = IMGFMT_YUYV,
+        .planes = 1,
+        .gl = {
+#if USE_LEGACY_OPENGL
+            { GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, GL_RGB }
+#else   //330
+            { GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, GL_RGB }
+#endif
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8FullRange,
+        .imgfmt = IMGFMT_YUYV,
+        .planes = 1,
+        .gl = {
+#if USE_LEGACY_OPENGL
+            { GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, GL_RGB }
+#else   //330
+            { GL_RGB_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, GL_RGB }
 #endif
         }
     },

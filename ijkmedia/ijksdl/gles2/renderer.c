@@ -192,23 +192,26 @@ fail:
 static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format, const Uint32 cv_format, int openglVer)
 {
     if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
-        ALOGI("create render yuv420sp vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay_format,YUV_2P_SHADER,openglVer);
+        ALOGI("create render yuv420sp\n");
+        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_32BGRA) {
-        ALOGI("create render bgrx vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay_format,BGRX_SHADER,openglVer);
+        ALOGI("create render bgrx\n");
+        return ijk_create_common_gl_Renderer(overlay_format,BGRX_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_32ARGB) {
-        ALOGI("create render xrgb vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay_format,XRGB_SHADER,openglVer);
+        ALOGI("create render xrgb\n");
+        return ijk_create_common_gl_Renderer(overlay_format,XRGB_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
                cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
-        ALOGI("create render yuv420p vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay_format,YUV_3P_SHADER,openglVer);
+        ALOGI("create render yuv420p\n");
+        return ijk_create_common_gl_Renderer(overlay_format,YUV_3P_SHADER,openglVer);
     }
     #if TARGET_OS_OSX
     else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
-        ALOGI("create render uyvy vtb\n");
-        return IJK_GL_Renderer_create_common_vtb(overlay_format,UYVY_SHADER,openglVer);
+        ALOGI("create render uyvy\n");
+        return ijk_create_common_gl_Renderer(overlay_format,UYVY_SHADER,openglVer);
+    } else if (cv_format == kCVPixelFormatType_422YpCbCr8_yuvs || cv_format == kCVPixelFormatType_422YpCbCr8FullRange) {
+        ALOGI("create render yuyv\n");
+        return ijk_create_common_gl_Renderer(overlay_format,YUYV_SHADER,openglVer);
     }
     #endif
     else {

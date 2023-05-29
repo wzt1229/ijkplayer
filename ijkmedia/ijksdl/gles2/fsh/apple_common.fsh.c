@@ -50,26 +50,25 @@ static const char apple_nv12_shader[] = IJK_GLES_STRING(
         } else {
 #if TARGET_OS_OSX
             vec3 yuv;
-            vec3 rgb;
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
             
             yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
-            yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).rg - vec2(0.5, 0.5);
+            yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).rg;
 #else
             mediump vec3 yuv;
-            lowp vec3 rgb;
             yuv.x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
-            yuv.yz = texture2DRect(us2_Sampler1, vv2_Texcoord).rg - vec2(0.5, 0.5);
+            yuv.yz = texture2DRect(us2_Sampler1, vv2_Texcoord).rg;
 #endif
+            vec3 offset;
             if (isFullRange == 1) {
-                yuv.x = yuv.x - (16.0 / 255.0);
+                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
+            } else {
+                offset = vec3(0.0, -0.5, -0.5);
             }
-            
-            rgb = um3_ColorConversion * yuv;
-            
+            yuv += offset;
+            vec3 rgb = um3_ColorConversion * yuv;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-
             fragColor = vec4(rgb, 1.0);
         }
     }
@@ -187,32 +186,28 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
         } else {
 #if TARGET_OS_OSX
             vec3 yuv;
-            vec3 rgb;
-            
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
             vec2 recTexCoord2 = vv2_Texcoord * textureDimension2;
 
             yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
-            yuv.y = texture2DRect(us2_Sampler1, recTexCoord1).r - 0.5;
-            yuv.z = texture2DRect(us2_Sampler2, recTexCoord2).r - 0.5;
+            yuv.y = texture2DRect(us2_Sampler1, recTexCoord1).r;
+            yuv.z = texture2DRect(us2_Sampler2, recTexCoord2).r;
 #else
             mediump vec3 yuv;
-            lowp vec3 rgb;
-            
             yuv.x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
-            yuv.y = texture2DRect(us2_Sampler1, vv2_Texcoord).r - 0.5;
-            yuv.z = texture2DRect(us2_Sampler2, vv2_Texcoord).r - 0.5;
+            yuv.y = texture2DRect(us2_Sampler1, vv2_Texcoord).r;
+            yuv.z = texture2DRect(us2_Sampler2, vv2_Texcoord).r;
 #endif
-            
+            vec3 offset;
             if (isFullRange == 1) {
-                yuv.x = yuv.x - (16.0 / 255.0);
+                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
+            } else {
+                offset = vec3(0.0, -0.5, -0.5);
             }
-            
-            rgb = um3_ColorConversion * yuv;
-
+            yuv += offset;
+            vec3 rgb = um3_ColorConversion * yuv;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-
             fragColor = vec4(rgb, 1.0);
         }
     }
@@ -222,42 +217,36 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
 static const char g_shader_rect_uyvy_1[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform vec3 um3_rgbAdjustment;
-    
+    uniform mat3 um3_ColorConversion;
     uniform sampler2DRect us2_Sampler0;
     uniform vec2 textureDimension0;
     
     uniform int isSubtitle;
-    
-    const vec3 R_cf = vec3(1.164383,  0.000000,  1.596027);
-    const vec3 G_cf = vec3(1.164383, -0.391762, -0.812968);
-    const vec3 B_cf = vec3(1.164383,  2.017232,  0.000000);
-    const vec3 offset = vec3(-0.0625, -0.5, -0.5);
-                                                           
+    uniform int isFullRange;
+          
     void main()
     {
         if (isSubtitle == 1) {
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
         } else {
-            vec3 rgb;
-            
             vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
             vec3 yuv = texture2DRect(us2_Sampler0, recTexCoord0).gbr;
-            
+            vec3 offset;
+            if (isFullRange == 1) {
+                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
+            } else {
+                offset = vec3(0.0, -0.5, -0.5);
+            }
             yuv += offset;
-            
-            rgb.r = dot(yuv, R_cf);
-            rgb.g = dot(yuv, G_cf);
-            rgb.b = dot(yuv, B_cf);
-            
+            vec3 rgb = um3_ColorConversion * yuv;
             rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-
             fragColor = vec4(rgb, 1.0);
         }
     }
 );
 
-void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
+void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver)
 {
     *out = '\0';
     sprintf(out, "#version %d\n",ver);
@@ -316,6 +305,7 @@ void IJK_GL_getAppleCommonFragmentShader(IJK_SHADER_TYPE type,char *out,int ver)
         }
             break;
         case UYVY_SHADER:
+        case YUYV_SHADER:
         {
             if (ver >= 330) {
                 buffer = g_shader_rect_uyvy_1;

@@ -58,7 +58,6 @@ typedef struct IJK_GLES2_Renderer_Opaque
 {
     CFTypeRef             color_attachments;
     GLint                 isSubtitle;
-    GLint                 isFullRange;
     int samples;
 #if TARGET_OS_OSX
     GLint                 textureDimension[3];
@@ -191,14 +190,15 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
         }
 
         opaque->color_attachments = CFRetain(color_attachments);
-        
-        int pixel_fmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
-        
-        //full color range
-        if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
-            kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt) {
-            glUniform1i(renderer->opaque->isFullRange, GL_TRUE);
-        }
+    }
+    
+    int pixel_fmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
+    
+    //full color range
+    if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
+        kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt ||
+        kCVPixelFormatType_422YpCbCr8FullRange == pixel_fmt) {
+        glUniform1i(renderer->isFullRange, GL_TRUE);
     }
     
     GLboolean uploaded = upload_texture_use_IOSurface(pixel_buffer, renderer);
@@ -252,12 +252,12 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
     return uploaded;
 }
 
-IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(Uint32 overlay_format,IJK_SHADER_TYPE type,int openglVer)
+IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(Uint32 overlay_format,IJK_SHADER_TYPE type,int openglVer)
 {
     assert(overlay_format == SDL_FCC__VTB || overlay_format == SDL_FCC__FFVTB);
     char shader_buffer[2048] = { '\0' };
     
-    IJK_GL_getAppleCommonFragmentShader(type,shader_buffer,openglVer);
+    ijk_get_apple_common_fragment_shader(type,shader_buffer,openglVer);
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(shader_buffer,openglVer);
 
     if (!renderer)
@@ -273,10 +273,8 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(Uint32 overlay_format,IJK_
     }
     
     //yuv to rgb
-    if (samples > 1) {
-        renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_ColorConversionMatrix)");
-    }
-    
+    renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion");
+    renderer->isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
     renderer->um3_rgb_adjustment = glGetUniformLocation(renderer->program, "um3_rgbAdjustment"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_rgb_adjustmentVector)");
     
     renderer->func_use            = use;
@@ -292,12 +290,12 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_common_vtb(Uint32 overlay_format,IJK_
     bzero(renderer->opaque, sizeof(IJK_GLES2_Renderer_Opaque));
     renderer->opaque->samples = samples;
     renderer->opaque->isSubtitle  = -1;
-    renderer->opaque->isFullRange = -1;
-    
+    renderer->isFullRange = -1;
+
     if (samples > 1) {
         GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
         assert(isFullRange >= 0);
-        renderer->opaque->isFullRange = isFullRange;
+        renderer->isFullRange = isFullRange;
     }
     
     GLint isSubtitle = glGetUniformLocation(renderer->program, "isSubtitle");
