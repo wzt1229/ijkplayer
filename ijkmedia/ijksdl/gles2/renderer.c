@@ -731,9 +731,9 @@ static void IJK_GLES2_updateRGB_adjust_ifNeed(IJK_GLES2_Renderer *renderer)
 }
 
 /*
- * update video vetex
+ * update video vertex
  */
-GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+GLboolean IJK_GLES2_Renderer_updateVertex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
 {
     if (!renderer)
         return GL_FALSE;
@@ -794,9 +794,9 @@ GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutO
 }
 
 /*
- * update video vetex
+ * update video vertex
  */
-GLboolean IJK_GLES2_Renderer_updateVetex2(IJK_GLES2_Renderer *renderer,
+GLboolean IJK_GLES2_Renderer_updateVertex2(IJK_GLES2_Renderer *renderer,
                                          int overlay_h,
                                          int overlay_w,
                                          int buffer_w,
@@ -935,9 +935,9 @@ GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer,
 }
 
 /*
- * update subtitle vetex
+ * update subtitle vertex
  */
-void IJK_GLES2_Renderer_updateSubtitleVetex(IJK_GLES2_Renderer *renderer, float width, float height)
+void IJK_GLES2_Renderer_updateSubtitleVertex(IJK_GLES2_Renderer *renderer, float width, float height)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

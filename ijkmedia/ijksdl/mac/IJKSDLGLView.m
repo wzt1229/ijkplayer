@@ -481,7 +481,7 @@ static bool _is_need_dispath_to_global(void)
         }
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-        IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(attach.subPicture), ratio * CVPixelBufferGetHeight(attach.subPicture));
+        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, ratio * CVPixelBufferGetWidth(attach.subPicture), ratio * CVPixelBufferGetHeight(attach.subPicture));
         if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)attach.subPicture)) {
             IJK_GLES2_Renderer_drawArrays();
         } else {
@@ -494,14 +494,14 @@ static bool _is_need_dispath_to_global(void)
 - (void)doUploadVideoPicture:(IJKOverlayAttach *)attach
 {
     if (attach.videoPicture) {
-        if (IJK_GLES2_Renderer_updateVetex2(_renderer, attach.h, attach.w, attach.bufferW, attach.sarNum, attach.sarDen)) {
+        if (IJK_GLES2_Renderer_updateVertex2(_renderer, attach.h, attach.w, attach.bufferW, attach.sarNum, attach.sarDen)) {
             if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture)) {
                 IJK_GLES2_Renderer_drawArrays();
             } else {
-                ALOGE("[GL] Renderer_updateVetex failed\n");
+                ALOGE("[GL] Renderer_updateVertex failed\n");
             }
         } else {
-            ALOGE("[GL] Renderer_updateVetex failed\n");
+            ALOGE("[GL] Renderer_updateVertex failed\n");
         }
     }
 }
@@ -696,7 +696,7 @@ static bool _is_need_dispath_to_global(void)
                     ALOGE("[GL] Renderer_resetVao failed\n");
                 
                 if (!IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture))
-                    ALOGE("[GL] Renderer_updateVetex failed\n");
+                    ALOGE("[GL] Renderer_updateVertex failed\n");
                 
                 IJK_GLES2_Renderer_drawArrays();
             }

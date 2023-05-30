@@ -78,15 +78,15 @@ GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format);
 GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer,float brightness,float satutaion,float contrast);
 
-GLboolean IJK_GLES2_Renderer_updateVetex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
-GLboolean IJK_GLES2_Renderer_updateVetex2(IJK_GLES2_Renderer *renderer, int overlay_h, int overlay_w, int buffer_w, int sar_num, int sar_den);
+GLboolean IJK_GLES2_Renderer_updateVertex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+GLboolean IJK_GLES2_Renderer_updateVertex2(IJK_GLES2_Renderer *renderer, int overlay_h, int overlay_w, int buffer_w, int sar_num, int sar_den);
 GLboolean IJK_GLES2_Renderer_uploadTexture(IJK_GLES2_Renderer *renderer, void *texture);
 GLboolean IJK_GLES2_Renderer_resetVao(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_drawArrays(void);
 
 void* IJK_GLES2_Renderer_getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
 void IJK_GLES2_Renderer_beginDrawSubtitle(IJK_GLES2_Renderer *renderer);
-void IJK_GLES2_Renderer_updateSubtitleVetex(IJK_GLES2_Renderer *renderer, float width, float height);
+void IJK_GLES2_Renderer_updateSubtitleVertex(IJK_GLES2_Renderer *renderer, float width, float height);
 GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer, void *texture);
 void IJK_GLES2_Renderer_endDrawSubtitle(IJK_GLES2_Renderer *renderer);
 
