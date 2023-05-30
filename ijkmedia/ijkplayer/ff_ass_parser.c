@@ -10,18 +10,31 @@
 
 static const char * remove_ass_line_header(const char *ass)
 {
-    const char *tok = NULL;
-#define CHECK_TOK if (tok) { tok += 1; } else { return NULL; }
-    tok = strchr(ass, ':'); CHECK_TOK // skip event
-    tok = strchr(tok, ','); CHECK_TOK // skip layer
-    tok = strchr(tok, ','); CHECK_TOK // skip start_time
-    tok = strchr(tok, ','); CHECK_TOK // skip end_time
-    tok = strchr(tok, ','); CHECK_TOK // skip style
-    tok = strchr(tok, ','); CHECK_TOK // skip name
-    tok = strchr(tok, ','); CHECK_TOK // skip margin_l
-    tok = strchr(tok, ','); CHECK_TOK // skip margin_r
-    tok = strchr(tok, ','); CHECK_TOK // skip margin_v
-    tok = strchr(tok, ','); CHECK_TOK // skip effect
+/*
+ ffmpeg4 ass解析规则:
+ "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,这里是自由城\\N{\\fn微软雅黑\\fs52.5\\b0\\bord0}{\\i1}This is Free City.{\\i}{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了\r\n{\\i1}";
+ "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,{\an3\fnDFKai-SB\c&HFEFDFD&\3c&H070101&\pos(260,422)}{\fad(300,150)}字幕来源 X2&CASO";
+ 
+ ffmpeg5 ass解析规则变了：16,0,DNOP-CHS,NTP,0000,0000,0000,,{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了
+ 
+ */
+    const char *tok = ass;
+#define CHECK_TOK(sepretor) \
+do {               \
+    char *pos = strchr(tok, sepretor); \
+    if (pos) {tok = pos + 1;} \
+} while(0) \
+    
+    CHECK_TOK(':'); // skip event
+    CHECK_TOK(','); // skip layer
+    CHECK_TOK(','); // skip start_time
+    CHECK_TOK(','); // skip end_time
+    CHECK_TOK(','); // skip style
+    CHECK_TOK(','); // skip name
+    CHECK_TOK(','); // skip margin_l
+    CHECK_TOK(','); // skip margin_r
+    CHECK_TOK(','); // skip margin_v
+//    CHECK_TOK(','); // skip effect
 #undef CHECK_TOK
     return tok;
 }
@@ -110,9 +123,6 @@ static char * remove_ass_line_effect(const char *ass)
 //need free!
 char * parse_ass_subtitle(const char *ass)
 {
-//    ass = "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,这里是自由城\\N{\\fn微软雅黑\\fs52.5\\b0\\bord0}{\\i1}This is Free City.{\\i}{\\fad(150,150)}在不断衍生的黑暗之中  相互交换了\r\n{\\i1}";
-//    ass = "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,{\an3\fnDFKai-SB\c&HFEFDFD&\3c&H070101&\pos(260,422)}{\fad(300,150)}字幕来源 X2&CASO";
-    
     const char *text = remove_ass_line_header(ass);
     if (text && strlen(text) > 0) {
         char *buffer = remove_ass_line_effect(text);
