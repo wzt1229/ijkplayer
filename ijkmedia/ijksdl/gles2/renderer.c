@@ -214,7 +214,18 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format,
         return ijk_create_common_gl_Renderer(overlay_format,YUYV_SHADER,openglVer);
     }
     #endif
+    else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange || cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange) {
+        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P10_SHADER,openglVer);
+    }
+    else if (cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange || cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange) {
+        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P10_SHADER,openglVer);
+    }
+    else if (cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange) {
+        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P10_SHADER,openglVer);
+    }
     else {
+        ALOGE("create render failed,unknown format:%4s\n",(char *)&cv_format);
         return NULL;
     }
 }
@@ -223,9 +234,14 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format,
 #ifdef __APPLE__
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 overlay_format,Uint32 cv_format,int openglVer)
 {
-    IJK_GLES2_printString("Version", GL_VERSION);
-    IJK_GLES2_printString("Vendor", GL_VENDOR);
-    IJK_GLES2_printString("Renderer", GL_RENDERER);
+    static int flag = 0;
+    if (!flag) {
+        IJK_GLES2_printString("Version", GL_VERSION);
+        IJK_GLES2_printString("Vendor", GL_VENDOR);
+        IJK_GLES2_printString("Renderer", GL_RENDERER);
+        flag = 1;
+    }
+    
 //    GLint m_nMaxTextureSize;
 //    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_nMaxTextureSize);
 //    IJK_GLES2_printString("Extensions", GL_EXTENSIONS);
@@ -255,10 +271,8 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 overlay_format,Uint32 
     }
     
     IJK_GLES2_Renderer *renderer = NULL;
-    
-    if (SDL_FCC__VTB == overlay_format) {
-        renderer = _smart_create_renderer_appple(overlay_format, cv_format, openglVer);
-    } else if (SDL_FCC__FFVTB == overlay_format) {
+    //软硬解渲染统一
+    if (SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format) {
         renderer = _smart_create_renderer_appple(overlay_format, cv_format, openglVer);
     } else {
         return NULL;
@@ -268,12 +282,12 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 overlay_format,Uint32 
         renderer->format = overlay_format;
         
         glGenVertexArrays(1, &renderer->vao);
-        /// 创建顶点缓存对象
+        // 创建顶点缓存对象
         glGenBuffers(1, &renderer->vbo);
         
         glBindVertexArray(renderer->vao);
-        /// 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
-        /// 同时也指定了_VBO的对象类型是一个顶点数据对象
+        // 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
+        // 同时也指定了_VBO的对象类型是一个顶点数据对象
         glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
     }
     return renderer;
@@ -324,12 +338,12 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
         renderer->format = overlay->format;
         
         glGenVertexArrays(1, &renderer->vao);
-        /// 创建顶点缓存对象
+        // 创建顶点缓存对象
         glGenBuffers(1, &renderer->vbo);
         
         glBindVertexArray(renderer->vao);
-        /// 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
-        /// 同时也指定了_VBO的对象类型是一个顶点数据对象
+        // 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
+        // 同时也指定了_VBO的对象类型是一个顶点数据对象
         glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
     }
     return renderer;
@@ -587,19 +601,19 @@ static void IJK_GLES2_Renderer_Upload_Vbo_Data(IJK_GLES2_Renderer *renderer)
         renderer->texcoords[6],renderer->texcoords[7],
     };
     
-    /// 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
+    // 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
     glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
-    /// 将CPU数据发送到GPU,数据类型GL_ARRAY_BUFFER
-    /// GL_STATIC_DRAW 表示数据不会被修改,将其放置在GPU显存的更合适的位置,增加其读取速度
+    // 将CPU数据发送到GPU,数据类型GL_ARRAY_BUFFER
+    // GL_STATIC_DRAW 表示数据不会被修改,将其放置在GPU显存的更合适的位置,增加其读取速度
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadData), quadData, GL_DYNAMIC_DRAW);
     
-    /// 指定顶点着色器位置为0的参数的数据读取方式与数据类型
-    /// 第一个参数: 参数位置
-    /// 第二个参数: 一次读取数据
-    /// 第三个参数: 数据类型
-    /// 第四个参数: 是否归一化数据
-    /// 第五个参数: 间隔多少个数据读取下一次数据
-    /// 第六个参数: 指定读取第一个数据在顶点数据中的偏移量
+    // 指定顶点着色器位置为0的参数的数据读取方式与数据类型
+    // 第一个参数: 参数位置
+    // 第二个参数: 一次读取数据
+    // 第三个参数: 数据类型
+    // 第四个参数: 是否归一化数据
+    // 第五个参数: 间隔多少个数据读取下一次数据
+    // 第六个参数: 指定读取第一个数据在顶点数据中的偏移量
     glVertexAttribPointer(renderer->av4_position, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av4_position)");
     //

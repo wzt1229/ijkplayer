@@ -57,82 +57,7 @@
     #define OpenGL_RG_EXT           GL_RG_EXT
 #endif
 
-enum mp_imgfmt {
-    IMGFMT_NONE = 0,
-
-    // Offset to make confusing with ffmpeg formats harder
-    IMGFMT_START = 1000,
-
-    // Planar YUV formats
-    IMGFMT_444P,                // 1x1
-    IMGFMT_420P,                // 2x2
-
-    // Gray
-    IMGFMT_Y8,
-    IMGFMT_Y16,
-
-    // Packed YUV formats (components are byte-accessed)
-    IMGFMT_UYVY,                // U  Y0 V  Y1
-    // Packed YUV formats (components are byte-accessed)
-    IMGFMT_YUYV,                // Y0  U Y1 V
-    // Y plane + packed plane for chroma
-    IMGFMT_NV12,
-
-    // Like IMGFMT_NV12, but with 10 bits per component (and 6 bits of padding)
-    IMGFMT_P010,
-
-    // Like IMGFMT_NV12, but for 4:4:4
-    IMGFMT_NV24,
-
-    // RGB/BGR Formats
-
-    // Byte accessed (low address to high address)
-    IMGFMT_ARGB,
-    IMGFMT_BGRA,
-    IMGFMT_ABGR,
-    IMGFMT_RGBA,
-    IMGFMT_BGR24,               // 3 bytes per pixel
-    IMGFMT_RGB24,
-
-    // Like e.g. IMGFMT_ARGB, but has a padding byte instead of alpha
-    IMGFMT_0RGB,
-    IMGFMT_BGR0,
-    IMGFMT_0BGR,
-    IMGFMT_RGB0,
-
-    IMGFMT_RGB0_START = IMGFMT_0RGB,
-    IMGFMT_RGB0_END = IMGFMT_RGB0,
-
-    // Like IMGFMT_RGBA, but 2 bytes per component.
-    IMGFMT_RGBA64,
-
-    // Accessed with bit-shifts after endian-swapping the uint16_t pixel
-    IMGFMT_RGB565,              // 5r 6g 5b (MSB to LSB)
-
-    // Hardware accelerated formats. Plane data points to special data
-    // structures, instead of pixel data.
-    IMGFMT_VDPAU,           // VdpVideoSurface
-    IMGFMT_VDPAU_OUTPUT,    // VdpOutputSurface
-    IMGFMT_VAAPI,
-    // plane 0: ID3D11Texture2D
-    // plane 1: slice index casted to pointer
-    IMGFMT_D3D11,
-    IMGFMT_DXVA2,           // IDirect3DSurface9 (NV12/P010/P016)
-    IMGFMT_MMAL,            // MMAL_BUFFER_HEADER_T
-    IMGFMT_VIDEOTOOLBOX,    // CVPixelBufferRef
-    IMGFMT_MEDIACODEC,      // AVMediaCodecBuffer
-    IMGFMT_DRMPRIME,        // AVDRMFrameDescriptor
-    IMGFMT_CUDA,            // CUDA Buffer
-
-    // Generic pass-through of AV_PIX_FMT_*. Used for formats which don't have
-    // a corresponding IMGFMT_ value.
-    IMGFMT_AVPIXFMT_START,
-    IMGFMT_AVPIXFMT_END = IMGFMT_AVPIXFMT_START + 500,
-
-    IMGFMT_END
-};
-
-#define MP_MAX_PLANES 4
+#define MP_MAX_PLANES 3
 #define MP_ARRAY_SIZE(s) (sizeof(s) / sizeof((s)[0]))
 
 struct vt_gl_plane_format {
@@ -143,7 +68,6 @@ struct vt_gl_plane_format {
 
 struct vt_format {
     uint32_t cvpixfmt;
-    int imgfmt;
     int planes;
     struct vt_gl_plane_format gl[MP_MAX_PLANES];
 };
@@ -151,7 +75,6 @@ struct vt_format {
 static struct vt_format vt_formats[] = {
     {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
-        .imgfmt = IMGFMT_NV12,
         .planes = 2,
         .gl = {
 //           when use RED/RG,the fsh must use r and rg!
@@ -164,17 +87,63 @@ static struct vt_format vt_formats[] = {
     },
     {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange,
-        .imgfmt = IMGFMT_NV12,
         .planes = 2,
         .gl = {
             { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
             { GL_RG,  GL_UNSIGNED_BYTE, GL_RG }
         }
     },
+    {
+        .cvpixfmt = kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_SHORT, GL_RED },
+            { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_444YpCbCr10BiPlanarFullRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_SHORT, GL_RED },
+            { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_SHORT, GL_RED },
+            { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr10BiPlanarFullRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_SHORT, GL_RED },
+            { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_SHORT, GL_RED },
+            { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_420YpCbCr10BiPlanarFullRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_SHORT, GL_RED },
+            { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
+        }
+    },
 #if TARGET_OS_OSX
     {
         .cvpixfmt = kCVPixelFormatType_422YpCbCr8,
-        .imgfmt = IMGFMT_UYVY,
         .planes = 1,
         .gl = {
 #if USE_LEGACY_OPENGL
@@ -186,7 +155,6 @@ static struct vt_format vt_formats[] = {
     },
     {
         .cvpixfmt = kCVPixelFormatType_422YpCbCr8_yuvs,
-        .imgfmt = IMGFMT_YUYV,
         .planes = 1,
         .gl = {
 #if USE_LEGACY_OPENGL
@@ -198,7 +166,6 @@ static struct vt_format vt_formats[] = {
     },
     {
         .cvpixfmt = kCVPixelFormatType_422YpCbCr8FullRange,
-        .imgfmt = IMGFMT_YUYV,
         .planes = 1,
         .gl = {
 #if USE_LEGACY_OPENGL
@@ -211,7 +178,6 @@ static struct vt_format vt_formats[] = {
 #endif
     {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8Planar,
-        .imgfmt = IMGFMT_420P,
         .planes = 3,
         .gl = {
 #if TARGET_OS_OSX
@@ -227,7 +193,6 @@ static struct vt_format vt_formats[] = {
     },
     {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8PlanarFullRange,
-        .imgfmt = IMGFMT_420P,
         .planes = 3,
         .gl = {
 #if TARGET_OS_OSX
@@ -243,7 +208,6 @@ static struct vt_format vt_formats[] = {
     },
     {
         .cvpixfmt = kCVPixelFormatType_32BGRA,
-        .imgfmt = IMGFMT_BGR0,
         .planes = 1,
         .gl = {
         #if TARGET_OS_OSX
@@ -256,7 +220,6 @@ static struct vt_format vt_formats[] = {
     },
     {
         .cvpixfmt = kCVPixelFormatType_32ARGB,
-        .imgfmt = IMGFMT_ARGB,
         .planes = 1,
         .gl = {
 #if TARGET_OS_OSX
@@ -270,7 +233,6 @@ static struct vt_format vt_formats[] = {
     {
 //        creating IOSurface texture invalid numerical value: kCVPixelFormatType_24RGB
         .cvpixfmt = kCVPixelFormatType_24RGB,
-        .imgfmt = IMGFMT_RGB24,
         .planes = 1,
         .gl = {
 #if TARGET_OS_OSX

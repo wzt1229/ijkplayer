@@ -42,6 +42,7 @@ typedef enum : int {
     BGRX_SHADER,
     XRGB_SHADER,
     YUV_2P_SHADER,//for 420sp
+    YUV_2P10_SHADER,//for 422sp 10bit
     YUV_3P_SHADER,//for 420p
     UYVY_SHADER,  //for uyvy
     YUYV_SHADER   //for yuyv
@@ -58,6 +59,7 @@ static inline const int IJK_Sample_Count_For_Shader(IJK_SHADER_TYPE type)
             return 1;
         }
         case YUV_2P_SHADER:
+        case YUV_2P10_SHADER:
         {
             return 2;
         }

@@ -289,6 +289,7 @@ void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver
         }
             break;
         case YUV_2P_SHADER:
+        case YUV_2P10_SHADER:
         {
             buffer = apple_nv12_shader;
         }
