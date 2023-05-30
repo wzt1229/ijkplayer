@@ -11,16 +11,18 @@
 static const char * remove_ass_line_header(const char *ass)
 {
     const char *tok = NULL;
-    tok = strchr(ass, ':'); if (tok) tok += 1; // skip event
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip layer
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip start_time
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip end_time
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip style
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip name
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_l
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_r
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip margin_v
-    tok = strchr(tok, ','); if (tok) tok += 1; // skip effect
+#define CHECK_TOK if (tok) { tok += 1; } else { return NULL; }
+    tok = strchr(ass, ':'); CHECK_TOK // skip event
+    tok = strchr(tok, ','); CHECK_TOK // skip layer
+    tok = strchr(tok, ','); CHECK_TOK // skip start_time
+    tok = strchr(tok, ','); CHECK_TOK // skip end_time
+    tok = strchr(tok, ','); CHECK_TOK // skip style
+    tok = strchr(tok, ','); CHECK_TOK // skip name
+    tok = strchr(tok, ','); CHECK_TOK // skip margin_l
+    tok = strchr(tok, ','); CHECK_TOK // skip margin_r
+    tok = strchr(tok, ','); CHECK_TOK // skip margin_v
+    tok = strchr(tok, ','); CHECK_TOK // skip effect
+#undef CHECK_TOK
     return tok;
 }
 
