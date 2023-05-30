@@ -197,7 +197,10 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
     //full color range
     if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
         kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt ||
-        kCVPixelFormatType_422YpCbCr8FullRange == pixel_fmt) {
+        kCVPixelFormatType_422YpCbCr8FullRange == pixel_fmt ||
+        kCVPixelFormatType_420YpCbCr10BiPlanarFullRange == pixel_fmt ||
+        kCVPixelFormatType_422YpCbCr10BiPlanarFullRange == pixel_fmt ||
+        kCVPixelFormatType_444YpCbCr10BiPlanarFullRange == pixel_fmt) {
         glUniform1i(renderer->isFullRange, GL_TRUE);
     }
     
