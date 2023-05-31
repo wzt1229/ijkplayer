@@ -1467,11 +1467,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         #if defined(__ANDROID__)
             overlay_format = SDL_FCC_YV12;
         #elif defined(__APPLE__)
-        #if TARGET_OS_IOS
-            if (src_format == AV_PIX_FMT_YUV444P10LE) {
-                overlay_format = SDL_FCC_I444P10LE;
-            }  else
-        #else
+        #if TARGET_OS_OSX
             if (src_format == AV_PIX_FMT_UYVY422) {
                 overlay_format = SDL_FCC_UYVY;
             } else if (src_format == AV_PIX_FMT_YUYV422) {
@@ -1505,12 +1501,6 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                     }
                     break;
                 }
-        #if ! TARGET_OS_OSX
-                case SDL_FCC_I444P10LE: {
-                    dst_format = AV_PIX_FMT_YUV444P10LE;
-                    break;
-                }
-        #endif
                 case SDL_FCC_NV12: {
                     dst_format = AV_PIX_FMT_NV12;
                     break;
@@ -4366,11 +4356,6 @@ void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
         case SDL_FCC_0RGB:
             ffp->overlay_format = chroma_fourcc;
             break;
-#ifdef __APPLE__
-        case SDL_FCC_I444P10LE:
-            ffp->overlay_format = chroma_fourcc;
-            break;
-#endif
         default:
             av_log(ffp, AV_LOG_ERROR, "ffp_set_overlay_format: unknown chroma fourcc: %d\n", chroma_fourcc);
             break;

@@ -328,7 +328,6 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
         case SDL_FCC_YV12:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
         case SDL_FCC_I420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
         case SDL_FCC_J420:      renderer = IJK_GLES2_Renderer_create_yuv420p(); break;
-        case SDL_FCC_I444P10LE: renderer = IJK_GLES2_Renderer_create_yuv444p10le(); break;
         default:
             ALOGE("[GLES2] unknown format %4s(%d)\n", (char *)&overlay->format, overlay->format);
             return NULL;
