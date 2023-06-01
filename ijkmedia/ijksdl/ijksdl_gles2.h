@@ -64,7 +64,7 @@ GLuint IJK_GLES2_loadShader(GLenum shader_type, const char *shader_source);
 #define IJK_GLES2_MAX_PLANE 3
 typedef struct IJK_GLES2_Renderer IJK_GLES2_Renderer;
 #ifdef __APPLE__
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 overlay_format,Uint32 cv_format,int openglVer);
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 cv_format,int openglVer);
 #else
 //openglVer greater than 330 use morden opengl, otherwise use legacy opengl
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openglVer);

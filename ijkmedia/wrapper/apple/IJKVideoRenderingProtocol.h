@@ -58,7 +58,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 @property(nonatomic) int w;
 @property(nonatomic) int h;
 
-@property(nonatomic) UInt32 format;
 @property(nonatomic) int planes;
 @property(nonatomic) UInt16 *pitches;
 @property(nonatomic) UInt8 **pixels;

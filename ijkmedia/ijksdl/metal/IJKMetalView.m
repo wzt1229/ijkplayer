@@ -631,8 +631,6 @@ typedef CGRect NSRect;
         return NO;
     }
     
-    NSAssert(SDL_FCC__VTB == attach.format || SDL_FCC__FFVTB == attach.format, @"wtf?");
-    
     //generate current subtitle.
     [self generateSub:attach];
     

@@ -189,29 +189,29 @@ fail:
 }
 
 #ifdef __APPLE__
-static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format, const Uint32 cv_format, int openglVer)
+static IJK_GLES2_Renderer * _smart_create_renderer_appple(const Uint32 cv_format, int openglVer)
 {
     if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
         ALOGI("create render yuv420sp\n");
-        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P_SHADER,openglVer);
+        return ijk_create_common_gl_Renderer(YUV_2P_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_32BGRA) {
         ALOGI("create render bgrx\n");
-        return ijk_create_common_gl_Renderer(overlay_format,BGRX_SHADER,openglVer);
+        return ijk_create_common_gl_Renderer(BGRX_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_32ARGB) {
         ALOGI("create render xrgb\n");
-        return ijk_create_common_gl_Renderer(overlay_format,XRGB_SHADER,openglVer);
+        return ijk_create_common_gl_Renderer(XRGB_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
                cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
         ALOGI("create render yuv420p\n");
-        return ijk_create_common_gl_Renderer(overlay_format,YUV_3P_SHADER,openglVer);
+        return ijk_create_common_gl_Renderer(YUV_3P_SHADER,openglVer);
     }
     #if TARGET_OS_OSX
     else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
         ALOGI("create render uyvy\n");
-        return ijk_create_common_gl_Renderer(overlay_format,UYVY_SHADER,openglVer);
+        return ijk_create_common_gl_Renderer(UYVY_SHADER,openglVer);
     } else if (cv_format == kCVPixelFormatType_422YpCbCr8_yuvs || cv_format == kCVPixelFormatType_422YpCbCr8FullRange) {
         ALOGI("create render yuyv\n");
-        return ijk_create_common_gl_Renderer(overlay_format,YUYV_SHADER,openglVer);
+        return ijk_create_common_gl_Renderer(YUYV_SHADER,openglVer);
     }
     #endif
     else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange ||
@@ -229,9 +229,9 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format,
 //        }
 #warning TODO here
         if (cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange) {
-            return ijk_create_common_gl_Renderer(overlay_format,YUV_2P10_SHADER,openglVer);
+            return ijk_create_common_gl_Renderer(YUV_2P10_SHADER,openglVer);
         }
-        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P_SHADER,openglVer);
+        return ijk_create_common_gl_Renderer(YUV_2P_SHADER,openglVer);
     } else {
         ALOGE("create render failed,unknown format:%4s\n",(char *)&cv_format);
         return NULL;
@@ -240,7 +240,7 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format,
 #endif
 
 #ifdef __APPLE__
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 overlay_format,Uint32 cv_format,int openglVer)
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 cv_format,int openglVer)
 {
     static int flag = 0;
     if (!flag) {
@@ -277,18 +277,11 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 overlay_format,Uint32 
         }
 #endif
     }
-    
-    IJK_GLES2_Renderer *renderer = NULL;
     //软硬解渲染统一
-    if (SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format) {
-        renderer = _smart_create_renderer_appple(overlay_format, cv_format, openglVer);
-    } else {
-        return NULL;
-    }
+    IJK_GLES2_Renderer *renderer = _smart_create_renderer_appple(cv_format, openglVer);
 
     if (renderer) {
-        renderer->format = overlay_format;
-        
+        renderer->format = cv_format;
         glGenVertexArrays(1, &renderer->vao);
         // 创建顶点缓存对象
         glGenBuffers(1, &renderer->vbo);

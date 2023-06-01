@@ -275,9 +275,8 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
     return uploaded;
 }
 
-IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(Uint32 overlay_format,IJK_SHADER_TYPE type,int openglVer)
+IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer)
 {
-    assert(overlay_format == SDL_FCC__VTB || overlay_format == SDL_FCC__FFVTB);
     char shader_buffer[4096] = { '\0' };
     
     ijk_get_apple_common_fragment_shader(type,shader_buffer,openglVer);
@@ -326,15 +325,12 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(Uint32 overlay_format,IJK_SHAD
     renderer->opaque->isSubtitle = isSubtitle;
     
 #if TARGET_OS_OSX
-    if (overlay_format == SDL_FCC__VTB || overlay_format == SDL_FCC__FFVTB) {
-        
-        for (int i = 0; i < samples; i++) {
-            char name[20] = "textureDimension";
-            name[strlen(name)] = (char)i + '0';
-            GLint textureDimension = glGetUniformLocation(renderer->program, name);
-            assert(textureDimension >= 0);
-            renderer->opaque->textureDimension[i] = textureDimension;
-        }
+    for (int i = 0; i < samples; i++) {
+        char name[20] = "textureDimension";
+        name[strlen(name)] = (char)i + '0';
+        GLint textureDimension = glGetUniformLocation(renderer->program, name);
+        assert(textureDimension >= 0);
+        renderer->opaque->textureDimension[i] = textureDimension;
     }
 #endif
     

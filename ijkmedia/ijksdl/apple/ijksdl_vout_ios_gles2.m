@@ -137,13 +137,16 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         return -3;
     }
 
+    if (SDL_FCC__VTB != overlay->format && SDL_FCC__FFVTB != overlay->format) {
+        ALOGE("vout_display_overlay_l: invalid format:%d\n",overlay->format);
+        return -4;
+    }
+    
     CVPixelBufferRef videoPic = SDL_Overlay_getCVPixelBufferRef(overlay);
     if (videoPic) {
         IJKOverlayAttach *attach = [[IJKOverlayAttach alloc] init];
-
         attach.w = overlay->w;
         attach.h = overlay->h;
-        attach.format = overlay->format;
         attach.pitches = overlay->pitches;
         attach.sarNum = overlay->sar_num;
         attach.sarDen = overlay->sar_den;
@@ -155,7 +158,7 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         return [gl_view displayAttach:attach];
     } else {
         ALOGE("vout_display_overlay_l: no video picture.\n");
-        return -4;
+        return -5;
     }
 }
 

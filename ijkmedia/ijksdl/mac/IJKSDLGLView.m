@@ -325,8 +325,9 @@ static bool _is_need_dispath_to_global(void)
     if (attach == nil)
         return _renderer != nil;
     
+    Uint32 cv_format = CVPixelBufferGetPixelFormatType(attach.videoPicture);
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
-        !IJK_GLES2_Renderer_isFormat(_renderer, attach.format)) {
+        !IJK_GLES2_Renderer_isFormat(_renderer, cv_format)) {
         
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
@@ -334,8 +335,7 @@ static bool _is_need_dispath_to_global(void)
     #if USE_LEGACY_OPENGL
         openglVer = 120;
     #endif
-        Uint32 cv_format = CVPixelBufferGetPixelFormatType(attach.videoPicture);
-        _renderer = IJK_GLES2_Renderer_createApple(attach.format, cv_format, openglVer);
+        _renderer = IJK_GLES2_Renderer_createApple(cv_format, openglVer);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
@@ -572,8 +572,6 @@ static bool _is_need_dispath_to_global(void)
     }
     
     //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
-    Uint32 overlay_format = attach.format;
-    NSAssert(SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format, @"wtf?");
     
     IJKSDLSubtitle *sub = attach.sub;
     //generate current subtitle.
