@@ -214,17 +214,25 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(Uint32 overlay_format,
         return ijk_create_common_gl_Renderer(overlay_format,YUYV_SHADER,openglVer);
     }
     #endif
-    else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange || cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange) {
-        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P10_SHADER,openglVer);
-    }
-    else if (cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange || cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange) {
-        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P10_SHADER,openglVer);
-    }
-    else if (cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange) {
-        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P10_SHADER,openglVer);
-    }
-    else {
+    else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange ||
+             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
+             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
+             ) {
+        
+//        CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
+//        if (color_attachments == nil ||
+//            CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
+//
+//        }
+#warning TODO here
+        if (cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange) {
+            return ijk_create_common_gl_Renderer(overlay_format,YUV_2P10_SHADER,openglVer);
+        }
+        return ijk_create_common_gl_Renderer(overlay_format,YUV_2P_SHADER,openglVer);
+    } else {
         ALOGE("create render failed,unknown format:%4s\n",(char *)&cv_format);
         return NULL;
     }
@@ -875,14 +883,14 @@ GLboolean IJK_GLES2_Renderer_resetVao(IJK_GLES2_Renderer *renderer)
 /*
  * upload video texture
  */
-GLboolean IJK_GLES2_Renderer_uploadTexture(IJK_GLES2_Renderer *renderer, void *texture)
+GLboolean IJK_GLES2_Renderer_uploadTexture(IJK_GLES2_Renderer *renderer, void *picture)
 {
     if (!renderer || !renderer->func_uploadTexture)
         return GL_FALSE;
     
     assert(!renderer->drawingSubtitle);
     
-    if (!renderer->func_uploadTexture(renderer, texture))
+    if (!renderer->func_uploadTexture(renderer, picture))
         return GL_FALSE;
     
     return GL_TRUE;

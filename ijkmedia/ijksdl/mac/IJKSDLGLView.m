@@ -286,6 +286,7 @@ static bool _is_need_dispath_to_global(void)
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
     [self setWantsBestResolutionOpenGLSurface:YES];
+//    [self setWantsExtendedDynamicRangeOpenGLSurface:YES];
     
     ///Fix the default red background color on the Intel platform
     [[self openGLContext] makeCurrentContext];

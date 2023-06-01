@@ -21,10 +21,163 @@
 
 #include "ijksdl/gles2/internal.h"
 
-//only macOS use sampler2DRect,need texture dimensions
+//only macOS use sampler2DRect,need texture dimensions                                                     );
+static const char g_shader_hdr[] = IJK_GLES_STRING(
+    varying vec2 vv2_Texcoord;
+    uniform sampler2DRect us2_Sampler0;
+    uniform sampler2DRect us2_Sampler1;
+    uniform vec2 textureDimension0;
+    uniform vec2 textureDimension1;
+    uniform mat3 um3_ColorConversion;
+    //   uniform mediump int isSt2084;
+    //   uniform mediump int isAribB67;
+
+    uniform int isSubtitle;
+    uniform int isFullRange;
+                           
+    #define FFMAX(a,b) ((a) > (b) ? (a) : (b))
+    #define FFMAX3(a,b,c) FFMAX(FFMAX(a,b),c)
+
+    // [arib b67 eotf
+    const float ARIB_B67_A = 0.17883277;
+    const float ARIB_B67_B = 0.28466892;
+    const float ARIB_B67_C = 0.55991073;
+    float arib_b67_inverse_oetf(float x)
+    {
+        // Prevent negative pixels expanding into positive values.
+        x = max(x, 0.0);
+        if (x <= 0.5)
+        x = (x * x) * (1.0 / 3.0);
+        else
+        x = (exp((x - ARIB_B67_C) / ARIB_B67_A) + ARIB_B67_B) / 12.0;
+        return x;
+    }
+    float ootf_1_2(float x)
+    {
+        return x < 0.0 ? x : pow(x, 1.2);
+    }
+    float arib_b67_eotf(float x)
+    {
+        return ootf_1_2(arib_b67_inverse_oetf(x));
+    }
+    // arib b67 eotf]
+
+    // [st 2084 eotf
+    float ST2084_M1 = 0.1593017578125;
+    const float ST2084_M2 = 78.84375;
+    const float ST2084_C1 = 0.8359375;
+    const float ST2084_C2 = 18.8515625;
+    const float ST2084_C3 = 18.6875;
+    float FLT_MIN = 1.17549435082228750797e-38;
+    float st_2084_eotf(float x)
+    {
+        float xpow = pow(x, float(1.0 / ST2084_M2));
+        float num = max(xpow - ST2084_C1, 0.0);
+        float den = max(ST2084_C2 - ST2084_C3 * xpow, FLT_MIN);
+        return pow(num/den, 1.0 / ST2084_M1);
+    }
+    // st 2084 eotf]
+
+    // [tonemap hable
+    float hableF(float inVal)
+    {
+        //fix xcode error:Too many arguments provided to function-like macro invocation
+        float a = 0.15;
+        float b = 0.50;
+        float c = 0.10;
+        float d = 0.20;
+        float e = 0.02;
+        float f = 0.30;
+        return (inVal * (inVal * a + b * c) + d * e) / (inVal * (inVal * a + b) + d * f) - e / f;
+    }
+    // tonemap hable]
+
+    // [bt709
+    float rec_1886_inverse_eotf(float x)
+    {
+        return x < 0.0 ? 0.0 : pow(x, 1.0 / 2.4);
+    }
+
+    float rec_1886_eotf(float x)
+    {
+        return x < 0.0 ? 0.0 : pow(x, 2.4);
+    }
+    // bt709]
+                      
+    void main() {
+       
+        if (isSubtitle == 1) {
+        #if TARGET_OS_OSX
+            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+        #else
+            fragColor = texture2DRect(us2_Sampler0, vv2_Texcoord);
+        #endif
+            return;
+        }
+        // 0、先把 [0.0,1.0] 范围的 10bit YUV 处理为 [0.0,1.0] 范围的 10bit RGB
+        vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+        vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
+        //OpenGL会在将这些值存入帧缓冲前主动将值处理为0.0到1.0之间
+        float x = texture2DRect(us2_Sampler0, recTexCoord0).r;
+        vec2 yz = texture2DRect(us2_Sampler1, recTexCoord1).rg;
+        //先还原为10bit范围的YUV
+        vec3 yuv = vec3(x,yz) * 1024;
+        
+        vec3 offset;
+        if (isFullRange == 1) {
+            offset = vec3(0.0, -512, -512);
+        } else {
+            offset = vec3(-64, -512, -512);
+        }
+        yuv += offset;
+        //使用 BT.2020 矩阵转为 10bit RGB，然后标准化为0.0到1.0之间
+        vec3 rgb10bit = um3_ColorConversion * yuv / 1024;
+        
+        // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
+        float peak_luminance = 50.0;
+        vec3 myFragColor;
+
+        int isSt2084 = 1;
+        int isAribB67 = 0;
+
+        if (isSt2084 == 1) {
+           float to_linear_scale = 10000.0 / peak_luminance;
+           myFragColor = to_linear_scale * vec3(st_2084_eotf(rgb10bit.r), st_2084_eotf(rgb10bit.g), st_2084_eotf(rgb10bit.b));
+        } else if (isAribB67 == 1) {
+           float to_linear_scale = 1000.0 / peak_luminance;
+           myFragColor = to_linear_scale * vec3(arib_b67_eotf(rgb10bit.r), arib_b67_eotf(rgb10bit.g), arib_b67_eotf(rgb10bit.b));
+        } else {
+           myFragColor = vec3(rec_1886_eotf(rgb10bit.r), rec_1886_eotf(rgb10bit.g), rec_1886_eotf(rgb10bit.b));
+        }
+
+        // 2、HDR 线性光信号做颜色空间转换（Color Space Converting）
+        // color-primaries REC_2020 to REC_709
+        mat3 rgb2xyz2020 = mat3(0.6370, 0.1446, 0.1689,
+                               0.2627, 0.6780, 0.0593,
+                               0.0000, 0.0281, 1.0610);
+        mat3 xyz2rgb709 = mat3(3.2410, -1.5374, -0.4986,
+                              -0.9692, 1.8760, 0.0416,
+                              0.0556, -0.2040, 1.0570);
+        myFragColor *= rgb2xyz2020 * xyz2rgb709;
+
+        // 3、HDR 线性光信号色调映射为 SDR 线性光信号（Tone Mapping）
+        float sig = FFMAX(FFMAX3(myFragColor.r, myFragColor.g, myFragColor.b), 1e-6);
+        float sig_orig = sig;
+        float peak = 10.0;
+        sig = hableF(sig) / hableF(peak);
+        myFragColor *= sig / sig_orig;
+
+        // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
+        myFragColor = vec3(rec_1886_inverse_eotf(myFragColor.r), rec_1886_inverse_eotf(myFragColor.g), rec_1886_inverse_eotf(myFragColor.b));
+        
+        fragColor = vec4(myFragColor, 1.0);
+    }
+
+);
 
 //for 420sp
-static const char apple_nv12_shader[] = IJK_GLES_STRING(
+static const char g_shader_nv12[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform mat3 um3_ColorConversion;
     uniform vec3 um3_rgbAdjustment;
@@ -289,9 +442,13 @@ void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver
         }
             break;
         case YUV_2P_SHADER:
+        {
+            buffer = g_shader_nv12;
+        }
+            break;
         case YUV_2P10_SHADER:
         {
-            buffer = apple_nv12_shader;
+            buffer = g_shader_hdr;
         }
             break;
         case YUV_3P_SHADER:

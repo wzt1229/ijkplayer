@@ -165,12 +165,12 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
     return GL_TRUE;
 }
 
-static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
+static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *picture)
 {
-    if (!texture) {
+    if (!picture) {
         return GL_FALSE;
     }
-    CVPixelBufferRef pixel_buffer = (CVPixelBufferRef)texture;
+    CVPixelBufferRef pixel_buffer = (CVPixelBufferRef)picture;
     
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
     if (!opaque) {
@@ -185,10 +185,30 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *texture)
             glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
         } else if (CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
             glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt601());
+        } else if (CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
+            glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt2020());
         } else {
             glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
         }
 
+//        float headroom = 1.0;
+//    #if TARGET_OS_IOS
+//        UIScreen *screen = self.window.screen;
+//        if (@available(iOS 16.0, *)) {
+//            headroom = screen?.currentEDRHeadroom ?? 1.0
+//        }
+//    #else
+//        NSScreen *screen = [NSScreen mainScreen];
+//        if (screen) {
+//            headroom = screen.maximumExtendedDynamicRangeColorComponentValue;
+//        }
+//    #endif
+        
+        CFTypeRef func_key = CVBufferGetAttachment(pixel_buffer, kCVImageBufferTransferFunctionKey, NULL);
+        if (func_key == nil ||
+            CFStringCompare(func_key, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo) {
+            
+        }
         opaque->color_attachments = CFRetain(color_attachments);
     }
     
@@ -258,7 +278,7 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
 IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(Uint32 overlay_format,IJK_SHADER_TYPE type,int openglVer)
 {
     assert(overlay_format == SDL_FCC__VTB || overlay_format == SDL_FCC__FFVTB);
-    char shader_buffer[2048] = { '\0' };
+    char shader_buffer[4096] = { '\0' };
     
     ijk_get_apple_common_fragment_shader(type,shader_buffer,openglVer);
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(shader_buffer,openglVer);

@@ -97,7 +97,7 @@ typedef struct IJK_GLES2_Renderer
     
     GLboolean (*func_use)(IJK_GLES2_Renderer *renderer);
     GLsizei   (*func_getBufferWidth)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
-    GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, void *texture);
+    GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, void *picture);
     GLvoid    (*func_useSubtitle)(IJK_GLES2_Renderer *renderer,GLboolean subtitle);
     GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer,void* subtitle);
     void*     (*func_getVideoImage)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
@@ -165,6 +165,7 @@ void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver
 
 #endif
 
+const GLfloat *IJK_GLES2_getColorMatrix_bt2020(void);
 const GLfloat *IJK_GLES2_getColorMatrix_bt709(void);
 const GLfloat *IJK_GLES2_getColorMatrix_bt601(void);
 

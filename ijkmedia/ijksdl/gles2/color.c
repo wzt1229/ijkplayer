@@ -21,6 +21,20 @@
 
 #include "internal.h"
 
+//https://github.com/lemenkov/libyuv/blob/6900494d90ae095d44405cd4cc3f346971fa69c9/source/row_common.cc#L2
+
+//Full Range YUV to RGB reference
+const GLfloat *IJK_GLES2_getColorMatrix_bt2020(void)
+{
+    // BT.2020, which is the standard for HDR.
+    static const GLfloat g_bt2020[] = {
+        1.164384, 1.164384 , 1.164384,
+        0.0     , -0.187326, 2.14177,
+        1.67867 , -0.65042 , 0.0
+    };
+    return g_bt2020;
+}
+
 const GLfloat *IJK_GLES2_getColorMatrix_bt709(void)
 {
     // BT.709, which is the standard for HDTV.
@@ -34,9 +48,10 @@ const GLfloat *IJK_GLES2_getColorMatrix_bt709(void)
 
 const GLfloat *IJK_GLES2_getColorMatrix_bt601(void)
 {
+    // BT.601, which is the standard for HDTV.
     static const GLfloat g_bt601[] = {
         1.164,  1.164, 1.164,
-        0.0,   -0.392, 2.017,
+        0.0,   -0.391, 2.018,
         1.596, -0.813, 0.0,
     };
     return g_bt601;
