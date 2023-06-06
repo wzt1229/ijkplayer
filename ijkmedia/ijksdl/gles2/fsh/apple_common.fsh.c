@@ -441,12 +441,12 @@ void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver
             buffer = g_shader_rect_xrgb_1;
         }
             break;
-        case YUV_2P_SHADER:
+        case YUV_2P_SDR_SHADER:
         {
             buffer = g_shader_nv12;
         }
             break;
-        case YUV_2P10_SHADER:
+        case YUV_2P_HDR_SHADER:
         {
             buffer = g_shader_hdr;
         }

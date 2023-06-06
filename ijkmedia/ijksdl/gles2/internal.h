@@ -29,6 +29,7 @@
 #include "ijksdl/ijksdl_gles2.h"
 #include "ijksdl/ijksdl_vout.h"
 #include "math_util.h"
+#include "color_matrix.h"
 
 #define IJK_GLES_STRINGIZE(x)   #x
 #define IJK_GLES_STRINGIZE2(x)  IJK_GLES_STRINGIZE(x)
@@ -41,8 +42,8 @@ typedef enum : int {
     NONE_SHADER,
     BGRX_SHADER,
     XRGB_SHADER,
-    YUV_2P_SHADER,//for 420sp
-    YUV_2P10_SHADER,//for 422sp 10bit
+    YUV_2P_SDR_SHADER,//for 420sp
+    YUV_2P_HDR_SHADER,//for sp 10bit hdr
     YUV_3P_SHADER,//for 420p
     UYVY_SHADER,  //for uyvy
     YUYV_SHADER   //for yuyv
@@ -58,8 +59,8 @@ static inline const int IJK_Sample_Count_For_Shader(IJK_SHADER_TYPE type)
         {
             return 1;
         }
-        case YUV_2P_SHADER:
-        case YUV_2P10_SHADER:
+        case YUV_2P_SDR_SHADER:
+        case YUV_2P_HDR_SHADER:
         {
             return 2;
         }
@@ -92,7 +93,9 @@ typedef struct IJK_GLES2_Renderer
 
     GLint us2_sampler[IJK_GLES2_MAX_PLANE];
     GLint um3_color_conversion;
-    GLint isFullRange;
+    YUV_2_RGB_Color_Matrix colorMatrix;
+    GLboolean isFullRange;
+    GLint fullRangeUM;
     GLint um3_rgb_adjustment;
     
     GLboolean (*func_use)(IJK_GLES2_Renderer *renderer);
@@ -160,7 +163,7 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
 
 #else
 
-IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer);
+IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer,YUV_2_RGB_Color_Matrix colorMatrix,int fullRange);
 void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver);
 
 #endif

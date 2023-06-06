@@ -56,7 +56,6 @@ typedef struct _Frame_Size
 
 typedef struct IJK_GLES2_Renderer_Opaque
 {
-    CFTypeRef             color_attachments;
     GLint                 isSubtitle;
     int samples;
 #if TARGET_OS_OSX
@@ -176,56 +175,17 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *picture)
     if (!opaque) {
         return GL_FALSE;
     }
+    
+    if (renderer->colorMatrix != YUV_2_RGB_Color_Matrix_None) {
+        glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix(renderer->colorMatrix));
+    }
+    
+    if (renderer->fullRangeUM != -1) {
+        glUniform1i(renderer->fullRangeUM, renderer->isFullRange);
+    }
+    
     CVPixelBufferRetain(pixel_buffer);
-    if (!opaque->color_attachments) {
-        CFTypeRef color_attachments = CVBufferGetAttachment(pixel_buffer, kCVImageBufferYCbCrMatrixKey, NULL);
-        if (color_attachments == nil ||
-            CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
-            color_attachments = kCVImageBufferYCbCrMatrix_ITU_R_709_2;
-            glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
-        } else if (CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-            glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt601());
-        } else if (CFStringCompare(color_attachments, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-            glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt2020());
-        } else {
-            glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix_bt709());
-        }
-
-//        float headroom = 1.0;
-//    #if TARGET_OS_IOS
-//        UIScreen *screen = self.window.screen;
-//        if (@available(iOS 16.0, *)) {
-//            headroom = screen?.currentEDRHeadroom ?? 1.0
-//        }
-//    #else
-//        NSScreen *screen = [NSScreen mainScreen];
-//        if (screen) {
-//            headroom = screen.maximumExtendedDynamicRangeColorComponentValue;
-//        }
-//    #endif
-        
-        CFTypeRef func_key = CVBufferGetAttachment(pixel_buffer, kCVImageBufferTransferFunctionKey, NULL);
-        if (func_key == nil ||
-            CFStringCompare(func_key, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo) {
-            
-        }
-        opaque->color_attachments = CFRetain(color_attachments);
-    }
-    
-    int pixel_fmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
-    
-    //full color range
-    if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == pixel_fmt ||
-        kCVPixelFormatType_420YpCbCr8PlanarFullRange == pixel_fmt ||
-        kCVPixelFormatType_422YpCbCr8FullRange == pixel_fmt ||
-        kCVPixelFormatType_420YpCbCr10BiPlanarFullRange == pixel_fmt ||
-        kCVPixelFormatType_422YpCbCr10BiPlanarFullRange == pixel_fmt ||
-        kCVPixelFormatType_444YpCbCr10BiPlanarFullRange == pixel_fmt) {
-        glUniform1i(renderer->isFullRange, GL_TRUE);
-    }
-    
     GLboolean uploaded = upload_texture_use_IOSurface(pixel_buffer, renderer);
-    
     CVPixelBufferRelease(pixel_buffer);
     return uploaded;
 }
@@ -241,13 +201,6 @@ static GLvoid destroy(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer || !renderer->opaque)
         return;
-    
-    IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
-
-    if (opaque->color_attachments != nil) {
-        CFRelease(opaque->color_attachments);
-        opaque->color_attachments = nil;
-    }
     free(renderer->opaque);
     renderer->opaque = nil;
 }
@@ -275,7 +228,7 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
     return uploaded;
 }
 
-IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer)
+IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer,YUV_2_RGB_Color_Matrix colorMatrix,int fullRange)
 {
     char shader_buffer[4096] = { '\0' };
     
@@ -285,6 +238,8 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openg
     if (!renderer)
         goto fail;
     
+    renderer->colorMatrix = colorMatrix;
+    renderer->isFullRange = fullRange;
     const int samples = IJK_Sample_Count_For_Shader(type);
     assert(samples);
     
@@ -296,7 +251,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openg
     
     //yuv to rgb
     renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion");
-    renderer->isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
+    renderer->fullRangeUM = glGetUniformLocation(renderer->program, "isFullRange");
     renderer->um3_rgb_adjustment = glGetUniformLocation(renderer->program, "um3_rgbAdjustment"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_rgb_adjustmentVector)");
     
     renderer->func_use            = use;
@@ -311,18 +266,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openg
         goto fail;
     bzero(renderer->opaque, sizeof(IJK_GLES2_Renderer_Opaque));
     renderer->opaque->samples = samples;
-    renderer->opaque->isSubtitle  = -1;
-    renderer->isFullRange = -1;
-
-    if (samples > 1) {
-        GLint isFullRange = glGetUniformLocation(renderer->program, "isFullRange");
-        assert(isFullRange >= 0);
-        renderer->isFullRange = isFullRange;
-    }
-    
-    GLint isSubtitle = glGetUniformLocation(renderer->program, "isSubtitle");
-    assert(isSubtitle >= 0);
-    renderer->opaque->isSubtitle = isSubtitle;
+    renderer->opaque->isSubtitle = glGetUniformLocation(renderer->program, "isSubtitle");
     
 #if TARGET_OS_OSX
     for (int i = 0; i < samples; i++) {

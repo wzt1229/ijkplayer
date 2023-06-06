@@ -20,8 +20,7 @@
  */
 
 #include "internal.h"
-
-//https://github.com/lemenkov/libyuv/blob/6900494d90ae095d44405cd4cc3f346971fa69c9/source/row_common.cc#L2
+#include "color_matrix.h"
 
 //Full Range YUV to RGB reference
 const GLfloat *IJK_GLES2_getColorMatrix_bt2020(void)
@@ -55,4 +54,18 @@ const GLfloat *IJK_GLES2_getColorMatrix_bt601(void)
         1.596, -0.813, 0.0,
     };
     return g_bt601;
+}
+
+const GLfloat *IJK_GLES2_getColorMatrix(YUV_2_RGB_Color_Matrix type)
+{
+    switch (type) {
+        case YUV_2_RGB_Color_Matrix_None:
+            return NULL;
+        case YUV_2_RGB_Color_Matrix_BT601:
+            return IJK_GLES2_getColorMatrix_bt601();
+        case YUV_2_RGB_Color_Matrix_BT709:
+            return IJK_GLES2_getColorMatrix_bt709();
+        case YUV_2_RGB_Color_Matrix_BT2020:
+            return IJK_GLES2_getColorMatrix_bt2020();
+    }
 }

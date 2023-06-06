@@ -326,6 +326,7 @@ static bool _is_need_dispath_to_global(void)
         return _renderer != nil;
     
     Uint32 cv_format = CVPixelBufferGetPixelFormatType(attach.videoPicture);
+    
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
         !IJK_GLES2_Renderer_isFormat(_renderer, cv_format)) {
         
@@ -335,7 +336,9 @@ static bool _is_need_dispath_to_global(void)
     #if USE_LEGACY_OPENGL
         openglVer = 120;
     #endif
-        _renderer = IJK_GLES2_Renderer_createApple(cv_format, openglVer);
+        
+        CFStringRef colorMatrix = CVBufferGetAttachment(attach.videoPicture, kCVImageBufferYCbCrMatrixKey, NULL);
+        _renderer = IJK_GLES2_Renderer_createApple(cv_format, openglVer, colorMatrix);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
