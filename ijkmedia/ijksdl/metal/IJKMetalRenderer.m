@@ -1,21 +1,26 @@
 //
-//  IJKMetalBasePipeline.m
+//  IJKMetalRenderer.m
 //  FFmpegTutorial-macOS
 //
 //  Created by qianlongxu on 2022/11/23.
 //  Copyright © 2022 Matt Reach's Awesome FFmpeg Tutotial. All rights reserved.
 //
 
-#import "IJKMetalBasePipeline.h"
+#import "IJKMetalRenderer.h"
 #import "IJKMathUtilities.h"
+#import "IJKMetalPixelTypes.h"
+#include "../ijksdl_log.h"
 
-@interface IJKMetalBasePipeline()
+@interface IJKMetalRenderer()
 {
     vector_float4 _colorAdjustment;
     // The Metal texture object to reference with an argument buffer.
     id<MTLTexture> _subTexture;
     id<MTLDevice> _device;
     MTLPixelFormat _colorPixelFormat;
+    BOOL _fullRange;
+    IJKConvertMatrix _colorMatrixType;
+    NSString* _fragmentName;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
@@ -37,13 +42,7 @@
 @property (nonatomic, strong) NSLock *pilelineLock;
 @end
 
-@implementation IJKMetalBasePipeline
-
-+ (NSString *)fragmentFuctionName
-{
-    NSAssert(NO, @"subclass must be override!");
-    return @"";
-}
+@implementation IJKMetalRenderer
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat
@@ -135,15 +134,106 @@
     return matrix;
 }
 
-- (void)createRenderPipelineIfNeed
+- (BOOL)prepareMetaWithCVPixelbuffer:(CVPixelBufferRef)pixelBuffer
+{
+    OSType cv_format = CVPixelBufferGetPixelFormatType(pixelBuffer);
+    CFStringRef colorMatrix = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
+    NSString* shaderName;
+    BOOL needConvertColor = YES;
+    if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+        ALOGI("create render yuv420sp\n");
+        shaderName = @"nv12FragmentShader";
+    } else if (cv_format == kCVPixelFormatType_32BGRA) {
+        ALOGI("create render bgrx\n");
+        needConvertColor = NO;
+        shaderName = @"bgraFragmentShader";
+    } else if (cv_format == kCVPixelFormatType_32ARGB) {
+        ALOGI("create render xrgb\n");
+        needConvertColor = NO;
+        shaderName = @"argbFragmentShader";
+    } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
+               cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
+        ALOGI("create render yuv420p\n");
+        shaderName = @"yuv420pFragmentShader";
+    }
+    #if TARGET_OS_OSX
+    else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
+        ALOGI("create render uyvy\n");
+        shaderName = @"uyvy422FragmentShader";
+    } else if (cv_format == kCVPixelFormatType_422YpCbCr8_yuvs || cv_format == kCVPixelFormatType_422YpCbCr8FullRange) {
+        ALOGI("create render yuyv\n");
+        shaderName = @"uyvy422FragmentShader";
+    }
+    #endif
+    else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange ||
+             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
+             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
+             ) {
+        if (colorMatrix != nil &&
+            CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
+            //HDR todo
+            shaderName = @"nv12FragmentShader";
+        } else {
+            shaderName = @"nv12FragmentShader";
+        }
+    } else {
+        ALOGE("create render failed,unknown format:%4s\n",(char *)&cv_format);
+        return NO;
+    }
+        
+    IJKYUVToRGBMatrixType colorMatrixType = IJKYUVToRGBNoneMatrix;
+    if (needConvertColor) {
+        if (colorMatrix) {
+            if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
+                colorMatrixType = IJKYUVToRGBBT709VideoRangeMatrix;
+            } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
+                colorMatrixType = IJKYUVToRGBBT601VideoRangeMatrix;
+            } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
+    //            TODO
+    //            colorMatrixType = IJKYUVToRGBBT2020VideoRangeMatrix;
+            }
+        }
+        if (colorMatrixType == IJKYUVToRGBNoneMatrix) {
+            colorMatrixType = IJKYUVToRGBBT709VideoRangeMatrix;
+        }
+    }
+
+    BOOL fullRange = NO;
+    //full color range
+    if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_420YpCbCr8PlanarFullRange == cv_format ||
+        kCVPixelFormatType_422YpCbCr8FullRange == cv_format ||
+        kCVPixelFormatType_420YpCbCr10BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_422YpCbCr10BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_444YpCbCr10BiPlanarFullRange == cv_format) {
+        fullRange = YES;
+    }
+    
+    _fragmentName = shaderName;
+    _fullRange = fullRange;
+    self.convertMatrixType = colorMatrixType;
+    return YES;
+}
+
+- (BOOL)matchPixelBuffer:(CVPixelBufferRef)pixelBuffer
+{
+#warning TODO
+    return YES;
+}
+
+- (void)createRenderPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
 {
     if (self.renderPipeline) {
         return;
     }
+    if (![self prepareMetaWithCVPixelbuffer:pixelBuffer]) {
+        return;
+    }
     
-    NSString *fragmentName = [[self class] fragmentFuctionName];
-    
-    NSParameterAssert(fragmentName);
+    NSParameterAssert(_fragmentName);
     
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
     NSURL * libURL = [bundle URLForResource:@"default" withExtension:@"metallib"];
@@ -157,8 +247,8 @@
     //id<MTLLibrary> defaultLibrary = [device newDefaultLibrary];
     id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"mvpShader"];
     NSAssert(vertexFunction, @"can't find Vertex Function:vertexShader");
-    id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:fragmentName];
-    NSAssert(vertexFunction, @"can't find Fragment Function:%@",fragmentName);
+    id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:_fragmentName];
+    NSAssert(vertexFunction, @"can't find Fragment Function:%@",_fragmentName);
 #if IJK_USE_METAL_2
     id <MTLArgumentEncoder> argumentEncoder =
         [fragmentFunction newArgumentEncoderWithBufferIndex:IJKFragmentBufferLocation0];
@@ -365,9 +455,40 @@
                                            options:MTLResourceStorageModeShared]; // 创建顶点缓存
 }
 
-- (NSArray<id<MTLTexture>> *)doGenerateTexture:(CVPixelBufferRef)pixelBuffer textureCache:(CVMetalTextureCacheRef)textureCache
+- (NSArray<id<MTLTexture>> *)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
+                                  textureCache:(CVMetalTextureCacheRef)textureCache
 {
-    return nil;
+    NSMutableArray *result = [NSMutableArray array];
+    
+    OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
+    mp_format *ft = mp_get_metal_format(type);
+    
+    NSAssert(ft != NULL, @"wrong pixel format type.");
+    
+    CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+    
+    const bool planar = CVPixelBufferIsPlanar(pixelBuffer);
+    const int planes  = (int)CVPixelBufferGetPlaneCount(pixelBuffer);
+    assert(planar && planes == ft->planes || ft->planes == 1);
+    
+    for (int i = 0; i < ft->planes; i++) {
+        size_t width  = CVPixelBufferGetWidthOfPlane(pixelBuffer, i);
+        size_t height = CVPixelBufferGetHeightOfPlane(pixelBuffer, i);
+        MTLPixelFormat format = ft->formats[i];
+        CVMetalTextureRef textureRef = NULL; // CoreVideo的Metal纹理
+        CVReturn status = CVMetalTextureCacheCreateTextureFromImage(NULL, textureCache, pixelBuffer, NULL, format, width, height, i, &textureRef);
+        if (status == kCVReturnSuccess) {
+            id<MTLTexture> texture = CVMetalTextureGetTexture(textureRef); // 转成Metal用的纹理
+            if (texture != nil) {
+                [result addObject:texture];
+            }
+            CFRelease(textureRef);
+        }
+    }
+
+    CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+    
+    return result;
 }
 
 #if IJK_USE_METAL_2
@@ -381,7 +502,7 @@
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  
-    [self createRenderPipelineIfNeed];
+    [self createRenderPipelineIfNeed:pixelBuffer];
     
     NSArray<id<MTLTexture>>*textures = [self doGenerateTexture:pixelBuffer textureCache:textureCache];
     
@@ -446,7 +567,7 @@
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  
-    [self createRenderPipelineIfNeed];
+    [self createRenderPipelineIfNeed:pixelBuffer];
     
     NSArray<id<MTLTexture>>*textures = [self doGenerateTexture:pixelBuffer textureCache:textureCache];
     

@@ -1,19 +1,19 @@
 //
-//  IJKMetalBasePipeline.h
+//  IJKMetalRenderer.h
 //  FFmpegTutorial-macOS
 //
 //  Created by qianlongxu on 2022/11/23.
 //  Copyright © 2022 Matt Reach's Awesome FFmpeg Tutotial. All rights reserved.
 //
 
-// IJKMetalBasePipeline is an abstract class, subclass must be override many methods.
+// IJKMetalRenderer is an abstract class, subclass must be override many methods.
 
 @import MetalKit;
 #import "IJKMetalShaderTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
 NS_CLASS_AVAILABLE(10_13, 11_0)
-@interface IJKMetalBasePipeline : NSObject
+@interface IJKMetalRenderer : NSObject
 
 @property (nonatomic, assign) IJKYUVToRGBMatrixType convertMatrixType;
 //current viewport,may not equal to drawable size.
@@ -24,20 +24,15 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 @property (nonatomic, assign) CGSize vertexRatio;
 @property (nonatomic, assign) CGSize textureCrop;
 
-//subclass override!
-+ (NSString *)fragmentFuctionName;
-
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
 
 - (void)lock;
 - (void)unlock;
 
-- (void)updateColorAdjustment:(vector_float4)c;
+- (BOOL)matchPixelBuffer:(CVPixelBufferRef)pixelBuffer;
 
-//subclass override!
-- (NSArray<id<MTLTexture>>*)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
-                                 textureCache:(CVMetalTextureCacheRef)textureCache;
+- (void)updateColorAdjustment:(vector_float4)c;
 
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer

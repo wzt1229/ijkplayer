@@ -136,6 +136,23 @@ fragment float4 bgraFragmentShader(RasterizerData input [[stage_in]],
     return float4(rgb_adjust(rgba.rgb, convertMatrix.adjustment),rgba.a);
 }
 
+/// @brief argb fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
+fragment float4 argbFragmentShader(RasterizerData input [[stage_in]],
+                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    texture2d<float> textureY = fragmentShaderArgs.textureY;
+    //auto converted bgra -> rgba;but data is argb,so target is grab
+    float4 grab = textureY.sample(textureSampler, input.textureCoordinate);
+    //color adjustment
+    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
+    return float4(rgb_adjust(grab.gra, convertMatrix.adjustment),grab.b);
+}
+
 /// @brief nv12 fragment shader
 /// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
 /// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY/UV 是索引
@@ -255,6 +272,22 @@ fragment float4 bgraFragmentShader(RasterizerData input [[stage_in]],
     float4 rgba = textureY.sample(textureSampler, input.textureCoordinate);
     //color adjustment
     return float4(rgb_adjust(rgba.rgb, convertMatrix.adjustment),rgba.a);
+}
+
+/// @brief argb fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
+fragment float4 argbFragmentShader(RasterizerData input [[stage_in]],
+                                   texture2d<float> textureY [[ texture(IJKFragmentTextureIndexTextureY) ]],
+                                   constant IJKConvertMatrix &convertMatrix [[ buffer(IJKFragmentMatrixIndexConvert) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    //auto converted bgra -> rgba
+    float4 grab = textureY.sample(textureSampler, input.textureCoordinate);
+    //color adjustment
+    return float4(rgb_adjust(grab.gra, convertMatrix.adjustment),grab.b);
 }
 
 /// @brief nv12 fragment shader

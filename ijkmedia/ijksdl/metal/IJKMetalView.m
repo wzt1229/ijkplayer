@@ -15,11 +15,7 @@
 // Header shared between C code here, which executes Metal API commands, and .metal files, which
 // uses these types as inputs to the shaders.
 #import "IJKMetalShaderTypes.h"
-#import "IJKMetalBGRAPipeline.h"
-#import "IJKMetalNV12Pipeline.h"
-#import "IJKMetalYUV420PPipeline.h"
-#import "IJKMetalUYVY422Pipeline.h"
-#import "IJKMetalYUYV422Pipeline.h"
+#import "IJKMetalRenderer.h"
 #import "IJKMetalSubtitlePipeline.h"
 #import "IJKMetalOffscreenRendering.h"
 
@@ -32,7 +28,7 @@
 // The command queue used to pass commands to the device.
 @property (nonatomic, strong) id<MTLCommandQueue>commandQueue;
 @property (nonatomic, assign) CVMetalTextureCacheRef pictureTextureCache;
-@property (atomic, strong) __kindof IJKMetalBasePipeline *picturePipeline;
+@property (atomic, strong) IJKMetalRenderer *picturePipeline;
 @property (atomic, strong) IJKMetalSubtitlePipeline *subPipeline;
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
 @property (atomic, strong) IJKOverlayAttach *currentAttach;
@@ -207,33 +203,6 @@ typedef CGRect NSRect;
     return CGSizeMake(nW, nH);
 }
 
-- (Class)pipelineClass:(CVPixelBufferRef)pixelBuffer
-{
-    if (!pixelBuffer) {
-        return NULL;
-    }
-    Class clazz = NULL;
-    OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
-    if (type == kCVPixelFormatType_32BGRA) {
-        clazz = [IJKMetalBGRAPipeline class];
-    } else if (type == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange || type ==  kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) {
-        clazz = [IJKMetalNV12Pipeline class];
-    } else if (type == kCVPixelFormatType_420YpCbCr8PlanarFullRange || type == kCVPixelFormatType_420YpCbCr8Planar) {
-        clazz = [IJKMetalYUV420PPipeline class];
-    } else if (type == kCVPixelFormatType_422YpCbCr8) {
-        clazz = [IJKMetalUYVY422Pipeline class];
-    } else if (type == kCVPixelFormatType_422YpCbCr8FullRange || type == kCVPixelFormatType_422YpCbCr8_yuvs) {
-        clazz = [IJKMetalYUYV422Pipeline class];
-    } else {
-        NSAssert(NO, @"no suopport pixel:%d",type);
-    }
-    //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8_yuvs
-    //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8FullRange
-    //    Cb Y'0 Cr Y'1 kCVPixelFormatType_422YpCbCr8
-    
-    return clazz;
-}
-
 - (BOOL)setupSubPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
 {
     if (!pixelBuffer) {
@@ -256,22 +225,16 @@ typedef CGRect NSRect;
     if (!pixelBuffer) {
         return NO;
     }
-    Class clazz = [self pipelineClass:pixelBuffer];
-    
-    if (clazz) {
-        if (self.picturePipeline) {
-            if ([self.picturePipeline class] != clazz) {
-                ALOGI("pixel format changed:%@",NSStringFromClass(clazz));
-                self.picturePipeline = nil;
-            } else {
-                return YES;
-            }
+    if (self.picturePipeline) {
+        if (![self.picturePipeline matchPixelBuffer:pixelBuffer]) {
+            ALOGI("pixel format not match,need rebuild pipeline");
+            self.picturePipeline = nil;
+        } else {
+            return YES;
         }
-        self.picturePipeline = [[clazz alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
-        return !!self.picturePipeline;
     }
-    ALOGE("setup Pipeline failed with clazz:%@",NSStringFromClass(clazz));
-    return NO;
+    self.picturePipeline = [[IJKMetalRenderer alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
+    return !!self.picturePipeline;
 }
 
 - (void)encoderPicture:(IJKOverlayAttach *)attach

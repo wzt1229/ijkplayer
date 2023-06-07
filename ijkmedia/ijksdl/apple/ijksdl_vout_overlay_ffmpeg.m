@@ -167,6 +167,15 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
     }
     
     if (kCVReturnSuccess == result) {
+        if (frame->color_trc == AVCOL_TRC_SMPTE170M) {
+            CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_601_4, kCVAttachmentMode_ShouldNotPropagate);
+        } else if (frame->color_trc == AVCOL_TRC_BT2020_10 || frame->color_trc == AVCOL_TRC_BT2020_12) {
+            CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_2020, kCVAttachmentMode_ShouldNotPropagate);
+        } else if (frame->color_trc == AVCOL_TRC_BT709) {
+            CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldNotPropagate);
+        } else {
+            CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldNotPropagate);
+        }
         
         int planes = 1;
         if (CVPixelBufferIsPlanar(pixelBuffer)) {
@@ -277,6 +286,7 @@ static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AV
             poolRef = opaque->pixelBufferPool;
         }
     }
+    
     CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, poolRef);
     if (pixel_buffer) {
         opaque->pixelBuffer = pixel_buffer;
