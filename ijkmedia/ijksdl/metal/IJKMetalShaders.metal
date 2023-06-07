@@ -175,6 +175,141 @@ fragment float4 nv12FragmentShader(RasterizerData input [[stage_in]],
     return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
 }
 
+// mark -hdr helps
+
+// [arib b67 eotf
+float arib_b67_inverse_oetf(float x)
+{
+    constexpr float ARIB_B67_A = 0.17883277;
+    constexpr float ARIB_B67_B = 0.28466892;
+    constexpr float ARIB_B67_C = 0.55991073;
+    
+    // Prevent negative pixels expanding into positive values.
+    x = max(x, 0.0);
+    if (x <= 0.5)
+    x = (x * x) * (1.0 / 3.0);
+    else
+    x = (exp((x - ARIB_B67_C) / ARIB_B67_A) + ARIB_B67_B) / 12.0;
+    return x;
+}
+float ootf_1_2(float x)
+{
+    return x < 0.0 ? x : pow(x, 1.2);
+}
+float arib_b67_eotf(float x)
+{
+    return ootf_1_2(arib_b67_inverse_oetf(x));
+}
+// arib b67 eotf]
+
+// [st 2084 eotf
+
+float st_2084_eotf(float x)
+{
+    constexpr float ST2084_M1 = 0.1593017578125;
+    constexpr float ST2084_M2 = 78.84375;
+    constexpr float ST2084_C1 = 0.8359375;
+    constexpr float ST2084_C2 = 18.8515625;
+    constexpr float ST2084_C3 = 18.6875;
+//    constexpr float FLT_MIN = 1.17549435082228750797e-38;
+    
+    float xpow = pow(x, float(1.0 / ST2084_M2));
+    float num = max(xpow - ST2084_C1, 0.0);
+    float den = max(ST2084_C2 - ST2084_C3 * xpow, FLT_MIN);
+    return pow(num/den, 1.0 / ST2084_M1);
+}
+// st 2084 eotf]
+
+// [tonemap hable
+float hableF(float inVal)
+{
+    //fix xcode error:Too many arguments provided to function-like macro invocation
+    float a = 0.15;
+    float b = 0.50;
+    float c = 0.10;
+    float d = 0.20;
+    float e = 0.02;
+    float f = 0.30;
+    return (inVal * (inVal * a + b * c) + d * e) / (inVal * (inVal * a + b) + d * f) - e / f;
+}
+// tonemap hable]
+
+// [bt709
+float rec_1886_inverse_eotf(float x)
+{
+    return x < 0.0 ? 0.0 : pow(x, 1.0 / 2.4);
+}
+
+float rec_1886_eotf(float x)
+{
+    return x < 0.0 ? 0.0 : pow(x, 2.4);
+}
+// bt709]
+// mark -hdr helps
+
+#define FFMAX(a,b) ((a) > (b) ? (a) : (b))
+#define FFMAX3(a,b,c) FFMAX(FFMAX(a,b),c)
+
+
+/// @brief hdr BiPlanar fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY/UV 是索引
+/// @param buffer表明是缓存数据，IJKFragmentBufferIndexMatrix是索引
+fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
+                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    texture2d<float> textureY = fragmentShaderArgs.textureY;
+    texture2d<float> textureUV = fragmentShaderArgs.textureU;
+    
+    float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
+                        textureUV.sample(textureSampler, input.textureCoordinate).rg);
+    //使用 BT.2020 矩阵转为RGB
+    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
+    float3 rgb10bit = convertMatrix.matrix * (yuv + convertMatrix.offset);
+    
+    // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
+    float peak_luminance = 50.0;
+    float3 myFragColor;
+
+    int isSt2084 = 1;
+    int isAribB67 = 0;
+
+    if (isSt2084 == 1) {
+       float to_linear_scale = 10000.0 / peak_luminance;
+       myFragColor = to_linear_scale * float3(st_2084_eotf(rgb10bit.r), st_2084_eotf(rgb10bit.g), st_2084_eotf(rgb10bit.b));
+    } else if (isAribB67 == 1) {
+       float to_linear_scale = 1000.0 / peak_luminance;
+       myFragColor = to_linear_scale * float3(arib_b67_eotf(rgb10bit.r), arib_b67_eotf(rgb10bit.g), arib_b67_eotf(rgb10bit.b));
+    } else {
+       myFragColor = float3(rec_1886_eotf(rgb10bit.r), rec_1886_eotf(rgb10bit.g), rec_1886_eotf(rgb10bit.b));
+    }
+
+    // 2、HDR 线性光信号做颜色空间转换（Color Space Converting）
+    // color-primaries REC_2020 to REC_709
+    matrix_float3x3 rgb2xyz2020 = matrix_float3x3(0.6370, 0.1446, 0.1689,
+                           0.2627, 0.6780, 0.0593,
+                           0.0000, 0.0281, 1.0610);
+    matrix_float3x3 xyz2rgb709 = matrix_float3x3(3.2410, -1.5374, -0.4986,
+                          -0.9692, 1.8760, 0.0416,
+                          0.0556, -0.2040, 1.0570);
+    myFragColor *= rgb2xyz2020 * xyz2rgb709;
+
+    // 3、HDR 线性光信号色调映射为 SDR 线性光信号（Tone Mapping）
+    float sig = FFMAX(FFMAX3(myFragColor.r, myFragColor.g, myFragColor.b), 1e-6);
+    float sig_orig = sig;
+    float peak = 10.0;
+    sig = hableF(sig) / hableF(peak);
+    myFragColor *= sig / sig_orig;
+
+    // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
+    myFragColor = float3(rec_1886_inverse_eotf(myFragColor.r), rec_1886_inverse_eotf(myFragColor.g), rec_1886_inverse_eotf(myFragColor.b));
+    //color adjustment
+    return float4(rgb_adjust(myFragColor,convertMatrix.adjustment),1.0);
+}
+
 /// @brief yuv420p fragment shader
 /// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
 /// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY/U/V 是索引

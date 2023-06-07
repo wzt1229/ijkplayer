@@ -6,10 +6,7 @@
 //  Copyright © 2022 Matt Reach's Awesome FFmpeg Tutotial. All rights reserved.
 //
 
-#ifndef IJKMetalShaderTypes_h
-#define IJKMetalShaderTypes_h
-
-#include <simd/simd.h>
+#import <simd/simd.h>
 
 // Buffer index values shared between shader and C code to ensure Metal shader buffer inputs
 // match Metal API buffer set calls.
@@ -55,15 +52,18 @@ typedef enum IJKFragmentBufferLocation
     IJKFragmentBufferLocation0,
 } IJKFragmentBufferLocation;
 
-typedef enum IJKYUVToRGBMatrixType
+typedef enum IJKYUV2RGBColorMatrixType
 {
-    IJKYUVToRGBNoneMatrix,
-    IJKYUVToRGBBT709FullRangeMatrix,
-    IJKYUVToRGBBT709VideoRangeMatrix,
-    IJKYUVToRGBBT601FullRangeMatrix,
-    IJKYUVToRGBBT601VideoRangeMatrix,
-    IJKUYVYToRGBFullRangeMatrix,
-    IJKUYVYToRGBVideoRangeMatrix,
-} IJKYUVToRGBMatrixType;
+    IJKYUV2RGBColorMatrixNone,
+    IJKYUV2RGBColorMatrixBT709,
+    IJKYUV2RGBColorMatrixBT601,
+    IJKYUV2RGBColorMatrixBT2020
+} IJKYUV2RGBColorMatrixType;
 
-#endif /* IJKMetalShaderTypes_h */
+typedef struct mp_format {
+    uint32_t cvpixfmt;
+    int planes;
+    uint32_t formats[3];
+} mp_format;
+
+IJKConvertMatrix ijk_metal_create_color_matrix(IJKYUV2RGBColorMatrixType matrixType, int fullRange);

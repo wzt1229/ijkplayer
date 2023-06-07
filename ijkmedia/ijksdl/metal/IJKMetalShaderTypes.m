@@ -6,16 +6,9 @@
 //  Copyright © 2022 Matt Reach's Awesome FFmpeg Tutotial. All rights reserved.
 //
 
-#ifndef IJKMetalPixelTypes_h
-#define IJKMetalPixelTypes_h
+#import "IJKMetalShaderTypes.h"
 
-typedef struct mp_format {
-    uint32_t cvpixfmt;
-    int planes;
-    MTLPixelFormat formats[3];
-}mp_format;
-
-static struct mp_format mp_formats[] = {
+static mp_format mp_formats[] = {
     {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
         .planes = 2,
@@ -97,7 +90,7 @@ static struct mp_format mp_formats[] = {
 
 #define MP_ARRAY_SIZE(s) (sizeof(s) / sizeof((s)[0]))
 
-static inline mp_format *mp_get_metal_format(uint32_t cvpixfmt)
+mp_format * mp_get_metal_format(uint32_t cvpixfmt)
 {
     for (int i = 0; i < MP_ARRAY_SIZE(mp_formats); i++) {
         if (mp_formats[i].cvpixfmt == cvpixfmt)
@@ -106,5 +99,49 @@ static inline mp_format *mp_get_metal_format(uint32_t cvpixfmt)
     return NULL;
 }
 
+IJKConvertMatrix ijk_metal_create_color_matrix(IJKYUV2RGBColorMatrixType matrixType, int fullRange)
+{
+    IJKConvertMatrix matrix = {0.0};
+    switch (matrixType) {
+        case IJKYUV2RGBColorMatrixBT601:
+        {
+            matrix.matrix = (matrix_float3x3){
+                (simd_float3){1.164,  1.164, 1.164},
+                (simd_float3){0.0,   -0.391, 2.018},
+                (simd_float3){1.596, -0.813, 0.0},
+            };
+        }
+            break;
+        case IJKYUV2RGBColorMatrixBT709:
+        {
+            matrix.matrix = (matrix_float3x3){
+                (simd_float3){1.164,  1.164, 1.164},
+                (simd_float3){0.0,   -0.213, 2.112},
+                (simd_float3){1.793, -0.533, 0.0},
+            };
+        }
+            break;
+        case IJKYUV2RGBColorMatrixBT2020:
+        {
+            matrix.matrix = (matrix_float3x3){
+                (simd_float3){1.164384, 1.164384 , 1.164384},
+                (simd_float3){0.0     , -0.187326, 2.14177},
+                (simd_float3){1.67867 , -0.65042 , 0.0},
+            };
+        }
+            break;
+        case IJKYUV2RGBColorMatrixNone:
+        {
+            break;
+        }
+    }
 
-#endif /* IJKMetalPixelTypes_h */
+    vector_float3 offset;
+    if (fullRange) {
+        offset = (vector_float3){ 0.0, -0.5, -0.5};
+    } else {
+        offset = (vector_float3){ -(16.0/255.0), -0.5, -0.5};
+    }
+    matrix.offset = offset;
+    return matrix;
+}

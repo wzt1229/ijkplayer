@@ -8,7 +8,7 @@
 
 #import "IJKMetalRenderer.h"
 #import "IJKMathUtilities.h"
-#import "IJKMetalPixelTypes.h"
+#import "IJKMetalShaderTypes.h"
 #include "../ijksdl_log.h"
 
 @interface IJKMetalRenderer()
@@ -68,70 +68,12 @@
     [self.pilelineLock unlock];
 }
 
-- (void)setConvertMatrixType:(IJKYUVToRGBMatrixType)convertMatrixType
+- (void)setConvertMatrixType:(IJKYUV2RGBColorMatrixType)convertMatrixType
 {
     if (_convertMatrixType != convertMatrixType) {
         _convertMatrixType = convertMatrixType;
         self.convertMatrixChanged = YES;
     }
-}
-
-- (IJKConvertMatrix)createMatrix:(IJKYUVToRGBMatrixType)matrixType
-{
-    IJKConvertMatrix matrix = {0.0};
-    BOOL videoRange;
-    switch (matrixType) {
-        case IJKYUVToRGBBT601FullRangeMatrix:
-        case IJKYUVToRGBBT601VideoRangeMatrix:
-        {
-            matrix.matrix = (matrix_float3x3){
-                (simd_float3){1.0,    1.0,    1.0},
-                (simd_float3){0.0,    -0.343, 1.765},
-                (simd_float3){1.4,    -0.711, 0.0},
-            };
-            
-            videoRange = matrixType == IJKYUVToRGBBT601VideoRangeMatrix;
-        }
-            break;
-        case IJKYUVToRGBBT709FullRangeMatrix:
-        case IJKYUVToRGBBT709VideoRangeMatrix:
-        {
-            matrix.matrix = (matrix_float3x3){
-                (simd_float3){1.164,    1.164,  1.164},
-                (simd_float3){0.0,      -0.213, 2.112},
-                (simd_float3){1.793,    -0.533, 0.0},
-            };
-            
-            videoRange = matrixType == IJKYUVToRGBBT709VideoRangeMatrix;
-        }
-            break;
-        case IJKUYVYToRGBFullRangeMatrix:
-        case IJKUYVYToRGBVideoRangeMatrix:
-        {
-            matrix.matrix = (matrix_float3x3){
-                (simd_float3){1.164,  1.164,  1.164},
-                (simd_float3){0.0,    -0.391, 2.017},
-                (simd_float3){1.596,  -0.812, 0.0},
-            };
-            
-            videoRange = matrixType == IJKUYVYToRGBVideoRangeMatrix;
-        }
-            break;
-        case IJKYUVToRGBNoneMatrix:
-        {
-            return matrix;
-        }
-            break;
-    }
-
-    vector_float3 offset;
-    if (videoRange) {
-        offset = (vector_float3){ -(16.0/255.0), -0.5, -0.5};
-    } else {
-        offset = (vector_float3){ 0.0, -0.5, -0.5};
-    }
-    matrix.offset = offset;
-    return matrix;
 }
 
 - (BOOL)prepareMetaWithCVPixelbuffer:(CVPixelBufferRef)pixelBuffer
@@ -174,8 +116,7 @@
              ) {
         if (colorMatrix != nil &&
             CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-            //HDR todo
-            shaderName = @"nv12FragmentShader";
+            shaderName = @"hdrBiPlanarFragmentShader";
         } else {
             shaderName = @"nv12FragmentShader";
         }
@@ -184,20 +125,19 @@
         return NO;
     }
         
-    IJKYUVToRGBMatrixType colorMatrixType = IJKYUVToRGBNoneMatrix;
+    IJKYUV2RGBColorMatrixType colorMatrixType = IJKYUV2RGBColorMatrixNone;
     if (needConvertColor) {
         if (colorMatrix) {
             if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
-                colorMatrixType = IJKYUVToRGBBT709VideoRangeMatrix;
+                colorMatrixType = IJKYUV2RGBColorMatrixBT709;
             } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-                colorMatrixType = IJKYUVToRGBBT601VideoRangeMatrix;
+                colorMatrixType = IJKYUV2RGBColorMatrixBT601;
             } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-    //            TODO
-    //            colorMatrixType = IJKYUVToRGBBT2020VideoRangeMatrix;
+                colorMatrixType = IJKYUV2RGBColorMatrixBT2020;
             }
         }
-        if (colorMatrixType == IJKYUVToRGBNoneMatrix) {
-            colorMatrixType = IJKYUVToRGBBT709VideoRangeMatrix;
+        if (colorMatrixType == IJKYUV2RGBColorMatrixNone) {
+            colorMatrixType = IJKYUV2RGBColorMatrixBT709;
         }
     }
 
@@ -455,6 +395,8 @@
                                            options:MTLResourceStorageModeShared]; // 创建顶点缓存
 }
 
+mp_format * mp_get_metal_format(uint32_t cvpixfmt);
+
 - (NSArray<id<MTLTexture>> *)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
                                   textureCache:(CVMetalTextureCacheRef)textureCache
 {
@@ -523,7 +465,7 @@
     
     if (self.convertMatrixChanged) {
         IJKConvertMatrix * data = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
-        IJKConvertMatrix convertMatrix = [self createMatrix:self.convertMatrixType];
+        IJKConvertMatrix convertMatrix = ijk_metal_create_color_matrix(_convertMatrixType, _fullRange);
         convertMatrix.adjustment = _colorAdjustment;
         *data = convertMatrix;
     }

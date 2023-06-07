@@ -6,8 +6,6 @@
 //  Copyright © 2022 Matt Reach's Awesome FFmpeg Tutotial. All rights reserved.
 //
 
-// IJKMetalRenderer is an abstract class, subclass must be override many methods.
-
 @import MetalKit;
 #import "IJKMetalShaderTypes.h"
 
@@ -15,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 NS_CLASS_AVAILABLE(10_13, 11_0)
 @interface IJKMetalRenderer : NSObject
 
-@property (nonatomic, assign) IJKYUVToRGBMatrixType convertMatrixType;
+@property (nonatomic, assign) IJKYUV2RGBColorMatrixType convertMatrixType;
 //current viewport,may not equal to drawable size.
 @property (nonatomic, assign) CGSize viewport;
 @property (nonatomic, assign) float rotateDegrees;
