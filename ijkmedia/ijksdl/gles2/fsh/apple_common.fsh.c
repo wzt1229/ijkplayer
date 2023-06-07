@@ -29,6 +29,7 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
     uniform vec2 textureDimension0;
     uniform vec2 textureDimension1;
     uniform mat3 um3_ColorConversion;
+    uniform vec3 um3_rgbAdjustment;
     //   uniform mediump int isSt2084;
     //   uniform mediump int isAribB67;
 
@@ -115,24 +116,23 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
         #endif
             return;
         }
-        // 0、先把 [0.0,1.0] 范围的 10bit YUV 处理为 [0.0,1.0] 范围的 10bit RGB
+        // 0、先把 [0.0,1.0] 范围的YUV 处理为 [0.0,1.0] 范围的RGB
         vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
         vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
         //OpenGL会在将这些值存入帧缓冲前主动将值处理为0.0到1.0之间
         float x = texture2DRect(us2_Sampler0, recTexCoord0).r;
         vec2 yz = texture2DRect(us2_Sampler1, recTexCoord1).rg;
-        //先还原为10bit范围的YUV
-        vec3 yuv = vec3(x,yz) * 1024;
+        vec3 yuv = vec3(x,yz);
         
         vec3 offset;
         if (isFullRange == 1) {
-            offset = vec3(0.0, -512, -512);
+            offset = vec3(0.0, -0.5, -0.5);
         } else {
-            offset = vec3(-64, -512, -512);
+            offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
         }
         yuv += offset;
-        //使用 BT.2020 矩阵转为 10bit RGB，然后标准化为0.0到1.0之间
-        vec3 rgb10bit = um3_ColorConversion * yuv / 1024;
+        //使用 BT.2020 矩阵转为RGB
+        vec3 rgb10bit = um3_ColorConversion * yuv;
         
         // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
         float peak_luminance = 50.0;
@@ -170,6 +170,8 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
 
         // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
         myFragColor = vec3(rec_1886_inverse_eotf(myFragColor.r), rec_1886_inverse_eotf(myFragColor.g), rec_1886_inverse_eotf(myFragColor.b));
+        
+        myFragColor = rgb_adjust(myFragColor,um3_rgbAdjustment);
         
         fragColor = vec4(myFragColor, 1.0);
     }
