@@ -1784,7 +1784,8 @@ static int configure_video_filters(FFPlayer *ffp, AVFilterGraph *graph, VideoSta
 } while (0)
 
     if (ffp->autorotate) {
-        double theta  = get_rotation(is->video_st);
+        int32_t *displaymatrix = (int32_t *)av_stream_get_side_data(is->video_st, AV_PKT_DATA_DISPLAYMATRIX, NULL);
+        double theta  = get_rotation(displaymatrix);
 
         if (fabs(theta - 90) < 1.0) {
             INSERT_FILT("transpose", "clock");
@@ -5002,28 +5003,18 @@ void ffp_set_playback_volume(FFPlayer *ffp, float volume)
     ffp->pf_playback_volume_changed = 1;
 }
 
-static double get_rotation(AVStream *st)
+static double get_rotation(int32_t *displaymatrix)
 {
-    AVDictionaryEntry *rotate_tag = av_dict_get(st->metadata, "rotate", NULL, 0);
-    uint8_t* displaymatrix = av_stream_get_side_data(st,
-                                                     AV_PKT_DATA_DISPLAYMATRIX, NULL);
     double theta = 0;
-
-    if (rotate_tag && *rotate_tag->value && strcmp(rotate_tag->value, "0")) {
-        char *tail;
-        theta = av_strtod(rotate_tag->value, &tail);
-        if (*tail)
-            theta = 0;
-    }
-    if (displaymatrix && !theta)
-        theta = -av_display_rotation_get((int32_t*) displaymatrix);
+    if (displaymatrix)
+        theta = -round(av_display_rotation_get((int32_t*) displaymatrix));
 
     theta -= 360*floor(theta/360 + 0.9/360);
 
     if (fabs(theta - 90*round(theta/90)) > 2)
         av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
                "If you want to help, upload a sample "
-               "of this file to ftp://upload.ffmpeg.org/incoming/ "
+               "of this file to https://streams.videolan.org/upload/ "
                "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
 
     return theta;
@@ -5034,8 +5025,8 @@ int ffp_get_video_rotate_degrees(FFPlayer *ffp)
     VideoState *is = ffp->is;
     if (!is)
         return 0;
-
-    int theta  = abs((int)((int64_t)round(fabs(get_rotation(is->video_st))) % 360));
+    int32_t *displaymatrix = (int32_t *)av_stream_get_side_data(is->video_st, AV_PKT_DATA_DISPLAYMATRIX, NULL);
+    int theta  = abs((int)((int64_t)round(fabs(get_rotation(displaymatrix))) % 360));
     switch (theta) {
         case 0:
         case 90:
