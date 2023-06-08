@@ -3724,7 +3724,7 @@ static int read_thread(void *arg)
                 if ((ret = av_packet_ref(pkt, &is->video_st->attached_pic)) < 0)
                     goto fail;
                 packet_queue_put(&is->videoq, pkt);
-                packet_queue_put_nullpacket(&is->videoq, is->video_stream);
+                packet_queue_put_nullpacket(&is->videoq, pkt, is->video_stream);
             }
             is->queue_attachments_req = 0;
         }
@@ -3807,18 +3807,18 @@ static int read_thread(void *arg)
 
             if (pb_eof) {
                 if (is->video_stream >= 0)
-                    packet_queue_put_nullpacket(&is->videoq, is->video_stream);
+                    packet_queue_put_nullpacket(&is->videoq, pkt, is->video_stream);
                 if (is->audio_stream >= 0)
-                    packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
-                ff_sub_put_null_packet(is->ffSub, ff_sub_get_opened_stream_idx(is->ffSub));
+                    packet_queue_put_nullpacket(&is->audioq, pkt, is->audio_stream);
+                ff_sub_put_null_packet(is->ffSub, pkt, ff_sub_get_opened_stream_idx(is->ffSub));
                 is->eof = 1;
             }
             if (pb_error) {
                 if (is->video_stream >= 0)
-                    packet_queue_put_nullpacket(&is->videoq, is->video_stream);
+                    packet_queue_put_nullpacket(&is->videoq, pkt, is->video_stream);
                 if (is->audio_stream >= 0)
-                    packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
-                ff_sub_put_null_packet(is->ffSub, ff_sub_get_opened_stream_idx(is->ffSub));
+                    packet_queue_put_nullpacket(&is->audioq, pkt, is->audio_stream);
+                ff_sub_put_null_packet(is->ffSub, pkt, ff_sub_get_opened_stream_idx(is->ffSub));
                 is->eof = 1;
                 ffp->error = pb_error;
                 av_log(ffp, AV_LOG_ERROR, "av_read_frame error: %s\n", ffp_get_error_string(ffp->error));

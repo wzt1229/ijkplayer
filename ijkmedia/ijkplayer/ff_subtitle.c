@@ -232,10 +232,10 @@ int ff_sub_has_enough_packets(FFSubtitle *sub, int min_frames)
     return 1;
 }
 
-int ff_sub_put_null_packet(FFSubtitle *sub, int st_idx)
+int ff_sub_put_null_packet(FFSubtitle *sub, AVPacket *pkt, int st_idx)
 {
     if (sub) {
-        return packet_queue_put_nullpacket(&sub->packetq, st_idx);
+        return packet_queue_put_nullpacket(&sub->packetq, pkt, st_idx);
     }
     return -1;
 }

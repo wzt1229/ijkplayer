@@ -34,7 +34,7 @@ int ff_sub_frame_queue_size(FFSubtitle *sub);
 
 int ff_sub_has_enough_packets(FFSubtitle *sub, int min_frames);
 
-int ff_sub_put_null_packet(FFSubtitle *sub, int st_idx);
+int ff_sub_put_null_packet(FFSubtitle *sub, AVPacket *pkt, int st_idx);
 
 int ff_sub_put_packet(FFSubtitle *sub, AVPacket *pkt);
 

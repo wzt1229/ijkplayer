@@ -50,7 +50,7 @@ static int read_packets(FFSubComponent *sub)
                 packet_queue_put(sub->packetq, sub->pkt);
                 continue;
             } else if (ret == AVERROR_EOF) {
-                packet_queue_put_nullpacket(sub->packetq, sub->pkt->stream_index);
+                packet_queue_put_nullpacket(sub->packetq, sub->pkt, sub->st_idx);
                 sub->eof = 1;
                 return 1;
             } else {

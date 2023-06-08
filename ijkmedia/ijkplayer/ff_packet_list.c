@@ -54,14 +54,8 @@ int packet_queue_put(PacketQueue *q, AVPacket *pkt)
     return ret;
 }
 
-int packet_queue_put_nullpacket(PacketQueue *q, int stream_index)
+int packet_queue_put_nullpacket(PacketQueue *q, AVPacket *pkt, int stream_index)
 {
-    AVPacket pkt1, *pkt = &pkt1;
-    //av_init_packet(pkt);
-    bzero(pkt, sizeof(AVPacket));
-    pkt->pos = -1;
-    pkt->pts = AV_NOPTS_VALUE;
-    pkt->dts = AV_NOPTS_VALUE;
     pkt->stream_index = stream_index;
     return packet_queue_put(q, pkt);
 }
