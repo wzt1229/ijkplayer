@@ -3405,7 +3405,10 @@ static int read_thread(void *arg)
         ic->pb->eof_reached = 0; // FIXME hack, ffplay maybe should not use avio_feof() to test for the end
 
     if (ffp->seek_by_bytes < 0)
-        ffp->seek_by_bytes = !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
+        ffp->seek_by_bytes = !(ic->iformat->flags & AVFMT_NO_BYTE_SEEK) &&
+        !!(ic->iformat->flags & AVFMT_TS_DISCONT) &&
+        strcmp("ogg", ic->iformat->name);
+
 
     is->max_frame_duration = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
     is->max_frame_duration = 10.0;
