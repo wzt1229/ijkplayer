@@ -45,7 +45,6 @@
 #include "libavutil/dict.h"
 #include "libavutil/parseutils.h"
 #include "libavutil/samplefmt.h"
-#include "libavutil/avassert.h"
 #include "libavutil/time.h"
 #include "libavutil/bprint.h"
 #include "libavformat/avformat.h"
@@ -3116,10 +3115,11 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         }
 #else
         sample_rate    = avctx->sample_rate;
-        nb_channels    = avctx->channels;
+        nb_channels    = avctx->ch_layout.nb_channels;
         channel_layout = avctx->channel_layout;
 #endif
 
+            
         /* prepare audio output */
         if ((ret = audio_open(ffp, channel_layout, nb_channels, sample_rate, &is->audio_tgt)) < 0)
             goto fail;

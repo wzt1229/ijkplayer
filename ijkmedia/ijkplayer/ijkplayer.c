@@ -96,7 +96,7 @@ void ijkmp_global_set_inject_callback(ijk_inject_callback cb)
     ffp_global_set_inject_callback(cb);
 }
 
-const char *ijkmp_version()
+const char *ijkmp_version(void)
 {
     return IJKPLAYER_VERSION;
 }
