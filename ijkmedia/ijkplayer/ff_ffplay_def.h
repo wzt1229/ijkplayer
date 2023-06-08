@@ -137,24 +137,8 @@
 static unsigned sws_flags = SWS_BICUBIC;
 #endif
 
-#define HD_IMAGE 2  // 640*360
-#define SD_IMAGE 1  // 320*180
-#define LD_IMAGE 0  // 160*90
 #define MAX_DEVIATION 1200000   // 1200ms
 #define IJK_EXCHANGE_DECODER_FLAG -1000
-
-typedef struct GetImgInfo {
-    char *img_path;
-    int64_t start_time;
-    int64_t end_time;
-    int64_t frame_interval;
-    int num;
-    int count;
-    int width;
-    int height;
-    AVCodecContext *frame_img_codec_ctx;
-    struct SwsContext *frame_img_convert_ctx;
-} GetImgInfo;
 
 typedef struct MyAVPacketList {
     AVPacket *pkt;
@@ -703,8 +687,6 @@ typedef struct FFPlayer {
     int accurate_seek_timeout;
     int mediacodec_sync;
     int skip_calc_frame_rate;
-    int get_frame_mode;
-    GetImgInfo *get_img_info;
     int async_init_decoder;
     char *video_mime_type;
     char *mediacodec_default_name;

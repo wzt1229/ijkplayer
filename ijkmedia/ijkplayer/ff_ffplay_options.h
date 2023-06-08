@@ -171,8 +171,6 @@ static const AVOption ffp_context_options[] = {
         OPTION_OFFSET(accurate_seek_timeout),       OPTION_INT(MAX_ACCURATE_SEEK_TIMEOUT, 0, MAX_ACCURATE_SEEK_TIMEOUT) },
     { "skip-calc-frame-rate",                      "don't calculate real frame rate",
         OPTION_OFFSET(skip_calc_frame_rate),       OPTION_INT(0, 0, 1) },
-    { "get-frame-mode",                      "warning, this option only for get frame",
-        OPTION_OFFSET(get_frame_mode),       OPTION_INT(0, 0, 1) },
     { "async-init-decoder",                  "async create decoder",
         OPTION_OFFSET(async_init_decoder),   OPTION_INT(0, 0, 1) },
     { "video-mime-type",                    "default video mime type",
