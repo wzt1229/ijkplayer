@@ -21,6 +21,7 @@
     BOOL _fullRange;
     IJKConvertMatrix _colorMatrixType;
     NSString* _fragmentName;
+    IJKColorTransferFunc _transferFunc;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
@@ -35,7 +36,7 @@
 #else
 @property (nonatomic, strong) id<MTLBuffer> convertMatrix;
 #endif
-
+@property (nonatomic, assign) IJKYUV2RGBColorMatrixType convertMatrixType;
 @property (nonatomic, assign) BOOL vertexChanged;
 @property (nonatomic, assign) BOOL subtitleVertexChanged;
 @property (nonatomic, assign) BOOL convertMatrixChanged;
@@ -80,6 +81,7 @@
 {
     OSType cv_format = CVPixelBufferGetPixelFormatType(pixelBuffer);
     CFStringRef colorMatrix = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
+    CFStringRef transferFuntion = CVBufferGetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, NULL);
     NSString* shaderName;
     BOOL needConvertColor = YES;
     if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
@@ -152,6 +154,20 @@
         fullRange = YES;
     }
     
+    IJKColorTransferFunc tf;
+    if (transferFuntion) {
+        if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
+            tf = IJKColorTransferFuncHLG;
+        } else if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo) {
+            tf = IJKColorTransferFuncPQ;
+        } else {
+            tf = IJKColorTransferFuncLINEAR;
+        }
+    } else {
+        tf = IJKColorTransferFuncLINEAR;
+    }
+    
+    _transferFunc = tf;
     _fragmentName = shaderName;
     _fullRange = fullRange;
     self.convertMatrixType = colorMatrixType;
@@ -467,6 +483,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
         IJKConvertMatrix * data = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
         IJKConvertMatrix convertMatrix = ijk_metal_create_color_matrix(_convertMatrixType, _fullRange);
         convertMatrix.adjustment = _colorAdjustment;
+        convertMatrix.transferFun = _transferFunc;
         *data = convertMatrix;
     }
     //Fragment Function(nv12FragmentShader): missing buffer binding at index 0 for fragmentShaderArgs[0].

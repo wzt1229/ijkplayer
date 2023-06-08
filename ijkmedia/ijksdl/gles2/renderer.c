@@ -266,10 +266,10 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(CVPixelBufferRef video
         } else if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo) {
             tf = IJK_Color_Transfer_Function_PQ;
         } else {
-            tf = IJK_Color_Transfer_Function_Linear;
+            tf = IJK_Color_Transfer_Function_LINEAR;
         }
     } else {
-        tf = IJK_Color_Transfer_Function_Linear;
+        tf = IJK_Color_Transfer_Function_LINEAR;
     }
     
     IJK_GLES2_Renderer *render = ijk_create_common_gl_Renderer(shaderType, openglVer, colorMatrixType, fullRange, tf);

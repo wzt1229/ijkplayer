@@ -8,6 +8,21 @@
 
 #import <simd/simd.h>
 
+typedef enum IJKYUV2RGBColorMatrixType
+{
+    IJKYUV2RGBColorMatrixNone,
+    IJKYUV2RGBColorMatrixBT709,
+    IJKYUV2RGBColorMatrixBT601,
+    IJKYUV2RGBColorMatrixBT2020
+} IJKYUV2RGBColorMatrixType;
+
+typedef enum IJKColorTransferFunc
+{
+    IJKColorTransferFuncLINEAR,
+    IJKColorTransferFuncPQ,
+    IJKColorTransferFuncHLG,
+} IJKColorTransferFunc;
+
 // Buffer index values shared between shader and C code to ensure Metal shader buffer inputs
 // match Metal API buffer set calls.
 typedef enum IJKVertexInputIndex
@@ -36,6 +51,7 @@ typedef struct {
     matrix_float3x3 matrix;
     vector_float3 offset;
     vector_float4 adjustment;
+    IJKColorTransferFunc transferFun;
 } IJKConvertMatrix;
 
 typedef enum IJKFragmentBufferArguments
@@ -51,14 +67,6 @@ typedef enum IJKFragmentBufferLocation
 {
     IJKFragmentBufferLocation0,
 } IJKFragmentBufferLocation;
-
-typedef enum IJKYUV2RGBColorMatrixType
-{
-    IJKYUV2RGBColorMatrixNone,
-    IJKYUV2RGBColorMatrixBT709,
-    IJKYUV2RGBColorMatrixBT601,
-    IJKYUV2RGBColorMatrixBT2020
-} IJKYUV2RGBColorMatrixType;
 
 typedef struct mp_format {
     uint32_t cvpixfmt;

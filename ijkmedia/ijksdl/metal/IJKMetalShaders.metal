@@ -273,14 +273,11 @@ fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
     // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
     float peak_luminance = 50.0;
     float3 myFragColor;
-
-    int isSt2084 = 1;
-    int isAribB67 = 0;
-
-    if (isSt2084 == 1) {
+    
+    if (convertMatrix.transferFun == IJKColorTransferFuncPQ) {
        float to_linear_scale = 10000.0 / peak_luminance;
        myFragColor = to_linear_scale * float3(st_2084_eotf(rgb10bit.r), st_2084_eotf(rgb10bit.g), st_2084_eotf(rgb10bit.b));
-    } else if (isAribB67 == 1) {
+    } else if (convertMatrix.transferFun == IJKColorTransferFuncHLG) {
        float to_linear_scale = 1000.0 / peak_luminance;
        myFragColor = to_linear_scale * float3(arib_b67_eotf(rgb10bit.r), arib_b67_eotf(rgb10bit.g), arib_b67_eotf(rgb10bit.b));
     } else {

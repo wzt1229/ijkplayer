@@ -13,7 +13,6 @@ NS_ASSUME_NONNULL_BEGIN
 NS_CLASS_AVAILABLE(10_13, 11_0)
 @interface IJKMetalRenderer : NSObject
 
-@property (nonatomic, assign) IJKYUV2RGBColorMatrixType convertMatrixType;
 //current viewport,may not equal to drawable size.
 @property (nonatomic, assign) CGSize viewport;
 @property (nonatomic, assign) float rotateDegrees;
