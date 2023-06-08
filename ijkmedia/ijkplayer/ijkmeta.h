@@ -67,7 +67,7 @@
 #define IJKM_KEY_SAR_DEN        "sar_den"
 // stream: audio
 #define IJKM_KEY_SAMPLE_RATE    "sample_rate"
-#define IJKM_KEY_CHANNEL_LAYOUT "channel_layout"
+//#define IJKM_KEY_CHANNEL_LAYOUT "channel_layout"
 
 #define IJKM_KEY_EX_SUBTITLE_URL "ex_subtile_url"
 // reserved for user

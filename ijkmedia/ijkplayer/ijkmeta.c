@@ -257,9 +257,7 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
 
                 if (codecpar->sample_rate)
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_SAMPLE_RATE, codecpar->sample_rate);
-                if (codecpar->channel_layout)
-                    ijkmeta_set_int64_l(stream_meta, IJKM_KEY_CHANNEL_LAYOUT, codecpar->channel_layout);
-                
+
                 AVDictionaryEntry *lang = av_dict_get(st->metadata, IJKM_KEY_LANGUAGE, NULL, 0);
                 if (lang && lang->value)
                     ijkmeta_set_string_l(stream_meta, IJKM_KEY_LANGUAGE, lang->value);
