@@ -1164,7 +1164,7 @@ retry:
                     }
                 }
                 
-                if (delta > 10) {
+                if (delta > 1000) {
                     ffp_notify_msg2(ffp, FFP_MSG_WARNING, SALTATION_RETURN_VALUE);
                 }
                 
@@ -2444,7 +2444,7 @@ reload:
                 delta = (int)(af->pts / next_af->pts);
             }
         }
-        if (delta > 10) {
+        if (delta > 1000) {
             ffp_notify_msg2(ffp, FFP_MSG_WARNING, SALTATION_RETURN_VALUE);
         }
     }
