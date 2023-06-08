@@ -278,7 +278,7 @@ typedef struct FFSubtitle FFSubtitle;
 typedef struct VideoState {
     SDL_Thread *read_tid;
     SDL_Thread _read_tid;
-    AVInputFormat *iformat;
+    const AVInputFormat *iformat;
     int abort_request;
     int force_refresh;
     int paused;

@@ -11,7 +11,6 @@
 #include "ff_ffplay_def.h"
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
-#include "ff_cmdutils.h"
 #include "ff_ass_parser.h"
 #include "ff_sub_component.h"
 
@@ -122,7 +121,7 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
         goto fail;
     }
     
-    AVCodec* codec = avcodec_find_decoder(sub_st->codecpar->codec_id);
+    const AVCodec* codec = avcodec_find_decoder(sub_st->codecpar->codec_id);
     if (!codec) {
         av_log(NULL, AV_LOG_WARNING, "could find codec:%s for %s\n",
                 file_name, avcodec_get_name(sub_st->codecpar->codec_id));
@@ -327,7 +326,7 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
     AVFormatContext* ic = avformat_alloc_context();
     int err = avformat_open_input(&ic, file_name, NULL, NULL);
     if (err < 0) {
-        print_error(file_name, err);
+        av_log(NULL, AV_LOG_ERROR, "open subtitle failed:%s,err:%d\n", file_name, err);
         avformat_close_input(&ic);
         return -3;
     }
