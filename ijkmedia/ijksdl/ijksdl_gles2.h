@@ -24,7 +24,7 @@
 #include "ijksdl_stdinc.h"
 #ifdef __APPLE__
     #include <TargetConditionals.h>
-    #include <CoreFoundation/CFBase.h>
+    #include <CoreVideo/CVPixelBuffer.h>
     #if TARGET_OS_OSX
         #include <OpenGL/OpenGL.h>
         #include <OpenGL/gl3.h>
@@ -65,7 +65,7 @@ GLuint IJK_GLES2_loadShader(GLenum shader_type, const char *shader_source);
 #define IJK_GLES2_MAX_PLANE 3
 typedef struct IJK_GLES2_Renderer IJK_GLES2_Renderer;
 #ifdef __APPLE__
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 cv_format,int openglVer,CFStringRef colorMatrix);
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(CVPixelBufferRef videoPicture,int openglVer);
 #else
 //openglVer greater than 330 use morden opengl, otherwise use legacy opengl
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openglVer);

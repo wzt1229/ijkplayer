@@ -184,6 +184,10 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *picture)
         glUniform1i(renderer->fullRangeUM, renderer->isFullRange);
     }
     
+    if (renderer->transferFunUM != -1) {
+        glUniform1i(renderer->transferFunUM, renderer->transferFun);
+    }
+    IJK_GLES2_checkError_TRACE("transferFunUM");
     CVPixelBufferRetain(pixel_buffer);
     GLboolean uploaded = upload_texture_use_IOSurface(pixel_buffer, renderer);
     CVPixelBufferRelease(pixel_buffer);
@@ -228,7 +232,7 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
     return uploaded;
 }
 
-IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer,YUV_2_RGB_Color_Matrix colorMatrix,int fullRange)
+IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer,YUV_2_RGB_Color_Matrix colorMatrix,int fullRange,IJK_Color_Transfer_Function tf)
 {
     char shader_buffer[4096] = { '\0' };
     
@@ -240,6 +244,8 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openg
     
     renderer->colorMatrix = colorMatrix;
     renderer->isFullRange = fullRange;
+    renderer->transferFun = tf;
+    
     const int samples = IJK_Sample_Count_For_Shader(type);
     assert(samples);
     
@@ -251,7 +257,8 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openg
     
     //yuv to rgb
     renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion");
-    renderer->fullRangeUM = glGetUniformLocation(renderer->program, "isFullRange");
+    renderer->fullRangeUM   = glGetUniformLocation(renderer->program, "isFullRange");
+    renderer->transferFunUM = glGetUniformLocation(renderer->program, "transferFun");
     renderer->um3_rgb_adjustment = glGetUniformLocation(renderer->program, "um3_rgbAdjustment"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_rgb_adjustmentVector)");
     
     renderer->func_use            = use;

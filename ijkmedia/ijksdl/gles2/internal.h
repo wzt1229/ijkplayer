@@ -94,6 +94,8 @@ typedef struct IJK_GLES2_Renderer
     GLint us2_sampler[IJK_GLES2_MAX_PLANE];
     GLint um3_color_conversion;
     YUV_2_RGB_Color_Matrix colorMatrix;
+    IJK_Color_Transfer_Function transferFun;
+    GLint transferFunUM;
     GLboolean isFullRange;
     GLint fullRangeUM;
     GLint um3_rgb_adjustment;
@@ -163,7 +165,7 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
 
 #else
 
-IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer,YUV_2_RGB_Color_Matrix colorMatrix,int fullRange);
+IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer,YUV_2_RGB_Color_Matrix colorMatrix,int fullRange,IJK_Color_Transfer_Function tf);
 void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver);
 
 #endif

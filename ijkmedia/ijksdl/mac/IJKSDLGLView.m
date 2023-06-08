@@ -337,8 +337,7 @@ static bool _is_need_dispath_to_global(void)
         openglVer = 120;
     #endif
         
-        CFStringRef colorMatrix = CVBufferGetAttachment(attach.videoPicture, kCVImageBufferYCbCrMatrixKey, NULL);
-        _renderer = IJK_GLES2_Renderer_createApple(cv_format, openglVer, colorMatrix);
+        _renderer = IJK_GLES2_Renderer_createApple(attach.videoPicture, openglVer);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         

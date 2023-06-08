@@ -30,12 +30,11 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
     uniform vec2 textureDimension1;
     uniform mat3 um3_ColorConversion;
     uniform vec3 um3_rgbAdjustment;
-    //   uniform mediump int isSt2084;
-    //   uniform mediump int isAribB67;
-
+    
     uniform int isSubtitle;
     uniform int isFullRange;
-                           
+    uniform int transferFun;
+                                                   
     #define FFMAX(a,b) ((a) > (b) ? (a) : (b))
     #define FFMAX3(a,b,c) FFMAX(FFMAX(a,b),c)
 
@@ -69,7 +68,7 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
     const float ST2084_C1 = 0.8359375;
     const float ST2084_C2 = 18.8515625;
     const float ST2084_C3 = 18.6875;
-    float FLT_MIN = 1.17549435082228750797e-38;
+//    float FLT_MIN = 1.17549435082228750797e-38;
     float st_2084_eotf(float x)
     {
         float xpow = pow(x, float(1.0 / ST2084_M2));
@@ -137,14 +136,11 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
         // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
         float peak_luminance = 50.0;
         vec3 myFragColor;
-
-        int isSt2084 = 1;
-        int isAribB67 = 0;
-
-        if (isSt2084 == 1) {
+        
+        if (transferFun == 1) {
            float to_linear_scale = 10000.0 / peak_luminance;
            myFragColor = to_linear_scale * vec3(st_2084_eotf(rgb10bit.r), st_2084_eotf(rgb10bit.g), st_2084_eotf(rgb10bit.b));
-        } else if (isAribB67 == 1) {
+        } else if (transferFun == 2) {
            float to_linear_scale = 1000.0 / peak_luminance;
            myFragColor = to_linear_scale * vec3(arib_b67_eotf(rgb10bit.r), arib_b67_eotf(rgb10bit.g), arib_b67_eotf(rgb10bit.b));
         } else {

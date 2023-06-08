@@ -30,6 +30,12 @@ typedef enum : int {
     YUV_2_RGB_Color_Matrix_BT2020
 } YUV_2_RGB_Color_Matrix;
 
+typedef enum : int {
+    IJK_Color_Transfer_Function_Linear,
+    IJK_Color_Transfer_Function_PQ,
+    IJK_Color_Transfer_Function_HLG,
+} IJK_Color_Transfer_Function;
+
 //Full Range YUV to RGB reference
 const GLfloat *IJK_GLES2_getColorMatrix_bt2020(void);
 const GLfloat *IJK_GLES2_getColorMatrix_bt709(void);

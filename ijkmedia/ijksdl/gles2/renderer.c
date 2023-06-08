@@ -189,8 +189,12 @@ fail:
 }
 
 #ifdef __APPLE__
-static IJK_GLES2_Renderer * _smart_create_renderer_appple(const Uint32 cv_format, int openglVer,CFStringRef colorMatrix)
+static IJK_GLES2_Renderer * _smart_create_renderer_appple(CVPixelBufferRef videoPicture, int openglVer)
 {
+    Uint32 cv_format = CVPixelBufferGetPixelFormatType(videoPicture);
+    CFStringRef colorMatrix = CVBufferGetAttachment(videoPicture, kCVImageBufferYCbCrMatrixKey, NULL);
+    CFStringRef transferFuntion = CVBufferGetAttachment(videoPicture, kCVImageBufferTransferFunctionKey, NULL);
+    
     IJK_SHADER_TYPE shaderType;
     if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
         ALOGI("create render yuv420sp\n");
@@ -255,12 +259,29 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(const Uint32 cv_format
         kCVPixelFormatType_444YpCbCr10BiPlanarFullRange == cv_format) {
         fullRange = 1;
     }
-    return ijk_create_common_gl_Renderer(shaderType, openglVer, colorMatrixType, fullRange);
+    IJK_Color_Transfer_Function tf;
+    if (transferFuntion) {
+        if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
+            tf = IJK_Color_Transfer_Function_HLG;
+        } else if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo) {
+            tf = IJK_Color_Transfer_Function_PQ;
+        } else {
+            tf = IJK_Color_Transfer_Function_Linear;
+        }
+    } else {
+        tf = IJK_Color_Transfer_Function_Linear;
+    }
+    
+    IJK_GLES2_Renderer *render = ijk_create_common_gl_Renderer(shaderType, openglVer, colorMatrixType, fullRange, tf);
+    if (render) {
+        render->format = cv_format;
+    }
+    return render;
 }
 #endif
 
 #ifdef __APPLE__
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 cv_format,int openglVer,CFStringRef colorMatrix)
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(CVPixelBufferRef videoPicture,int openglVer)
 {
     static int flag = 0;
     if (!flag) {
@@ -298,10 +319,9 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(Uint32 cv_format,int openglVe
 #endif
     }
     //软硬解渲染统一
-    IJK_GLES2_Renderer *renderer = _smart_create_renderer_appple(cv_format, openglVer, colorMatrix);
+    IJK_GLES2_Renderer *renderer = _smart_create_renderer_appple(videoPicture, openglVer);
 
     if (renderer) {
-        renderer->format = cv_format;
         glGenVertexArrays(1, &renderer->vao);
         // 创建顶点缓存对象
         glGenBuffers(1, &renderer->vbo);
