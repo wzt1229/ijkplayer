@@ -166,7 +166,7 @@ static int64_t get_bit_rate(AVCodecParameters *codecpar)
             break;
         case AVMEDIA_TYPE_AUDIO:
             bits_per_sample = av_get_bits_per_sample(codecpar->codec_id);
-            bit_rate = bits_per_sample ? codecpar->sample_rate * codecpar->channels * bits_per_sample : codecpar->bit_rate;
+            bit_rate = bits_per_sample ? codecpar->sample_rate * codecpar->ch_layout.nb_channels * bits_per_sample : codecpar->bit_rate;
             break;
         default:
             bit_rate = 0;

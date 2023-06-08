@@ -69,14 +69,6 @@
     [self.pilelineLock unlock];
 }
 
-- (void)setConvertMatrixType:(IJKYUV2RGBColorMatrixType)convertMatrixType
-{
-    if (_convertMatrixType != convertMatrixType) {
-        _convertMatrixType = convertMatrixType;
-        self.convertMatrixChanged = YES;
-    }
-}
-
 - (BOOL)prepareMetaWithCVPixelbuffer:(CVPixelBufferRef)pixelBuffer
 {
     OSType cv_format = CVPixelBufferGetPixelFormatType(pixelBuffer);
@@ -170,7 +162,8 @@
     _transferFunc = tf;
     _fragmentName = shaderName;
     _fullRange = fullRange;
-    self.convertMatrixType = colorMatrixType;
+    _convertMatrixType = colorMatrixType;
+    self.convertMatrixChanged = YES;
     return YES;
 }
 
