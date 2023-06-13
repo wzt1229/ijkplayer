@@ -117,17 +117,18 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.seekCostLb.stringValue = @"";
     self.accurateSeek = 1;
     self.loop = 1;
-    NSArray *onlineArr = @[
-@"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
-@"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
-@"https://cdn10.vipbf-video.com/20221205/17013_50618fea/index.m3u8"];
-    
+    NSArray *onlineArr = @[@"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
+        @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
+        @"https://cdn10.vipbf-video.com/20221205/17013_50618fea/index.m3u8"];
+
     for (NSString *url in onlineArr) {
         [self.playList addObject:[NSURL URLWithString:url]];
     }
    
-//    @"2e0fb226-d7c3-4672-a4bc.m3u8"
-    NSArray *bundleNameArr = @[@"2e0fb226-d7c3-4672-a4bc-db6e1bbf6a06.m3u8",@"5003509-693880-3.m3u8",@"996747-5277368-31.m3u8"];
+    NSArray *bundleNameArr = @[@"ipad8225552_4897622324404_1436873-no-dis.m3u8",
+                               @"ipad8225552_4897622324404_1436873.m3u8",
+                               @"5003509-693880-3.m3u8",
+                               @"996747-5277368-31.m3u8"];
     
     for (NSString *fileName in bundleNameArr) {
         NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
@@ -623,6 +624,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         }
     }
     
+    [options setFormatOptionIntValue:0 forKey:@"http_persistent"];
     BOOL isLive = NO;
     //isLive表示是直播还是点播
     if (isLive) {
@@ -733,10 +735,12 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)ijkPlayerVideoDecoderFatal:(NSNotification *)notifi
 {
-    NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo[@"code"]);
     if (self.videotoolbox_hwaccel) {
+        NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo[@"code"]);
         self.videotoolbox_hwaccel = NO;
         [self onChangedHWaccel:nil];
+    } else {
+        NSLog(@"decoder fatal:%@",notifi.userInfo[@"code"]);
     }
 }
 

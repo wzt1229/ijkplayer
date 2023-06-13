@@ -227,6 +227,7 @@
 				<string>tif</string>
 				<string>pcx</string>
 				<string>gif</string>
+				<string>heic</string>
 			</array>
 			<key>CFBundleTypeName</key>
 			<string>Other Picture Document</string>
