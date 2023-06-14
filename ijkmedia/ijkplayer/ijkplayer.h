@@ -221,8 +221,10 @@ float           ijkmp_get_subtitle_extra_delay(IjkMediaPlayer *mp);
 int             ijkmp_add_active_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 /* add only ex-subtitle */
 int             ijkmp_addOnly_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
-/* get video frame queue chache remaining count*/
+/* get video frame queue cache remaining count*/
 int             ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp);
+/* get audio frame queue cache remaining count*/
+int             ijkmp_get_audio_frame_cache_remaining(IjkMediaPlayer *mp);
 /* register audio samples observer*/
 void            ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callback cb);
 /* toggle accurate seek */

@@ -113,7 +113,7 @@ int       ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
 /* add only ex-subtitle */
 int       ffp_addOnly_external_subtitle(FFPlayer *ffp, const char *file_name);
 int       ffp_get_video_frame_cache_remaining(FFPlayer *ffp);
-
+int       ffp_get_audio_frame_cache_remaining(FFPlayer *ffp);
 /* audio samples realtime observer callback, callback can be NULL */
 void      ffp_set_audio_sample_observer(FFPlayer *ffp, ijk_audio_samples_callback cb);
 /* toggle accurate seek*/

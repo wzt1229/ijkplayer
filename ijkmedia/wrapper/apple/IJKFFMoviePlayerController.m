@@ -315,21 +315,22 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     NSString *render = [self.view name];
     [self setHudValue:render forKey:@"v-renderer"];
     
-    if (![_contentURL isFileURL]) {
-        [self setHudValue:nil forKey:@"scheme"];
-        [self setHudValue:nil forKey:@"host"];
-        [self setHudValue:nil forKey:@"path"];
-        [self setHudValue:nil forKey:@"ip"];
-        [self setHudValue:nil forKey:@"tcp-info"];
-        [self setHudValue:nil forKey:@"http"];
-        [self setHudValue:nil forKey:@"tcp-spd"];
-        [self setHudValue:nil forKey:@"t-prepared"];
-        [self setHudValue:nil forKey:@"t-render"];
-        [self setHudValue:nil forKey:@"t-preroll"];
-        [self setHudValue:nil forKey:@"t-http-open"];
-        [self setHudValue:nil forKey:@"t-http-seek"];
-    }
+//    if (![_contentURL isFileURL]) {
+//        [self setHudValue:nil forKey:@"scheme"];
+//        [self setHudValue:nil forKey:@"host"];
+//        [self setHudValue:nil forKey:@"path"];
+//        [self setHudValue:nil forKey:@"ip"];
+//        [self setHudValue:nil forKey:@"tcp-info"];
+//        [self setHudValue:nil forKey:@"http"];
+//        [self setHudValue:nil forKey:@"tcp-spd"];
+//        [self setHudValue:nil forKey:@"t-prepared"];
+//        [self setHudValue:nil forKey:@"t-render"];
+//        [self setHudValue:nil forKey:@"t-preroll"];
+//        [self setHudValue:nil forKey:@"t-http-open"];
+//        [self setHudValue:nil forKey:@"t-http-seek"];
+//    }
     
+    [self setHudValue:nil forKey:@"path"];
     // Detect if URL is file path and return proper string for it
     NSString *urlString = [_contentURL isFileURL] ? [_contentURL path] : [_contentURL absoluteString];
     
@@ -938,7 +939,9 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     float vfps = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VIDEO_OUTPUT_FRAMES_PER_SECOND, .0f);
     [self setHudValue:[NSString stringWithFormat:@"%.2f / %.2f / %.2f", vdps, vfps, self.fpsInMeta] forKey:@"fps(d/o/f)"];
     int pic_remaining = ijkmp_get_video_frame_cache_remaining(_mediaPlayer);
-    [self setHudValue:[NSString stringWithFormat:@"%d", pic_remaining] forKey:@"p-cache"];
+    int sam_remaining = ijkmp_get_audio_frame_cache_remaining(_mediaPlayer);
+    [self setHudValue:[NSString stringWithFormat:@"%d", pic_remaining] forKey:@"pictures"];
+    [self setHudValue:[NSString stringWithFormat:@"%d", sam_remaining] forKey:@"samples"];
     
     int64_t vcacheb = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_CACHED_BYTES, 0);
     int64_t acacheb = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_AUDIO_CACHED_BYTES, 0);

@@ -5105,6 +5105,14 @@ int ffp_get_video_frame_cache_remaining(FFPlayer *ffp)
     return frame_queue_nb_remaining(&ffp->is->pictq);
 }
 
+int ffp_get_audio_frame_cache_remaining(FFPlayer *ffp)
+{
+    if (!ffp || !ffp->is) {
+        return 0;
+    }
+    return frame_queue_nb_remaining(&ffp->is->sampq);
+}
+
 void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque);
 
 void ffp_set_audio_sample_observer(FFPlayer *ffp, ijk_audio_samples_callback cb)
