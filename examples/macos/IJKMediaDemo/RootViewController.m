@@ -20,6 +20,7 @@
 #import "MRBaseView.h"
 #import <IOKit/pwr_mgt/IOPMLib.h>
 #import "MultiRenderSample.h"
+#import "NSString+Ex.h"
 
 static NSString* lastPlayedKey = @"__lastPlayedKey";
 
@@ -656,7 +657,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
-    
+    int startTime = (int)([self readCurrentPlayRecord] * 1000);
+    [options setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
     options.metalRenderer = !self.use_openGL;
     options.showHudView = self.shouldShowHudView;
     
@@ -707,8 +709,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerAfterSeekFirstVideoFrameDisplay:) name:IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification object:self.player];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerOpenInput:) name:IJKMPMoviePlayerOpenInputNotification object:self.player];
-    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerVideoDecoderFatal:) name:IJKMPMoviePlayerVideoDecoderFatalNotification object:self.player];
     
     
@@ -719,6 +719,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
 }
+
+#pragma mark - ijkplayer
 
 - (void)ijkPlayerRecvWarning:(NSNotification *)notifi
 {
@@ -749,11 +751,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     } else {
         NSLog(@"decoder fatal:%@",notifi.userInfo[@"code"]);
     }
-}
-
-- (void)ijkPlayerOpenInput:(NSNotification *)notifi
-{
-    NSLog(@"demuxer:%@",notifi.userInfo[@"name"]);
 }
 
 - (void)ijkPlayerAfterSeekFirstVideoFrameDisplay:(NSNotification *)notifi
@@ -835,8 +832,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 NSAlert *alert = [[NSAlert alloc] init];
                 NSString *urlString = [self.player.contentURL isFileURL] ? [self.player.contentURL path] : [self.player.contentURL absoluteString];
                 alert.informativeText = urlString;
-                
-                alert.messageText = [NSString stringWithFormat:@"%@(%d)",notifi.userInfo[@"msg"],errCode];
+                alert.messageText = [NSString stringWithFormat:@"%@",notifi.userInfo[@"msg"]];
                 
                 if ([self.playList count] > 1) {
                     [alert addButtonWithTitle:@"Next"];
@@ -876,6 +872,30 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             }
         }
     }
+}
+
+- (void)saveCurrentPlayRecord
+{
+    if (self.playingUrl && self.player) {
+        NSString *key = [[self.playingUrl absoluteString] md5Hash];
+        
+        if (self.player.duration > 0 &&
+            self.player.duration - self.player.currentPlaybackTime < 10 &&
+            self.player.currentPlaybackTime / self.player.duration > 0.9) {
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+        } else {
+            [[NSUserDefaults standardUserDefaults] setDouble:self.player.currentPlaybackTime forKey:key];
+        }
+    }
+}
+
+- (NSTimeInterval)readCurrentPlayRecord
+{
+    if (self.playingUrl) {
+        NSString *key = [[self.playingUrl absoluteString] md5Hash];
+        return [[NSUserDefaults standardUserDefaults] doubleForKey:key];
+    }
+    return 0.0;
 }
 
 - (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
@@ -952,6 +972,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         [self.subtitlePopUpBtn selectItemWithTitle:currentTitle];
         [self.audioPopUpBtn selectItemWithTitle:currentAudio];
         [self.videoPopUpBtn selectItemWithTitle:currentVideo];
+        
+        if (!self.tickTimer) {
+            self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
+        }
     }
 }
 
@@ -977,14 +1001,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.bottomMargin = self.subtitleMargin;
     self.player.view.subtitlePreference = p;
-    
-    if (self.tickTimer) {
-        [self.tickTimer invalidate];
-        self.tickTimer = nil;
-        self.tickCount = 0;
-    }
-    
-    self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
     
     [self.player prepareToPlay];
 }
@@ -1029,6 +1045,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
     
     if ([self.player isPlaying]) {
         self.tickCount ++;
+        if (self.tickCount % 60 == 0) {
+            [self saveCurrentPlayRecord];
+        }
         if (self.autoTest) {
             //auto seek
             if (duration > 0) {
@@ -1231,8 +1250,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
 {
     NSLog(@"stop play");
     if (self.player) {
+        [self saveCurrentPlayRecord];
         [self.kvoCtrl safelyRemoveAllObservers];
-        [[NSNotificationCenter defaultCenter] removeObserver:self.player];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:nil object:self.player];
         [self.player.view removeFromSuperview];
         [self.player pause];
         [self.player shutdown];

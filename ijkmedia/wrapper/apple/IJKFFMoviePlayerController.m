@@ -330,7 +330,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 //        [self setHudValue:nil forKey:@"t-http-seek"];
 //    }
     
-    [self setHudValue:nil forKey:@"path"];
+//    [self setHudValue:nil forKey:@"path"];
     // Detect if URL is file path and return proper string for it
     NSString *urlString = [_contentURL isFileURL] ? [_contentURL path] : [_contentURL absoluteString];
     
@@ -853,20 +853,6 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self setHudValue:value forKey:key];
-        });
-    }
-}
-
-- (void)setHudUrl:(NSString *)urlString
-{
-    if ([[NSThread currentThread] isMainThread]) {
-        NSURL *url = [NSURL URLWithString:urlString];
-        [self setHudValue:url.scheme forKey:@"scheme"];
-        [self setHudValue:url.host   forKey:@"host"];
-        [self setHudValue:url.path   forKey:@"path"];
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self setHudUrl:urlString];
         });
     }
 }
@@ -1601,6 +1587,20 @@ static int media_player_msg_loop(void* arg)
 }
 
 #if ! IJK_IO_OFF
+
+- (void)setHudUrl:(NSString *)urlString
+{
+    if ([[NSThread currentThread] isMainThread]) {
+        NSURL *url = [NSURL URLWithString:urlString];
+        [self setHudValue:url.scheme forKey:@"scheme"];
+        [self setHudValue:url.host   forKey:@"host"];
+        [self setHudValue:url.path   forKey:@"path"];
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setHudUrl:urlString];
+        });
+    }
+}
 
 #pragma mark av_format_control_message
 

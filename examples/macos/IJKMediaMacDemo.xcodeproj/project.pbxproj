@@ -30,6 +30,7 @@
 		C969BEBA27BDEAD0008BC2AD /* 5003509-693880-1.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = C969BEB927BDEAD0008BC2AD /* 5003509-693880-1.m3u8 */; };
 		C96F5B9B291A052100C79E07 /* MRProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = C96F5B99291A052000C79E07 /* MRProgressIndicator.m */; };
 		C96F5B9D291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = C96F5B9C291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 */; };
+		C97423CE2A3AE8BE001F6B54 /* NSString+Ex.m in Sources */ = {isa = PBXBuildFile; fileRef = C97423CD2A3AE8BE001F6B54 /* NSString+Ex.m */; };
 		C97674EE2A1F333D00B7627E /* MRTextInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C97674EC2A1F333D00B7627E /* MRTextInfoViewController.m */; };
 		C97674EF2A1F333D00B7627E /* MRTextInfoViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C97674ED2A1F333D00B7627E /* MRTextInfoViewController.xib */; };
 		C97DCC0727C867EA0019874F /* MRBaseView.m in Sources */ = {isa = PBXBuildFile; fileRef = C97DCC0627C867EA0019874F /* MRBaseView.m */; };
@@ -109,6 +110,8 @@
 		C96F5B99291A052000C79E07 /* MRProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRProgressIndicator.m; sourceTree = "<group>"; };
 		C96F5B9A291A052100C79E07 /* MRProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRProgressIndicator.h; sourceTree = "<group>"; };
 		C96F5B9C291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "2e0fb226-d7c3-4672-a4bc.m3u8"; sourceTree = "<group>"; };
+		C97423CC2A3AE8BE001F6B54 /* NSString+Ex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSString+Ex.h"; sourceTree = "<group>"; };
+		C97423CD2A3AE8BE001F6B54 /* NSString+Ex.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSString+Ex.m"; sourceTree = "<group>"; };
 		C97674EB2A1F333D00B7627E /* MRTextInfoViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRTextInfoViewController.h; sourceTree = "<group>"; };
 		C97674EC2A1F333D00B7627E /* MRTextInfoViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MRTextInfoViewController.m; sourceTree = "<group>"; };
 		C97674ED2A1F333D00B7627E /* MRTextInfoViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MRTextInfoViewController.xib; sourceTree = "<group>"; };
@@ -258,6 +261,8 @@
 				DDE9FC6F273BD3CF00481560 /* NSFileManager+Sandbox.m */,
 				DD050F9525A43A1300F01E2F /* MRUtil.h */,
 				DD050F9625A43A1300F01E2F /* MRUtil.m */,
+				C97423CC2A3AE8BE001F6B54 /* NSString+Ex.h */,
+				C97423CD2A3AE8BE001F6B54 /* NSString+Ex.m */,
 			);
 			path = MRUtil;
 			sourceTree = "<group>";
@@ -514,6 +519,7 @@
 				C955005E27C769D30026AB17 /* GraphicSettingViewController.m in Sources */,
 				DDB7827B2757266900382094 /* SHBaseView.m in Sources */,
 				DD0443E727E7749800CB946B /* MRActionProcessor.m in Sources */,
+				C97423CE2A3AE8BE001F6B54 /* NSString+Ex.m in Sources */,
 				DD9B139522C23A7A002D1D79 /* main.m in Sources */,
 				C955005427C769770026AB17 /* SnapshotSettingViewController.m in Sources */,
 				C97DCC0727C867EA0019874F /* MRBaseView.m in Sources */,
