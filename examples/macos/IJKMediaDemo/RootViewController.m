@@ -116,7 +116,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self reSetLoglevel:@"info"];
     self.seekCostLb.stringValue = @"";
     self.accurateSeek = 1;
-    self.loop = 1;
+    self.loop = 0;
 //http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream_ts.m3u8
 //http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream.mpd
 //http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream_fmp4.m3u8
@@ -774,41 +774,41 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)ijkPlayerNaturalSizeAvailable:(NSNotification *)notifi
 {
-    if (self.player == notifi.object) {
-        CGSize const videoSize = NSSizeFromString(notifi.userInfo[@"size"]);
-        if (!CGSizeEqualToSize(self.view.window.aspectRatio, videoSize)) {
-            
-//            [self.view.window setAspectRatio:videoSize];
-            CGRect rect = self.view.window.frame;
-            
-            CGPoint center = CGPointMake(rect.origin.x + rect.size.width/2.0, rect.origin.y + rect.size.height/2.0);
-            static float kMaxRatio = 1.0;
-            if (videoSize.width < videoSize.height) {
-                rect.size.width = rect.size.height / videoSize.height * videoSize.width;
-                if (rect.size.width > [[NSScreen mainScreen]frame].size.width * kMaxRatio) {
-                    float ratio = [[NSScreen mainScreen]frame].size.width * kMaxRatio / rect.size.width;
-                    rect.size.width *= ratio;
-                    rect.size.height *= ratio;
-                }
-            } else {
-                rect.size.height = rect.size.width / videoSize.width * videoSize.height;
-                if (rect.size.height > [[NSScreen mainScreen]frame].size.height * kMaxRatio) {
-                    float ratio = [[NSScreen mainScreen]frame].size.height * kMaxRatio / rect.size.height;
-                    rect.size.width *= ratio;
-                    rect.size.height *= ratio;
-                }
-            }
-            //keep center.
-            rect.origin = CGPointMake(center.x - rect.size.width/2.0, center.y - rect.size.height/2.0);
-            rect.size = CGSizeMake((int)rect.size.width, (int)rect.size.height);
-            NSLog(@"窗口位置:%@;视频尺寸：%@",NSStringFromRect(rect),NSStringFromSize(videoSize));
-            [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-                [self.view.window.animator setFrame:rect display:YES];
-                [self.view.window.animator center];
-            }];
-
-        }
-    }
+//    if (self.player == notifi.object) {
+//        CGSize const videoSize = NSSizeFromString(notifi.userInfo[@"size"]);
+//        if (!CGSizeEqualToSize(self.view.window.aspectRatio, videoSize)) {
+//
+////            [self.view.window setAspectRatio:videoSize];
+//            CGRect rect = self.view.window.frame;
+//
+//            CGPoint center = CGPointMake(rect.origin.x + rect.size.width/2.0, rect.origin.y + rect.size.height/2.0);
+//            static float kMaxRatio = 1.0;
+//            if (videoSize.width < videoSize.height) {
+//                rect.size.width = rect.size.height / videoSize.height * videoSize.width;
+//                if (rect.size.width > [[NSScreen mainScreen]frame].size.width * kMaxRatio) {
+//                    float ratio = [[NSScreen mainScreen]frame].size.width * kMaxRatio / rect.size.width;
+//                    rect.size.width *= ratio;
+//                    rect.size.height *= ratio;
+//                }
+//            } else {
+//                rect.size.height = rect.size.width / videoSize.width * videoSize.height;
+//                if (rect.size.height > [[NSScreen mainScreen]frame].size.height * kMaxRatio) {
+//                    float ratio = [[NSScreen mainScreen]frame].size.height * kMaxRatio / rect.size.height;
+//                    rect.size.width *= ratio;
+//                    rect.size.height *= ratio;
+//                }
+//            }
+//            //keep center.
+//            rect.origin = CGPointMake(center.x - rect.size.width/2.0, center.y - rect.size.height/2.0);
+//            rect.size = CGSizeMake((int)rect.size.width, (int)rect.size.height);
+//            NSLog(@"窗口位置:%@;视频尺寸：%@",NSStringFromRect(rect),NSStringFromSize(videoSize));
+//            [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+//                [self.view.window.animator setFrame:rect display:YES];
+//                [self.view.window.animator center];
+//            }];
+//
+//        }
+//    }
 }
 
 - (void)ijkPlayerDidFinish:(NSNotification *)notifi
@@ -868,11 +868,11 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 }];
             }
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
-            
-            if (![[MRUtil pictureType] containsObject:[[self.playingUrl lastPathComponent] pathExtension]]) {
-                NSLog(@"播放结束");
-                [self stopPlay:nil];
-//                [self playNext:nil];
+            NSLog(@"播放结束");
+            if ([[MRUtil pictureType] containsObject:[[self.playingUrl lastPathComponent] pathExtension]]) {
+//                [self stopPlay:nil];
+            } else {
+                [self playNext:nil];
             }
         }
     }
@@ -1281,7 +1281,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
         [self stopPlay:nil];
         return;
     }
-    
+    //reset
+    self.videotoolbox_hwaccel = YES;
     NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
     //when autotest not loop
     if (self.autoTest && idx == self.playList.count - 1) {
