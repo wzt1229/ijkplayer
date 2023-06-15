@@ -117,25 +117,32 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.seekCostLb.stringValue = @"";
     self.accurateSeek = 1;
     self.loop = 1;
-    NSArray *onlineArr = @[@"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
+//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream_ts.m3u8
+//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream.mpd
+//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream_fmp4.m3u8
+//https://events-delivery.apple.com/2807skttevpekgjkgcyolyxgkexyahqp/m3u8/vod_index-bHTtMFcgdqmJGoHoDBPadNWwGwrNevrj.m3u8
+//@"http://localhost/test-videos/av1-m3u8/res.m3u8"
+//    @"http://10.18.17.49/samba/video/BDMV%E7%9A%84%E5%BA%93/%E4%BB%A5%E5%AF%A1%E6%95%8C%E4%BC%97%5B%E7%AE%80%E7%B9%81%E8%8B%B1%E5%AD%97%E5%B9%95%5D.Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD/Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD.mkv"
+    NSArray *onlineArr = @[
+  @"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
         @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
-        @"https://cdn10.vipbf-video.com/20221205/17013_50618fea/index.m3u8"];
+        @"https://cdn10.vipbf-video.com/20221205/17013_50618fea/index.m3u8"
+    ];
 
     for (NSString *url in onlineArr) {
         [self.playList addObject:[NSURL URLWithString:url]];
     }
    
-    NSArray *bundleNameArr = @[@"ipad8225552_4897622324404_1436873-no-dis.m3u8",
+    NSArray *bundleNameArr = @[@"996747-5277368-31.m3u8",
+                               @"ipad8225552_4897622324404_1436873-no-dis.m3u8",
                                @"ipad8225552_4897622324404_1436873.m3u8",
-                               @"5003509-693880-3.m3u8",
-                               @"996747-5277368-31.m3u8"];
+                               @"5003509-693880-3.m3u8"];
     
     for (NSString *fileName in bundleNameArr) {
         NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
         [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
     }
         
-    
     if ([self.view isKindOfClass:[SHBaseView class]]) {
         SHBaseView *baseView = (SHBaseView *)self.view;
         baseView.delegate = self;
@@ -648,7 +655,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
-    [options setPlayerOptionIntValue:2500 forKey:@"accurate-seek-timeout"];
+    [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
     
     options.metalRenderer = !self.use_openGL;
     options.showHudView = self.shouldShowHudView;

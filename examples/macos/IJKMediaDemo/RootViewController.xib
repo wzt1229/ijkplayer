@@ -44,7 +44,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="1060" height="402"/>
                                     <subviews>
                                         <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="5" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XnT-kB-NAs">
-                                            <rect key="frame" x="0.0" y="84" width="808" height="313"/>
+                                            <rect key="frame" x="0.0" y="84" width="895" height="313"/>
                                             <subviews>
                                                 <stackView distribution="fill" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dr3-RU-wfk" userLabel="Subtitle Ctrl">
                                                     <rect key="frame" x="0.0" y="273" width="718" height="40"/>
@@ -242,7 +242,7 @@
                                                     </customSpacing>
                                                 </stackView>
                                                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="Ckg-k7-0GT">
-                                                    <rect key="frame" x="0.0" y="265" width="808" height="5"/>
+                                                    <rect key="frame" x="0.0" y="265" width="895" height="5"/>
                                                 </box>
                                                 <stackView distribution="fillProportionally" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tvh-Jh-v0C" userLabel="Pic Ctrl">
                                                     <rect key="frame" x="0.0" y="108" width="611" height="154"/>
@@ -685,7 +685,7 @@
                                                     <rect key="frame" x="0.0" y="49" width="808" height="5"/>
                                                 </box>
                                                 <stackView distribution="fill" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6aw-Az-n9w" userLabel="Codec Ctrl">
-                                                    <rect key="frame" x="0.0" y="6" width="691" height="40"/>
+                                                    <rect key="frame" x="0.0" y="6" width="895" height="40"/>
                                                     <subviews>
                                                         <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aNP-9f-hzd">
                                                             <rect key="frame" x="8" y="12" width="68" height="16"/>
@@ -855,6 +855,29 @@
                                                                 <action selector="onChangeLogLevel:" target="-2" id="KRK-Dh-glD"/>
                                                             </connections>
                                                         </popUpButton>
+                                                        <box horizontalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="ocG-ox-AIp">
+                                                            <rect key="frame" x="687" y="0.0" width="5" height="40"/>
+                                                        </box>
+                                                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1RJ-Y2-c36">
+                                                            <rect key="frame" x="691" y="3" width="93" height="32"/>
+                                                            <buttonCell key="cell" type="push" title="Mutil-Inst" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zgg-5b-X8b">
+                                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                                <font key="font" metaFont="system"/>
+                                                            </buttonCell>
+                                                            <connections>
+                                                                <action selector="openNewInstance:" target="-2" id="q9b-b2-agr"/>
+                                                            </connections>
+                                                        </button>
+                                                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qA3-p2-N3I">
+                                                            <rect key="frame" x="778" y="3" width="114" height="32"/>
+                                                            <buttonCell key="cell" type="push" title="Mutil-Render" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Bqt-2r-oqG">
+                                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                                <font key="font" metaFont="system"/>
+                                                            </buttonCell>
+                                                            <connections>
+                                                                <action selector="testMultiRenderSample:" target="-2" id="Fwx-te-VXA"/>
+                                                            </connections>
+                                                        </button>
                                                     </subviews>
                                                     <edgeInsets key="edgeInsets" left="10" right="10" top="0.0" bottom="0.0"/>
                                                     <constraints>
@@ -875,8 +898,14 @@
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
+                                                        <integer value="1000"/>
+                                                        <integer value="1000"/>
+                                                        <integer value="1000"/>
                                                     </visibilityPriorities>
                                                     <customSpacing>
+                                                        <real value="3.4028234663852886e+38"/>
+                                                        <real value="3.4028234663852886e+38"/>
+                                                        <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
@@ -996,27 +1025,6 @@
                                                 </button>
                                             </middleViews>
                                             <endViews>
-                                                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1RJ-Y2-c36">
-                                                    <rect key="frame" x="809" y="10" width="93" height="32"/>
-                                                    <buttonCell key="cell" type="push" title="Mutil-Inst" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zgg-5b-X8b">
-                                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                        <font key="font" metaFont="system"/>
-                                                    </buttonCell>
-                                                    <connections>
-                                                        <action selector="openNewInstance:" target="-2" id="q9b-b2-agr"/>
-                                                    </connections>
-                                                </button>
-                                                <button verticalHuggingPriority="750" id="qA3-p2-N3I">
-                                                    <rect key="frame" x="893" y="10" width="114" height="32"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                    <buttonCell key="cell" type="push" title="Mutil-Render" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Bqt-2r-oqG">
-                                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                        <font key="font" metaFont="system"/>
-                                                    </buttonCell>
-                                                    <connections>
-                                                        <action selector="testMultiRenderSample:" target="-2" id="Fwx-te-VXA"/>
-                                                    </connections>
-                                                </button>
                                                 <button verticalHuggingPriority="750" id="hez-32-c2g">
                                                     <rect key="frame" x="1005" y="17" width="20" height="20"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -1051,12 +1059,8 @@
                                                 <integer value="1000"/>
                                                 <integer value="1000"/>
                                                 <integer value="1000"/>
-                                                <integer value="1000"/>
-                                                <integer value="1000"/>
                                             </visibilityPriorities>
                                             <customSpacing>
-                                                <real value="3.4028234663852886e+38"/>
-                                                <real value="3.4028234663852886e+38"/>
                                                 <real value="3.4028234663852886e+38"/>
                                                 <real value="3.4028234663852886e+38"/>
                                                 <real value="3.4028234663852886e+38"/>
