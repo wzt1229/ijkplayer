@@ -46,5 +46,11 @@
 // #define FFP_AMC_DISABLE_OUTPUT
 
 // #define FFP_AVFILTER_PLAYBACK_RATE
+//#define FFP_MONKEY_DEBUG
+#ifdef FFP_MONKEY_DEBUG
+#define monkey_log(fmt, ...) av_log(NULL, AV_LOG_INFO,fmt,__VA_ARGS__)
+#else
+#define monkey_log(fmt, ...)
+#endif
 
 #endif

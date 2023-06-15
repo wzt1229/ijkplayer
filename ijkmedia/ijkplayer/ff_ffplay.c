@@ -687,6 +687,8 @@ static int stream_seek(VideoState *is, int64_t pos, int64_t rel, int by_bytes)
         is->seek_flags &= ~AVSEEK_FLAG_BYTE;
         if (by_bytes)
             is->seek_flags |= AVSEEK_FLAG_BYTE;
+        else
+            is->seek_flags |= AVSEEK_FLAG_BACKWARD;
         is->seek_req = 1;
         is->viddec.start_seek_time = SDL_GetTickHR();
         SDL_CondSignal(is->continue_read_thread);
@@ -921,7 +923,7 @@ retry:
              video and audio pts are NAN,usually video is firstly display,at this time video picture delay is zero, so we wait until audio clock right,because we need use auido sync video.
              check audioq.duration avoid video picture wait audio forever.
              */
-            if (!is->step_on_seeking && !is->step && get_master_sync_type(is) == AV_SYNC_AUDIO_MASTER) {
+            if (!is->step_on_seeking && !is->step && get_master_sync_type(is) == AV_SYNC_AUDIO_MASTER && !is->audio_accurate_seek_req) {
                 if (is->audio_stream >= 0 && isnan(get_master_clock(is)) && is->auddec.finished != is->audioq.serial && vp->pts > 0 && is->audioq.duration > 1) {
                     av_usleep(1000);
                     av_log(NULL,AV_LOG_INFO,"wait master clock,video pts is:%0.3f,serial:%d\n",vp->pts,vp->serial);
@@ -1127,17 +1129,20 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
     int video_accurate_seek_fail = 0;
     int64_t video_seek_pos = 0;
     int64_t now = 0;
-    int64_t deviation = 0;
-
-    int64_t deviation2 = 0;
-    int64_t deviation3 = 0;
-
-    if (ffp->enable_accurate_seek && is->video_accurate_seek_req && !is->seek_req && !is->step_on_seeking) {
+    
+    monkey_log(NULL, AV_LOG_INFO,"xql video queue_picture\n");
+    
+    /*
+     去掉了 && !is->step_on_seeking，因为解码可能非常快，在 step_on_seeking 期间，就把视频frame queue 填满了，但实际上跳过了精准过滤，接着处于等待队列不满状态，可只有播放才会消耗队列；
+     (seek 后，开启精准seek时，则 video_accurate_seek_req = 1;)
+     此时音频精准seek在继续，判断 video_accurate_seek_req = 1，进而陷入无条件等待视频精准seek结束，直到达到设定的精准seek超时阈值。
+     */
+    if (ffp->enable_accurate_seek && is->video_accurate_seek_req && !is->seek_req) {
         if (!isnan(pts)) {
             video_seek_pos = is->seek_pos;
             is->accurate_seek_vframe_pts = pts * 1000 * 1000;
-            deviation = llabs((int64_t)(pts * 1000 * 1000) - is->seek_pos);
-            if ((pts * 1000 * 1000 < is->seek_pos) || deviation > MAX_DEVIATION) {
+            int64_t deviation = is->seek_pos - (int64_t)(pts * 1000 * 1000);
+            if (deviation > MAX_DEVIATION) {
                 now = av_gettime_relative() / 1000;
                 /*
                  fix fast rewind and fast forward continually,however accurate seek may not ended,cause accurate seek timeout.
@@ -1161,21 +1166,21 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                 }
                 is->drop_vframe_count++;
 
-                while (is->audio_accurate_seek_req && !is->abort_request) {
-                    int64_t apts = is->accurate_seek_aframe_pts;
-                    deviation2 = apts - pts * 1000 * 1000;
-                    deviation3 = apts - is->seek_pos;
-
-                    if (deviation2 > -100 * 1000 && deviation3 < 0) {
-                        break;
-                    } else {
-                        av_usleep(20 * 1000);
-                    }
-                    now = av_gettime_relative() / 1000;
-                    if ((now - is->accurate_seek_start_time) > ffp->accurate_seek_timeout) {
-                        break;
-                    }
-                }
+//                while (is->audio_accurate_seek_req && !is->abort_request) {
+//                    int64_t apts = is->accurate_seek_aframe_pts;
+//                    int64_t deviation2 = apts - pts * 1000 * 1000;
+//                    int64_t deviation3 = apts - is->seek_pos;
+//
+//                    if (deviation2 > -100 * 1000 && deviation3 < 0) {
+//                        break;
+//                    } else {
+//                        av_usleep(20 * 1000);
+//                    }
+//                    now = av_gettime_relative() / 1000;
+//                    if ((now - is->accurate_seek_start_time) > ffp->accurate_seek_timeout) {
+//                        break;
+//                    }
+//                }
 
                 if ((now - is->accurate_seek_start_time) <= ffp->accurate_seek_timeout) {
                     return 1;  // drop some old frame when do accurate seek
@@ -1238,6 +1243,8 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
            av_get_picture_type_char(src_frame->pict_type), pts);
 #endif
 
+    monkey_log("will put frame,dropped vframe_count=%d, pts = %lf\n", is->drop_vframe_count, pts);
+    
     if (!(vp = frame_queue_peek_writable(&is->pictq)))
         return -1;
 
@@ -1724,10 +1731,7 @@ static int audio_thread(void *arg)
     double audio_clock = 0;
     int64_t now = 0;
     double samples_duration = 0;
-    int64_t deviation = 0;
-    int64_t deviation2 = 0;
-    int64_t deviation3 = 0;
-
+    
     if (!frame)
         return AVERROR(ENOMEM);
 
@@ -1735,9 +1739,9 @@ static int audio_thread(void *arg)
         ffp_audio_statistic_l(ffp);
         if ((got_frame = decoder_decode_frame(ffp, &is->auddec, frame, NULL)) < 0)
             goto the_end;
-
         if (got_frame) {
                 tb = (AVRational){1, frame->sample_rate};
+                monkey_log("decoder audio frame: %0.2f\n", frame->pts * av_q2d(tb));
                 if (ffp->enable_accurate_seek && is->audio_accurate_seek_req && !is->seek_req) {
                     frame_pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
                     now = av_gettime_relative() / 1000;
@@ -1746,8 +1750,11 @@ static int audio_thread(void *arg)
                         audio_clock = frame_pts + samples_duration;
                         is->accurate_seek_aframe_pts = audio_clock * 1000 * 1000;
                         audio_seek_pos = is->seek_pos;
-                        deviation = llabs((int64_t)(audio_clock * 1000 * 1000) - is->seek_pos);
-                        if ((audio_clock * 1000 * 1000 < is->seek_pos) || deviation > MAX_DEVIATION) {
+                        int64_t deviation = is->seek_pos - (int64_t)(audio_clock * 1000 * 1000);
+                        
+                        monkey_log("audio accurate_seek deviation:%lld\n", deviation);
+                        
+                        if (deviation > MAX_DEVIATION) {
                             /*
                              fix fast rewind and fast forward continually,however accurate seek may not ended,cause accurate seek timeout.
                              */
@@ -1769,21 +1776,25 @@ static int audio_thread(void *arg)
                                 av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, is->seek_pos=%lld, audio_clock=%lf, is->accurate_seek_start_time = %lld\n", is->seek_pos, audio_clock, is->accurate_seek_start_time);
                             }
                             is->drop_aframe_count++;
-                            while (is->video_accurate_seek_req && !is->abort_request) {
-                                int64_t vpts = is->accurate_seek_vframe_pts;
-                                deviation2 = vpts - audio_clock * 1000 * 1000;
-                                deviation3 = vpts - is->seek_pos;
-                                if (deviation2 > -100 * 1000 && deviation3 < 0) {
-
-                                    break;
-                                } else {
-                                    av_usleep(20 * 1000);
-                                }
-                                now = av_gettime_relative() / 1000;
-                                if ((now - is->accurate_seek_start_time) > ffp->accurate_seek_timeout) {
-                                    break;
-                                }
-                            }
+/* 下面的逻辑是在丢帧的时候保持音视频时间戳在一定的范围内，否则就等待；
+   但是有可能导致持续等待，有的视频视音频帧可能是连续很久的，间隔很远，比如：
+ VVVVVVVVVVVVAAAAAAAAAAAAAAAAVVVVVVVVVVVVVVVV
+ */
+//                            while (is->video_accurate_seek_req && !is->abort_request) {
+//                                int64_t vpts = is->accurate_seek_vframe_pts;
+//                                int64_t deviation2 = vpts - audio_clock * 1000 * 1000;
+//                                int64_t deviation3 = vpts - is->seek_pos;
+//                                if (deviation2 > -100 * 1000 && deviation3 < 0) {
+//                                    break;
+//                                } else {
+//                                    av_log(NULL, AV_LOG_INFO, "audio accurate_seek waiting\n");
+//                                    av_usleep(20 * 1000);
+//                                }
+//                                now = av_gettime_relative() / 1000;
+//                                if ((now - is->accurate_seek_start_time) > ffp->accurate_seek_timeout) {
+//                                    break;
+//                                }
+//                            }
 
                             if(!is->video_accurate_seek_req && is->video_stream >= 0 && audio_clock * 1000 * 1000 > is->accurate_seek_vframe_pts) {
                                 audio_accurate_seek_fail = 1;
@@ -1791,7 +1802,7 @@ static int audio_thread(void *arg)
                                 now = av_gettime_relative() / 1000;
                                 if ((now - is->accurate_seek_start_time) <= ffp->accurate_seek_timeout) {
                                     av_frame_unref(frame);
-                                    continue;  // drop some old frame when do accurate seek
+                                    continue;  //continue drop more old frame
                                 } else {
                                     audio_accurate_seek_fail = 2;
                                 }
@@ -3544,6 +3555,7 @@ static int read_thread(void *arg)
         if (ret < 0) {
             int pb_eof = 0;
             int pb_error = 0;
+            monkey_log("av_read_frame failed:%4s\n",av_err2str(ret));
             if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
                 ffp_check_buffering_l(ffp);
                 pb_eof = 1;
@@ -3602,6 +3614,8 @@ static int read_thread(void *arg)
         } else {
             is->eof = 0;
         }
+        
+        monkey_log("av_read_frame %s : %0.2f\n",pkt->stream_index == is->audio_stream ? "audio" : "video", pkt->pts * av_q2d(ic->streams[pkt->stream_index]->time_base));
         
         if (pkt->flags & AV_PKT_FLAG_DISCONTINUITY) {
         #warning TESTME
