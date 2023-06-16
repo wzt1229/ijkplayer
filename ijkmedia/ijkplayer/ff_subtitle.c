@@ -20,19 +20,10 @@ typedef struct FFSubtitle {
     int maxInternalStream;
     FFSubComponent* inSub;
     IJKEXSubtitle* exSub;
-    int streamStartTime;//ic start_time
+    int streamStartTime;//ic start_time (s)
 }FFSubtitle;
 
 //---------------------------Private Functions--------------------------------------------------//
-
-static float ff_sub_get_total_delay(FFSubtitle *sub)
-{
-    if (!sub) {
-        return 0.0f;
-    }
-    
-    return sub->delay;
-}
 
 static double get_frame_real_begin_pts(FFSubtitle *sub, Frame *sp)
 {
@@ -41,12 +32,12 @@ static double get_frame_real_begin_pts(FFSubtitle *sub, Frame *sp)
 
 static double get_frame_begin_pts(FFSubtitle *sub, Frame *sp)
 {
-    return sp->pts + (float)sp->sub.start_display_time / 1000.0 + ff_sub_get_total_delay(sub);
+    return sp->pts + (float)sp->sub.start_display_time / 1000.0 + (sub ? sub->delay : 0.0);
 }
 
 static double get_frame_end_pts(FFSubtitle *sub, Frame *sp)
 {
-    return sp->pts + (float)sp->sub.end_display_time / 1000.0 + ff_sub_get_total_delay(sub);
+    return sp->pts + (float)sp->sub.end_display_time / 1000.0 + (sub ? sub->delay : 0.0);
 }
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -134,29 +125,34 @@ int ff_sub_drop_frames_lessThan_pts(FFSubtitle *sub, float pts)
     if (!sub) {
         return -1;
     }
-    pts -= sub->streamStartTime;
-    Frame *sp, *sp2;
+    
+    if(exSub_get_opened_stream_idx(sub->exSub) != -1) {
+       pts -= sub->streamStartTime;
+    }
     FrameQueue *subpq = &sub->frameq;
     int q_serial = sub->packetq.serial;
     int uploaded = 0;
     while (frame_queue_nb_remaining(subpq) > 0) {
-        sp = frame_queue_peek(subpq);
-
-        if (frame_queue_nb_remaining(subpq) > 1) {
-            sp2 = frame_queue_peek_next(subpq);
-        } else {
-            sp2 = NULL;
-        }
-        
-        //when video's pts greater than sub's pts need drop
-        if (sp->serial != q_serial ||
-            (pts > get_frame_end_pts(sub, sp)) ||
-            (sp2 && pts > get_frame_begin_pts(sub, sp2))) {
+        Frame *sp = frame_queue_peek(subpq);
+        if (sp->serial != q_serial || pts > get_frame_end_pts(sub, sp)) {
             if (sp->uploaded) {
                 uploaded ++;
             }
             frame_queue_next(subpq);
             continue;
+        }
+        
+        //when video's pts greater than sub's pts need drop
+        Frame *sp2 = NULL;
+        if (frame_queue_nb_remaining(subpq) > 1) {
+            sp2 = frame_queue_peek_next(subpq);
+            if (pts > get_frame_begin_pts(sub, sp2)) {
+                if (sp->uploaded) {
+                    uploaded ++;
+                }
+                frame_queue_next(subpq);
+                continue;
+            }
         }
         break;
     }
@@ -180,14 +176,17 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
         return -1;
     }
     int r = 1;
-    pts -= sub->streamStartTime;
+    if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
+        pts -= sub->streamStartTime;
+    }
     if (frame_queue_nb_remaining(&sub->frameq) > 0) {
         Frame * sp = frame_queue_peek(&sub->frameq);
         sub->current_pts = get_frame_real_begin_pts(sub, sp);
-        float begin = sub->current_pts + ff_sub_get_total_delay(sub);
+        float begin = sub->current_pts + (sub ? sub->delay : 0.0);
+        float end = get_frame_end_pts(sub, sp);
         
-        //av_log(NULL, AV_LOG_ERROR, "sub_fetch_frame:%0.2f,%0.2f,%0.2f\n",pts,sub->current_pts,ff_sub_get_total_delay(sub));
-        if (pts >= begin) {
+        //av_log(NULL, AV_LOG_ERROR, "sub_fetch_frame:%0.2f,%0.2f,%0.2f\n",pts,sub->current_pts,(sub ? sub->delay : 0.0));
+        if (pts > begin && pts < end) {
             if (!sp->uploaded) {
                 if (sp->sub.num_rects > 0) {
                     if (sp->sub.rects[0]->text) {
@@ -267,8 +266,10 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
     if (!sub) {
         return -1;
     }
+    if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
+        v_pts -= sub->streamStartTime;
+    }
     
-    v_pts -= sub->streamStartTime;
     float wantDisplay = v_pts - delay;
     //subtile's frame queue greater than can display pts
     if (sub->current_pts > wantDisplay) {
@@ -299,7 +300,7 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
 
 float ff_sub_get_delay(FFSubtitle *sub)
 {
-    return ff_sub_get_total_delay(sub);
+    return sub ? sub->delay : 0.0;
 }
 
 int ff_sub_isInternal_stream(FFSubtitle *sub, int stream)
@@ -343,7 +344,7 @@ int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx)
 
 void ff_sub_stream_ic_ready(FFSubtitle *sub,AVFormatContext* ic)
 {
-    sub->streamStartTime = (int)(fftime_to_milliseconds(ic->start_time) / 1000);
+    sub->streamStartTime = (int)fftime_to_seconds(ic->start_time);
     sub->maxInternalStream = ic->nb_streams;
 }
 

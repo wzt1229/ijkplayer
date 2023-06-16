@@ -124,6 +124,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 //https://events-delivery.apple.com/2807skttevpekgjkgcyolyxgkexyahqp/m3u8/vod_index-bHTtMFcgdqmJGoHoDBPadNWwGwrNevrj.m3u8
 //@"http://localhost/test-videos/av1-m3u8/res.m3u8"
 //    @"http://10.18.17.49/samba/video/BDMV%E7%9A%84%E5%BA%93/%E4%BB%A5%E5%AF%A1%E6%95%8C%E4%BC%97%5B%E7%AE%80%E7%B9%81%E8%8B%B1%E5%AD%97%E5%B9%95%5D.Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD/Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD.mkv"
+//    @"http://10.18.17.49/samba/video-library/movies/Fast.X.2023.1080p.WEB-DL.DDP5.1.Atmos.H264-AQLJ.m2ts"
     NSArray *onlineArr = @[
   @"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
         @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
@@ -1141,6 +1142,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)handleDragFileList:(nonnull NSArray<NSURL *> *)fileUrls
 {
+    BOOL hasVideo = NO;
     NSMutableArray *bookmarkArr = [NSMutableArray array];
     for (NSURL *url in fileUrls) {
         //先判断是不是文件夹
@@ -1157,15 +1159,22 @@ static IOPMAssertionID g_displaySleepAssertionID;
             } else {
                 NSString *pathExtension = [[url pathExtension] lowercaseString];
                 if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
+                    if ([[MRUtil videoType] containsObject:pathExtension]) {
+                        hasVideo = YES;
+                    }
                     NSDictionary *dic = [MRUtil makeBookmarkWithURL:url];
                     [bookmarkArr addObject:dic];
                 }
             }
         }
     }
-    //拖拽播放时清空原先的列表
-    [self.playList removeAllObjects];
-    [self stopPlay:nil];
+    
+    if (hasVideo) {
+        //拖拽播放时清空原先的列表
+        [self.playList removeAllObjects];
+        [self stopPlay:nil];
+    }
+    
     [self appendToPlayList:bookmarkArr];
 }
 

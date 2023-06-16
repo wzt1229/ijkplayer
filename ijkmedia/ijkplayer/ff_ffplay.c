@@ -3411,7 +3411,7 @@ static int read_thread(void *arg)
             
             if (ff_sub_current_stream_type(is->ffSub, NULL) == 2) {
                 //seek the extra subtitle
-                int sec = (int)(fftime_to_milliseconds(seek_target - is->ic->start_time) / 1000);
+                int sec = (int)fftime_to_seconds(seek_target);
                 float delay = ff_sub_get_delay(is->ffSub);
                 ff_sub_set_delay(is->ffSub, delay, sec);
             }
