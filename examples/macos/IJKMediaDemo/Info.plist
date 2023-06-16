@@ -207,6 +207,7 @@
 				<string>avc</string>
 				<string>xlist</string>
 				<string>swf</string>
+				<string>m3u8</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>VIDEO.icns</string>
