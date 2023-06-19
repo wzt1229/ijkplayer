@@ -3291,7 +3291,28 @@ static int read_thread(void *arg)
         ijkmeta_set_avformat_context_l(ffp->meta, ic);
     }
 
+    /*a hdr 4k video,bit rate is 71404785,when max buffer size less than 10MB,
+     the audio play may be pause-play-pause,so max buffer size need increase by movie bit rate
+     */
     ffp->stat.bit_rate = ic->bit_rate;
+    
+    if (ffp->dcc.max_buffer_size == 0) {
+        if (ic->bit_rate > 0) {
+            int buffer_size = DEFAULT_QUEUE_SIZE;
+            if (ic->bit_rate < 10000000) {
+                buffer_size += ic->bit_rate/1000000 * 1024 * 1024;
+            } else {
+                buffer_size += 10 * 1024 * 1024;
+                int rate = (int)(ic->bit_rate / 10000000);
+                buffer_size += rate * 1024 * 1024;
+            }
+            ffp->dcc.max_buffer_size = FFMIN(MAX_QUEUE_SIZE, buffer_size);
+        } else {
+            ffp->dcc.max_buffer_size = (DEFAULT_QUEUE_SIZE + MAX_QUEUE_SIZE) / 2;
+        }
+        av_log(NULL, AV_LOG_DEBUG, "auto decision max buffer size:%dMB\n",ffp->dcc.max_buffer_size/1024/1024);
+    }
+    
     if (st_index[AVMEDIA_TYPE_VIDEO] >= 0)
         ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_VIDEO_STREAM, st_index[AVMEDIA_TYPE_VIDEO]);
     if (st_index[AVMEDIA_TYPE_AUDIO] >= 0)

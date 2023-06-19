@@ -622,7 +622,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 //    [options setPlayerOptionIntValue:1      forKey:@"render-wait-start"];
     
     if ([url isFileURL]) {
-        [options setPlayerOptionIntValue:10*1024*1024      forKey:@"max-buffer-size"];
         //图片不使用 cvpixelbufferpool
         NSString *ext = [[[url path] pathExtension] lowercaseString];
         if ([[MRUtil pictureType] containsObject:ext]) {
