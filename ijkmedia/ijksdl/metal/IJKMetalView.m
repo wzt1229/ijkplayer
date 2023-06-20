@@ -491,6 +491,18 @@ typedef CGRect NSRect;
     CGImageRef cgImg = [self snapshot:IJKSDLSnapshot_Screen];
     return [[UIImage alloc]initWithCGImage:cgImg];
 }
+#else
+- (void)layout
+{
+    [super layout];
+    [self setNeedsRefreshCurrentPic];
+}
+
+- (void)viewDidChangeBackingProperties
+{
+    [super viewDidChangeBackingProperties];
+    [self setNeedsRefreshCurrentPic];
+}
 #endif
 
 - (void)setNeedsRefreshCurrentPic

@@ -394,6 +394,8 @@ static bool _is_need_dispath_to_global(void)
         if (IJK_GLES2_Renderer_isValid(_renderer)) {
             IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
         }
+        
+        [self setNeedsRefreshCurrentPic];
     }
 }
 
