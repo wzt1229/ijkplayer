@@ -306,19 +306,8 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
         av_log(sub, AV_LOG_ERROR, "subtitle path is too long:%s\n", __func__);
         return -2;
     }
-    SDL_LockMutex(sub->mutex);
-    //maybe already added.
-    bool alread_added = 0;
-    for (int i = 0; i < IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET; i++) {
-        char* next = sub->pathArr[i];
-        if (next && (0 == av_strncasecmp(next, file_name, 1024))) {
-            alread_added = 1;
-            break;
-        }
-    }
-    SDL_UnlockMutex(sub->mutex);
     
-    if (alread_added) {
+    if (exSub_check_file_added(file_name, sub)) {
         return 1;
     }
     
@@ -346,18 +335,8 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
     return 0;
 }
 
-int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name,IjkMediaMeta *meta)
+int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub)
 {
-    if (!sub) {
-        return -1;
-    }
- 
-    /* there is a length limit in avformat */
-    if (strlen(file_name) + 1 > 1024) {
-        av_log(sub, AV_LOG_ERROR, "subtitle path is too long:%s\n", __func__);
-        return -2;
-    }
-    
     SDL_LockMutex(sub->mutex);
     bool already_added = 0;
     //maybe already added.
@@ -370,9 +349,25 @@ int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name,IjkMedia
     }
     SDL_UnlockMutex(sub->mutex);
     
-    if (already_added) {
+    return already_added;
+}
+
+int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name,IjkMediaMeta *meta)
+{
+    if (!sub) {
+        return -1;
+    }
+ 
+    /* there is a length limit in avformat */
+    if (strlen(file_name) + 1 > 1024) {
+        av_log(sub, AV_LOG_ERROR, "subtitle path is too long:%s\n", __func__);
+        return -2;
+    }
+    
+    if (exSub_check_file_added(file_name, sub)) {
         return 1;
     }
+    
     //recycle; release memory if the url array has been used
     int idx = sub->next_idx % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
     

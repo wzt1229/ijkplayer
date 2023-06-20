@@ -5113,12 +5113,16 @@ float ffp_get_subtitle_extra_delay(FFPlayer *ffp)
 int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
 {
     VideoState *is = ffp->is;
-    ff_sub_close_current(is->ffSub);
-    int ret = ff_exSub_add_active_subtitle(is->ffSub, file_name, ffp->meta);
-    if (ret == 0) {
-        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+    if (ff_exSub_check_file_added(file_name, is->ffSub) == 1) {
+        return 1;
+    } else {
+        ff_sub_close_current(is->ffSub);
+        int ret = ff_exSub_add_active_subtitle(is->ffSub, file_name, ffp->meta);
+        if (ret == 0) {
+            ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+        }
+        return ret;
     }
-    return ret;
 }
 
 //add only

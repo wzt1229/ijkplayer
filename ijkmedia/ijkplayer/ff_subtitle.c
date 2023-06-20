@@ -96,7 +96,7 @@ int ff_sub_destroy(FFSubtitle **subp)
     }
     if (sub->inSub) {
         subComponent_close(&sub->inSub);
-    } else if (sub->exSub) {
+    } else if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
         exSub_subtitle_destroy(&sub->exSub);
     }
     packet_queue_destroy(&sub->packetq);
@@ -114,7 +114,7 @@ int ff_sub_close_current(FFSubtitle *sub)
 {
     if (sub->inSub) {
         return subComponent_close(&sub->inSub);
-    } else if (sub->exSub) {
+    } else if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
         return exSub_close_current(sub->exSub);
     }
     return -1;
@@ -284,7 +284,7 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
                 return 1;
             }
             return -2;
-        } else if (sub->exSub) {
+        } else if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
             ff_sub_clean_frame_queue(sub);
             exSub_seek_to(sub->exSub, wantDisplay-2);
             return 0;
@@ -406,4 +406,12 @@ int ff_exSub_open_stream(FFSubtitle *sub, int stream)
     ff_sub_clean_frame_queue(sub);
     
     return exSub_open_file_idx(sub->exSub, stream);
+}
+
+int ff_exSub_check_file_added(const char *file_name, FFSubtitle *sub)
+{
+    if (!sub || !sub->exSub) {
+        return -1;
+    }
+    return exSub_check_file_added(file_name, sub->exSub);
 }

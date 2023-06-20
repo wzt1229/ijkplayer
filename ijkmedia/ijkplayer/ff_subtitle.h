@@ -24,7 +24,6 @@ int ff_sub_destroy(FFSubtitle **subp);
 //
 int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx);
 int ff_sub_close_current(FFSubtitle *sub);
-
 //return value means dropped uploaded frame count rather than dropped frame count;
 int ff_sub_drop_frames_lessThan_pts(FFSubtitle *sub, float pts);
 //return zero means out has content
@@ -58,4 +57,5 @@ void ff_sub_stream_ic_ready(FFSubtitle *sub,AVFormatContext* ic);
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int ff_exSub_open_stream(FFSubtitle *sub, int stream);
+int ff_exSub_check_file_added(const char *file_name, FFSubtitle *ffSub);
 #endif /* ff_subtitle_h */

@@ -17,6 +17,7 @@ typedef struct FrameQueue FrameQueue;
 typedef struct PacketQueue PacketQueue;
 
 int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq);
+int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub);
 int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int exSub_open_file_idx(IJKEXSubtitle *sub, int idx);
