@@ -1540,7 +1540,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             int code = avmsg->arg1;
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerVideoDecoderFatalNotification
-             object:self userInfo:@{@"code" : @(code)}];
+             object:self userInfo:@{@"code" : @(code),@"msg" : [self averrToString:code]}];
             break; 
         }
         default:

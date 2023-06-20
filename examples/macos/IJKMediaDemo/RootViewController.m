@@ -616,7 +616,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:119     forKey:@"max-fps"];
     [options setPlayerOptionIntValue:self.loop?0:1      forKey:@"loop"];
 //    [options setCodecOptionValue:@"48" forKey:@"skip_loop_filter"];
-//    [options setFormatOptionValue:@"100L" forKey:@"analyzemaxduration"];
+//    default is 5000000,but some high bit rate video probe faild cause no audio.
+    [options setFormatOptionValue:@"10000000" forKey:@"probesize"];
 //    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
 //    [options setPlayerOptionIntValue:0      forKey:@"packet-buffering"];
 //    [options setPlayerOptionIntValue:1      forKey:@"render-wait-start"];
@@ -657,6 +658,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
+#warning 发现 Samsung Wonderland Two HDR UHD 4K Demo.ts 这个视频，启动硬解失败！
     int startTime = (int)([self readCurrentPlayRecord] * 1000);
     [options setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
     options.metalRenderer = !self.use_openGL;
@@ -739,17 +741,18 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 {
     if (self.player == notifi.object) {
         NSLog(@"first frame cost:%lldms",self.player.monitor.firstVideoFrameLatency);
+        self.seekCostLb.stringValue = [NSString stringWithFormat:@"%lldms",self.player.monitor.firstVideoFrameLatency];
     }
 }
 
 - (void)ijkPlayerVideoDecoderFatal:(NSNotification *)notifi
 {
     if (self.videotoolbox_hwaccel) {
-        NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo[@"code"]);
+        NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo);
         self.videotoolbox_hwaccel = NO;
         [self onChangedHWaccel:nil];
     } else {
-        NSLog(@"decoder fatal:%@",notifi.userInfo[@"code"]);
+        NSLog(@"decoder fatal:%@",notifi.userInfo);
     }
 }
 
