@@ -243,6 +243,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         [menu addItemWithTitle:@"1.25x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 125;
         [menu addItemWithTitle:@"1.5x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 150;
         [menu addItemWithTitle:@"2.0x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 200;
+        [menu addItemWithTitle:@"3.0x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 300;
+        [menu addItemWithTitle:@"4.0x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 400;
+        [menu addItemWithTitle:@"5.0x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 500;
         [menu addItemWithTitle:@"20x" action:@selector(updateSpeed:) keyEquivalent:@""].tag = 2000;
     }
 }
@@ -615,7 +618,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
     [options setPlayerOptionIntValue:119     forKey:@"max-fps"];
     [options setPlayerOptionIntValue:self.loop?0:1      forKey:@"loop"];
-//    [options setCodecOptionValue:@"48" forKey:@"skip_loop_filter"];
+    [options setCodecOptionIntValue:IJK_AVDISCARD_DEFAULT forKey:@"skip_loop_filter"];
+    //for mgeg-ts seek
+    [options setFormatOptionIntValue:1 forKey:@"seek_flag_keyframe"];
 //    default is 5000000,but some high bit rate video probe faild cause no audio.
     [options setFormatOptionValue:@"10000000" forKey:@"probesize"];
 //    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
