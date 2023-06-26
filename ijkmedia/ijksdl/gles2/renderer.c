@@ -239,12 +239,16 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(CVPixelBufferRef video
     
     YUV_2_RGB_Color_Matrix colorMatrixType = YUV_2_RGB_Color_Matrix_None;
     if (shaderType != BGRX_SHADER && shaderType != XRGB_SHADER) {
-        if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
-            colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
-        } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-            colorMatrixType = YUV_2_RGB_Color_Matrix_BT601;
-        } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-            colorMatrixType = YUV_2_RGB_Color_Matrix_BT2020;
+        if (colorMatrix != nil) {
+            if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
+                colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
+            } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
+                colorMatrixType = YUV_2_RGB_Color_Matrix_BT601;
+            } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
+                colorMatrixType = YUV_2_RGB_Color_Matrix_BT2020;
+            } else {
+                colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
+            }
         } else {
             colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
         }

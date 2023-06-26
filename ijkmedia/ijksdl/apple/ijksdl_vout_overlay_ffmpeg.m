@@ -225,7 +225,10 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
             }
                 break;
             default:
-            {}
+            {
+                //some video is AVCOL_PRI_UNSPECIFIED
+                CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldNotPropagate);
+            }
                 break;
         }
         
