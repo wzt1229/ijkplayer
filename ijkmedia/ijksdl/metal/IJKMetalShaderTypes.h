@@ -11,8 +11,8 @@
 typedef enum IJKYUV2RGBColorMatrixType
 {
     IJKYUV2RGBColorMatrixNone,
-    IJKYUV2RGBColorMatrixBT709,
     IJKYUV2RGBColorMatrixBT601,
+    IJKYUV2RGBColorMatrixBT709,
     IJKYUV2RGBColorMatrixBT2020
 } IJKYUV2RGBColorMatrixType;
 

@@ -8,7 +8,7 @@
 
 #import "IJKMetalRenderer.h"
 #import "IJKMathUtilities.h"
-#import "IJKMetalShaderTypes.h"
+#import "IJKMetalPipelineMeta.h"
 #include "../ijksdl_log.h"
 
 @interface IJKMetalRenderer()
@@ -18,10 +18,7 @@
     id<MTLTexture> _subTexture;
     id<MTLDevice> _device;
     MTLPixelFormat _colorPixelFormat;
-    BOOL _fullRange;
     IJKConvertMatrix _colorMatrixType;
-    NSString* _fragmentName;
-    IJKColorTransferFunc _transferFunc;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
@@ -36,7 +33,7 @@
 #else
 @property (nonatomic, strong) id<MTLBuffer> convertMatrix;
 #endif
-@property (nonatomic, assign) IJKYUV2RGBColorMatrixType convertMatrixType;
+@property (nonatomic, strong) IJKMetalPipelineMeta *pipelineMeta;
 @property (nonatomic, assign) BOOL vertexChanged;
 @property (nonatomic, assign) BOOL subtitleVertexChanged;
 @property (nonatomic, assign) BOOL convertMatrixChanged;
@@ -69,108 +66,9 @@
     [self.pilelineLock unlock];
 }
 
-- (BOOL)prepareMetaWithCVPixelbuffer:(CVPixelBufferRef)pixelBuffer
-{
-    OSType cv_format = CVPixelBufferGetPixelFormatType(pixelBuffer);
-    CFStringRef colorMatrix = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
-    CFStringRef transferFuntion = CVBufferGetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, NULL);
-    NSString* shaderName;
-    BOOL needConvertColor = YES;
-    if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
-        ALOGI("create render yuv420sp\n");
-        shaderName = @"nv12FragmentShader";
-    } else if (cv_format == kCVPixelFormatType_32BGRA) {
-        ALOGI("create render bgrx\n");
-        needConvertColor = NO;
-        shaderName = @"bgraFragmentShader";
-    } else if (cv_format == kCVPixelFormatType_32ARGB) {
-        ALOGI("create render xrgb\n");
-        needConvertColor = NO;
-        shaderName = @"argbFragmentShader";
-    } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
-               cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
-        ALOGI("create render yuv420p\n");
-        shaderName = @"yuv420pFragmentShader";
-    }
-    #if TARGET_OS_OSX
-    else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
-        ALOGI("create render uyvy\n");
-        shaderName = @"uyvy422FragmentShader";
-    } else if (cv_format == kCVPixelFormatType_422YpCbCr8_yuvs || cv_format == kCVPixelFormatType_422YpCbCr8FullRange) {
-        ALOGI("create render yuyv\n");
-        shaderName = @"uyvy422FragmentShader";
-    }
-    #endif
-    else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange ||
-             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
-             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
-             ) {
-        if (colorMatrix != nil &&
-            CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-            shaderName = @"hdrBiPlanarFragmentShader";
-        } else {
-            shaderName = @"nv12FragmentShader";
-        }
-    } else {
-        ALOGE("create render failed,unknown format:%4s\n",(char *)&cv_format);
-        return NO;
-    }
-        
-    IJKYUV2RGBColorMatrixType colorMatrixType = IJKYUV2RGBColorMatrixNone;
-    if (needConvertColor) {
-        if (colorMatrix) {
-            if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
-                colorMatrixType = IJKYUV2RGBColorMatrixBT709;
-            } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-                colorMatrixType = IJKYUV2RGBColorMatrixBT601;
-            } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-                colorMatrixType = IJKYUV2RGBColorMatrixBT2020;
-            }
-        }
-        if (colorMatrixType == IJKYUV2RGBColorMatrixNone) {
-            colorMatrixType = IJKYUV2RGBColorMatrixBT709;
-        }
-    }
-
-    BOOL fullRange = NO;
-    //full color range
-    if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == cv_format ||
-        kCVPixelFormatType_420YpCbCr8PlanarFullRange == cv_format ||
-        kCVPixelFormatType_422YpCbCr8FullRange == cv_format ||
-        kCVPixelFormatType_420YpCbCr10BiPlanarFullRange == cv_format ||
-        kCVPixelFormatType_422YpCbCr10BiPlanarFullRange == cv_format ||
-        kCVPixelFormatType_444YpCbCr10BiPlanarFullRange == cv_format) {
-        fullRange = YES;
-    }
-    
-    IJKColorTransferFunc tf;
-    if (transferFuntion) {
-        if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
-            tf = IJKColorTransferFuncHLG;
-        } else if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo || CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_428_1, 0) == kCFCompareEqualTo) {
-            tf = IJKColorTransferFuncPQ;
-        } else {
-            tf = IJKColorTransferFuncLINEAR;
-        }
-    } else {
-        tf = IJKColorTransferFuncLINEAR;
-    }
-    
-    _transferFunc = tf;
-    _fragmentName = shaderName;
-    _fullRange = fullRange;
-    _convertMatrixType = colorMatrixType;
-    self.convertMatrixChanged = YES;
-    return YES;
-}
-
 - (BOOL)matchPixelBuffer:(CVPixelBufferRef)pixelBuffer
 {
-#warning TODO
-    return YES;
+    return [self.pipelineMeta metaMatchedCVPixelbuffer:pixelBuffer];
 }
 
 - (void)createRenderPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
@@ -178,11 +76,16 @@
     if (self.renderPipeline) {
         return;
     }
-    if (![self prepareMetaWithCVPixelbuffer:pixelBuffer]) {
-        return;
+    
+    if (!self.pipelineMeta) {
+        self.pipelineMeta = [IJKMetalPipelineMeta createWithCVPixelbuffer:pixelBuffer];
+        self.convertMatrixChanged = YES;
+        ALOGI("render meta:%s",[[self.pipelineMeta description]UTF8String]);
     }
     
-    NSParameterAssert(_fragmentName);
+    if (!self.pipelineMeta) {
+        return;
+    }
     
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
     NSURL * libURL = [bundle URLForResource:@"default" withExtension:@"metallib"];
@@ -196,8 +99,8 @@
     //id<MTLLibrary> defaultLibrary = [device newDefaultLibrary];
     id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"mvpShader"];
     NSAssert(vertexFunction, @"can't find Vertex Function:vertexShader");
-    id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:_fragmentName];
-    NSAssert(vertexFunction, @"can't find Fragment Function:%@",_fragmentName);
+    id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:self.pipelineMeta.fragmentName];
+    NSAssert(vertexFunction, @"can't find Fragment Function:%@",self.pipelineMeta.fragmentName);
 #if IJK_USE_METAL_2
     id <MTLArgumentEncoder> argumentEncoder =
         [fragmentFunction newArgumentEncoderWithBufferIndex:IJKFragmentBufferLocation0];
@@ -474,10 +377,11 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     
     if (self.convertMatrixChanged) {
         IJKConvertMatrix * data = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
-        IJKConvertMatrix convertMatrix = ijk_metal_create_color_matrix(_convertMatrixType, _fullRange);
+        IJKConvertMatrix convertMatrix = ijk_metal_create_color_matrix(self.pipelineMeta.convertMatrixType, self.pipelineMeta.fullRange);
         convertMatrix.adjustment = _colorAdjustment;
-        convertMatrix.transferFun = _transferFunc;
+        convertMatrix.transferFun = self.pipelineMeta.transferFunc;
         *data = convertMatrix;
+        self.convertMatrixChanged = NO;
     }
     //Fragment Function(nv12FragmentShader): missing buffer binding at index 0 for fragmentShaderArgs[0].
     [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
