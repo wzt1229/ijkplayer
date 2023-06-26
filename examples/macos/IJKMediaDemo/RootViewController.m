@@ -154,7 +154,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.eventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent * _Nullable(NSEvent * _Nonnull theEvent) {
         __strongSelf__
         if (theEvent.window == self.view.window && [theEvent keyCode] == kVK_ANSI_Period && theEvent.modifierFlags & NSEventModifierFlagCommand){
-            [self stopPlay:nil];
+            [self onStop];
         }
         return theEvent;
     }];
@@ -214,7 +214,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             } else {
                 [menu addItemWithTitle:@"播放" action:@selector(pauseOrPlay:)keyEquivalent:@""];
             }
-            [menu addItemWithTitle:@"停止" action:@selector(stopPlay:) keyEquivalent:@"."];
+            [menu addItemWithTitle:@"停止" action:@selector(doStopPlay) keyEquivalent:@"."];
             [menu addItemWithTitle:@"下一集" action:@selector(playNext:)keyEquivalent:@""];
             [menu addItemWithTitle:@"上一集" action:@selector(playPrevious:)keyEquivalent:@""];
             
@@ -265,7 +265,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     if ([movies count] > 0) {
         [self.playList removeAllObjects];
-        [self stopPlay:nil];
+        [self doStopPlay];
         // 开始播放
         [self appendToPlayList:movies];
     }
@@ -286,7 +286,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         // 开始播放
         [self.playList removeAllObjects];
         [self.playList addObjectsFromArray:videos];
-        [self stopPlay:nil];
+        [self doStopPlay];
         [self playFirstIfNeed];
     }
 }
@@ -407,12 +407,14 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                 break;
             case kVK_ANSI_Period:
             {
-                [self stopPlay:nil];
+                [self doStopPlay];
             }
                 break;
-            case kVK_ANSI_I:
+            case kVK_ANSI_H:
             {
-                [self toggleHUD:nil];
+                if (event.modifierFlags & NSEventModifierFlagShift) {
+                    [self toggleHUD:nil];
+                }
             }
                 break;
             case kVK_ANSI_0:
@@ -558,7 +560,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         }
     }
     if (lastUrl) {
-        [self stopPlay:nil];
+        [self doStopPlay];
         BOOL hwaccel = [self preferHW];
         [self playURL:lastUrl hwaccel:hwaccel];
     } else {
@@ -577,7 +579,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 - (void)perpareIJKPlayer:(NSURL *)url hwaccel:(BOOL)hwaccel
 {
     if (self.playingUrl) {
-        [self stopPlay:nil];
+        [self doStopPlay];
     }
     
     self.playingUrl = url;
@@ -700,7 +702,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
     //playerView.preventDisplay = YES;
     //test
-    [playerView setBackgroundColor:100 g:10 b:20];
+    [playerView setBackgroundColor:0 g:0 b:0];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerFirstVideoFrameRendered:) name:IJKMPMoviePlayerFirstVideoFrameRenderedNotification object:self.player];
     
@@ -756,7 +758,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         if (self.player.isUsingHardwareAccelerae) {
             NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo);
             NSURL *playingUrl = self.playingUrl;
-            [self stopPlay:nil];
+            [self doStopPlay];
             [self playURL:playingUrl hwaccel:NO];
             return;
         }
@@ -873,8 +875,11 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
             NSLog(@"播放结束");
             if ([[MRUtil pictureType] containsObject:[[self.playingUrl lastPathComponent] pathExtension]]) {
-//                [self stopPlay:nil];
+//                [self stopPlay];
             } else {
+                NSString *key = [[self.playingUrl absoluteString] md5Hash];
+                [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+                self.playingUrl = nil;
                 [self playNext:nil];
             }
         }
@@ -1178,7 +1183,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     if (hasVideo) {
         //拖拽播放时清空原先的列表
         [self.playList removeAllObjects];
-        [self stopPlay:nil];
+        [self doStopPlay];
     }
     
     [self appendToPlayList:bookmarkArr];
@@ -1263,16 +1268,21 @@ static IOPMAssertionID g_displaySleepAssertionID;
 - (void)retry
 {
     NSURL *url = self.playingUrl;
-    [self stopPlay:nil];
+    [self doStopPlay];
     BOOL hwaccel = [self preferHW];
     [self playURL:url hwaccel:hwaccel];
 }
 
-- (void)stopPlay:(NSButton *)sender
+- (void)onStop
+{
+    [self saveCurrentPlayRecord];
+    [self doStopPlay];
+}
+
+- (void)doStopPlay
 {
     NSLog(@"stop play");
     if (self.player) {
-        [self saveCurrentPlayRecord];
         [self.kvoCtrl safelyRemoveAllObservers];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:nil object:self.player];
         [self.player.view removeFromSuperview];
@@ -1304,6 +1314,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
         return;
     }
     
+    [self saveCurrentPlayRecord];
+    
     NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
     if (idx == NSNotFound) {
         idx = 0;
@@ -1320,15 +1332,16 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (IBAction)playNext:(NSButton *)sender
 {
+    [self saveCurrentPlayRecord];
     if ([self.playList count] == 0) {
-        [self stopPlay:nil];
+        [self doStopPlay];
         return;
     }
 
     NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
     //when autotest not loop
     if (self.autoTest && idx == self.playList.count - 1) {
-        [self stopPlay:nil];
+        [self doStopPlay];
         self.autoTest = NO;
         [self.playList removeAllObjects];
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:lastPlayedKey];
@@ -1691,7 +1704,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 - (IBAction)testMultiRenderSample:(NSButton *)sender
 {
     NSURL *playingUrl = self.playingUrl;
-    [self stopPlay:nil];
+    [self doStopPlay];
     
     MultiRenderSample *multiRenderVC = [[MultiRenderSample alloc] initWithNibName:@"MultiRenderSample" bundle:nil];
     
