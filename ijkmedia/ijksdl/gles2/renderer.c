@@ -263,7 +263,7 @@ static IJK_GLES2_Renderer * _smart_create_renderer_appple(CVPixelBufferRef video
     if (transferFuntion) {
         if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
             tf = IJK_Color_Transfer_Function_HLG;
-        } else if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo) {
+        } else if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo || CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_428_1, 0) == kCFCompareEqualTo) {
             tf = IJK_Color_Transfer_Function_PQ;
         } else {
             tf = IJK_Color_Transfer_Function_LINEAR;

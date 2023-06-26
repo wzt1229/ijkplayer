@@ -58,6 +58,8 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
         pixelFormatType = kCVPixelFormatType_422YpCbCr8;
     } else if (format == AV_PIX_FMT_YUYV422) {
         pixelFormatType = fullRange ? kCVPixelFormatType_422YpCbCr8FullRange : kCVPixelFormatType_422YpCbCr8_yuvs;
+    } else if (format == AV_PIX_FMT_P010) {
+        pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr10BiPlanarFullRange : kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange;
     }
 //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8_yuvs
 //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8FullRange
@@ -167,14 +169,64 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
     }
     
     if (kCVReturnSuccess == result) {
-        if (frame->color_trc == AVCOL_TRC_SMPTE170M) {
-            CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_601_4, kCVAttachmentMode_ShouldNotPropagate);
-        } else if (frame->color_trc == AVCOL_TRC_BT2020_10 || frame->color_trc == AVCOL_TRC_BT2020_12) {
-            CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_2020, kCVAttachmentMode_ShouldNotPropagate);
-        } else if (frame->color_trc == AVCOL_TRC_BT709) {
-            CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldNotPropagate);
-        } else {
-            CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldNotPropagate);
+        switch (frame->color_primaries) {
+            case AVCOL_PRI_BT709:
+            {
+                CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldNotPropagate);
+            }
+                break;
+            case AVCOL_PRI_BT2020:
+            {
+                CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_2020, kCVAttachmentMode_ShouldNotPropagate);
+                //only HDR video need trc info.
+                switch (frame->color_trc) {
+                    case AVCOL_TRC_LINEAR:
+                    {
+                        if (@available(macOS 10.14, *)) {
+                            CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_Linear, kCVAttachmentMode_ShouldNotPropagate);
+                        } else {
+                            CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_2020, kCVAttachmentMode_ShouldNotPropagate);
+                        }
+                    }
+                        break;
+                    case AVCOL_TRC_SMPTE2084:
+                    {
+                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, kCVAttachmentMode_ShouldNotPropagate);
+                    }
+                        break;
+                    case AVCOL_TRC_SMPTE428:
+                    {
+                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_SMPTE_ST_428_1, kCVAttachmentMode_ShouldNotPropagate);
+                    }
+                        break;
+                    case AVCOL_TRC_BT2020_10:
+                    case AVCOL_TRC_BT2020_12:
+                    {
+                        //unverified feature
+                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_2020, kCVAttachmentMode_ShouldNotPropagate);
+                    }
+                        break;
+                    case AVCOL_TRC_ARIB_STD_B67:
+                    {
+                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_2100_HLG, kCVAttachmentMode_ShouldNotPropagate);
+                    }
+                        break;
+                    default:
+                        break;
+                }
+            }
+                break;
+            case AVCOL_PRI_BT470BG:
+            case AVCOL_PRI_BT470M:
+            case AVCOL_PRI_SMPTE170M:
+            case AVCOL_PRI_SMPTE240M:
+            {
+                CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_601_4, kCVAttachmentMode_ShouldNotPropagate);
+            }
+                break;
+            default:
+            {}
+                break;
         }
         
         int planes = 1;

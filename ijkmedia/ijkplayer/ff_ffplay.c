@@ -1276,8 +1276,21 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                 overlay_format = SDL_FCC_I420;
             } else if (src_format == AV_PIX_FMT_YUVJ420P) {
                 overlay_format = SDL_FCC_J420;
+            } else if (src_format == AV_PIX_FMT_YUV420P10) {
+                overlay_format = SDL_FCC_P010;
+            } else if (src_format == AV_PIX_FMT_YUV422P10) {
+                overlay_format = SDL_FCC_P010;
+            } else if (src_format == AV_PIX_FMT_YUV444P10) {
+                overlay_format = SDL_FCC_P010;
             } else {
-                overlay_format = SDL_FCC_NV12;
+                const AVPixFmtDescriptor *pfd = av_pix_fmt_desc_get(src_format);
+                if (pfd->nb_components > 0) {
+                    if (pfd->comp[0].depth == 10) {
+                        overlay_format = SDL_FCC_P010;
+                    } else {
+                        overlay_format = SDL_FCC_NV12;
+                    }
+                }
             }
         #endif
             //
@@ -1325,6 +1338,10 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                     dst_format = AV_PIX_FMT_YUYV422;
                     break;
                 }
+                case SDL_FCC_P010: {
+                    dst_format = AV_PIX_FMT_P010;
+                }
+                break;
                 default:
                     ALOGE("unknow overly format:%.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
                     break;

@@ -54,7 +54,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 @property (assign) float saturation;
 @property (assign) float contrast;
 @property (assign) BOOL use_openGL;
-@property (assign) BOOL videotoolbox_hwaccel;
 @property (copy) NSString *fcc;
 @property (assign) int snapshot;
 @property (assign) BOOL shouldShowHudView;
@@ -94,6 +93,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     [NSEvent removeMonitor:self.eventMonitor];
 }
 
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do view setup here.
@@ -110,7 +110,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     self.subtitleFontRatio = 1.0;
     self.subtitleMargin = 0.7;
     self.fcc = @"fcc-_es2";
-    self.videotoolbox_hwaccel = 1;
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
@@ -560,7 +559,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     }
     if (lastUrl) {
         [self stopPlay:nil];
-        [self playURL:lastUrl];
+        BOOL hwaccel = [self preferHW];
+        [self playURL:lastUrl hwaccel:hwaccel];
     } else {
         [self playFirstIfNeed];
     }
@@ -574,7 +574,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     return _playList;
 }
 
-- (void)perpareIJKPlayer:(NSURL *)url
+- (void)perpareIJKPlayer:(NSURL *)url hwaccel:(BOOL)hwaccel
 {
     if (self.playingUrl) {
         [self stopPlay:nil];
@@ -660,7 +660,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 //    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
     
     [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
-    [options setPlayerOptionIntValue:self.videotoolbox_hwaccel forKey:@"videotoolbox_hwaccel"];
+    [options setPlayerOptionIntValue:hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
 #warning 发现 Samsung Wonderland Two HDR UHD 4K Demo.ts 这个视频，启动硬解失败！
@@ -752,13 +752,16 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 - (void)ijkPlayerVideoDecoderFatal:(NSNotification *)notifi
 {
-    if (self.videotoolbox_hwaccel) {
-        NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo);
-        self.videotoolbox_hwaccel = NO;
-        [self onChangedHWaccel:nil];
-    } else {
-        NSLog(@"decoder fatal:%@",notifi.userInfo);
+    if (self.player == notifi.object) {
+        if (self.player.isUsingHardwareAccelerae) {
+            NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo);
+            NSURL *playingUrl = self.playingUrl;
+            [self stopPlay:nil];
+            [self playURL:playingUrl hwaccel:NO];
+            return;
+        }
     }
+    NSLog(@"decoder fatal:%@",notifi.userInfo);
 }
 
 - (void)ijkPlayerAfterSeekFirstVideoFrameDisplay:(NSNotification *)notifi
@@ -853,18 +856,14 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
                             [self playNext:nil];
                         } else if (returnCode == NSAlertSecondButtonReturn) {
                             //retry
-                            NSURL *url = self.playingUrl;
-                            [self stopPlay:nil];
-                            [self playURL:url];
+                            [self retry];
                         } else {
                             //
                         }
                     } else if ([[alert buttons] count] == 2) {
                         if (returnCode == NSAlertFirstButtonReturn) {
                             //retry
-                            NSURL *url = self.playingUrl;
-                            [self stopPlay:nil];
-                            [self playURL:url];
+                            [self retry];
                         } else if (returnCode == NSAlertSecondButtonReturn) {
                             //
                         }
@@ -987,13 +986,13 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     }
 }
 
-- (void)playURL:(NSURL *)url
+- (void)playURL:(NSURL *)url hwaccel:(BOOL)hwaccel
 {
     if (!url) {
         return;
     }
     
-    [self perpareIJKPlayer:url];
+    [self perpareIJKPlayer:url hwaccel:hwaccel];
     NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     
     NSInteger idx = [self.playList indexOfObject:self.playingUrl] + 1;
@@ -1255,11 +1254,18 @@ static IOPMAssertionID g_displaySleepAssertionID;
     [self toggleAdvancedViewShow];
 }
 
+- (BOOL)preferHW
+{
+    BOOL hwaccel = [[[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.hw"] boolValue];
+    return hwaccel;
+}
+
 - (void)retry
 {
-    NSURL *playingUrl = self.playingUrl;
+    NSURL *url = self.playingUrl;
     [self stopPlay:nil];
-    [self playURL:playingUrl];
+    BOOL hwaccel = [self preferHW];
+    [self playURL:url hwaccel:hwaccel];
 }
 
 - (void)stopPlay:(NSButton *)sender
@@ -1308,7 +1314,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     NSURL *url = self.playList[idx];
-    [self playURL:url];
+    BOOL hwaccel = [self preferHW];
+    [self playURL:url hwaccel:hwaccel];
 }
 
 - (IBAction)playNext:(NSButton *)sender
@@ -1317,8 +1324,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
         [self stopPlay:nil];
         return;
     }
-    //reset
-    self.videotoolbox_hwaccel = YES;
+
     NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
     //when autotest not loop
     if (self.autoTest && idx == self.playList.count - 1) {
@@ -1338,7 +1344,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     NSURL *url = self.playList[idx];
-    [self playURL:url];
+    BOOL hwaccel = [self preferHW];
+    [self playURL:url hwaccel:hwaccel];
 }
 
 - (void)seekTo:(float)cp

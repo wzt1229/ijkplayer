@@ -703,7 +703,7 @@
                                                             </buttonCell>
                                                             <connections>
                                                                 <action selector="onChangedHWaccel:" target="-2" id="RWQ-Uv-GFm"/>
-                                                                <binding destination="-2" name="value" keyPath="videotoolbox_hwaccel" id="0tT-Rs-bEa"/>
+                                                                <binding destination="OCk-Q5-1dK" name="value" keyPath="values.hw" id="TAQ-u8-ekH"/>
                                                             </connections>
                                                         </button>
                                                         <box horizontalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="neR-Kv-HKK">
