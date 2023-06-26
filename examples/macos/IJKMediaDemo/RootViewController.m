@@ -996,7 +996,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     if (!url) {
         return;
     }
-    
+    [self destroyPlayer];
     [self perpareIJKPlayer:url hwaccel:hwaccel];
     NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     
@@ -1279,9 +1279,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
     [self doStopPlay];
 }
 
-- (void)doStopPlay
+- (void)destroyPlayer
 {
-    NSLog(@"stop play");
     if (self.player) {
         [self.kvoCtrl safelyRemoveAllObservers];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:nil object:self.player];
@@ -1290,6 +1289,12 @@ static IOPMAssertionID g_displaySleepAssertionID;
         [self.player shutdown];
         self.player = nil;
     }
+}
+
+- (void)doStopPlay
+{
+    NSLog(@"stop play");
+    [self destroyPlayer];
     
     if (self.tickTimer) {
         [self.tickTimer invalidate];
