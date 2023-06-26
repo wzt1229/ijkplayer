@@ -492,9 +492,9 @@ typedef CGRect NSRect;
     return [[UIImage alloc]initWithCGImage:cgImg];
 }
 #else
-- (void)layout
+
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize
 {
-    [super layout];
     [self setNeedsRefreshCurrentPic];
 }
 
