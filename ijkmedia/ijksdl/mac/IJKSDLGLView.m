@@ -364,11 +364,6 @@ static bool _is_need_dispath_to_global(void)
     [super setFrame:frame];
 }
 
-- (void)resizeWithOldSuperviewSize:(NSSize)oldSize
-{
-    [self resetViewPort];
-}
-
 - (void)reshape
 {
     [super reshape];

@@ -59,6 +59,7 @@
 
 - (void)dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     CFRelease(_pictureTextureCache);
 }
 
@@ -91,6 +92,8 @@
     // important;then use draw method drive rendering.
     self.enableSetNeedsDisplay = NO;
     self.paused = YES;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidEndLiveResize:) name:NSWindowDidEndLiveResizeNotification object:nil];
     return YES;
 }
 
@@ -493,8 +496,18 @@ typedef CGRect NSRect;
 }
 #else
 
+- (void)windowDidEndLiveResize:(NSNotification *)notifi
+{
+    if (notifi.object == self.window) {
+        [self setNeedsRefreshCurrentPic];
+    }
+}
+
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize
 {
+    if (!self.window.inLiveResize) {
+        [self setNeedsRefreshCurrentPic];
+    }
     [self setNeedsRefreshCurrentPic];
 }
 
