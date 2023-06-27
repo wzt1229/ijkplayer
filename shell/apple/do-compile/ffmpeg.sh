@@ -222,9 +222,6 @@ if [[ -n "$MY_PKG_CONFIG_PATH" ]]; then
     export PKG_CONFIG_PATH="$MY_PKG_CONFIG_PATH"
 fi
 
-#parser subtitles
-FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-demuxer=ass --enable-demuxer=webvtt --enable-demuxer=srt"
-
 CC="$XCRUN_CC"
 
 # echo "PKG_CONFIG_PATH:${PKG_CONFIG_PATH}"
