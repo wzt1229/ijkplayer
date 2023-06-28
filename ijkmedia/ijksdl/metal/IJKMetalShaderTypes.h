@@ -52,6 +52,7 @@ typedef struct {
     vector_float3 offset;
     vector_float4 adjustment;
     IJKColorTransferFunc transferFun;
+    float hdrPercentage;
 } IJKConvertMatrix;
 
 typedef enum IJKFragmentBufferArguments

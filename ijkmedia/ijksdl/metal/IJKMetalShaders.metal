@@ -271,39 +271,42 @@ fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
     
     float3 rgb10bit = convertMatrix->matrix * (yuv + convertMatrix->offset);
     
-    // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
-    float peak_luminance = 50.0;
     float3 myFragColor;
-    
-    if (convertMatrix->transferFun == IJKColorTransferFuncPQ) {
-       float to_linear_scale = 10000.0 / peak_luminance;
-       myFragColor = to_linear_scale * float3(st_2084_eotf(rgb10bit.r), st_2084_eotf(rgb10bit.g), st_2084_eotf(rgb10bit.b));
-    } else if (convertMatrix->transferFun == IJKColorTransferFuncHLG) {
-       float to_linear_scale = 1000.0 / peak_luminance;
-       myFragColor = to_linear_scale * float3(arib_b67_eotf(rgb10bit.r), arib_b67_eotf(rgb10bit.g), arib_b67_eotf(rgb10bit.b));
+    if (input.textureCoordinate.x <= convertMatrix->hdrPercentage) {
+        // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
+        float peak_luminance = 50.0;
+        if (convertMatrix->transferFun == IJKColorTransferFuncPQ) {
+           float to_linear_scale = 10000.0 / peak_luminance;
+           myFragColor = to_linear_scale * float3(st_2084_eotf(rgb10bit.r), st_2084_eotf(rgb10bit.g), st_2084_eotf(rgb10bit.b));
+        } else if (convertMatrix->transferFun == IJKColorTransferFuncHLG) {
+           float to_linear_scale = 1000.0 / peak_luminance;
+           myFragColor = to_linear_scale * float3(arib_b67_eotf(rgb10bit.r), arib_b67_eotf(rgb10bit.g), arib_b67_eotf(rgb10bit.b));
+        } else {
+           myFragColor = float3(rec_1886_eotf(rgb10bit.r), rec_1886_eotf(rgb10bit.g), rec_1886_eotf(rgb10bit.b));
+        }
+
+        // 2、HDR 线性光信号做颜色空间转换（Color Space Converting）
+        // color-primaries REC_2020 to REC_709
+        matrix_float3x3 rgb2xyz2020 = matrix_float3x3(0.6370, 0.1446, 0.1689,
+                               0.2627, 0.6780, 0.0593,
+                               0.0000, 0.0281, 1.0610);
+        matrix_float3x3 xyz2rgb709 = matrix_float3x3(3.2410, -1.5374, -0.4986,
+                              -0.9692, 1.8760, 0.0416,
+                              0.0556, -0.2040, 1.0570);
+        myFragColor *= rgb2xyz2020 * xyz2rgb709;
+
+        // 3、HDR 线性光信号色调映射为 SDR 线性光信号（Tone Mapping）
+        float sig = FFMAX(FFMAX3(myFragColor.r, myFragColor.g, myFragColor.b), 1e-6);
+        float sig_orig = sig;
+        float peak = 10.0;
+        sig = hableF(sig) / hableF(peak);
+        myFragColor *= sig / sig_orig;
+
+        // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
+        myFragColor = float3(rec_1886_inverse_eotf(myFragColor.r), rec_1886_inverse_eotf(myFragColor.g), rec_1886_inverse_eotf(myFragColor.b));
     } else {
-       myFragColor = float3(rec_1886_eotf(rgb10bit.r), rec_1886_eotf(rgb10bit.g), rec_1886_eotf(rgb10bit.b));
+        myFragColor = rgb10bit;
     }
-
-    // 2、HDR 线性光信号做颜色空间转换（Color Space Converting）
-    // color-primaries REC_2020 to REC_709
-    matrix_float3x3 rgb2xyz2020 = matrix_float3x3(0.6370, 0.1446, 0.1689,
-                           0.2627, 0.6780, 0.0593,
-                           0.0000, 0.0281, 1.0610);
-    matrix_float3x3 xyz2rgb709 = matrix_float3x3(3.2410, -1.5374, -0.4986,
-                          -0.9692, 1.8760, 0.0416,
-                          0.0556, -0.2040, 1.0570);
-    myFragColor *= rgb2xyz2020 * xyz2rgb709;
-
-    // 3、HDR 线性光信号色调映射为 SDR 线性光信号（Tone Mapping）
-    float sig = FFMAX(FFMAX3(myFragColor.r, myFragColor.g, myFragColor.b), 1e-6);
-    float sig_orig = sig;
-    float peak = 10.0;
-    sig = hableF(sig) / hableF(peak);
-    myFragColor *= sig / sig_orig;
-
-    // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
-    myFragColor = float3(rec_1886_inverse_eotf(myFragColor.r), rec_1886_inverse_eotf(myFragColor.g), rec_1886_inverse_eotf(myFragColor.b));
     //color adjustment
     return float4(rgb_adjust(myFragColor,convertMatrix->adjustment),1.0);
 }

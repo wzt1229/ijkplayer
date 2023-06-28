@@ -16,6 +16,7 @@
     vector_float4 _colorAdjustment;
     id<MTLDevice> _device;
     MTLPixelFormat _colorPixelFormat;
+    float _hdrPercentage;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
@@ -48,6 +49,7 @@
         _colorPixelFormat = colorPixelFormat;
         _colorAdjustment = (vector_float4){0.0};
         _pilelineLock = [[NSLock alloc]init];
+        _hdrPercentage = 0.0;
     }
     return self;
 }
@@ -274,7 +276,7 @@
         IJKConvertMatrix convertMatrix = ijk_metal_create_color_matrix(self.pipelineMeta.convertMatrixType, self.pipelineMeta.fullRange);
         convertMatrix.adjustment = _colorAdjustment;
         convertMatrix.transferFun = self.pipelineMeta.transferFunc;
-        
+        convertMatrix.hdrPercentage = _hdrPercentage;
         self.convertMatrixBuff = [_device newBufferWithBytes:&convertMatrix
                                                       length:sizeof(IJKConvertMatrix)
                                                      options:MTLResourceStorageModeShared];
@@ -291,6 +293,10 @@
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  
+    if (_hdrPercentage < 1.0) {
+        _hdrPercentage += 0.005;
+        self.convertMatrixChanged = YES;
+    }
     [self updateConvertMatrixBufferIfNeed];
     
     //Fragment Function(nv12FragmentShader): missing buffer binding at index 0 for fragmentShaderArgs[0].
