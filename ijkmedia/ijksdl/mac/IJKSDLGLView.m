@@ -493,7 +493,7 @@ static bool _is_need_dispath_to_global(void)
 - (void)doUploadVideoPicture:(IJKOverlayAttach *)attach
 {
     if (attach.videoPicture) {
-        if (IJK_GLES2_Renderer_updateVertex2(_renderer, attach.h, attach.w, attach.bufferW, attach.sarNum, attach.sarDen)) {
+        if (IJK_GLES2_Renderer_updateVertex2(_renderer, attach.h, attach.w, attach.pixelW, attach.sarNum, attach.sarDen)) {
             if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture)) {
                 IJK_GLES2_Renderer_drawArrays();
             } else {

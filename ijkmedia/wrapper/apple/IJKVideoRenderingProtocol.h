@@ -68,7 +68,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 @property(nonatomic) int sarDen;
 //degrees
 @property(nonatomic) int autoZRotate;
-@property(nonatomic) int bufferW;
 @property(nonatomic) CVPixelBufferRef videoPicture;
 @property(atomic) CVPixelBufferRef subPicture;
 @property(nonatomic) IJKSDLSubtitle *sub;
