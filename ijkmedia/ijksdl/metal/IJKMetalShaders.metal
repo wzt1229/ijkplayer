@@ -79,7 +79,7 @@ struct IJKFragmentShaderArguments {
     texture2d<float> textureY [[ id(IJKFragmentTextureIndexTextureY) ]];
     texture2d<float> textureU [[ id(IJKFragmentTextureIndexTextureU) ]];
     texture2d<float> textureV [[ id(IJKFragmentTextureIndexTextureV) ]];
-    IJKConvertMatrix convertMatrix [[ id(IJKFragmentDataIndex) ]];
+    device IJKConvertMatrix * convertMatrix [[ id(IJKFragmentMatrixIndexConvert) ]];
 };
 
 vertex RasterizerData subVertexShader(uint vertexID [[vertex_id]],
@@ -132,8 +132,8 @@ fragment float4 bgraFragmentShader(RasterizerData input [[stage_in]],
     //auto converted bgra -> rgba
     float4 rgba = textureY.sample(textureSampler, input.textureCoordinate);
     //color adjustment
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
-    return float4(rgb_adjust(rgba.rgb, convertMatrix.adjustment),rgba.a);
+    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
+    return float4(rgb_adjust(rgba.rgb, convertMatrix->adjustment),rgba.a);
 }
 
 /// @brief argb fragment shader
@@ -149,8 +149,8 @@ fragment float4 argbFragmentShader(RasterizerData input [[stage_in]],
     //auto converted bgra -> rgba;but data is argb,so target is grab
     float4 grab = textureY.sample(textureSampler, input.textureCoordinate);
     //color adjustment
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
-    return float4(rgb_adjust(grab.gra, convertMatrix.adjustment),grab.b);
+    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
+    return float4(rgb_adjust(grab.gra, convertMatrix->adjustment),grab.b);
 }
 
 /// @brief nv12 fragment shader
@@ -169,10 +169,10 @@ fragment float4 nv12FragmentShader(RasterizerData input [[stage_in]],
     float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
                         textureUV.sample(textureSampler, input.textureCoordinate).rg);
     
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
-    float3 rgb = convertMatrix.matrix * (yuv + convertMatrix.offset);
+    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
+    float3 rgb = convertMatrix->matrix * (yuv + convertMatrix->offset);
     //color adjustment
-    return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
+    return float4(rgb_adjust(rgb,convertMatrix->adjustment),1.0);
 }
 
 // mark -hdr helps
@@ -267,17 +267,18 @@ fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
     float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
                         textureUV.sample(textureSampler, input.textureCoordinate).rg);
     //使用 BT.2020 矩阵转为RGB
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
-    float3 rgb10bit = convertMatrix.matrix * (yuv + convertMatrix.offset);
+    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
+    
+    float3 rgb10bit = convertMatrix->matrix * (yuv + convertMatrix->offset);
     
     // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
     float peak_luminance = 50.0;
     float3 myFragColor;
     
-    if (convertMatrix.transferFun == IJKColorTransferFuncPQ) {
+    if (convertMatrix->transferFun == IJKColorTransferFuncPQ) {
        float to_linear_scale = 10000.0 / peak_luminance;
        myFragColor = to_linear_scale * float3(st_2084_eotf(rgb10bit.r), st_2084_eotf(rgb10bit.g), st_2084_eotf(rgb10bit.b));
-    } else if (convertMatrix.transferFun == IJKColorTransferFuncHLG) {
+    } else if (convertMatrix->transferFun == IJKColorTransferFuncHLG) {
        float to_linear_scale = 1000.0 / peak_luminance;
        myFragColor = to_linear_scale * float3(arib_b67_eotf(rgb10bit.r), arib_b67_eotf(rgb10bit.g), arib_b67_eotf(rgb10bit.b));
     } else {
@@ -304,7 +305,7 @@ fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
     // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
     myFragColor = float3(rec_1886_inverse_eotf(myFragColor.r), rec_1886_inverse_eotf(myFragColor.g), rec_1886_inverse_eotf(myFragColor.b));
     //color adjustment
-    return float4(rgb_adjust(myFragColor,convertMatrix.adjustment),1.0);
+    return float4(rgb_adjust(myFragColor,convertMatrix->adjustment),1.0);
 }
 
 /// @brief yuv420p fragment shader
@@ -325,10 +326,10 @@ fragment float4 yuv420pFragmentShader(RasterizerData input [[stage_in]],
                         textureU.sample(textureSampler, input.textureCoordinate).r,
                         textureV.sample(textureSampler, input.textureCoordinate).r);
     
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
-    float3 rgb = convertMatrix.matrix * (yuv + convertMatrix.offset);
+    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
+    float3 rgb = convertMatrix->matrix * (yuv + convertMatrix->offset);
     //color adjustment
-    return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
+    return float4(rgb_adjust(rgb,convertMatrix->adjustment),1.0);
 }
 
 /// @brief uyvy422 fragment shader
@@ -345,10 +346,10 @@ fragment float4 uyvy422FragmentShader(RasterizerData input [[stage_in]],
     float3 tc = textureY.sample(textureSampler, input.textureCoordinate).rgb;
     float3 yuv = float3(tc.g, tc.b, tc.r);
     
-    IJKConvertMatrix convertMatrix = fragmentShaderArgs.convertMatrix;
-    float3 rgb = convertMatrix.matrix * (yuv + convertMatrix.offset);
+    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
+    float3 rgb = convertMatrix->matrix * (yuv + convertMatrix->offset);
     //color adjustment 
-    return float4(rgb_adjust(rgb,convertMatrix.adjustment),1.0);
+    return float4(rgb_adjust(rgb,convertMatrix->adjustment),1.0);
 }
 
 #else

@@ -59,8 +59,7 @@ typedef enum IJKFragmentBufferArguments
     IJKFragmentTextureIndexTextureY,
     IJKFragmentTextureIndexTextureU,
     IJKFragmentTextureIndexTextureV,
-    IJKFragmentMatrixIndexConvert,
-    IJKFragmentDataIndex,
+    IJKFragmentMatrixIndexConvert
 } IJKFragmentBufferArguments;
 
 typedef enum IJKFragmentBufferLocation

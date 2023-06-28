@@ -30,14 +30,14 @@
 // The buffer that contains arguments for the fragment shader.
 @property (nonatomic, strong) id<MTLBuffer> fragmentShaderArgumentBuffer;
 @property (nonatomic, strong) id<MTLArgumentEncoder> argumentEncoder;
-#else
-@property (nonatomic, strong) id<MTLBuffer> convertMatrix;
 #endif
+@property (nonatomic, strong) id<MTLBuffer> convertMatrixBuff;
+@property (nonatomic, assign) BOOL convertMatrixChanged;
+
 @property (nonatomic, strong) IJKMetalPipelineMeta *pipelineMeta;
 @property (nonatomic, assign) BOOL vertexChanged;
-@property (nonatomic, assign) BOOL subtitleVertexChanged;
-@property (nonatomic, assign) BOOL convertMatrixChanged;
 @property (nonatomic, strong) NSLock *pilelineLock;
+
 @end
 
 @implementation IJKMetalRenderer
@@ -268,45 +268,6 @@
                                         options:MTLResourceStorageModeShared]; // 创建顶点缓存
 }
 
-- (void)updateSubtitleVertexIfNeed:(CGRect)rect
-{
-    if (!self.subtitleVertexChanged) {
-        return;
-    }
-    
-    self.subtitleVertexChanged = NO;
-    
-    float x = rect.origin.x;
-    float y = rect.origin.y;
-    float w = rect.size.width;
-    float h = rect.size.height;
-    /*
-     triangle strip
-       ^+
-     V3|V4
-     --|--->+
-     V1|V2
-     -->V1V2V3
-     -->V2V3V4
-     */
-
-    IJKVertex quadVertices[4] =
-    {   // 顶点坐标，分别是x、y、z、w；    纹理坐标，x、y；
-        { { x, y },  { 0.f, 1.f } },
-        { { x + w, y },  { 1.f, 1.f } },
-        { { x, y + h },  { 0.f, 0.f } },
-        { { x + w, y },  { 1.f, 0.f } },
-    };
-    
-    /// These are the view and projection transforms.
-    matrix_float4x4 viewMatrix = matrix4x4_identity();
-    
-    IJKVertexData data = {quadVertices[0],quadVertices[1],quadVertices[2],quadVertices[3],viewMatrix};
-    self.subVertices = [_device newBufferWithBytes:&data
-                                            length:sizeof(data)
-                                           options:MTLResourceStorageModeShared]; // 创建顶点缓存
-}
-
 mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 
 - (NSArray<id<MTLTexture>> *)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
@@ -339,10 +300,24 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
             CFRelease(textureRef);
         }
     }
-
     CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
     
     return result;
+}
+
+- (void)updateConvertMatrixBufferIfNeed
+{
+    if (self.convertMatrixChanged || !self.convertMatrixBuff) {
+        self.convertMatrixChanged = NO;
+        
+        IJKConvertMatrix convertMatrix = ijk_metal_create_color_matrix(self.pipelineMeta.convertMatrixType, self.pipelineMeta.fullRange);
+        convertMatrix.adjustment = _colorAdjustment;
+        convertMatrix.transferFun = self.pipelineMeta.transferFunc;
+        
+        self.convertMatrixBuff = [_device newBufferWithBytes:&convertMatrix
+                                                      length:sizeof(IJKConvertMatrix)
+                                                     options:MTLResourceStorageModeShared];
+    }
 }
 
 #if IJK_USE_METAL_2
@@ -375,14 +350,16 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
         }
     }
     
-    if (self.convertMatrixChanged) {
-        IJKConvertMatrix * data = (IJKConvertMatrix *)[_argumentEncoder constantDataAtIndex:IJKFragmentDataIndex];
-        IJKConvertMatrix convertMatrix = ijk_metal_create_color_matrix(self.pipelineMeta.convertMatrixType, self.pipelineMeta.fullRange);
-        convertMatrix.adjustment = _colorAdjustment;
-        convertMatrix.transferFun = self.pipelineMeta.transferFunc;
-        *data = convertMatrix;
-        self.convertMatrixChanged = NO;
+    [self updateConvertMatrixBufferIfNeed];
+    [_argumentEncoder setBuffer:self.convertMatrixBuff offset:0 atIndex:IJKFragmentMatrixIndexConvert];
+    // to map to the GPU's address space.
+    if (@available(macOS 10.15, ios 13.0, *)) {
+        [encoder useResource:self.convertMatrixBuff usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
+    } else {
+        // Fallback on earlier versions
+        [encoder useResource:self.convertMatrixBuff usage:MTLResourceUsageRead];
     }
+    
     //Fragment Function(nv12FragmentShader): missing buffer binding at index 0 for fragmentShaderArgs[0].
     [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
     
@@ -400,18 +377,6 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 }
 
 #else
-
-- (void)updateConvertMatrixBufferIfNeed
-{
-    if (self.convertMatrixChanged || !self.convertMatrix) {
-        self.convertMatrixChanged = NO;
-        IJKConvertMatrix convertMatrix = [self createMatrix:self.convertMatrixType];
-        convertMatrix.adjustment = _colorAdjustment;
-        self.convertMatrix = [_device newBufferWithBytes:&convertMatrix
-                                                  length:sizeof(IJKConvertMatrix)
-                                                 options:MTLResourceStorageModeShared];
-    }
-}
 
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                           buffer:(CVPixelBufferRef)pixelBuffer
@@ -434,7 +399,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     
     [self updateConvertMatrixBufferIfNeed];
     
-    [encoder setFragmentBuffer:self.convertMatrix
+    [encoder setFragmentBuffer:self.convertMatrixBuff
                         offset:0
                        atIndex:IJKFragmentMatrixIndexConvert];
     
