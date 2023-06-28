@@ -532,7 +532,6 @@ typedef CGRect NSRect;
     if (!self.window.inLiveResize) {
         [self setNeedsRefreshCurrentPic];
     }
-    [self setNeedsRefreshCurrentPic];
 }
 
 - (void)viewDidChangeBackingProperties
