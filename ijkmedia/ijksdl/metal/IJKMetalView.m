@@ -206,21 +206,19 @@ typedef CGRect NSRect;
     return CGSizeMake(nW, nH);
 }
 
-- (BOOL)setupSubPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
+- (BOOL)setupSubPipelineIfNeed
 {
-    if (!pixelBuffer) {
-        return NO;
-    }
-    
-    OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
-    if (type != kCVPixelFormatType_32BGRA) {
-        return NO;
-    }
-    
     if (!self.subPipeline) {
         self.subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
     }
-    return !!self.subPipeline;
+    
+    if ([self.subPipeline createRenderPipelineIfNeed]) {
+        return YES;
+    } else {
+        ALOGI("create RenderPipeline failed.");
+        self.subPipeline = nil;
+        return NO;
+    }
 }
 
 - (BOOL)setupPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
@@ -237,67 +235,74 @@ typedef CGRect NSRect;
         }
     }
     self.picturePipeline = [[IJKMetalRenderer alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
-    return !!self.picturePipeline;
-}
-
-- (void)encoderPicture:(IJKOverlayAttach *)attach
-         renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-              viewport:(CGSize)viewport
-                 ratio:(CGSize)ratio
-{
-    // Set the region of the drawable to draw into.
-    [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
-    
-    CVPixelBufferRef pixelBuffer = attach.videoPicture;
-    
-    if ([self setupPipelineIfNeed:pixelBuffer]) {
-        [self.picturePipeline lock];
-        self.picturePipeline.viewport = viewport;
-        self.picturePipeline.autoZRotateDegrees = attach.autoZRotate;
-        self.picturePipeline.rotateType = self.rotatePreference.type;
-        self.picturePipeline.rotateDegrees = self.rotatePreference.degrees;
-        
-        bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
-        [self.picturePipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust ? 1.0 : 0.0}];
-        self.picturePipeline.vertexRatio = ratio;
-        
-        self.picturePipeline.textureCrop = CGSizeMake(1.0 * (CVPixelBufferGetWidth(pixelBuffer) - attach.w) / CVPixelBufferGetWidth(pixelBuffer), 1.0 * (CVPixelBufferGetHeight(pixelBuffer) - attach.h) / CVPixelBufferGetHeight(pixelBuffer));
-        //upload textures
-        [self.picturePipeline uploadTextureWithEncoder:renderEncoder
-                                                buffer:pixelBuffer
-                                          textureCache:_pictureTextureCache];
-        [self.picturePipeline unlock];
-    }
-}
-
-- (BOOL)encoderSubtitle:(CVPixelBufferRef)pixelBuffer
-          renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               viewport:(CGSize)viewport
-                  scale:(float)scale
-{
-    if (!pixelBuffer) {
+    if ([self.picturePipeline createRenderPipelineIfNeed:pixelBuffer]) {
+        return YES;
+    } else {
+        ALOGI("create RenderPipeline failed.");
+        self.picturePipeline = nil;
         return NO;
     }
+}
+
+- (void)encodePicture:(IJKOverlayAttach *)attach
+        renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
+             viewport:(CGSize)viewport
+                ratio:(CGSize)ratio
+{
+    [self.picturePipeline lock];
+    self.picturePipeline.autoZRotateDegrees = attach.autoZRotate;
+    self.picturePipeline.rotateType = self.rotatePreference.type;
+    self.picturePipeline.rotateDegrees = self.rotatePreference.degrees;
+    
+    bool applyAdjust = _colorPreference.brightness != 1.0 || _colorPreference.saturation != 1.0 || _colorPreference.contrast != 1.0;
+    [self.picturePipeline updateColorAdjustment:(vector_float4){_colorPreference.brightness,_colorPreference.saturation,_colorPreference.contrast,applyAdjust ? 1.0 : 0.0}];
+    self.picturePipeline.vertexRatio = ratio;
+    
+    self.picturePipeline.textureCrop = CGSizeMake(1.0 * (attach.pixelW - attach.w) / attach.pixelW, 1.0 * (attach.pixelH - attach.h) / attach.pixelH);
+    
     // Set the region of the drawable to draw into.
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
-    
-    if ([self setupSubPipelineIfNeed:pixelBuffer]) {
-        [self.subPipeline lock];
-        self.subPipeline.viewport = viewport;
-        self.subPipeline.scale = scale;
-        self.subPipeline.subtitleBottomMargin = self.subtitlePreference.bottomMargin;
-        //upload textures
-        [self.subPipeline uploadTextureWithEncoder:renderEncoder
-                                            buffer:pixelBuffer];
-        [self.subPipeline unlock];
-    }
-    return YES;
+    //upload textures
+    [self.picturePipeline uploadTextureWithEncoder:renderEncoder
+                                          textures:attach.videoTextures];
+    [self.picturePipeline unlock];
+}
+
+- (void)encodeSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder
+              viewport:(CGSize)viewport
+               texture:(id)subTexture
+                  rect:(CGRect)subRect
+{
+    [self.subPipeline lock];
+    // Set the region of the drawable to draw into.
+    [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
+    //upload textures
+    [self.subPipeline uploadTextureWithEncoder:renderEncoder
+                                       texture:subTexture
+                                          rect:subRect];
+    [self.subPipeline unlock];
 }
 
 /// Called whenever the view needs to render a frame.
 - (void)drawRect:(NSRect)dirtyRect
 {
     IJKOverlayAttach * attach = self.currentAttach;
+    if (attach.videoTextures.count == 0) {
+        return;
+    }
+    
+    if (![self setupPipelineIfNeed:attach.videoPicture]) {
+        return;
+    }
+    
+    if (attach.sub && ![self setupSubPipelineIfNeed]) {
+        return;
+    }
+    
+    CGSize ratio = [self computeNormalizedVerticesRatio:attach];
+    
+    id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
+    
     // Obtain a renderPassDescriptor generated from the view's drawable textures.
     MTLRenderPassDescriptor *renderPassDescriptor = self.currentRenderPassDescriptor;
     //MTLRenderPassDescriptor描述一系列attachments的值，类似GL的FrameBuffer；同时也用来创建MTLRenderCommandEncoder
@@ -305,39 +310,30 @@ typedef CGRect NSRect;
         ALOGE("renderPassDescriptor can't be nil");
         return;
     }
-    
-    id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
-    
     // Create a render command encoder.
     id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-    {
-        CVPixelBufferRef pixelBuffer = attach.videoPicture;
-        if (pixelBuffer) {
-            CGSize ratio = [self computeNormalizedVerticesRatio:attach];
-            [self encoderPicture:attach
-                   renderEncoder:renderEncoder
-                        viewport:self.drawableSize
-                           ratio:ratio];
-        }
-        
-        if (attach.sub) {
-            float ratio = 1.0;
-            if (attach.sub.pixels) {
-                ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-            } else {
-                //for text subtitle scale display_scale.
-                ratio *= self.displayScreenScale;
-            }
-            [self encoderSubtitle:attach.subPicture
-                    renderEncoder:renderEncoder
-                         viewport:self.drawableSize
-                            scale:ratio];
-        }
-    }
     
+    [renderEncoder pushDebugGroup:@"encodePicture"];
+    [self encodePicture:attach
+          renderEncoder:renderEncoder
+               viewport:self.drawableSize
+                  ratio:ratio];
+    
+    if (attach.sub) {
+        [self encodeSubtitle:renderEncoder
+                    viewport:self.drawableSize
+                     texture:attach.subTexture
+                        rect:attach.subTextureRect];
+    }
+    [renderEncoder popDebugGroup];
     [renderEncoder endEncoding];
     // Schedule a present once the framebuffer is complete using the current drawable.
-    [commandBuffer presentDrawable:self.currentDrawable];
+    id <CAMetalDrawable> currentDrawable = self.currentDrawable;
+    if (!currentDrawable) {
+        ALOGE("wtf?currentDrawable is nil!");
+        return;
+    }
+    [commandBuffer presentDrawable:currentDrawable];
     // Finalize rendering here & push the command buffer to the GPU.
     [commandBuffer commit];
 }
@@ -401,16 +397,30 @@ typedef CGRect NSRect;
     }
     
     CGSize viewport = CGSizeMake(floorf(width), floorf(height));
+    
+    if (![self setupPipelineIfNeed:attach.videoPicture]) {
+        return NULL;
+    }
+    
+    if (attach.sub && ![self setupSubPipelineIfNeed]) {
+        return NULL;
+    }
+    
     return [self.offscreenRendering snapshot:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
-        [self encoderPicture:attach
-               renderEncoder:renderEncoder
-                    viewport:viewport
-                       ratio:CGSizeMake(1.0, 1.0)];
+        
+        [self encodePicture:attach
+              renderEncoder:renderEncoder
+                   viewport:viewport
+                      ratio:CGSizeMake(1.0, 1.0)];
+        
         if (drawSub) {
-            [self encoderSubtitle:attach.subPicture
-                    renderEncoder:renderEncoder
-                         viewport:viewport
-                            scale:subScale];
+            CGRect rect;
+            id subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device scale:subScale viewport:self.drawableSize bottomMargin:self.subtitlePreference.bottomMargin rect:&rect];
+            
+            [self encodeSubtitle:renderEncoder
+                        viewport:viewport
+                         texture:subTexture
+                            rect:rect];
         }
     }];
 }
@@ -448,17 +458,26 @@ typedef CGRect NSRect;
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     CGSize viewport = self.drawableSize;
     
+    if (![self setupPipelineIfNeed:attach.videoPicture]) {
+        return NULL;
+    }
+    
+    if (attach.sub && ![self setupSubPipelineIfNeed]) {
+        return NULL;
+    }
+    
     return [self.offscreenRendering snapshot:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
         CVPixelBufferRef pixelBuffer = attach.videoPicture;
         if (pixelBuffer) {
             CGSize ratio = [self computeNormalizedVerticesRatio:attach];
-            [self encoderPicture:attach
-                   renderEncoder:renderEncoder
-                        viewport:viewport
-                           ratio:ratio];
+            [self encodePicture:attach
+                  renderEncoder:renderEncoder
+                       viewport:viewport
+                          ratio:ratio];
         }
         
         if (attach.sub) {
+            
             float ratio = 1.0;
             if (attach.sub.pixels) {
                 ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
@@ -466,10 +485,15 @@ typedef CGRect NSRect;
                 //for text subtitle scale display_scale.
                 ratio *= self.displayScreenScale;
             }
-            [self encoderSubtitle:attach.subPicture
-                    renderEncoder:renderEncoder
-                         viewport:viewport
-                            scale:ratio];
+            
+            CGRect rect;
+            id subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device scale:ratio viewport:viewport bottomMargin:self.subtitlePreference.bottomMargin rect:&rect];
+            
+            [self encodeSubtitle:renderEncoder
+                        viewport:viewport
+                         texture:subTexture
+                            rect:rect];
+            
         }
     }];
 }
@@ -610,6 +634,131 @@ typedef CGRect NSRect;
         }
     }
     attach.subPicture = subRef;
+    if (subRef) {
+        float subRatio = 1.0;
+        if (attach.sub.pixels) {
+            subRatio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+        } else {
+            //for text subtitle scale display_scale.
+            subRatio *= self.displayScreenScale;
+        }
+        
+        CGRect rect;
+        attach.subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device scale:subRatio viewport:self.drawableSize bottomMargin:self.subtitlePreference.bottomMargin rect:&rect];
+        attach.subTextureRect = rect;
+    }
+}
+
+mp_format * mp_get_metal_format(uint32_t cvpixfmt);
+
++ (NSArray<id<MTLTexture>> *)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
+                                  textureCache:(CVMetalTextureCacheRef)textureCache
+{
+    if (!pixelBuffer) {
+        return nil;
+    }
+    
+    NSMutableArray *result = [NSMutableArray array];
+    
+    OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
+    mp_format *ft = mp_get_metal_format(type);
+    
+    NSAssert(ft != NULL, @"wrong pixel format type.");
+    
+    CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+    
+    const bool planar = CVPixelBufferIsPlanar(pixelBuffer);
+    const int planes  = (int)CVPixelBufferGetPlaneCount(pixelBuffer);
+    assert(planar && planes == ft->planes || ft->planes == 1);
+    
+    for (int i = 0; i < ft->planes; i++) {
+        size_t width  = CVPixelBufferGetWidthOfPlane(pixelBuffer, i);
+        size_t height = CVPixelBufferGetHeightOfPlane(pixelBuffer, i);
+        MTLPixelFormat format = ft->formats[i];
+        CVMetalTextureRef textureRef = NULL; // CoreVideo的Metal纹理
+        CVReturn status = CVMetalTextureCacheCreateTextureFromImage(NULL, textureCache, pixelBuffer, NULL, format, width, height, i, &textureRef);
+        if (status == kCVReturnSuccess) {
+            id<MTLTexture> texture = CVMetalTextureGetTexture(textureRef); // 转成Metal用的纹理
+            if (texture != nil) {
+                [result addObject:texture];
+            }
+            CFRelease(textureRef);
+        }
+    }
+
+    CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+    
+    return result;
+}
+
++ (id)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
+                      device:(id<MTLDevice>)device
+                     scale:(float)scale
+                  viewport:(CGSize)viewport
+              bottomMargin:(float)bottomMargin
+                      rect:(CGRect *)rect
+{
+    if (!pixelBuff) {
+        return nil;
+    }
+    
+    OSType type = CVPixelBufferGetPixelFormatType(pixelBuff);
+    if (type != kCVPixelFormatType_32BGRA) {
+        ALOGE("generate subtitle texture must use 32BGRA pixelBuff");
+        return nil;
+    }
+    
+    CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
+    void *src = CVPixelBufferGetBaseAddress(pixelBuff);
+    
+    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+
+    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
+    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
+    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    
+    // Set the pixel dimensions of the texture
+    
+    textureDescriptor.width  = CVPixelBufferGetWidth(pixelBuff);
+    textureDescriptor.height = CVPixelBufferGetHeight(pixelBuff);
+    
+    // Create the texture from the device by using the descriptor
+    id<MTLTexture> subTexture = [device newTextureWithDescriptor:textureDescriptor];
+    
+    MTLRegion region = {
+        { 0, 0, 0 },                   // MTLOrigin
+        {CVPixelBufferGetWidth(pixelBuff), CVPixelBufferGetHeight(pixelBuff), 1} // MTLSize
+    };
+    
+    NSUInteger bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuff);
+    
+    [subTexture replaceRegion:region
+                   mipmapLevel:0
+                     withBytes:src
+                   bytesPerRow:bytesPerRow];
+    
+    CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
+    
+    //截图的时候，按照画面实际大小截取的，显示的时候通常是 retain 屏幕，所以 scale 通常会小于 1；
+    //没有这个scale的话，字幕可能会超出画面，位置跟观看时不一致。
+    float swidth  = subTexture.width  * scale;
+    float sheight = subTexture.height * scale;
+    
+    float width  = viewport.width;
+    float height = viewport.height;
+    //转化到 [-1,1] 的区间
+    float y = bottomMargin * (height - sheight) / height * 2.0 - 1.0;
+    
+    if (width != 0 && height != 0) {
+        *rect = (CGRect){
+            - 1.0 * swidth / width,
+            y,
+            2.0 * (swidth / width),
+            2.0 * (sheight / height)
+        };
+    }
+    
+    return subTexture;
 }
 
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach
@@ -632,6 +781,8 @@ typedef CGRect NSRect;
     if (self.preventDisplay) {
         return YES;
     }
+    
+    attach.videoTextures = [[self class] doGenerateTexture:attach.videoPicture textureCache:_pictureTextureCache];
     
     //not dispatch to main thread, use current sub thread (ff_vout) draw
     [self draw];

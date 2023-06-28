@@ -147,6 +147,10 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         IJKOverlayAttach *attach = [[IJKOverlayAttach alloc] init];
         attach.w = overlay->w;
         attach.h = overlay->h;
+      
+        attach.pixelW = (int)CVPixelBufferGetWidth(videoPic);
+        attach.pixelH = (int)CVPixelBufferGetHeight(videoPic);
+        
         attach.pitches = overlay->pitches;
         attach.sarNum = overlay->sar_num;
         attach.sarDen = overlay->sar_den;

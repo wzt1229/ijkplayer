@@ -57,6 +57,9 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 //video frame normal size not alignmetn,maybe not equal to currentVideoPic's size.
 @property(nonatomic) int w;
 @property(nonatomic) int h;
+//cvpixebuffer pixel memory size;
+@property(nonatomic) int pixelW;
+@property(nonatomic) int pixelH;
 
 @property(nonatomic) int planes;
 @property(nonatomic) UInt16 *pitches;
@@ -69,7 +72,9 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 @property(nonatomic) CVPixelBufferRef videoPicture;
 @property(atomic) CVPixelBufferRef subPicture;
 @property(nonatomic) IJKSDLSubtitle *sub;
-
+@property(nonatomic) NSArray *videoTextures;
+@property(nonatomic) id subTexture;
+@property(nonatomic) CGRect subTextureRect;
 @end
 
 typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;

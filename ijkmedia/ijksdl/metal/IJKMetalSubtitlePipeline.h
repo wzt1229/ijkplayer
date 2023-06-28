@@ -11,17 +11,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface IJKMetalSubtitlePipeline : NSObject
 
-//current viewport,may not equal to drawable size.
-@property (nonatomic, assign) CGSize viewport;
-@property (nonatomic, assign) float scale;
-@property (nonatomic, assign) float subtitleBottomMargin;
-
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
 - (void)lock;
 - (void)unlock;
+
+- (BOOL)createRenderPipelineIfNeed;
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                          buffer:(CVPixelBufferRef)subPixelBuffer;
+                         texture:(id)subTexture
+                            rect:(CGRect)subRect;
 
 @end
 

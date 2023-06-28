@@ -14,17 +14,13 @@
 @interface IJKMetalRenderer()
 {
     vector_float4 _colorAdjustment;
-    // The Metal texture object to reference with an argument buffer.
-    id<MTLTexture> _subTexture;
     id<MTLDevice> _device;
     MTLPixelFormat _colorPixelFormat;
-    IJKConvertMatrix _colorMatrixType;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
 @property (nonatomic, strong) id<MTLRenderPipelineState> renderPipeline;
 @property (nonatomic, strong) id<MTLBuffer> vertices;
-@property (nonatomic, strong) id<MTLBuffer> subVertices;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
 #if IJK_USE_METAL_2
 // The buffer that contains arguments for the fragment shader.
@@ -71,21 +67,22 @@
     return [self.pipelineMeta metaMatchedCVPixelbuffer:pixelBuffer];
 }
 
-- (void)createRenderPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
+- (BOOL)createRenderPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
 {
     if (self.renderPipeline) {
-        return;
+        return YES;
     }
     
     if (!self.pipelineMeta) {
         self.pipelineMeta = [IJKMetalPipelineMeta createWithCVPixelbuffer:pixelBuffer];
-        self.convertMatrixChanged = YES;
-        ALOGI("render meta:%s",[[self.pipelineMeta description]UTF8String]);
     }
     
     if (!self.pipelineMeta) {
-        return;
+        return NO;
     }
+    
+    self.convertMatrixChanged = YES;
+    ALOGI("render meta:%s",[[self.pipelineMeta description]UTF8String]);
     
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
     NSURL * libURL = [bundle URLForResource:@"default" withExtension:@"metallib"];
@@ -131,6 +128,7 @@
     self.argumentEncoder = argumentEncoder;
 #endif
     self.renderPipeline = pipelineState;
+    return YES;
 }
 
 - (void)setVertexRatio:(CGSize)vertexRatio
@@ -268,43 +266,6 @@
                                         options:MTLResourceStorageModeShared]; // 创建顶点缓存
 }
 
-mp_format * mp_get_metal_format(uint32_t cvpixfmt);
-
-- (NSArray<id<MTLTexture>> *)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
-                                  textureCache:(CVMetalTextureCacheRef)textureCache
-{
-    NSMutableArray *result = [NSMutableArray array];
-    
-    OSType type = CVPixelBufferGetPixelFormatType(pixelBuffer);
-    mp_format *ft = mp_get_metal_format(type);
-    
-    NSAssert(ft != NULL, @"wrong pixel format type.");
-    
-    CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
-    
-    const bool planar = CVPixelBufferIsPlanar(pixelBuffer);
-    const int planes  = (int)CVPixelBufferGetPlaneCount(pixelBuffer);
-    assert(planar && planes == ft->planes || ft->planes == 1);
-    
-    for (int i = 0; i < ft->planes; i++) {
-        size_t width  = CVPixelBufferGetWidthOfPlane(pixelBuffer, i);
-        size_t height = CVPixelBufferGetHeightOfPlane(pixelBuffer, i);
-        MTLPixelFormat format = ft->formats[i];
-        CVMetalTextureRef textureRef = NULL; // CoreVideo的Metal纹理
-        CVReturn status = CVMetalTextureCacheCreateTextureFromImage(NULL, textureCache, pixelBuffer, NULL, format, width, height, i, &textureRef);
-        if (status == kCVReturnSuccess) {
-            id<MTLTexture> texture = CVMetalTextureGetTexture(textureRef); // 转成Metal用的纹理
-            if (texture != nil) {
-                [result addObject:texture];
-            }
-            CFRelease(textureRef);
-        }
-    }
-    CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
-    
-    return result;
-}
-
 - (void)updateConvertMatrixBufferIfNeed
 {
     if (self.convertMatrixChanged || !self.convertMatrixBuff) {
@@ -322,8 +283,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 
 #if IJK_USE_METAL_2
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                          buffer:(CVPixelBufferRef)pixelBuffer
-                    textureCache:(CVMetalTextureCacheRef)textureCache
+                        textures:(NSArray*)textures
 {
     [self updateVertexIfNeed];
     // Pass in the parameter data.
@@ -331,14 +291,15 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  
-    [self createRenderPipelineIfNeed:pixelBuffer];
+    [self updateConvertMatrixBufferIfNeed];
     
-    NSArray<id<MTLTexture>>*textures = [self doGenerateTexture:pixelBuffer textureCache:textureCache];
+    //Fragment Function(nv12FragmentShader): missing buffer binding at index 0 for fragmentShaderArgs[0].
+    [self.argumentEncoder setArgumentBuffer:self.fragmentShaderArgumentBuffer offset:0];
     
     for (int i = 0; i < [textures count]; i++) {
         id<MTLTexture>t = textures[i];
-        [_argumentEncoder setTexture:t
-                             atIndex:IJKFragmentTextureIndexTextureY + i]; // 设置纹理
+        [self.argumentEncoder setTexture:t
+                                 atIndex:IJKFragmentTextureIndexTextureY + i]; // 设置纹理
         
         // Indicate to Metal that the GPU accesses these resources, so they need
         // to map to the GPU's address space.
@@ -349,9 +310,8 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
             [encoder useResource:t usage:MTLResourceUsageRead];
         }
     }
+    [self.argumentEncoder setBuffer:self.convertMatrixBuff offset:0 atIndex:IJKFragmentMatrixIndexConvert];
     
-    [self updateConvertMatrixBufferIfNeed];
-    [_argumentEncoder setBuffer:self.convertMatrixBuff offset:0 atIndex:IJKFragmentMatrixIndexConvert];
     // to map to the GPU's address space.
     if (@available(macOS 10.15, ios 13.0, *)) {
         [encoder useResource:self.convertMatrixBuff usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
@@ -360,10 +320,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
         [encoder useResource:self.convertMatrixBuff usage:MTLResourceUsageRead];
     }
     
-    //Fragment Function(nv12FragmentShader): missing buffer binding at index 0 for fragmentShaderArgs[0].
-    [_argumentEncoder setArgumentBuffer:_fragmentShaderArgumentBuffer offset:0];
-    
-    [encoder setFragmentBuffer:_fragmentShaderArgumentBuffer
+    [encoder setFragmentBuffer:self.fragmentShaderArgumentBuffer
                         offset:0
                        atIndex:IJKFragmentBufferLocation0];
     
@@ -379,8 +336,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 #else
 
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                          buffer:(CVPixelBufferRef)pixelBuffer
-                    textureCache:(CVMetalTextureCacheRef)textureCache
+                        textures:(NSArray*)textures
 {
     [self updateVertexIfNeed];
     // Pass in the parameter data.
@@ -388,10 +344,6 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  
-    [self createRenderPipelineIfNeed:pixelBuffer];
-    
-    NSArray<id<MTLTexture>>*textures = [self doGenerateTexture:pixelBuffer textureCache:textureCache];
-    
     for (int i = 0; i < [textures count]; i++) {
         id<MTLTexture>t = textures[i];
         [encoder setFragmentTexture:t atIndex:IJKFragmentTextureIndexTextureY + i];

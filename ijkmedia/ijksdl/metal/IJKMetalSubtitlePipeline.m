@@ -11,8 +11,6 @@
 
 @interface IJKMetalSubtitlePipeline()
 {
-    // The Metal texture object to reference with an argument buffer.
-    id<MTLTexture> _subTexture;
     id<MTLDevice> _device;
     MTLPixelFormat _colorPixelFormat;
 }
@@ -21,7 +19,7 @@
 @property (nonatomic, strong) id<MTLRenderPipelineState> renderPipeline;
 @property (nonatomic, strong) id<MTLBuffer> vertices;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
-@property (nonatomic, assign) BOOL vertexChanged;
+@property (nonatomic, assign) CGRect lastRect;
 @property (nonatomic, strong) NSLock *pilelineLock;
 
 @end
@@ -51,10 +49,10 @@
     [self.pilelineLock unlock];
 }
 
-- (void)createRenderPipelineIfNeed
+- (BOOL)createRenderPipelineIfNeed
 {
     if (self.renderPipeline) {
-        return;
+        return YES;
     }
     
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
@@ -94,15 +92,16 @@
     //  from Xcode.)
     NSAssert(pipelineState, @"Failed to create pipeline state: %@", error);
     self.renderPipeline = pipelineState;
+    return YES;
 }
 
 - (void)updateSubtitleVertexIfNeed:(CGRect)rect
 {
-    if (!self.vertexChanged) {
+    if (CGRectEqualToRect(self.lastRect, rect)) {
         return;
     }
     
-    self.vertexChanged = NO;
+    self.lastRect = rect;
     
     float x = rect.origin.x;
     float y = rect.origin.y;
@@ -131,82 +130,18 @@
                                         options:MTLResourceStorageModeShared]; // 创建顶点缓存
 }
 
-- (void)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
-                      device:(id<MTLDevice>)device
-                        rect:(CGRect *)rect
-{
-    if (!pixelBuff) {
-        return;
-    }
-    
-    CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-    void *src = CVPixelBufferGetBaseAddress(pixelBuff);
-    
-    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
-
-    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
-    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
-    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
-    
-    // Set the pixel dimensions of the texture
-    
-    textureDescriptor.width  = CVPixelBufferGetWidth(pixelBuff);
-    textureDescriptor.height = CVPixelBufferGetHeight(pixelBuff);
-    
-    // Create the texture from the device by using the descriptor
-    _subTexture = [device newTextureWithDescriptor:textureDescriptor];
-    
-    MTLRegion region = {
-        { 0, 0, 0 },                   // MTLOrigin
-        {CVPixelBufferGetWidth(pixelBuff), CVPixelBufferGetHeight(pixelBuff), 1} // MTLSize
-    };
-    
-    NSUInteger bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuff);
-    
-    [_subTexture replaceRegion:region
-                   mipmapLevel:0
-                     withBytes:src
-                   bytesPerRow:bytesPerRow];
-    
-    CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-    
-    //截图的时候，按照画面实际大小截取的，显示的时候通常是 retain 屏幕，所以 scale 通常会小于 1；
-    //没有这个scale的话，字幕可能会超出画面，位置跟观看时不一致。
-    float swidth  = _subTexture.width  * self.scale;
-    float sheight = _subTexture.height * self.scale;
-    
-    float width  = self.viewport.width;
-    float height = self.viewport.height;
-    //转化到 [-1,1] 的区间
-    float y = self.subtitleBottomMargin * (height - sheight) / height * 2.0 - 1.0;
-    
-    if (width != 0 && height != 0) {
-        *rect = (CGRect){
-            - 1.0 * swidth / width,
-            y,
-            2.0 * (swidth / width),
-            2.0 * (sheight / height)
-        };
-    }
-}
-
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                          buffer:(CVPixelBufferRef)pixelBuffer
+                         texture:(id)subTexture
+                            rect:(CGRect)subRect
 {
-    self.vertexChanged = YES;
-    CGRect subRect;
-    [self doGenerateSubTexture:pixelBuffer device:_device rect:&subRect];
-
-    [encoder setFragmentTexture:_subTexture atIndex:IJKFragmentTextureIndexTextureY];
+    [encoder setFragmentTexture:subTexture atIndex:IJKFragmentTextureIndexTextureY];
 
     [self updateSubtitleVertexIfNeed:subRect];
     // Pass in the parameter data.
     [encoder setVertexBuffer:self.vertices
                       offset:0
-                     atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
+                     atIndex:IJKVertexInputIndexVertices];
  
-    [self createRenderPipelineIfNeed];
-    
     // 设置渲染管道，以保证顶点和片元两个shader会被调用
     [encoder setRenderPipelineState:self.renderPipeline];
     
