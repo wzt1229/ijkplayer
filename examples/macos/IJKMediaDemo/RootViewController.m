@@ -46,7 +46,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 
 //for cocoa binding begin
 @property (assign) float volume;
-@property (assign) float subtitleFontRatio;
 @property (assign) float subtitleDelay;
 @property (assign) float subtitleMargin;
 
@@ -107,7 +106,6 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 //        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
     }];
 
-    self.subtitleFontRatio = 1.0;
     self.subtitleMargin = 0.7;
     self.fcc = @"fcc-_es2";
     self.snapshot = 3;
@@ -1012,6 +1010,8 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.bottomMargin = self.subtitleMargin;
+    NSNumber *number = [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.subtitleFontRatio"];
+    p.ratio = [number floatValue];
     self.player.view.subtitlePreference = p;
     
     [self.player prepareToPlay];

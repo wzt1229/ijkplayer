@@ -62,7 +62,7 @@
                                                             <stepperCell key="cell" continuous="YES" alignment="left" increment="0.20000000000000001" maxValue="250" doubleValue="1" id="jrT-rP-2bU"/>
                                                             <connections>
                                                                 <action selector="onChangeSubtitleSize:" target="-2" id="03c-bp-WoO"/>
-                                                                <binding destination="-2" name="value" keyPath="subtitleFontRatio" id="B4b-Hn-CAZ"/>
+                                                                <binding destination="OCk-Q5-1dK" name="value" keyPath="values.subtitleFontRatio" id="6gl-F1-F17"/>
                                                             </connections>
                                                         </stepper>
                                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0AD-kG-47p">
@@ -73,7 +73,7 @@
                                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                             </textFieldCell>
                                                             <connections>
-                                                                <binding destination="-2" name="value" keyPath="subtitleFontRatio" id="USE-P4-GZl"/>
+                                                                <binding destination="OCk-Q5-1dK" name="value" keyPath="values.subtitleFontRatio" id="PhZ-eo-4Og"/>
                                                             </connections>
                                                         </textField>
                                                         <box horizontalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="805-2W-RQo">
