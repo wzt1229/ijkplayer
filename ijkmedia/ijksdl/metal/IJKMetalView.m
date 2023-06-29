@@ -593,6 +593,7 @@ typedef CGRect NSRect;
     CVPixelBufferRef pixelBuffer = NULL;
     NSDictionary *options = @{
         (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
+        (__bridge NSString*)kCVPixelBufferMetalCompatibilityKey : @YES,
         (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
     };
     

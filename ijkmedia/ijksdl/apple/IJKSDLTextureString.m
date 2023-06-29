@@ -305,6 +305,7 @@
      
     NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
                              [NSNumber numberWithBool:YES], kCVPixelBufferOpenGLCompatibilityKey,
+                             [NSNumber numberWithBool:YES], kCVPixelBufferMetalCompatibilityKey,
                              [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
                              [NSNumber numberWithBool:YES], kCVPixelBufferCGBitmapContextCompatibilityKey,
                              [NSDictionary dictionary],kCVPixelBufferIOSurfacePropertiesKey,

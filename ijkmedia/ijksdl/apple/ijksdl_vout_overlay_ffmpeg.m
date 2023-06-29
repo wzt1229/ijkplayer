@@ -103,6 +103,9 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
     [attributes setObject:[NSNumber numberWithInt:h] forKey:(NSString*)kCVPixelBufferHeightKey];
     [attributes setObject:@(linesize) forKey:(NSString*)kCVPixelBufferBytesPerRowAlignmentKey];
     [attributes setObject:[NSDictionary dictionary] forKey:(NSString*)kCVPixelBufferIOSurfacePropertiesKey];
+    [attributes setObject:@(YES) forKey:(NSString*)kCVPixelBufferMetalCompatibilityKey];
+    [attributes setObject:@(YES) forKey:(NSString*)kCVPixelBufferOpenGLCompatibilityKey];
+    
     return attributes;
 }
 

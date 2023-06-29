@@ -30,7 +30,7 @@
 {
     CVPixelBufferRef pixelBuffer;
     NSDictionary* cvBufferProperties = @{
-//        (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
+        (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
         (__bridge NSString*)kCVPixelBufferMetalCompatibilityKey : @YES,
     };
     CVReturn cvret = CVPixelBufferCreate(kCFAllocatorDefault,
