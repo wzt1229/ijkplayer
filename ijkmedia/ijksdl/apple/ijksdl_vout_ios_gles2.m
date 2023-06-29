@@ -57,6 +57,7 @@
     if (self.subPicture) {
         CVPixelBufferRelease(self.subPicture);
         self.subPicture = NULL;
+        self.subTexture = nil;
     }
 }
 

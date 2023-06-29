@@ -315,6 +315,7 @@ static bool _is_need_dispath_to_global(void)
         if (self.currentAttach.subPicture) {
             CVPixelBufferRelease(self.currentAttach.subPicture);
             self.currentAttach.subPicture = NULL;
+            self.currentAttach.subTexture = nil;
         }
         [self setNeedsRefreshCurrentPic];
     }
@@ -517,6 +518,7 @@ static bool _is_need_dispath_to_global(void)
             if (currentAttach.subPicture) {
                 CVPixelBufferRelease(currentAttach.subPicture);
                 currentAttach.subPicture = NULL;
+                currentAttach.subTexture = nil;
             }
             currentAttach.subPicture = [self _generateSubtitlePixel:currentAttach.sub.text];
         }

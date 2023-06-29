@@ -142,7 +142,8 @@ typedef CGRect NSRect;
         self.currentAttach.sub = nil;
         if (attach.subPicture) {
             CVPixelBufferRelease(attach.subPicture);
-            self.currentAttach.subPicture = NULL;
+            attach.subPicture = NULL;
+            attach.subTexture = nil;
         }
         [self setNeedsRefreshCurrentPic];
     }
