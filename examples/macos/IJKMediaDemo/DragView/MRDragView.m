@@ -11,7 +11,6 @@
 
 - (void)registerDragTypes
 {
-    
     if (@available(macOS 10.13, *)) {
         [self registerForDraggedTypes:[NSArray arrayWithObjects:NSPasteboardTypeFileURL, nil]];
     } else if (@available(macOS 10.0, *)){

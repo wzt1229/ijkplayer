@@ -626,6 +626,10 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 //    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
 //    [options setPlayerOptionIntValue:0      forKey:@"packet-buffering"];
 //    [options setPlayerOptionIntValue:1      forKey:@"render-wait-start"];
+//    [options setCodecOptionIntValue:1 forKey:@"allow_software"];
+//    test video decoder performance.
+//    [options setPlayerOptionIntValue:1 forKey:@"an"];
+//    [options setPlayerOptionIntValue:1 forKey:@"nodisp"];
     
     if ([url isFileURL]) {
         //图片不使用 cvpixelbufferpool

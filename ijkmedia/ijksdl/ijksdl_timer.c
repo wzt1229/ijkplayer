@@ -160,8 +160,6 @@ float SDL_SpeedSamplerAdd(SDL_SpeedSampler *sampler, int enable_log, const char 
     return samples_per_second;
 }
 
-
-
 void SDL_SpeedSampler2Reset(SDL_SpeedSampler2 *sampler, int sample_range)
 {
     memset(sampler, 0, sizeof(SDL_SpeedSampler2));

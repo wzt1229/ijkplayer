@@ -224,6 +224,23 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                                 ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_OPEN, vdec_type);
                             }
                             
+//                            static Uint64 bein = 0;
+//                            if (bein == 0) {
+//                                bein = SDL_GetTickHR();
+//                            }
+//                            static int count = 0;
+//                            count++;
+//
+//                            /*
+//                             vdec 2000 frame cost:
+//                             加速：23.699ms 23.782ms 23.755ms
+//                                  23.647ms 23.660ms 23.735ms
+//                             */
+//                            if (count == 2000) {
+//                                printf("vdec 2000 frame cost:%0.3fms\n",(SDL_GetTickHR() - bein)/1000.0);
+//                                exit(0);
+//                            }
+                            
                             ffp->stat.vdps = SDL_SpeedSamplerAdd(&ffp->vdps_sampler, FFP_SHOW_VDPS_AVCODEC, "vdps[avcodec]");
                             if (ffp->decoder_reorder_pts == -1) {
                                 frame->pts = frame->best_effort_timestamp;
@@ -880,7 +897,12 @@ static void video_refresh(FFPlayer *opaque, double *remaining_time)
         }
         *remaining_time = FFMIN(*remaining_time, is->last_vis_time + ffp->rdftspeed - time);
     }
-
+    
+    if (ffp->audio_disable && ffp->display_disable) {
+        frame_queue_next(&is->pictq);
+        return;
+    }
+    
     if (is->video_st) {
 retry:
         if (frame_queue_nb_remaining(&is->pictq) == 0) {
