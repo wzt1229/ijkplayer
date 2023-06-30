@@ -647,7 +647,8 @@ typedef struct FFPlayer {
 
     int videotoolbox_hwaccel;
     int cvpixelbufferpool;
-
+    int copy_hw_frame;
+    
     int mediacodec_all_videos;
     int mediacodec_avc;
     int mediacodec_hevc;

@@ -181,7 +181,9 @@ static const AVOption ffp_context_options[] = {
         OPTION_OFFSET(videotoolbox_hwaccel),   OPTION_INT(1, 0, 1) },
     { "enable-cvpixelbufferpool",           "1:enable cvpixelbufferpool improve performance for ffmpeg software decoder avframe -> CVPixelBufferRef;",
         OPTION_OFFSET(cvpixelbufferpool),OPTION_INT(1, 0, 1) },
-
+    { "copy_hw_frame",                "default not copy hw data from GPU->CPU",
+        OPTION_OFFSET(copy_hw_frame),   OPTION_INT(0, 0, 1) },
+    
     // Android only options
     { "mediacodec",                             "MediaCodec: enable H264 (deprecated by 'mediacodec-avc')",
         OPTION_OFFSET(mediacodec_avc),          OPTION_INT(0, 0, 1) },

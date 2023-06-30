@@ -43,6 +43,7 @@
         [NSApp activateIgnoringOtherApps:YES];
     } forPath:@"/play"];
     
+    [MRUtil initUserDefaults];
     [MRActionManager registerProcessor:processor];
 }
 
@@ -59,16 +60,9 @@
         printf("big endian\n");
     }
     
-    if (nil == [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.subtitleFontRatio"]) {
-        [[NSUserDefaultsController sharedUserDefaultsController] setValue:@(1.5) forKeyPath:@"values.subtitleFontRatio"];
-    }
-
-    if (nil == [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.hw"]) {
-        [[NSUserDefaultsController sharedUserDefaultsController] setValue:@(1) forKeyPath:@"values.hw"];
-    }
-    
     [self prepareActionProcessor];
 }
+
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {

@@ -10,8 +10,28 @@
 #if TARGET_OS_IOS
 #import <MobileCoreServices/MobileCoreServices.h>
 #endif
+#import <AppKit/NSUserDefaultsController.h>
 
 @implementation MRUtil
+
++ (void)initUserDefault:(NSString *)key defaultValue:(id)value
+{
+    if (nil == [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:key]) {
+        [[NSUserDefaultsController sharedUserDefaultsController] setValue:value forKeyPath:key];
+    }
+}
+
++ (void)initUserDefaults
+{
+    [self initUserDefault:@"values.subtitleFontRatio" defaultValue:@(1.5)];
+    [self initUserDefault:@"values.hw" defaultValue:@(1)];
+    [self initUserDefault:@"values.copy_hw_frame" defaultValue:@(0)];
+}
+
++ (BOOL)boolForKey:(NSString *)key
+{
+    return [[[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:key] boolValue];
+}
 
 + (NSArray <NSString *>*)audioType
 {

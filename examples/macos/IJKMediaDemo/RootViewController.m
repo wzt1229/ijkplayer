@@ -631,6 +631,7 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
 //    [options setPlayerOptionIntValue:1 forKey:@"an"];
 //    [options setPlayerOptionIntValue:1 forKey:@"nodisp"];
     
+    [options setPlayerOptionIntValue:[MRUtil boolForKey:@"values.copy_hw_frame"] forKey:@"copy_hw_frame"];
     if ([url isFileURL]) {
         //图片不使用 cvpixelbufferpool
         NSString *ext = [[[url path] pathExtension] lowercaseString];
@@ -1265,8 +1266,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (BOOL)preferHW
 {
-    BOOL hwaccel = [[[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.hw"] boolValue];
-    return hwaccel;
+    return [MRUtil boolForKey:@"values.hw"];
 }
 
 - (void)retry

@@ -687,16 +687,18 @@
                                                 <stackView distribution="fill" orientation="horizontal" alignment="centerY" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6aw-Az-n9w" userLabel="Codec Ctrl">
                                                     <rect key="frame" x="0.0" y="6" width="895" height="40"/>
                                                     <subviews>
-                                                        <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aNP-9f-hzd">
-                                                            <rect key="frame" x="8" y="12" width="68" height="16"/>
+                                                        <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="aNP-9f-hzd">
+                                                            <rect key="frame" x="8" y="12" width="4" height="16"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                             <textFieldCell key="cell" lineBreakMode="clipping" title="硬件加速：" id="apQ-fC-1FX">
                                                                 <font key="font" metaFont="system"/>
                                                                 <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                             </textFieldCell>
                                                         </textField>
-                                                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BoI-2U-4x0">
-                                                            <rect key="frame" x="80" y="11" width="18" height="18"/>
+                                                        <button verticalHuggingPriority="750" id="BoI-2U-4x0">
+                                                            <rect key="frame" x="16" y="11" width="4" height="18"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                             <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="only" inset="2" id="x9e-8S-LQP">
                                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                                 <font key="font" metaFont="system"/>
@@ -706,8 +708,30 @@
                                                                 <binding destination="OCk-Q5-1dK" name="value" keyPath="values.hw" id="TAQ-u8-ekH"/>
                                                             </connections>
                                                         </button>
-                                                        <box horizontalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="neR-Kv-HKK">
+                                                        <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="NWG-Jj-Qcw" userLabel="拷贝：">
+                                                            <rect key="frame" x="24" y="12" width="52" height="16"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                            <textFieldCell key="cell" lineBreakMode="clipping" title="拷贝：" id="nuB-2x-VZL">
+                                                                <font key="font" metaFont="system"/>
+                                                                <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                            </textFieldCell>
+                                                        </textField>
+                                                        <button verticalHuggingPriority="750" id="Bon-Er-cUH">
+                                                            <rect key="frame" x="80" y="11" width="18" height="18"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                            <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="only" inset="2" id="7Jb-7G-0ZN">
+                                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                                <font key="font" metaFont="system"/>
+                                                            </buttonCell>
+                                                            <connections>
+                                                                <action selector="onChangedHWaccel:" target="-2" id="niI-b2-TD1"/>
+                                                                <binding destination="OCk-Q5-1dK" name="value" keyPath="values.copy_hw_frame" id="Vtb-VD-abH"/>
+                                                            </connections>
+                                                        </button>
+                                                        <box horizontalHuggingPriority="750" boxType="separator" id="neR-Kv-HKK">
                                                             <rect key="frame" x="102" y="0.0" width="5" height="40"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                         </box>
                                                         <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="pTf-h9-9RE">
                                                             <rect key="frame" x="111" y="12" width="65" height="16"/>
@@ -901,8 +925,12 @@
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
+                                                        <integer value="1000"/>
+                                                        <integer value="1000"/>
                                                     </visibilityPriorities>
                                                     <customSpacing>
+                                                        <real value="3.4028234663852886e+38"/>
+                                                        <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>

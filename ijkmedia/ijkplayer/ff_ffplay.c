@@ -247,15 +247,19 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                             } else if (!ffp->decoder_reorder_pts) {
                                 frame->pts = frame->pkt_dts;
                             }
-//                                if (frame->format == hw_pix_fmt) {
-//                                    /* retrieve data from GPU to CPU */
-//                                    AVFrame *sw_frame = av_frame_alloc();
-//                                    if ((ret = av_hwframe_transfer_data(sw_frame, frame, 0)) < 0) {
-//                                        fprintf(stderr, "Error transferring the data to system memory\n");
-//                                    }
-//                                    av_frame_unref(frame);
-//                                    av_frame_move_ref(frame, sw_frame);
-//                                }
+                            
+                            if (ffp->copy_hw_frame) {
+                                if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+                                    /* retrieve data from GPU to CPU */
+                                    AVFrame *sw_frame = av_frame_alloc();
+                                    //use av_hwframe_map instead of av_hwframe_transfer_data
+                                    if ((ret = av_hwframe_map(sw_frame, frame, 0)) < 0) {
+                                        fprintf(stderr, "Error transferring the data to system memory\n");
+                                    }
+                                    av_frame_unref(frame);
+                                    av_frame_move_ref(frame, sw_frame);
+                                }
+                            }
                         }
                         break;
                     case AVMEDIA_TYPE_AUDIO:
