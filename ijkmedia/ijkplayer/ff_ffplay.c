@@ -291,6 +291,7 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                 if (old_serial != d->pkt_serial) {
                     avcodec_flush_buffers(d->avctx);
                     d->finished = 0;
+                    d->hw_failed_count = 0;
                     d->next_pts = d->start_pts;
                     d->next_pts_tb = d->start_pts_tb;
                 }
@@ -323,13 +324,20 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                 d->packet_pending = 1;
             } else {
                 av_packet_unref(d->pkt);
+                
+                if (send != 0) {
+                    char errbuf[128] = { '\0' };
+                    av_strerror(send, errbuf, sizeof(errbuf));
+                    av_log(d->avctx, AV_LOG_ERROR, "avcodec_send_packet failed:%s(%d).\n",errbuf,send);
+                }
                 if (send == AVERROR_INVALIDDATA
                     || send == AVERROR_UNKNOWN
                     || send == AVERROR_EXTERNAL
                     || send == AVERROR(ENOSYS)
                     || send == AVERROR(EINVAL)) {
-                    VideoState *is = ffp->is;
-                    if (!is->viddec.first_frame_decoded) {
+                    //Samsung Wonderland Two HDR UHD 4K HDR10.ts decode first frame return AVERROR_INVALIDDATA 
+                    //hw accel decode failed greater than twice.
+                    if (d->avctx->hw_device_ctx && ++d->hw_failed_count > 2) {
                         ffp_notify_msg2(ffp, FFP_MSG_VIDEO_DECODER_FATAL, send);
                     }
                 } else if (send == AVERROR_PATCHWELCOME) {
@@ -339,9 +347,8 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
                         //save the error,when complete play,pass the error to caller.
                         ffp->error = send;
                     }
-                } else if (send != 0){
-                    int n_send = - send;
-                    av_log(d->avctx, AV_LOG_ERROR, "avcodec_send_packet failed:%4s(%d).\n",(char *)&n_send,send);
+                } else {
+                    //do what?
                 }
             }
         }

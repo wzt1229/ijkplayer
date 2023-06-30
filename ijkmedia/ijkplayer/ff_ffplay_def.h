@@ -254,6 +254,8 @@ typedef struct Decoder {
     int    first_frame_decoded;
     int    after_seek_frame;
     Uint64 start_seek_time;
+    
+    int hw_failed_count;
 } Decoder;
 
 typedef struct FFSubtitle FFSubtitle;
