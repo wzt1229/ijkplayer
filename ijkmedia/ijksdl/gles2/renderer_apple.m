@@ -41,6 +41,7 @@
 #include "ijksdl_vout_overlay_videotoolbox.h"
 #include "ijksdl_vout_overlay_ffmpeg.h"
 #include "renderer_pixfmt.h"
+#import "ijk_vout_common.h"
 
 #if TARGET_OS_OSX
 #define GL_TEXTURE_TARGET GL_TEXTURE_RECTANGLE
@@ -232,21 +233,106 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
     return uploaded;
 }
 
-IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openglVer,YUV_2_RGB_Color_Matrix colorMatrix,int fullRange,IJK_Color_Transfer_Function tf)
+IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture, int openglVer)
 {
+    Uint32 cv_format = CVPixelBufferGetPixelFormatType(videoPicture);
+    CFStringRef colorMatrixStr = CVBufferGetAttachment(videoPicture, kCVImageBufferYCbCrMatrixKey, NULL);
+    CFStringRef transferFuntion = CVBufferGetAttachment(videoPicture, kCVImageBufferTransferFunctionKey, NULL);
+    
+    IJK_SHADER_TYPE shaderType;
+    if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+        ALOGI("create render yuv420sp\n");
+        shaderType = YUV_2P_SDR_SHADER;
+    } else if (cv_format == kCVPixelFormatType_32BGRA) {
+        ALOGI("create render bgrx\n");
+        shaderType = BGRX_SHADER;
+    } else if (cv_format == kCVPixelFormatType_32ARGB) {
+        ALOGI("create render xrgb\n");
+        shaderType = XRGB_SHADER;
+    } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
+               cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
+        ALOGI("create render yuv420p\n");
+        shaderType = YUV_3P_SHADER;
+    }
+    #if TARGET_OS_OSX
+    else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
+        ALOGI("create render uyvy\n");
+        shaderType = UYVY_SHADER;
+    } else if (cv_format == kCVPixelFormatType_422YpCbCr8_yuvs || cv_format == kCVPixelFormatType_422YpCbCr8FullRange) {
+        ALOGI("create render yuyv\n");
+        shaderType = YUYV_SHADER;
+    }
+    #endif
+    else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange ||
+             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
+             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
+             ) {
+        if (colorMatrixStr != nil &&
+            CFStringCompare(colorMatrixStr, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
+            shaderType = YUV_2P_HDR_SHADER;
+        } else {
+            shaderType = YUV_2P_SDR_SHADER;
+        }
+    } else {
+        ALOGE("create render failed,unknown format:%4s\n",(char *)&cv_format);
+        return NULL;
+    }
+    
+    YUV_2_RGB_Color_Matrix colorMatrixType = YUV_2_RGB_Color_Matrix_None;
+    if (shaderType != BGRX_SHADER && shaderType != XRGB_SHADER) {
+        if (colorMatrixStr != nil) {
+            if (CFStringCompare(colorMatrixStr, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
+                colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
+            } else if (CFStringCompare(colorMatrixStr, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
+                colorMatrixType = YUV_2_RGB_Color_Matrix_BT601;
+            } else if (CFStringCompare(colorMatrixStr, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
+                colorMatrixType = YUV_2_RGB_Color_Matrix_BT2020;
+            } else {
+                colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
+            }
+        } else {
+            colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
+        }
+    }
+    int fullRange = 0;
+    //full color range
+    if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_420YpCbCr8PlanarFullRange == cv_format ||
+        kCVPixelFormatType_422YpCbCr8FullRange == cv_format ||
+        kCVPixelFormatType_420YpCbCr10BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_422YpCbCr10BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_444YpCbCr10BiPlanarFullRange == cv_format) {
+        fullRange = 1;
+    }
+    IJK_Color_Transfer_Function tf;
+    if (transferFuntion) {
+        if (CFStringCompare(transferFuntion, IJK_TransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
+            tf = IJK_Color_Transfer_Function_HLG;
+        } else if (CFStringCompare(transferFuntion, IJK_TransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo || CFStringCompare(transferFuntion, IJK_TransferFunction_SMPTE_ST_428_1, 0) == kCFCompareEqualTo) {
+            tf = IJK_Color_Transfer_Function_PQ;
+        } else {
+            tf = IJK_Color_Transfer_Function_LINEAR;
+        }
+    } else {
+        tf = IJK_Color_Transfer_Function_LINEAR;
+    }
+        
     char shader_buffer[4096] = { '\0' };
     
-    ijk_get_apple_common_fragment_shader(type,shader_buffer,openglVer);
+    ijk_get_apple_common_fragment_shader(shaderType,shader_buffer,openglVer);
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(shader_buffer,openglVer);
 
     if (!renderer)
         goto fail;
     
-    renderer->colorMatrix = colorMatrix;
+    renderer->colorMatrix = colorMatrixType;
     renderer->isFullRange = fullRange;
     renderer->transferFun = tf;
     
-    const int samples = IJK_Sample_Count_For_Shader(type);
+    const int samples = IJK_Sample_Count_For_Shader(shaderType);
     assert(samples);
     
     for (int i = 0; i < samples; i++) {
@@ -284,7 +370,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(IJK_SHADER_TYPE type,int openg
         renderer->opaque->textureDimension[i] = textureDimension;
     }
 #endif
-    
+    renderer->format = cv_format;
     return renderer;
 fail:
     IJK_GLES2_Renderer_free(renderer);

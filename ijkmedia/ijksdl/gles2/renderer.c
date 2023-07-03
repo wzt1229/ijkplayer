@@ -23,6 +23,7 @@
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #include <CoreVideo/CoreVideo.h>
+#include "../apple/ijk_vout_common.h"
 #if TARGET_OS_OSX
 #include <OpenGL/gl3.h>
 #else
@@ -189,102 +190,6 @@ fail:
 }
 
 #ifdef __APPLE__
-static IJK_GLES2_Renderer * _smart_create_renderer_appple(CVPixelBufferRef videoPicture, int openglVer)
-{
-    Uint32 cv_format = CVPixelBufferGetPixelFormatType(videoPicture);
-    CFStringRef colorMatrix = CVBufferGetAttachment(videoPicture, kCVImageBufferYCbCrMatrixKey, NULL);
-    CFStringRef transferFuntion = CVBufferGetAttachment(videoPicture, kCVImageBufferTransferFunctionKey, NULL);
-    
-    IJK_SHADER_TYPE shaderType;
-    if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
-        ALOGI("create render yuv420sp\n");
-        shaderType = YUV_2P_SDR_SHADER;
-    } else if (cv_format == kCVPixelFormatType_32BGRA) {
-        ALOGI("create render bgrx\n");
-        shaderType = BGRX_SHADER;
-    } else if (cv_format == kCVPixelFormatType_32ARGB) {
-        ALOGI("create render xrgb\n");
-        shaderType = XRGB_SHADER;
-    } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
-               cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
-        ALOGI("create render yuv420p\n");
-        shaderType = YUV_3P_SHADER;
-    }
-    #if TARGET_OS_OSX
-    else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
-        ALOGI("create render uyvy\n");
-        shaderType = UYVY_SHADER;
-    } else if (cv_format == kCVPixelFormatType_422YpCbCr8_yuvs || cv_format == kCVPixelFormatType_422YpCbCr8FullRange) {
-        ALOGI("create render yuyv\n");
-        shaderType = YUYV_SHADER;
-    }
-    #endif
-    else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange ||
-             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
-             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
-             ) {
-        if (colorMatrix != nil &&
-            CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-            shaderType = YUV_2P_HDR_SHADER;
-        } else {
-            shaderType = YUV_2P_SDR_SHADER;
-        }
-    } else {
-        ALOGE("create render failed,unknown format:%4s\n",(char *)&cv_format);
-        return NULL;
-    }
-    
-    YUV_2_RGB_Color_Matrix colorMatrixType = YUV_2_RGB_Color_Matrix_None;
-    if (shaderType != BGRX_SHADER && shaderType != XRGB_SHADER) {
-        if (colorMatrix != nil) {
-            if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
-                colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
-            } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_601_4, 0) == kCFCompareEqualTo) {
-                colorMatrixType = YUV_2_RGB_Color_Matrix_BT601;
-            } else if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-                colorMatrixType = YUV_2_RGB_Color_Matrix_BT2020;
-            } else {
-                colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
-            }
-        } else {
-            colorMatrixType = YUV_2_RGB_Color_Matrix_BT709;
-        }
-    }
-    int fullRange = 0;
-    //full color range
-    if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == cv_format ||
-        kCVPixelFormatType_420YpCbCr8PlanarFullRange == cv_format ||
-        kCVPixelFormatType_422YpCbCr8FullRange == cv_format ||
-        kCVPixelFormatType_420YpCbCr10BiPlanarFullRange == cv_format ||
-        kCVPixelFormatType_422YpCbCr10BiPlanarFullRange == cv_format ||
-        kCVPixelFormatType_444YpCbCr10BiPlanarFullRange == cv_format) {
-        fullRange = 1;
-    }
-    IJK_Color_Transfer_Function tf;
-    if (transferFuntion) {
-        if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
-            tf = IJK_Color_Transfer_Function_HLG;
-        } else if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo || CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_428_1, 0) == kCFCompareEqualTo) {
-            tf = IJK_Color_Transfer_Function_PQ;
-        } else {
-            tf = IJK_Color_Transfer_Function_LINEAR;
-        }
-    } else {
-        tf = IJK_Color_Transfer_Function_LINEAR;
-    }
-    
-    IJK_GLES2_Renderer *render = ijk_create_common_gl_Renderer(shaderType, openglVer, colorMatrixType, fullRange, tf);
-    if (render) {
-        render->format = cv_format;
-    }
-    return render;
-}
-#endif
-
-#ifdef __APPLE__
 IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(CVPixelBufferRef videoPicture,int openglVer)
 {
     static int flag = 0;
@@ -323,7 +228,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_createApple(CVPixelBufferRef videoPicture
 #endif
     }
     //软硬解渲染统一
-    IJK_GLES2_Renderer *renderer = _smart_create_renderer_appple(videoPicture, openglVer);
+    IJK_GLES2_Renderer *renderer = ijk_create_common_gl_Renderer(videoPicture, openglVer);
 
     if (renderer) {
         glGenVertexArrays(1, &renderer->vao);

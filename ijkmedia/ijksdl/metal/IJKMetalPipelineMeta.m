@@ -6,6 +6,7 @@
 //
 
 #import "IJKMetalPipelineMeta.h"
+#import "ijk_vout_common.h"
 
 @implementation IJKMetalPipelineMeta
 
@@ -82,9 +83,9 @@
     
     IJKColorTransferFunc tf;
     if (transferFuntion) {
-        if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
+        if (CFStringCompare(transferFuntion, IJK_TransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
             tf = IJKColorTransferFuncHLG;
-        } else if (CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo || CFStringCompare(transferFuntion, kCVImageBufferTransferFunction_SMPTE_ST_428_1, 0) == kCFCompareEqualTo) {
+        } else if (CFStringCompare(transferFuntion, IJK_TransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo || CFStringCompare(transferFuntion, IJK_TransferFunction_SMPTE_ST_428_1, 0) == kCFCompareEqualTo) {
             tf = IJKColorTransferFuncPQ;
         } else {
             tf = IJKColorTransferFuncLINEAR;

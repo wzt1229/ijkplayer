@@ -24,6 +24,7 @@
 
 #include "ijksdl_vout_overlay_ffmpeg.h"
 #include "../ijksdl_vout_internal.h"
+#include "ijk_vout_common.h"
 
 struct SDL_VoutOverlay_Opaque {
     SDL_mutex *mutex;
@@ -185,21 +186,17 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
                 switch (frame->color_trc) {
                     case AVCOL_TRC_LINEAR:
                     {
-                        if (@available(macOS 10.14, *)) {
-                            CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_Linear, kCVAttachmentMode_ShouldNotPropagate);
-                        } else {
-                            CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_2020, kCVAttachmentMode_ShouldNotPropagate);
-                        }
+                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, IJK_TransferFunction_Linear, kCVAttachmentMode_ShouldNotPropagate);
                     }
                         break;
                     case AVCOL_TRC_SMPTE2084:
                     {
-                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ, kCVAttachmentMode_ShouldNotPropagate);
+                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, IJK_TransferFunction_SMPTE_ST_2084_PQ, kCVAttachmentMode_ShouldNotPropagate);
                     }
                         break;
                     case AVCOL_TRC_SMPTE428:
                     {
-                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_SMPTE_ST_428_1, kCVAttachmentMode_ShouldNotPropagate);
+                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, IJK_TransferFunction_SMPTE_ST_428_1, kCVAttachmentMode_ShouldNotPropagate);
                     }
                         break;
                     case AVCOL_TRC_BT2020_10:
@@ -211,7 +208,7 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
                         break;
                     case AVCOL_TRC_ARIB_STD_B67:
                     {
-                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_2100_HLG, kCVAttachmentMode_ShouldNotPropagate);
+                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, IJK_TransferFunction_ITU_R_2100_HLG, kCVAttachmentMode_ShouldNotPropagate);
                     }
                         break;
                     default:
