@@ -25,7 +25,7 @@
 {
     [self initUserDefault:@"values.subtitleFontRatio" defaultValue:@(1.5)];
     [self initUserDefault:@"values.hw" defaultValue:@(1)];
-    [self initUserDefault:@"values.copy_hw_frame" defaultValue:@(0)];
+    [self initUserDefault:@"values.copy_hw_frame" defaultValue:@(1)];
 }
 
 + (BOOL)boolForKey:(NSString *)key

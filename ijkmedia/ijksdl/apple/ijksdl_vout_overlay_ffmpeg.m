@@ -26,6 +26,12 @@
 #include "../ijksdl_vout_internal.h"
 #include "ijk_vout_common.h"
 
+#define USE_VIMAGE_ACCELERATE 0
+
+#if USE_VIMAGE_ACCELERATE
+#import <Accelerate/Accelerate.h>
+#endif
+
 struct SDL_VoutOverlay_Opaque {
     SDL_mutex *mutex;
     Uint16 pitches[AV_NUM_DATA_POINTERS];
@@ -128,6 +134,30 @@ static CVReturn createCVPixelBufferPoolFromAVFrame(CVPixelBufferPoolRef * poolRe
     }
     return result;
 }
+
+#if USE_VIMAGE_ACCELERATE
+NS_INLINE size_t  pixelSizeForCV(CVPixelBufferRef pixelBuffer) {
+    size_t pixelSize = 0;   // For vImageCopyBuffer()
+    {
+        NSString* kBitsPerBlock = (__bridge NSString*)kCVPixelFormatBitsPerBlock;
+        NSString* kBlockWidth = (__bridge NSString*)kCVPixelFormatBlockWidth;
+        NSString* kBlockHeight = (__bridge NSString*)kCVPixelFormatBlockHeight;
+        
+        OSType pixelFormat = CVPixelBufferGetPixelFormatType(pixelBuffer);
+        CFDictionaryRef pfDict = CVPixelFormatDescriptionCreateWithPixelFormatType(kCFAllocatorDefault, pixelFormat);
+        NSDictionary* dict = CFBridgingRelease(pfDict);
+        
+        int numBitsPerBlock = ((NSNumber*)dict[kBitsPerBlock]).intValue;
+        int numWidthPerBlock = MAX(1,((NSNumber*)dict[kBlockWidth]).intValue);
+        int numHeightPerBlock = MAX(1,((NSNumber*)dict[kBlockHeight]).intValue);
+        int numPixelPerBlock = numWidthPerBlock * numHeightPerBlock;
+        if (numPixelPerBlock) {
+            pixelSize = ceil(numBitsPerBlock / numPixelPerBlock / 8.0);
+        }
+    }
+    return pixelSize;
+}
+#endif
 
 static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPixelBufferPoolRef poolRef)
 {
@@ -248,13 +278,43 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
             int src_linesize = (int)frame->linesize[p];
             int dst_linesize = (int)CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, p);
             int height = (int)CVPixelBufferGetHeightOfPlane(pixelBuffer, p);
+#if USE_VIMAGE_ACCELERATE
+            int width  = (int)CVPixelBufferGetWidthOfPlane(pixelBuffer, p);
+            vImage_Buffer sourceBuffer = {0};
+            sourceBuffer.data = src;
+            sourceBuffer.width = frame->width;
+            sourceBuffer.height = frame->height;
+            sourceBuffer.rowBytes = (int)frame->linesize[p];
             
+            vImage_Buffer targetBuffer = {0};
+            targetBuffer.data = dst;
+            targetBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
+            targetBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
+            targetBuffer.rowBytes = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, p);
+            
+            const AVPixFmtDescriptor *fd = av_pix_fmt_desc_get(frame->format);
+            size_t pixelSize = ceil(fd->comp[p].depth/8.0);
+//            av_get_bits_per_pixel(fd);
+//            targetBuffer.rowBytes/targetBuffer.width;//pixelSizeForCV(pixelBuffer);
+            if (src && dst) {
+                assert(pixelSize > 0);
+                
+                vImage_Error convErr = kvImageNoError;
+                //crash：EXC_BAD_ACCESS
+                convErr = vImageCopyBuffer(&sourceBuffer, &targetBuffer,
+                                           pixelSize, kvImageDoNotTile);
+                if (convErr != kvImageNoError) {
+                    NSLog(@"-------------------");
+                }
+            }
+#else
             if (src_linesize == dst_linesize) {
                 memcpy(dst, src, dst_linesize * height);
             } else {
                 int bytewidth = MIN(src_linesize, dst_linesize);
                 av_image_copy_plane(dst, dst_linesize, src, src_linesize, bytewidth, height);
             }
+#endif
         }
         CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
         return pixelBuffer;
