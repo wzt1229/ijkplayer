@@ -98,6 +98,8 @@ typedef struct IJK_GLES2_Renderer
     GLint transferFunUM;
     GLboolean isFullRange;
     GLint fullRangeUM;
+    GLfloat hdrAnimationPercentage;
+    GLint hdrAnimationUM;
     GLint um3_rgb_adjustment;
     
     GLboolean (*func_use)(IJK_GLES2_Renderer *renderer);
@@ -105,6 +107,7 @@ typedef struct IJK_GLES2_Renderer
     GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, void *picture);
     GLvoid    (*func_useSubtitle)(IJK_GLES2_Renderer *renderer,GLboolean subtitle);
     GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer,void* subtitle);
+    GLvoid    (*func_updateHDRAnimation)(IJK_GLES2_Renderer *renderer,float per);
     void*     (*func_getVideoImage)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
     GLvoid    (*func_destroy)(IJK_GLES2_Renderer *renderer);
 

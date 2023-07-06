@@ -188,6 +188,11 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *picture)
     if (renderer->transferFunUM != -1) {
         glUniform1i(renderer->transferFunUM, renderer->transferFun);
     }
+    
+    if (renderer->hdrAnimationUM != -1) {
+        glUniform1f(renderer->hdrAnimationUM, renderer->hdrAnimationPercentage);
+    }
+    
     IJK_GLES2_checkError_TRACE("transferFunUM");
     CVPixelBufferRetain(pixel_buffer);
     GLboolean uploaded = upload_texture_use_IOSurface(pixel_buffer, renderer);
@@ -213,6 +218,11 @@ static GLvoid destroy(IJK_GLES2_Renderer *renderer)
 static GLvoid useSubtitle(IJK_GLES2_Renderer *renderer,GLboolean subtitle)
 {
     glUniform1i(renderer->opaque->isSubtitle, (GLint)subtitle);
+}
+
+static GLvoid updateHDRAnimation(IJK_GLES2_Renderer *renderer,float per)
+{
+    renderer->hdrAnimationPercentage = per;
 }
 
 static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
@@ -345,6 +355,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
     renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion");
     renderer->fullRangeUM   = glGetUniformLocation(renderer->program, "isFullRange");
     renderer->transferFunUM = glGetUniformLocation(renderer->program, "transferFun");
+    renderer->hdrAnimationUM = glGetUniformLocation(renderer->program, "hdrPercentage");
     renderer->um3_rgb_adjustment = glGetUniformLocation(renderer->program, "um3_rgbAdjustment"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(um3_rgb_adjustmentVector)");
     
     renderer->func_use            = use;
@@ -354,6 +365,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
     renderer->func_destroy        = destroy;
     renderer->func_useSubtitle    = useSubtitle;
     renderer->func_uploadSubtitle = uploadSubtitle;
+    renderer->func_updateHDRAnimation = updateHDRAnimation;
     renderer->opaque = calloc(1, sizeof(IJK_GLES2_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;

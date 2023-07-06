@@ -840,7 +840,10 @@ GLboolean IJK_GLES2_Renderer_uploadTexture(IJK_GLES2_Renderer *renderer, void *p
 
 void IJK_GLES2_Renderer_updateHdrAnimationProgress(IJK_GLES2_Renderer *renderer, float per)
 {
-    //todo
+    if (!renderer || !renderer->func_updateHDRAnimation)
+        return;
+
+    renderer->func_updateHDRAnimation(renderer, per);
 }
 
 void IJK_GLES2_Renderer_drawArrays(void)
