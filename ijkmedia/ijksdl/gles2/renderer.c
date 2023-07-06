@@ -838,6 +838,11 @@ GLboolean IJK_GLES2_Renderer_uploadTexture(IJK_GLES2_Renderer *renderer, void *p
     return GL_TRUE;
 }
 
+void IJK_GLES2_Renderer_updateHdrAnimationProgress(IJK_GLES2_Renderer *renderer, float per)
+{
+    //todo
+}
+
 void IJK_GLES2_Renderer_drawArrays(void)
 {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); IJK_GLES2_checkError_TRACE("glDrawArrays");

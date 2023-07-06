@@ -57,6 +57,8 @@
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
 
+#define kHDRAnimationMaxCount 90
+
 static IJKSDLThread *__ijk_global_thread;
 
 static IJKSDLThread * _globalThread_(void)
@@ -189,6 +191,7 @@ static bool _is_need_dispath_to_global(void)
 @property(atomic) BOOL subtitlePreferenceChanged;
 @property(atomic) _IJKSDLFBO * fbo;
 @property(atomic) IJKSDLThread *renderThread;
+@property(assign) int hdrAnimationFrameCount;
 
 @end
 
@@ -208,6 +211,7 @@ static bool _is_need_dispath_to_global(void)
 // user defined display aspect ratio
 @synthesize darPreference = _darPreference;
 @synthesize preventDisplay;
+@synthesize showHdrAnimation = _showHdrAnimation;
 
 - (void)dealloc
 {
@@ -292,6 +296,15 @@ static bool _is_need_dispath_to_global(void)
     [[self openGLContext] makeCurrentContext];
     glClear(GL_COLOR_BUFFER_BIT);
     [[self openGLContext]flushBuffer];
+}
+
+
+- (void)setShowHdrAnimation:(BOOL)showHdrAnimation
+{
+    if (_showHdrAnimation != showHdrAnimation) {
+        _showHdrAnimation = showHdrAnimation;
+        self.hdrAnimationFrameCount = 0;
+    }
 }
 
 - (void)videoZRotateDegrees:(NSInteger)degrees
@@ -496,6 +509,20 @@ static bool _is_need_dispath_to_global(void)
 {
     if (attach.videoPicture) {
         if (IJK_GLES2_Renderer_updateVertex2(_renderer, attach.h, attach.w, attach.pixelW, attach.sarNum, attach.sarDen)) {
+            float hdrPer = 1.0;
+            if (self.showHdrAnimation) {
+                if (self.hdrAnimationFrameCount == 0) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(1)}];
+                } else if (self.hdrAnimationFrameCount == kHDRAnimationMaxCount) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(2)}];
+                }
+                
+                if (self.hdrAnimationFrameCount <= kHDRAnimationMaxCount) {
+                    self.hdrAnimationFrameCount++;
+                    hdrPer = 1.0 * self.hdrAnimationFrameCount / kHDRAnimationMaxCount;
+                }
+            }
+            IJK_GLES2_Renderer_updateHdrAnimationProgress(_renderer, hdrPer);
             if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture)) {
                 IJK_GLES2_Renderer_drawArrays();
             } else {
