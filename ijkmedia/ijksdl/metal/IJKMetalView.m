@@ -127,11 +127,11 @@ typedef CGRect NSRect;
     return self;
 }
 
-- (void)setHdrAnimation:(BOOL)hdrAnimation
+- (void)setShowHdrAnimation:(BOOL)showHdrAnimation
 {
-    if (_showHdrAnimation != hdrAnimation) {
-        _showHdrAnimation = hdrAnimation;
-        self.hdrAnimationFrameCount = kHDRAnimationMaxCount;
+    if (_showHdrAnimation != showHdrAnimation) {
+        _showHdrAnimation = showHdrAnimation;
+        self.hdrAnimationFrameCount = 0;
     }
 }
 
@@ -332,7 +332,6 @@ typedef CGRect NSRect;
     
     float hdrPer = 1.0;
     if (self.showHdrAnimation) {
-        
         if (self.hdrAnimationFrameCount == 0) {
             [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(1)}];
         } else if (self.hdrAnimationFrameCount == kHDRAnimationMaxCount) {
