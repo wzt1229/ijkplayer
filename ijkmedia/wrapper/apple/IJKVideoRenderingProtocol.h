@@ -136,7 +136,8 @@ typedef enum : NSUInteger {
 @property(nonatomic) IJKSDLDARPreference darPreference;
 // not render picture and subtitle,but holder overlay content.
 @property(atomic) BOOL preventDisplay;
-
+// hdr video show 'Gray mask' animation
+@property(nonatomic) BOOL showHdrAnimation;
 // refresh current video picture and subtitle (when player paused change video pic preference, you can invoke this method)
 - (void)setNeedsRefreshCurrentPic;
 

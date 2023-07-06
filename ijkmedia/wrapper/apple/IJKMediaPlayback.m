@@ -67,6 +67,7 @@ NSString *const IJKMPMoviePlayerPlaybackRecvWarningNotification = @"IJKMPMoviePl
 
 NSString *const IJKMPMoviePlayerPlaybackWarningReasonUserInfoKey = @"IJKMPMoviePlayerPlaybackWarningReasonUserInfoKey";
 
+NSString *const IJKMoviePlayerHDRAnimationStateChanged = @"IJKMoviePlayerHDRAnimationStateChanged";
 
 @implementation IJKMediaUrlOpenData {
     NSString *_url;

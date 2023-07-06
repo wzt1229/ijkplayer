@@ -16,7 +16,6 @@
     vector_float4 _colorAdjustment;
     id<MTLDevice> _device;
     MTLPixelFormat _colorPixelFormat;
-    float _hdrPercentage;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
@@ -276,7 +275,7 @@
         IJKConvertMatrix convertMatrix = ijk_metal_create_color_matrix(self.pipelineMeta.convertMatrixType, self.pipelineMeta.fullRange);
         convertMatrix.adjustment = _colorAdjustment;
         convertMatrix.transferFun = self.pipelineMeta.transferFunc;
-        convertMatrix.hdrPercentage = _hdrPercentage;
+        convertMatrix.hdrPercentage = self.hdrPercentage;
         self.convertMatrixBuff = [_device newBufferWithBytes:&convertMatrix
                                                       length:sizeof(IJKConvertMatrix)
                                                      options:MTLResourceStorageModeShared];
@@ -284,6 +283,14 @@
 }
 
 #if IJK_USE_METAL_2
+- (void)setHdrPercentage:(float)hdrPercentage
+{
+    if (0.0 <= hdrPercentage && hdrPercentage <= 1.0 && _hdrPercentage != hdrPercentage) {
+        _hdrPercentage = hdrPercentage;
+        self.convertMatrixChanged = YES;
+    }
+}
+
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                         textures:(NSArray*)textures
 {
@@ -293,10 +300,6 @@
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  
-    if (_hdrPercentage < 1.0) {
-        _hdrPercentage += 0.005;
-        self.convertMatrixChanged = YES;
-    }
     [self updateConvertMatrixBufferIfNeed];
     
     //Fragment Function(nv12FragmentShader): missing buffer binding at index 0 for fragmentShaderArgs[0].

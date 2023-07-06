@@ -18,6 +18,8 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 @property (nonatomic, assign) float autoZRotateDegrees;
 @property (nonatomic, assign) CGSize vertexRatio;
 @property (nonatomic, assign) CGSize textureCrop;
+//非HDR视频设置无效
+@property (nonatomic, assign) float hdrPercentage;
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
@@ -29,7 +31,6 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 - (void)updateColorAdjustment:(vector_float4)c;
 
 - (BOOL)createRenderPipelineIfNeed:(CVPixelBufferRef)pixelBuffer;
-
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                         textures:(NSArray*)textures;
 @end

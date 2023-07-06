@@ -23,6 +23,7 @@
 #import "NSString+Ex.h"
 
 static NSString* lastPlayedKey = @"__lastPlayedKey";
+static BOOL hdrAnimationShown = 0;
 
 @interface RootViewController ()<MRDragViewDelegate,SHBaseViewDelegate,NSMenuDelegate>
 {
@@ -696,13 +697,15 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
-    CGRect rect = self.view.frame;
-    rect.origin = CGPointZero;
-    self.player.view.frame = rect;
     
     NSView <IJKVideoRenderingProtocol>*playerView = self.player.view;
+    CGRect rect = self.view.frame;
+    rect.origin = CGPointZero;
+    playerView.frame = rect;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
+    
+    playerView.showHdrAnimation = !hdrAnimationShown;
     //playerView.preventDisplay = YES;
     //test
     [playerView setBackgroundColor:0 g:0 b:0];
@@ -726,6 +729,9 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerRecvWarning:) name:IJKMPMoviePlayerPlaybackRecvWarningNotification object:self.player];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hdrAnimationStateChanged:) name:IJKMoviePlayerHDRAnimationStateChanged object:self.player.view];
+    
+    
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
     [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
     self.player.shouldAutoplay = YES;
@@ -743,6 +749,19 @@ static NSString* lastPlayedKey = @"__lastPlayedKey";
             //会收到很多次，所以立马取消掉监听
             [[NSNotificationCenter defaultCenter] removeObserver:self name:IJKMPMoviePlayerPlaybackRecvWarningNotification object:notifi.object];
             [self retry];
+        }
+    }
+}
+
+- (void)hdrAnimationStateChanged:(NSNotification *)notifi
+{
+    if (self.player.view == notifi.object) {
+        int state = [notifi.userInfo[@"state"] intValue];
+        if (state == 1) {
+            NSLog(@"hdr animation is begin.");
+        } else if (state == 2) {
+            NSLog(@"hdr animation is end.");
+            hdrAnimationShown = 1;
         }
     }
 }

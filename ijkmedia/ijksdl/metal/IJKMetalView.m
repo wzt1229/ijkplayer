@@ -23,6 +23,12 @@
 #import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 
+#if TARGET_OS_IPHONE
+typedef CGRect NSRect;
+#endif
+
+#define kHDRAnimationMaxCount 90
+
 @interface IJKMetalView ()
 
 // The command queue used to pass commands to the device.
@@ -37,6 +43,7 @@
 @property(atomic) float displayVideoScale;
 //display window size / screen size
 @property(atomic) float displayScreenScale;
+@property(assign) int hdrAnimationFrameCount;
 
 @end
 
@@ -54,8 +61,9 @@
 
 @synthesize preventDisplay = _preventDisplay;
 #if TARGET_OS_IOS
-@synthesize scaleFactor                = _scaleFactor;
+@synthesize scaleFactor = _scaleFactor;
 #endif
+@synthesize showHdrAnimation = _showHdrAnimation;
 
 - (void)dealloc
 {
@@ -108,10 +116,6 @@
     return self;
 }
 
-#if TARGET_OS_IPHONE
-typedef CGRect NSRect;
-#endif
-
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
     self = [super initWithFrame:frameRect];
@@ -121,6 +125,14 @@ typedef CGRect NSRect;
         }
     }
     return self;
+}
+
+- (void)setHdrAnimation:(BOOL)hdrAnimation
+{
+    if (_showHdrAnimation != hdrAnimation) {
+        _showHdrAnimation = hdrAnimation;
+        self.hdrAnimationFrameCount = kHDRAnimationMaxCount;
+    }
 }
 
 - (void)videoNaturalSizeChanged:(CGSize)size
@@ -249,8 +261,10 @@ typedef CGRect NSRect;
         renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
              viewport:(CGSize)viewport
                 ratio:(CGSize)ratio
+        hdrPercentage:(float)hdrPercentage
 {
     [self.picturePipeline lock];
+    self.picturePipeline.hdrPercentage = hdrPercentage;
     self.picturePipeline.autoZRotateDegrees = attach.autoZRotate;
     self.picturePipeline.rotateType = self.rotatePreference.type;
     self.picturePipeline.rotateDegrees = self.rotatePreference.degrees;
@@ -315,10 +329,27 @@ typedef CGRect NSRect;
     id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
     
     [renderEncoder pushDebugGroup:@"encodePicture"];
+    
+    float hdrPer = 1.0;
+    if (self.showHdrAnimation) {
+        
+        if (self.hdrAnimationFrameCount == 0) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(1)}];
+        } else if (self.hdrAnimationFrameCount == kHDRAnimationMaxCount) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(2)}];
+        }
+        
+        if (self.hdrAnimationFrameCount <= kHDRAnimationMaxCount) {
+            self.hdrAnimationFrameCount++;
+            hdrPer = 1.0 * self.hdrAnimationFrameCount / kHDRAnimationMaxCount;
+        }
+    }
+    
     [self encodePicture:attach
           renderEncoder:renderEncoder
                viewport:self.drawableSize
-                  ratio:ratio];
+                  ratio:ratio
+          hdrPercentage:hdrPer];
     
     if (attach.sub) {
         [self encodeSubtitle:renderEncoder
@@ -351,8 +382,6 @@ typedef CGRect NSRect;
     if (!self.offscreenRendering) {
         self.offscreenRendering = [IJKMetalOffscreenRendering alloc];
     }
-    
-    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     
     float width  = (float)CVPixelBufferGetWidth(pixelBuffer);
     float height = (float)CVPixelBufferGetHeight(pixelBuffer);
@@ -407,12 +436,14 @@ typedef CGRect NSRect;
         return NULL;
     }
     
+    id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
     return [self.offscreenRendering snapshot:viewport device:self.device commandBuffer:commandBuffer doUploadPicture:^(id<MTLRenderCommandEncoder> _Nonnull renderEncoder) {
         
         [self encodePicture:attach
               renderEncoder:renderEncoder
                    viewport:viewport
-                      ratio:CGSizeMake(1.0, 1.0)];
+                      ratio:CGSizeMake(1.0, 1.0)
+              hdrPercentage:1.0];
         
         if (drawSub) {
             CGRect rect;
@@ -474,7 +505,8 @@ typedef CGRect NSRect;
             [self encodePicture:attach
                   renderEncoder:renderEncoder
                        viewport:viewport
-                          ratio:ratio];
+                          ratio:ratio
+                  hdrPercentage:1.0];
         }
         
         if (attach.sub) {
