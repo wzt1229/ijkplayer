@@ -331,15 +331,13 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 //    }
     
 //    [self setHudValue:nil forKey:@"path"];
-    // Detect if URL is file path and return proper string for it
-    NSString *urlString = [_contentURL isFileURL] ? [_contentURL path] : [_contentURL absoluteString];
     
-    /// 解决bluray中文编码打不开的问题
-    if ([_contentURL.scheme isEqualToString:@"bluray"]) {
-        urlString = [urlString stringByRemovingPercentEncoding];
-    }
+    //解决中文路径 bluray://中文编码/打不开流问题
+    //absoluteString 遇到中文，不会解码，因此需要 stringByRemovingPercentEncoding
+    //path 遇到中文，会解码，因此不需要 stringByRemovingPercentEncoding
+    NSString *filePath = self.contentURL.isFileURL ? [self.contentURL path] : [[self.contentURL absoluteString] stringByRemovingPercentEncoding];
     
-    ijkmp_set_data_source(_mediaPlayer, [urlString UTF8String]);
+    ijkmp_set_data_source(_mediaPlayer, [filePath UTF8String]);
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", 0); // for concat demuxer
 
     _monitor.prepareStartTick = (int64_t)SDL_GetTickHR();
