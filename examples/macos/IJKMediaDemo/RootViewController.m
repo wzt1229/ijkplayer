@@ -669,7 +669,6 @@ static BOOL hdrAnimationShown = 0;
     [options setPlayerOptionIntValue:hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
-#warning 发现 Samsung Wonderland Two HDR UHD 4K Demo.ts 这个视频，启动硬解失败！
     int startTime = (int)([self readCurrentPlayRecord] * 1000);
     [options setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
     options.metalRenderer = !self.use_openGL;
@@ -729,7 +728,7 @@ static BOOL hdrAnimationShown = 0;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerRecvWarning:) name:IJKMPMoviePlayerPlaybackRecvWarningNotification object:self.player];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hdrAnimationStateChanged:) name:IJKMoviePlayerHDRAnimationStateChanged object:self.player.view];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerHdrAnimationStateChanged:) name:IJKMoviePlayerHDRAnimationStateChanged object:self.player.view];
     
     
     self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
@@ -753,7 +752,7 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-- (void)hdrAnimationStateChanged:(NSNotification *)notifi
+- (void)ijkPlayerHdrAnimationStateChanged:(NSNotification *)notifi
 {
     if (self.player.view == notifi.object) {
         int state = [notifi.userInfo[@"state"] intValue];

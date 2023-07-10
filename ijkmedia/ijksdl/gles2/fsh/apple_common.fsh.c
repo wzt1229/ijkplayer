@@ -69,7 +69,7 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
     const float ST2084_C1 = 0.8359375;
     const float ST2084_C2 = 18.8515625;
     const float ST2084_C3 = 18.6875;
-//    float FLT_MIN = 1.17549435082228750797e-38;
+    
     float st_2084_eotf(float x)
     {
         float xpow = pow(x, float(1.0 / ST2084_M2));
