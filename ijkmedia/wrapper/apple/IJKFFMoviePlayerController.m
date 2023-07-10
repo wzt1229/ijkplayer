@@ -333,9 +333,18 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 //    [self setHudValue:nil forKey:@"path"];
     
     //解决中文路径 bluray://中文编码/打不开流问题
-    //absoluteString 遇到中文，不会解码，因此需要 stringByRemovingPercentEncoding
-    //path 遇到中文，会解码，因此不需要 stringByRemovingPercentEncoding
-    NSString *filePath = self.contentURL.isFileURL ? [self.contentURL path] : [[self.contentURL absoluteString] stringByRemovingPercentEncoding];
+    //[absoluteString] 遇到中文，不会解码，因此需要 stringByRemovingPercentEncoding
+    //[path] 遇到中文，会解码，因此不需要 stringByRemovingPercentEncoding
+    //http 等网络协议请求中的编码不应该移除，需要保留
+    
+    NSString *filePath = nil;
+    if (self.contentURL.isFileURL) {
+        filePath = [self.contentURL path];
+    } else if ([self.contentURL.scheme isEqualToString:@"bluray"]) {
+        filePath = [[self.contentURL absoluteString] stringByRemovingPercentEncoding];
+    } else {
+        filePath = [self.contentURL absoluteString];
+    }
     
     ijkmp_set_data_source(_mediaPlayer, [filePath UTF8String]);
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", 0); // for concat demuxer
