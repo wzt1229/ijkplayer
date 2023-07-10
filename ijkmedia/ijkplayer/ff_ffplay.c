@@ -4320,15 +4320,20 @@ int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
             file_name = "ijklongurl:";
         }
     }
-
-    av_log(NULL, AV_LOG_INFO, "===== versions =====\n");
-    ffp_show_version_str(ffp, "ijkplayer",      ijk_version_info());
-    ffp_show_version_str(ffp, "FFmpeg",         av_version_info());
-    ffp_show_version_int(ffp, "libavutil",      avutil_version());
-    ffp_show_version_int(ffp, "libavcodec",     avcodec_version());
-    ffp_show_version_int(ffp, "libavformat",    avformat_version());
-    ffp_show_version_int(ffp, "libswscale",     swscale_version());
-    ffp_show_version_int(ffp, "libswresample",  swresample_version());
+    static int once_flag = 1;
+    
+    if (once_flag) {
+        once_flag = 0;
+        av_log(NULL, AV_LOG_INFO, "===== versions =====\n");
+        ffp_show_version_str(ffp, "ijkplayer",      ijk_version_info());
+        ffp_show_version_str(ffp, "FFmpeg",         av_version_info());
+        ffp_show_version_int(ffp, "libavutil",      avutil_version());
+        ffp_show_version_int(ffp, "libavcodec",     avcodec_version());
+        ffp_show_version_int(ffp, "libavformat",    avformat_version());
+        ffp_show_version_int(ffp, "libswscale",     swscale_version());
+        ffp_show_version_int(ffp, "libswresample",  swresample_version());
+    }
+    
     av_log(NULL, AV_LOG_INFO, "===== options =====\n");
     ffp_show_dict(ffp, "player-opts", ffp->player_opts);
     ffp_show_dict(ffp, "format-opts", ffp->format_opts);
