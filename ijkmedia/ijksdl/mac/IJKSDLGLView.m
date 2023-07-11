@@ -489,10 +489,8 @@ static bool _is_need_dispath_to_global(void)
         float ratio = 1.0;
         if (attach.sub.pixels) {
             ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-        } else {
-            //for text subtitle scale display_scale.
-            ratio *= self.displayScreenScale;
         }
+        ratio *= self.displayScreenScale;
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, ratio * CVPixelBufferGetWidth(attach.subPicture), ratio * CVPixelBufferGetHeight(attach.subPicture));

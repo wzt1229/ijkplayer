@@ -139,12 +139,6 @@ typedef CGRect NSRect;
 {
     CGSize viewSize = [self bounds].size;
     self.displayVideoScale = FFMIN(1.0 * viewSize.width / size.width, 1.0 * viewSize.height / size.height);
-#if TARGET_OS_OSX
-    CGSize screenSize = [[NSScreen mainScreen]frame].size;
-#else
-    CGSize screenSize = [[UIScreen mainScreen]bounds].size;
-#endif
-    self.displayScreenScale = FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
 }
 
 - (void)cleanSubtitle
@@ -350,11 +344,19 @@ typedef CGRect NSRect;
                   ratio:ratio
           hdrPercentage:hdrPer];
     
-    if (attach.sub) {
+    if (attach.subTexture) {
+        
+        float subScale = 1.0;
+        if (attach.sub.pixels) {
+            subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+        }
+        
+        CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale];
+        
         [self encodeSubtitle:renderEncoder
                     viewport:self.drawableSize
                      texture:attach.subTexture
-                        rect:attach.subTextureRect];
+                        rect:rect];
     }
     [renderEncoder popDebugGroup];
     [renderEncoder endEncoding];
@@ -395,9 +397,6 @@ typedef CGRect NSRect;
     
     if (attach.sub.pixels) {
         subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-    } else {
-        //for text subtitle scale display_scale.
-        subScale *= self.displayScreenScale;
     }
     
     subScale *= scale;
@@ -445,9 +444,8 @@ typedef CGRect NSRect;
               hdrPercentage:1.0];
         
         if (drawSub) {
-            CGRect rect;
-            id subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device scale:subScale viewport:self.drawableSize bottomMargin:self.subtitlePreference.bottomMargin rect:&rect];
-            
+            id subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device];
+            CGRect rect = [self subTextureTargetRect:subTexture scale:subScale];
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
                          texture:subTexture
@@ -510,16 +508,13 @@ typedef CGRect NSRect;
         
         if (attach.sub) {
             
-            float ratio = 1.0;
+            float subScale = 1.0;
             if (attach.sub.pixels) {
-                ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-            } else {
-                //for text subtitle scale display_scale.
-                ratio *= self.displayScreenScale;
+                subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
             }
             
-            CGRect rect;
-            id subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device scale:ratio viewport:viewport bottomMargin:self.subtitlePreference.bottomMargin rect:&rect];
+            id subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device];
+            CGRect rect = [self subTextureTargetRect:subTexture scale:subScale];
             
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
@@ -544,6 +539,17 @@ typedef CGRect NSRect;
     }
 }
 
+- (void)refreshDisplayScreenSacle
+{
+#if TARGET_OS_OSX
+    CGSize screenSize = [[NSScreen mainScreen]frame].size;
+#else
+    CGSize screenSize = [[UIScreen mainScreen]bounds].size;
+#endif
+    CGSize viewSize = [self bounds].size;
+    self.displayScreenScale = FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
+}
+
 #if TARGET_OS_IOS
 - (UIImage *)snapshot
 {
@@ -551,9 +557,9 @@ typedef CGRect NSRect;
     return [[UIImage alloc]initWithCGImage:cgImg];
 }
 #else
-
 - (void)windowDidEndLiveResize:(NSNotification *)notifi
 {
+    [self refreshDisplayScreenSacle];
     if (notifi.object == self.window) {
         [self setNeedsRefreshCurrentPic];
     }
@@ -561,7 +567,9 @@ typedef CGRect NSRect;
 
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize
 {
+    [self refreshDisplayScreenSacle];
     if (!self.window.inLiveResize) {
+        [self refreshDisplayScreenSacle];
         [self setNeedsRefreshCurrentPic];
     }
 }
@@ -569,6 +577,7 @@ typedef CGRect NSRect;
 - (void)viewDidChangeBackingProperties
 {
     [super viewDidChangeBackingProperties];
+    [self refreshDisplayScreenSacle];
     [self setNeedsRefreshCurrentPic];
 }
 #endif
@@ -666,19 +675,7 @@ typedef CGRect NSRect;
         }
     }
     attach.subPicture = subRef;
-    if (subRef) {
-        float subRatio = 1.0;
-        if (attach.sub.pixels) {
-            subRatio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-        } else {
-            //for text subtitle scale display_scale.
-            subRatio *= self.displayScreenScale;
-        }
-        
-        CGRect rect;
-        attach.subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device scale:subRatio viewport:self.drawableSize bottomMargin:self.subtitlePreference.bottomMargin rect:&rect];
-        attach.subTextureRect = rect;
-    }
+    attach.subTexture = [[self class] doGenerateSubTexture:subRef device:self.device];
 }
 
 mp_format * mp_get_metal_format(uint32_t cvpixfmt);
@@ -723,12 +720,8 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     return result;
 }
 
-+ (id)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
++ (id<MTLTexture>)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
                       device:(id<MTLDevice>)device
-                     scale:(float)scale
-                  viewport:(CGSize)viewport
-              bottomMargin:(float)bottomMargin
-                      rect:(CGRect *)rect
 {
     if (!pixelBuff) {
         return nil;
@@ -771,6 +764,16 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     
     CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
     
+    return subTexture;
+}
+
+- (CGRect)subTextureTargetRect:(id<MTLTexture>)subTexture
+                         scale:(float)scale
+{
+    CGSize viewport = self.drawableSize;
+    float bottomMargin = self.subtitlePreference.bottomMargin;
+    //字幕跟随显示窗口放大
+    scale *= self.displayScreenScale;
     //截图的时候，按照画面实际大小截取的，显示的时候通常是 retain 屏幕，所以 scale 通常会小于 1；
     //没有这个scale的话，字幕可能会超出画面，位置跟观看时不一致。
     float swidth  = subTexture.width  * scale;
@@ -782,15 +785,14 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     float y = bottomMargin * (height - sheight) / height * 2.0 - 1.0;
     
     if (width != 0 && height != 0) {
-        *rect = (CGRect){
+        return (CGRect){
             - 1.0 * swidth / width,
             y,
             2.0 * (swidth / width),
             2.0 * (sheight / height)
         };
     }
-    
-    return subTexture;
+    return CGRectZero;
 }
 
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach

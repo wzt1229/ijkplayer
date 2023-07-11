@@ -73,7 +73,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 @property(nonatomic) IJKSDLSubtitle *sub;
 @property(nonatomic) NSArray *videoTextures;
 @property(nonatomic) id subTexture;
-@property(nonatomic) CGRect subTextureRect;
 @end
 
 typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
