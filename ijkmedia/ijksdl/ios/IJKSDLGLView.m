@@ -28,6 +28,9 @@
 #include "ijksdl/apple/ijksdl_ios.h"
 #include "ijksdl/ijksdl_gles2.h"
 #import "IJKSDLTextureString.h"
+#import "IJKMediaPlayback.h"
+
+#define kHDRAnimationMaxCount 90
 
 typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     IJKSDLGLViewApplicationUnknownState = 0,
@@ -50,6 +53,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 @property(atomic) GLint backingHeight;
 @property(atomic) BOOL subtitlePreferenceChanged;
 @property(atomic,getter=isRenderBufferInvalidated) BOOL renderBufferInvalidated;
+@property(assign) int hdrAnimationFrameCount;
 
 @end
 
@@ -89,6 +93,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 // user defined display aspect ratio
 @synthesize darPreference = _darPreference;
 @synthesize preventDisplay;
+@synthesize showHdrAnimation = _showHdrAnimation;
 
 + (Class) layerClass
 {
@@ -224,6 +229,14 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     return didSetupGL;
 }
 
+- (void)setShowHdrAnimation:(BOOL)showHdrAnimation
+{
+    if (_showHdrAnimation != showHdrAnimation) {
+        _showHdrAnimation = showHdrAnimation;
+        self.hdrAnimationFrameCount = 0;
+    }
+}
+
 - (void)videoZRotateDegrees:(NSInteger)degrees
 {
     self.videoDegrees = degrees;
@@ -336,14 +349,16 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
     if (attach == nil)
         return _renderer != nil;
     
+    Uint32 cv_format = CVPixelBufferGetPixelFormatType(attach.videoPicture);
+    
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
-        !IJK_GLES2_Renderer_isFormat(_renderer, attach.format)) {
+        !IJK_GLES2_Renderer_isFormat(_renderer, cv_format)) {
 
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
         
         Uint32 cv_format = CVPixelBufferGetPixelFormatType(attach.videoPicture);
-        _renderer = IJK_GLES2_Renderer_createApple(attach.format, cv_format, 0);
+        _renderer = IJK_GLES2_Renderer_createApple(attach.videoPicture, 0);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
 
@@ -378,7 +393,7 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         }
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-        IJK_GLES2_Renderer_updateSubtitleVetex(_renderer, ratio * CVPixelBufferGetWidth(attach.subPicture), ratio * CVPixelBufferGetHeight(attach.subPicture));
+        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, ratio * CVPixelBufferGetWidth(attach.subPicture), ratio * CVPixelBufferGetHeight(attach.subPicture));
         if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)attach.subPicture)) {
             IJK_GLES2_Renderer_drawArrays();
         } else {
@@ -391,14 +406,28 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
 - (void)doUploadVideoPicture:(IJKOverlayAttach *)attach
 {
     if (attach.videoPicture) {
-        if (IJK_GLES2_Renderer_updateVetex2(_renderer, attach.h, attach.w, attach.bufferW, attach.sarNum, attach.sarDen)) {
+        if (IJK_GLES2_Renderer_updateVertex2(_renderer, attach.h, attach.w, attach.pixelW, attach.sarNum, attach.sarDen)) {
+            float hdrPer = 1.0;
+            if (self.showHdrAnimation) {
+                if (self.hdrAnimationFrameCount == 0) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(1)}];
+                } else if (self.hdrAnimationFrameCount == kHDRAnimationMaxCount) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(2)}];
+                }
+                
+                if (self.hdrAnimationFrameCount <= kHDRAnimationMaxCount) {
+                    self.hdrAnimationFrameCount++;
+                    hdrPer = 1.0 * self.hdrAnimationFrameCount / kHDRAnimationMaxCount;
+                }
+            }
+            IJK_GLES2_Renderer_updateHdrAnimationProgress(_renderer, hdrPer);
             if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture)) {
                 IJK_GLES2_Renderer_drawArrays();
             } else {
-                ALOGE("[GL] Renderer_updateVetex failed\n");
+                ALOGE("[GL] Renderer_updateVertex failed\n");
             }
         } else {
-            ALOGE("[GL] Renderer_updateVetex failed\n");
+            ALOGE("[GL] Renderer_updateVertex failed\n");
         }
     }
 }
@@ -559,9 +588,6 @@ typedef NS_ENUM(NSInteger, IJKSDLGLViewApplicationState) {
         ALOGW("IJKSDLGLView: overlay is nil\n");
         return NO;
     }
-
-    Uint32 overlay_format = attach.format;
-    NSAssert(SDL_FCC__VTB == overlay_format || SDL_FCC__FFVTB == overlay_format, @"wtf?");
     
     IJKSDLSubtitle *sub = attach.sub;
     //generate current subtitle.

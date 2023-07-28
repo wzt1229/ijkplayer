@@ -1,17 +1,31 @@
+tag 0.10.0
+--------------------------------
+
+- upgrade ffmpeg5.1.3
+- opengl and metal support hw_10bit SDR/HDR video
+- metal support XRGB pixel format
+- enable av1 use dav1d decoder
+- optimize seek speed and accuracy
+- convert to new channel layout-API
+- switch to new FIFO API
+- sync lastest ffplay.c 
+- adapt ass parser
+
 tag 0.9.7
 --------------------------------
-- expose internal render view.
-- support multi render view.
-- fix shutdown player crash,some video may cause.
-- when pts changed abruptly throw FFP_MSG_WARNING.
+
+- expose internal render view
+- support multi render view
+- fix shutdown player crash,some video may cause
+- when pts changed abruptly throw FFP_MSG_WARNING
 
 tag 0.9.6
 --------------------------------
 
-- fix accurate seek waiting time out bug.
-- support step play mode.
-- improve audio-video sync logic, especially drop audio frame.
-- metal view snapshot support origin,screen,effect origin type.
+- fix accurate seek waiting time out bug
+- support step play mode
+- improve audio-video sync logic, especially drop audio frame
+- metal view snapshot support origin,screen,effect origin type
 
 tag 0.9.5
 --------------------------------

@@ -100,8 +100,9 @@ typedef CGRect NSRect;
     // important;then use draw method drive rendering.
     self.enableSetNeedsDisplay = NO;
     self.paused = YES;
-    
+#if TARGET_OS_OSX
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidEndLiveResize:) name:NSWindowDidEndLiveResizeNotification object:nil];
+#endif
     return YES;
 }
 
