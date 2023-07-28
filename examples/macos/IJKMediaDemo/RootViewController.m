@@ -123,6 +123,7 @@ static BOOL hdrAnimationShown = 0;
 //@"http://localhost/test-videos/av1-m3u8/res.m3u8"
 //    @"http://10.18.17.49/samba/video/BDMV%E7%9A%84%E5%BA%93/%E4%BB%A5%E5%AF%A1%E6%95%8C%E4%BC%97%5B%E7%AE%80%E7%B9%81%E8%8B%B1%E5%AD%97%E5%B9%95%5D.Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD/Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD.mkv"
 //    @"http://10.18.17.49/samba/video-library/movies/Fast.X.2023.1080p.WEB-DL.DDP5.1.Atmos.H264-AQLJ.m2ts"
+//    @"https://pan.baidu.com/rest/2.0/xpan/file?method=streaming&access_token=123.be0be15bf745faf4d16855c1690d6912.YBC2KjymwuTVhNLBrpv7f1LpYasEMPrFAl0eVUD.Uukf5A&adToken=&path=%2F%E5%85%84D%E8%BF%9E%EF%BC%88%E5%9B%BD%E9%85%8D%EF%BC%89%2FEP04%28%E6%96%B0%E5%85%B5%E6%94%AF%E6%8F%B4%29.2001.BluRay.1080p.x264.AAC.2Audios.Chs%26Eng.%E7%89%B9%E6%95%88%E4%B8%AD%E5%AD%97-DiaosMan.mp4&type=M3U8_AUTO_720"
     NSArray *onlineArr = @[
   @"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
         @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
@@ -644,7 +645,10 @@ static BOOL hdrAnimationShown = 0;
         }
     }
     
-    [options setFormatOptionIntValue:0 forKey:@"http_persistent"];
+//    [options setFormatOptionIntValue:0 forKey:@"http_persistent"];
+    //请求m3u8文件里的ts出错后是否继续请求下一个ts，默认是1000
+    [options setFormatOptionIntValue:1 forKey:@"max_reload"];
+    
     BOOL isLive = NO;
     //isLive表示是直播还是点播
     if (isLive) {
