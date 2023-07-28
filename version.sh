@@ -72,6 +72,9 @@ do_version_xcode() {
     > examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj.new
 
     mv -f examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj.new examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj
+
+    sed -i "" "s/\(export IJK_VERSION=\)[[:digit:].]*[[:digit:]]/\1$VERSION_NAME/g" shell/init-cfgs/ijk
+    
 }
 
 if [ "$VERSION_TARGET" = "readme" ]; then
