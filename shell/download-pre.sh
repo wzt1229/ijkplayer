@@ -15,8 +15,6 @@
 # limitations under the License.
 #
 
-VERSION=20220220204836
-
 set -e
 
 EDITION=$1
@@ -66,8 +64,8 @@ fi
 
 if test -z $VER ;then
     #VER=$(git describe --abbrev=0 --tag | awk -F - '{printf "%s-%s",$1,$2}')
-    VER="$VERSION"
-    echo "use the default version:${VER}"
+    usage
+    exit
 fi
 
 if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' ]]; then

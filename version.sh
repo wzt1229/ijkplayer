@@ -73,7 +73,7 @@ do_version_xcode() {
 
     mv -f examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj.new examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj
 
-    sed -i "" "s/\(export IJK_VERSION=\)[[:digit:].]*[[:digit:]]/\1$VERSION_NAME/g" shell/init-cfgs/ijk
+    sed -i "" "s/\(export IJK_VERSION=\)[[:digit:].]*[[:digit:]]/\1$VERSION_NAME/g" shell/version.sh
     
 }
 
