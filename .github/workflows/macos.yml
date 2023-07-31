@@ -17,7 +17,7 @@ jobs:
     - run: brew install tree
     - name: Download Pre Compiled Dependencies
       run: |
-        cd shell && ./download-pre.sh ijk macos
+        cd shell && ./download-pre.sh macos 0.10.0-230731150148-ijk
     - name: Pod install
       run: pod install --project-directory=examples/macos
     - name: Set Default Scheme
