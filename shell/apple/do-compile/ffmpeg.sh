@@ -220,13 +220,14 @@ fi
 
 if [[ -n "$MY_PKG_CONFIG_PATH" ]]; then
     export PKG_CONFIG_PATH="$MY_PKG_CONFIG_PATH"
+    echo "PKG_CONFIG_PATH:$PKG_CONFIG_PATH"
 fi
 
 CC="$XCRUN_CC"
 
 # echo "PKG_CONFIG_PATH:${PKG_CONFIG_PATH}"
 # pkg-config --variable pc_path pkg-config
-# pkg-config --libs dav1d
+pkg-config --libs dav1d
 
 echo "----------------------"
 echo "[*] configure"

@@ -137,8 +137,10 @@ function main() {
         do_lipo_all "$archs"
         ;;
     'rebuild')
+        echo '---clean for rebuild-----------------'
         XC_CMD='clean'
-        main
+        main 1>/dev/null
+        echo '---build for rebuild-----------------'
         XC_CMD='build'
         main
         ;;
