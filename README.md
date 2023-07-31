@@ -10,9 +10,9 @@ Video player based on [ffplay](http://ffmpeg.org)
 
 ### My Build Environment
 
-- macOS Monterey(12.1)
-- Xcode Version 13.1 (13A1030d)
-- cocoapods 1.11.2
+- macOS Monterey(13.1)
+- Xcode Version 14.3.1 (14E300c)
+- cocoapods 1.12.1
 
 TODO check:
 
@@ -37,7 +37,7 @@ TODO check:
   - video-output: OpenGL ES 2.0/OpenGL 3.3
   - audio-output: AudioQueue, AudioUnit
   - hw-decoder: auto use VideoToolbox accel by default
-  - subtitle: use Quartz to draw text into a CVPixelBufferRef then use OpenGL render
+  - subtitle: use Quartz to draw text into a CVPixelBufferRef then use OpenGL/Metal render
   - alternative-backend: AVFoundation.Framework.AVPlayer, MediaPlayer.Framework.MPMoviePlayerControlelr (obselete since iOS 8)
 - Android (⚠️ unknown state)
   - platform: API 9~23
@@ -50,7 +50,6 @@ TODO check:
 
 ### ON-PLAN
 
-- use Metal instead of OpenGL
 - avfilter support
 
 ### Before Build
@@ -203,6 +202,8 @@ cd ..
 
 ```
 Copyright (c) 2017 Bilibili
+Licensed under LGPLv2.1 or later
+Copyright (c) 2022 Sohu
 Licensed under LGPLv2.1 or later
 ```
 
