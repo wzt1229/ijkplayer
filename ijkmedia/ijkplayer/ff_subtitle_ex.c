@@ -101,6 +101,9 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
         goto fail;
     }
 
+    if (ic) {
+        av_log(NULL, AV_LOG_DEBUG, "ex subtitle demuxer:%s\n",ic->iformat->name);
+    }
     AVStream *sub_st = NULL;
     int stream_id = -1;
     //字幕流的索引

@@ -275,6 +275,8 @@
 				<string>vtt</string>
 				<string>webvtt</string>
 				<string>lrc</string>
+				<string>sup</string>
+				<string>idx</string>
 			</array>
 			<key>CFBundleTypeName</key>
 			<string>Other Subtitle Document</string>

@@ -16,8 +16,9 @@
     
     NSString *pathExtension = [[url pathExtension] lowercaseString];
     [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
+    NSError *error = nil;
     NSData *bookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
-                        | NSURLBookmarkCreationSecurityScopeAllowOnlyReadAccess includingResourceValuesForKeys:nil relativeToURL:nil error:nil];
+                        | NSURLBookmarkCreationSecurityScopeAllowOnlyReadAccess includingResourceValuesForKeys:nil relativeToURL:nil error:&error];
     if (bookmark) {
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         [dic setObject:url forKey:@"url"];
