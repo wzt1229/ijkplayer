@@ -349,20 +349,22 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_prepare_async(_mediaPlayer);
 }
 
-- (void)loadThenActiveSubtitleFile:(NSString *)url
+- (BOOL)loadThenActiveSubtitleFile:(NSString *)url
 {
     if (!_mediaPlayer)
-        return;
+        return NO;
     
-    ijkmp_add_active_external_subtitle(_mediaPlayer, [url UTF8String]);
+    int ret = ijkmp_add_active_external_subtitle(_mediaPlayer, [url UTF8String]);
+    return ret >= 0;
 }
 
-- (void)loadSubtitleFileOnly:(NSString *)url
+- (BOOL)loadSubtitleFileOnly:(NSString *)url
 {
     if (!_mediaPlayer)
-        return;
+        return NO;
     
-    ijkmp_addOnly_external_subtitle(_mediaPlayer, [url UTF8String]);
+    int ret = ijkmp_addOnly_external_subtitle(_mediaPlayer, [url UTF8String]);
+    return ret >= 0;
 }
 
 - (void)play
