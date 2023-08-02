@@ -303,7 +303,7 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
     
     /* there is a length limit in avformat */
     if (strlen(file_name) + 1 > 1024) {
-        av_log(sub, AV_LOG_ERROR, "subtitle path is too long:%s\n", __func__);
+        av_log(NULL, AV_LOG_ERROR, "can't load subtitle,path is too long:%d\n",(int)strlen(file_name));
         return -2;
     }
     
@@ -398,7 +398,7 @@ int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx)
     SDL_LockMutex(sub->mutex);
     int arr_idx = convert_idx_from_stream(idx);
     if (NULL == sub->pathArr[arr_idx]) {
-        av_log(sub, AV_LOG_ERROR, "invalid stream index %d is NULL\n", idx);
+        av_log(NULL, AV_LOG_ERROR, "invalid stream index %d is NULL\n", idx);
         arr_idx = -1;
     }
     SDL_UnlockMutex(sub->mutex);
