@@ -126,6 +126,10 @@ int ff_sub_drop_frames_lessThan_pts(FFSubtitle *sub, float pts)
         return -1;
     }
     
+    if (ff_sub_get_opened_stream_idx(sub) < 0) {
+        return -1;
+    }
+        
     if(exSub_get_opened_stream_idx(sub->exSub) != -1) {
        pts -= sub->streamStartTime;
     }
@@ -175,6 +179,11 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
     if (!sub) {
         return -1;
     }
+    
+    if (ff_sub_get_opened_stream_idx(sub) < 0) {
+        return -1;
+    }
+    
     int r = 1;
     if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
         pts -= sub->streamStartTime;
