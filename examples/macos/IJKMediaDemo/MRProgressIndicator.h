@@ -13,8 +13,6 @@ static const CGFloat kProgressIndicatorColorHeight = 6.0;
 
 @interface MRProgressIndicator : NSView
 
-//停止状态颜色
-@property (nonatomic, strong) IBInspectable NSColor  *stopColor;
 //左侧已经播放开始颜色
 @property (nonatomic, strong) IBInspectable NSColor  *playedStartColor;
 //左侧已经播放结束颜色

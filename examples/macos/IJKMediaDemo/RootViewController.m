@@ -1042,6 +1042,7 @@ static BOOL hdrAnimationShown = 0;
     self.player.view.subtitlePreference = p;
     
     [self.player prepareToPlay];
+    [self onTick:nil];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
@@ -1080,7 +1081,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     self.playerSlider.playedValue = interval;
     self.playerSlider.minValue = 0;
     self.playerSlider.maxValue = duration;
-    self.playerSlider.preloadValue = interval + self.player.playableDuration / 1000;
+    self.playerSlider.preloadValue = self.player.playableDuration;
     
     if ([self.player isPlaying]) {
         self.tickCount ++;

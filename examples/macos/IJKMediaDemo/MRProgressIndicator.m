@@ -40,10 +40,6 @@ IB_DESIGNABLE
 
 - (void)_init
 {
-    if (!_stopColor) {
-        _stopColor = [[NSColor grayColor] colorWithAlphaComponent:0.12];
-    }
-    
     if (!_playedStartColor) {
         _playedStartColor = [NSColor colorWithRed:253.0/255.0 green:107.0/255.0 blue:107.0/255.0 alpha:1.0];
     }
@@ -53,7 +49,7 @@ IB_DESIGNABLE
     }
     
     if (!_preloadColor) {
-        _preloadColor = [[NSColor whiteColor] colorWithAlphaComponent:0.45];
+        _preloadColor = [[NSColor whiteColor] colorWithAlphaComponent:0.75];
     }
     
     if (!_unLoadColor) {
@@ -243,7 +239,7 @@ IB_DESIGNABLE
     
     // stop state
     if (0 == _playedValue && 0 == _maxValue) {
-        [_stopColor set];
+        [_unLoadColor set];
         NSRectFill(slideRect);
         return;
     }
