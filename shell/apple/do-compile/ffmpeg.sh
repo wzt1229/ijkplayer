@@ -266,7 +266,7 @@ echo "----------------------"
 echo "[*] compile $LIB_NAME"
 echo "----------------------"
 
-make clean
+make
 cp config.* $XC_BUILD_PREFIX
 make install -j8 1>/dev/null
 mkdir -p $XC_BUILD_PREFIX/include/libffmpeg

@@ -72,9 +72,7 @@ else
     ./Configure $OPENSSL_CFG_FLAGS \
         CC="$XCRUN_CC" \
         CFLAGS="$CFLAGS" \
-        CXXFLAG="$CFLAGS" 
-
-    make clean 1>/dev/null
+        CXXFLAG="$CFLAGS"
 fi
 
 #----------------------

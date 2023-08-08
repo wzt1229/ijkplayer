@@ -50,7 +50,7 @@ echo "----------------------"
 echo "[*] configurate $LIB_NAME"
 echo "----------------------"
 
-make -f linux.mk clean >/dev/null
+#make -f linux.mk clean >/dev/null
 
 #----------------------
 echo "----------------------"
