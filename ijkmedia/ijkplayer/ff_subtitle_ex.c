@@ -303,13 +303,7 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
     if (!sub) {
         return -1;
     }
-    
-    /* there is a length limit in avformat */
-    if (strlen(file_name) + 1 > 1024) {
-        av_log(NULL, AV_LOG_ERROR, "can't load subtitle,path is too long:%d\n",(int)strlen(file_name));
-        return -2;
-    }
-    
+
     if (exSub_check_file_added(file_name, sub)) {
         return 1;
     }
@@ -345,7 +339,7 @@ int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub)
     //maybe already added.
     for (int i = 0; i < IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET; i++) {
         char* next = sub->pathArr[i];
-        if (next && (0 == av_strncasecmp(next, file_name, 1024))) {
+        if (next && (0 == av_strcasecmp(next, file_name))) {
             already_added = 1;
             break;
         }
@@ -361,12 +355,6 @@ int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name,IjkMedia
         return -1;
     }
  
-    /* there is a length limit in avformat */
-    if (strlen(file_name) + 1 > 1024) {
-        av_log(sub, AV_LOG_ERROR, "subtitle path is too long:%s\n", __func__);
-        return -2;
-    }
-    
     if (exSub_check_file_added(file_name, sub)) {
         return 1;
     }

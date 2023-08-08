@@ -4360,14 +4360,6 @@ int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
         av_dict_set(&ffp->format_opts, "timeout", NULL, 0);
     }
 
-    /* there is a length limit in avformat */
-    if (strlen(file_name) + 1 > 1024) {
-        av_log(ffp, AV_LOG_ERROR, "%s too long url\n", __func__);
-        if (avio_find_protocol_name("ijklongurl:")) {
-            av_dict_set(&ffp->format_opts, "ijklongurl-url", file_name, 0);
-            file_name = "ijklongurl:";
-        }
-    }
     static int once_flag = 1;
     
     if (once_flag) {

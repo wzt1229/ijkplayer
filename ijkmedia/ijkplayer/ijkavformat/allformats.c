@@ -81,7 +81,6 @@ void ijkav_register_all(void)
 
     IJK_REGISTER_PROTOCOL(ijkio);
     IJK_REGISTER_PROTOCOL(async);
-    IJK_REGISTER_PROTOCOL(ijklongurl);
     IJK_REGISTER_PROTOCOL(ijktcphook);
     IJK_REGISTER_PROTOCOL(ijkhttphook);
     IJK_REGISTER_PROTOCOL(ijksegment);

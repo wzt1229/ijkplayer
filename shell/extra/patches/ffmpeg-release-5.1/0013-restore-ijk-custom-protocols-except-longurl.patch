@@ -1,7 +1,7 @@
-From 577396e57abf6b55c54b8ff2ce71895da15604d8 Mon Sep 17 00:00:00 2001
+From 0d685c7a7dd124afdf9700d158a6cfc1c710ea19 Mon Sep 17 00:00:00 2001
 From: qianlongxu <qianlongxu@gmail.com>
-Date: Tue, 8 Aug 2023 14:41:24 +0800
-Subject: [PATCH] restore ijk custom protocols
+Date: Tue, 8 Aug 2023 14:53:18 +0800
+Subject: [PATCH] restore ijk custom protocols except longurl
 
 ---
  libavcodec/Makefile      |   1 +
@@ -10,12 +10,12 @@ Subject: [PATCH] restore ijk custom protocols
  libavformat/async.c      |   2 +-
  libavformat/avformat.h   |   5 +
  libavformat/demux.c      |  12 +++
- libavformat/ijkutils.c   |  98 ++++++++++++++++++
- libavformat/protocols.c  |   7 ++
+ libavformat/ijkutils.c   |  97 ++++++++++++++++++
+ libavformat/protocols.c  |   6 ++
  libavutil/Makefile       |   3 +
  libavutil/application.c  | 215 +++++++++++++++++++++++++++++++++++++++
  libavutil/application.h  | 122 ++++++++++++++++++++++
- 11 files changed, 476 insertions(+), 1 deletion(-)
+ 11 files changed, 474 insertions(+), 1 deletion(-)
  create mode 100644 libavformat/ijkutils.c
  create mode 100644 libavutil/application.c
  create mode 100644 libavutil/application.h
@@ -148,10 +148,10 @@ index d518515..bccd5a5 100644
      avformat_free_context(s);
 diff --git a/libavformat/ijkutils.c b/libavformat/ijkutils.c
 new file mode 100644
-index 0000000..c6d0134
+index 0000000..25faad1
 --- /dev/null
 +++ b/libavformat/ijkutils.c
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,97 @@
 +/*
 + * utils.c
 + *
@@ -216,7 +216,6 @@ index 0000000..c6d0134
 +IJK_FF_PROTOCOL(async);
 +IJK_DUMMY_PROTOCOL(ijkmediadatasource);
 +IJK_DUMMY_PROTOCOL(ijkhttphook);
-+IJK_DUMMY_PROTOCOL(ijklongurl);
 +IJK_DUMMY_PROTOCOL(ijksegment);
 +IJK_DUMMY_PROTOCOL(ijktcphook);
 +IJK_DUMMY_PROTOCOL(ijkio);
@@ -251,15 +250,14 @@ index 0000000..c6d0134
 +IJK_DUMMY_DEMUXER(ijklivehook);
 +IJK_DUMMY_DEMUXER(ijklas);
 diff --git a/libavformat/protocols.c b/libavformat/protocols.c
-index 6ee62a5..5e97b89 100644
+index 6ee62a5..8c67f34 100644
 --- a/libavformat/protocols.c
 +++ b/libavformat/protocols.c
-@@ -74,6 +74,13 @@ extern const URLProtocol ff_libzmq_protocol;
+@@ -74,6 +74,12 @@ extern const URLProtocol ff_libzmq_protocol;
  extern const URLProtocol ff_ipfs_protocol;
  extern const URLProtocol ff_ipns_protocol;
  
 +extern const URLProtocol ff_ijkhttphook_protocol;
-+extern const URLProtocol ff_ijklongurl_protocol;
 +extern const URLProtocol ff_ijkmediadatasource_protocol;
 +extern const URLProtocol ff_ijksegment_protocol;
 +extern const URLProtocol ff_ijktcphook_protocol;
