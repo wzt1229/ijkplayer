@@ -30,6 +30,7 @@
 #import "IJKMediaModule.h"
 #import "IJKNotificationManager.h"
 #import "NSString+IJKMedia.h"
+#import "ijkioapplication.h"
 #include "string.h"
 #if TARGET_OS_IOS
 #import "IJKAudioKit.h"
@@ -75,9 +76,9 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
     BOOL _pauseInBackground;
     BOOL _playingBeforeInterruption;
 
-#if ! IJK_IO_OFF
     AVAppAsyncStatistic _asyncStat;
-#endif
+    IjkIOAppCacheStatistic _cacheStat;
+
     NSTimer *_hudTimer;
     IJKSDLHudControl *_hudCtrl;
 #if TARGET_OS_IOS
@@ -175,9 +176,8 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     _contentURL = aUrl;
     
     ijkmp_global_init();
-#if ! IJK_IO_OFF
     ijkmp_global_set_inject_callback(ijkff_inject_callback);
-#endif
+
     [IJKFFMoviePlayerController checkIfFFmpegVersionMatch:NO];
 
     if (options == nil)
@@ -189,9 +189,10 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     // init fields
     _scalingMode = IJKMPMovieScalingModeAspectFit;
     _shouldAutoplay = YES;
-#if ! IJK_IO_OFF
+
     memset(&_asyncStat, 0, sizeof(_asyncStat));
-#endif
+    memset(&_cacheStat, 0, sizeof(_cacheStat));
+
     _monitor = [[IJKFFMonitor alloc] init];
 
     // init player
@@ -202,6 +203,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
     ijkmp_set_weak_thiz(_mediaPlayer, (__bridge_retained void *) self);
     ijkmp_set_inject_opaque(_mediaPlayer, (__bridge_retained void *) weakHolder);
+    ijkmp_set_ijkio_inject_opaque(_mediaPlayer, (__bridge_retained void *)weakHolder);
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "start-on-prepared", _shouldAutoplay ? 1 : 0);
 
     _view = _glView = glView;
@@ -325,8 +327,8 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 //        [self setHudValue:nil forKey:@"t-http-open"];
 //        [self setHudValue:nil forKey:@"t-http-seek"];
 //    }
-    
-//    [self setHudValue:nil forKey:@"path"];
+//
+    [self setHudUrl:_contentURL];
     
     //解决中文路径 bluray://中文编码/打不开流问题
     //[absoluteString] 遇到中文，不会解码，因此需要 stringByRemovingPercentEncoding
@@ -663,9 +665,9 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
     _nativeInvokeDelegate   = nil;
 
     __unused id weakPlayer = (__bridge_transfer IJKFFMoviePlayerController*)ijkmp_set_weak_thiz(_mediaPlayer, NULL);
-#if ! IJK_IO_OFF
     __unused id weakHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_inject_opaque(_mediaPlayer, NULL);
-#endif
+    __unused id weakijkHolder = (__bridge_transfer IJKWeakHolder*)ijkmp_set_ijkio_inject_opaque(_mediaPlayer, NULL);
+
     ijkmp_dec_ref_p(&_mediaPlayer);
 
     [self didShutdown];
@@ -757,7 +759,6 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
         return 0.0f;
 
     NSTimeInterval demux_cache = ((NSTimeInterval)ijkmp_get_playable_duration(_mediaPlayer)) / 1000;
-#if ! IJK_IO_OFF
     int64_t buf_forwards = _asyncStat.buf_forwards;
     int64_t bit_rate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
 
@@ -765,7 +766,6 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
         NSTimeInterval io_cache = ((float)buf_forwards) * 8 / bit_rate;
         demux_cache += io_cache;
     }
-#endif
     return demux_cache;
 }
 
@@ -870,6 +870,13 @@ inline static NSString *formatedDurationMilli(int64_t duration) {
     }
 }
 
+inline static NSString *formatedDurationBytesAndBitrate(int64_t bytes, int64_t bitRate) {
+    if (bitRate <= 0) {
+        return @"inf";
+    }
+    return formatedDurationMilli(((float)bytes) * 8 * 1000 / bitRate);
+}
+
 inline static NSString *formatedSize(int64_t bytes) {
     if (bytes >= 100 * 1024) {
         return [NSString stringWithFormat:@"%.2f MB", ((float)bytes) / 1000 / 1024];
@@ -956,6 +963,21 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     [self setHudValue:[NSString stringWithFormat:@"%.3f %.3f", avdelay, -vmdiff] forKey:@"delay-avdiff"];
 
     if (self.monitor.httpUrl) {
+        int64_t bitRate = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_BIT_RATE, 0);
+        [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
+                             formatedSize(_cacheStat.cache_file_forwards),
+                              formatedDurationBytesAndBitrate(_cacheStat.cache_file_forwards, bitRate)] forKey:@"cache-forwards"];
+        [self setHudValue:formatedSize(_cacheStat.cache_physical_pos) forKey:@"cache-physical-pos"];
+        [self setHudValue:formatedSize(_cacheStat.cache_file_pos) forKey:@"cache-file-pos"];
+        [self setHudValue:formatedSize(_cacheStat.cache_count_bytes) forKey:@"cache-bytes"];
+        [self setHudValue:[NSString stringWithFormat:@"-%@, %@",
+                              formatedSize(_asyncStat.buf_backwards),
+                              formatedDurationBytesAndBitrate(_asyncStat.buf_backwards, bitRate)]
+                      forKey:@"async-backward"];
+        [self setHudValue:[NSString stringWithFormat:@"+%@, %@",
+                              formatedSize(_asyncStat.buf_forwards),
+                              formatedDurationBytesAndBitrate(_asyncStat.buf_forwards, bitRate)]
+                      forKey:@"async-forward"];
         int64_t tcpSpeed = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
         [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
                    forKey:@"tcp-spd"];
@@ -1112,6 +1134,13 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     if (!_mediaPlayer)
         return 0.0f;
     return ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_PLAYBACK_VOLUME, 1.0f);
+}
+
+- (int64_t)getFileSize
+{
+    if (!_mediaPlayer)
+        return 0;
+    return ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_LOGICAL_FILE_SIZE, 0);
 }
 
 - (int64_t)trafficStatistic
@@ -1591,18 +1620,15 @@ static int media_player_msg_loop(void* arg)
     }
 }
 
-#if ! IJK_IO_OFF
-
-- (void)setHudUrl:(NSString *)urlString
+- (void)setHudUrl:(NSURL *)url
 {
     if ([[NSThread currentThread] isMainThread]) {
-        NSURL *url = [NSURL URLWithString:urlString];
         [self setHudValue:url.scheme forKey:@"scheme"];
         [self setHudValue:url.host   forKey:@"host"];
         [self setHudValue:url.path   forKey:@"path"];
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self setHudUrl:urlString];
+            [self setHudUrl:url];
         });
     }
 }
@@ -1694,6 +1720,16 @@ static int onInjectAsyncStatistic(IJKFFMoviePlayerController *mpc, int type, voi
     return 0;
 }
 
+static int onInectIJKIOStatistic(IJKFFMoviePlayerController *mpc, int type, void *data, size_t data_size)
+{
+    IjkIOAppCacheStatistic *realData = data;
+    assert(realData);
+    assert(sizeof(IjkIOAppCacheStatistic) == data_size);
+
+    mpc->_cacheStat = *realData;
+    return 0;
+}
+
 static int64_t calculateElapsed(int64_t begin, int64_t end)
 {
     if (begin <= 0)
@@ -1729,7 +1765,7 @@ static int onInjectOnHttpEvent(IJKFFMoviePlayerController *mpc, int type, void *
             monitor.httpUrl      = url;
             monitor.httpHost     = host;
             monitor.httpOpenTick = SDL_GetTickHR();
-            [mpc setHudUrl:url];
+            [mpc setHudUrl:nsurl];
 
             if (delegate != nil) {
                 dict[IJKMediaEventAttrKey_host]         = [NSString ijk_stringBeEmptyIfNil:host];
@@ -1809,6 +1845,8 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
             return onInjectIOControl(mpc, mpc.liveOpenDelegate, message, data, data_size);
         case AVAPP_EVENT_ASYNC_STATISTIC:
             return onInjectAsyncStatistic(mpc, message, data, data_size);
+        case IJKIOAPP_EVENT_CACHE_STATISTIC:
+            return onInectIJKIOStatistic(mpc, message, data, data_size);
         case AVAPP_CTRL_DID_TCP_OPEN:
             return onInjectTcpIOControl(mpc, mpc.tcpOpenDelegate, message, data, data_size);
         case AVAPP_EVENT_WILL_HTTP_OPEN:
@@ -1821,8 +1859,6 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
         }
     }
 }
-
-#endif
 
 static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int sampleSize, int sampleRate, int channels)
 {

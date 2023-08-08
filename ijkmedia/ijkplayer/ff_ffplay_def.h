@@ -59,10 +59,13 @@
 #endif
 
 #include <stdbool.h>
+#include "ijkavformat/ijkiomanager.h"
+#include "ijkavformat/ijkioapplication.h"
 #include "ff_ffinc.h"
 #include "ff_ffmsg_queue.h"
 #include "ff_ffpipenode.h"
 #include "ijkmeta.h"
+#include "ijkavformat/ijklas.h"
 
 #define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (256 * 1024)
 #define SALTATION_RETURN_VALUE 1000
@@ -494,6 +497,11 @@ typedef struct FFStatistic
     SDL_SpeedSampler2 tcp_read_sampler;
     int64_t latest_seek_load_duration;
     int64_t byte_count;
+    int64_t cache_physical_pos;
+    int64_t cache_file_forwards;
+    int64_t cache_file_pos;
+    int64_t cache_count_bytes;
+    int64_t logical_file_size;
     int drop_frame_count;
     int decode_frame_count;
     float drop_frame_rate;
@@ -681,12 +689,13 @@ typedef struct FFPlayer {
     int         pf_playback_volume_changed;
 
     void               *inject_opaque;
+    void               *ijkio_inject_opaque;
     FFStatistic         stat;
     FFDemuxCacheControl dcc;
 
-#if ! IJK_IO_OFF
     AVApplicationContext *app_ctx;
-#endif
+    IjkIOManagerContext *ijkio_manager_ctx;
+
     int enable_accurate_seek;
     int accurate_seek_timeout;
     int mediacodec_sync;
@@ -696,6 +705,9 @@ typedef struct FFPlayer {
     char *mediacodec_default_name;
     int ijkmeta_delay_init;
     int render_wait_start;
+    int is_manifest;
+    
+    LasPlayerStatistic las_player_statistic;
 
     ijk_audio_samples_callback audio_samples_callback;
 } FFPlayer;
@@ -810,6 +822,8 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->mediacodec_default_name        = NULL; // option
     ffp->ijkmeta_delay_init             = 0; // option
     ffp->render_wait_start              = 0;
+    ffp->is_manifest                    = 0;
+
     ijkmeta_reset(ffp->meta);
 
     SDL_SpeedSamplerReset(&ffp->vfps_sampler);
@@ -822,12 +836,14 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->pf_playback_rate_changed       = 0;
     ffp->pf_playback_volume             = 1.0f;
     ffp->pf_playback_volume_changed     = 0;
-#if ! IJK_IO_OFF
+
     av_application_closep(&ffp->app_ctx);
-#endif
+    ijkio_manager_destroyp(&ffp->ijkio_manager_ctx);
+
     msg_queue_flush(&ffp->msg_queue);
 
     ffp->inject_opaque = NULL;
+    ffp->ijkio_inject_opaque = NULL;
     ffp_reset_statistic(&ffp->stat);
     ffp_reset_demux_cache_control(&ffp->dcc);
 }

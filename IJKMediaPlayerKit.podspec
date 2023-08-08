@@ -37,7 +37,7 @@ TODO: Add long description of the pod here.
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ffmpeg/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
-    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=1 IJK_USE_METAL_2=1',
+    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_USE_METAL_2=1',
     'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework/Resources'
   }
 
@@ -51,7 +51,7 @@ TODO: Add long description of the pod here.
     'EXCLUDED_ARCHS' => 'armv7',
     # fix apple m1 building iOS Simulator platform,linking xxx built
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64',
-    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_IO_OFF=1 IJK_USE_METAL_2=1',
+    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_USE_METAL_2=1',
     'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework'
   }
 
@@ -93,8 +93,6 @@ TODO: Add long description of the pod here.
     'ijkmedia/ijkplayer/android/**/*.*',
     'ijkmedia/ijksdl/android/**/*.*',
     'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}'
-    # need exclude when IJK_IO_OFF is 1.
-    #'ijkmedia/ijkplayer/ijkavformat/*.*'
   s.osx.exclude_files = 
     'ijkmedia/ijksdl/ijksdl_egl.*',
     'ijkmedia/ijksdl/ios/*.*',
