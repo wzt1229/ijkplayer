@@ -141,7 +141,7 @@
 static unsigned sws_flags = SWS_BICUBIC;
 #endif
 
-#define MAX_DEVIATION 50000   // 50ms
+#define MAX_DEVIATION 200000   // 200ms
 #define IJK_EXCHANGE_DECODER_FLAG -1000
 
 typedef struct MyAVPacketList {

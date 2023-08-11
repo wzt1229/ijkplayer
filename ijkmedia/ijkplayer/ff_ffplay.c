@@ -1196,7 +1196,12 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                         is->accurate_seek_start_time = now;
                     }
                     SDL_UnlockMutex(is->accurate_seek_mutex);
-                    av_log(NULL, AV_LOG_INFO, "video accurate_seek start, is->seek_pos=%lld, pts=%lf, is->accurate_seek_time = %lld\n", is->seek_pos, pts, is->accurate_seek_start_time);
+                    
+                    int64_t delta = deviation - MAX_DEVIATION;
+                    double fps = av_q2d(is->video_st->avg_frame_rate);
+                    int need_drop = ceil(delta * fps / 1000 / 1000);
+                    
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek start, is->seek_pos=%lld, first pts=%lf,estimate drop=%d is->accurate_seek_time = %lld\n", is->seek_pos, pts, need_drop, is->accurate_seek_start_time);
                 }
                 is->drop_vframe_count++;
 
@@ -1222,14 +1227,15 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                     video_accurate_seek_fail = 2;  // if KEY_FRAME interval too big, disable accurate seek
                 }
             } else {
-                av_log(NULL, AV_LOG_INFO, "video accurate_seek is ok, is->drop_vframe_count =%d, is->seek_pos=%lld, pts=%lf\n", is->drop_vframe_count, is->seek_pos, pts);
                 if (video_seek_pos == is->seek_pos) {
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is ok, is->drop_vframe_count =%d, is->seek_pos=%lld, pts=%lf\n", is->drop_vframe_count, is->seek_pos, pts);
                     is->drop_vframe_count       = 0;
                     SDL_LockMutex(is->accurate_seek_mutex);
                     is->video_accurate_seek_req = 0;
                     SDL_CondSignal(is->audio_accurate_seek_cond);
                     if (video_seek_pos == is->seek_pos && is->audio_accurate_seek_req && !is->abort_request) {
-                        SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, ffp->accurate_seek_timeout);
+                        int wd = FFMIN((int)(av_gettime_relative() / 1000 - is->accurate_seek_start_time), ffp->accurate_seek_timeout);
+                        SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, wd);
                     } else {
                         ffp_notify_msg2(ffp, FFP_MSG_ACCURATE_SEEK_COMPLETE, (int)(pts * 1000));
                     }
@@ -1257,7 +1263,8 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
             is->video_accurate_seek_req = 0;
             SDL_CondSignal(is->audio_accurate_seek_cond);
             if (is->audio_accurate_seek_req && !is->abort_request) {
-                SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, ffp->accurate_seek_timeout);
+                int wd = FFMIN((int)(av_gettime_relative() / 1000 - is->accurate_seek_start_time), ffp->accurate_seek_timeout);
+                SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, wd);
             } else {
                 if (!isnan(pts)) {
                     ffp_notify_msg2(ffp, FFP_MSG_ACCURATE_SEEK_COMPLETE, (int)(pts * 1000));
@@ -1824,7 +1831,12 @@ static int audio_thread(void *arg)
                                     is->accurate_seek_start_time = now;
                                 }
                                 SDL_UnlockMutex(is->accurate_seek_mutex);
-                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, is->seek_pos=%lld, audio_clock=%lf, is->accurate_seek_start_time = %lld\n", is->seek_pos, audio_clock, is->accurate_seek_start_time);
+                                
+                                int64_t delta = is->seek_pos - frame_pts * 1000 * 1000 - MAX_DEVIATION;
+                                double fps = 1.0 / samples_duration;
+                                int need_drop = ceil(delta * fps / 1000 / 1000);
+                                
+                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, is->seek_pos=%lld, audio_clock=%lf, estimate drop=%d, is->accurate_seek_start_time = %lld\n", is->seek_pos, audio_clock, need_drop, is->accurate_seek_start_time);
                             }
                             is->drop_aframe_count++;
 /* 下面的逻辑是在丢帧的时候保持音视频时间戳在一定的范围内，否则就等待；
@@ -1866,7 +1878,8 @@ static int audio_thread(void *arg)
                                 is->audio_accurate_seek_req = 0;
                                 SDL_CondSignal(is->video_accurate_seek_cond);
                                 if (audio_seek_pos == is->seek_pos && is->video_accurate_seek_req && !is->abort_request) {
-                                    SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, ffp->accurate_seek_timeout);
+                                    int wd = FFMIN((int)(av_gettime_relative() / 1000 - is->accurate_seek_start_time), ffp->accurate_seek_timeout);
+                                    SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, wd);
                                 } else {
                                     ffp_notify_msg2(ffp, FFP_MSG_ACCURATE_SEEK_COMPLETE, (int)(audio_clock * 1000));
                                 }
@@ -1895,7 +1908,8 @@ static int audio_thread(void *arg)
                         is->audio_accurate_seek_req = 0;
                         SDL_CondSignal(is->video_accurate_seek_cond);
                         if (is->video_accurate_seek_req && !is->abort_request) {
-                            SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, ffp->accurate_seek_timeout);
+                            int wd = FFMIN((int)(av_gettime_relative() / 1000 - is->accurate_seek_start_time), ffp->accurate_seek_timeout);
+                            SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, wd);
                         } else {
                             ffp_notify_msg2(ffp, FFP_MSG_ACCURATE_SEEK_COMPLETE, (int)(audio_clock * 1000));
                         }
