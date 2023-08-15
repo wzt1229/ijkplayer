@@ -5264,7 +5264,7 @@ float ffp_get_subtitle_extra_delay(FFPlayer *ffp)
     return ff_sub_get_delay(is->ffSub);
 }
 
-//add + avtive
+//add + active
 int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
 {
     VideoState *is = ffp->is;
@@ -5286,6 +5286,28 @@ int ffp_addOnly_external_subtitle(FFPlayer *ffp, const char *file_name)
     VideoState *is = ffp->is;
     int ret = ff_exSub_addOnly_subtitle(is->ffSub, file_name, ffp->meta);
     if (ret == 0) {
+        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+    }
+    return ret;
+}
+
+//add only
+int ffp_addOnly_external_subtitles(FFPlayer *ffp, const char *file_names [], int count)
+{
+    VideoState *is = ffp->is;
+    int ret = 0;
+    for(int i = 0; i < count; i++) {
+        const char *file = file_names[i];
+        if (file) {
+            int added = ff_exSub_addOnly_subtitle(is->ffSub, file, ffp->meta);
+            if (added == 0) {
+                ret ++;
+            }
+        } else {
+            break;
+        }
+    }
+    if (ret > 0) {
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     }
     return ret;

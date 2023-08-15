@@ -249,52 +249,51 @@ void exSub_subtitle_destroy(IJKEXSubtitle **subp)
 
 static void ijkmeta_set_ex_subtitle_context_l(IjkMediaMeta *meta, struct AVFormatContext *ic, IJKEXSubtitle *sub, int actived_stream)
 {
-    if (!meta || !ic || !sub)
+    if (!meta || !sub)
         return;
 
     if (actived_stream != -1) {
         ijkmeta_set_int64_l(meta, IJKM_KEY_TIMEDTEXT_STREAM, actived_stream);
     }
     
-    IjkMediaMeta *stream_meta = NULL;
+    IjkMediaMeta *stream_meta = ijkmeta_create();
+    if (!stream_meta)
+        return;
+    int idx = sub->next_idx - 1;
+    char *url = sub->pathArr[idx];
+    int stream_idx = idx % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET) + IJK_EX_SUBTITLE_STREAM_OFFSET;
+    ijkmeta_set_int64_l(stream_meta, IJKM_KEY_STREAM_IDX, stream_idx);
+    ijkmeta_set_string_l(stream_meta, IJKM_KEY_TYPE, IJKM_VAL_TYPE__TIMEDTEXT);
+    ijkmeta_set_string_l(stream_meta, IJKM_KEY_EX_SUBTITLE_URL, url);
+    char title[64] = {0};
+    snprintf(title, 64, "Track%d", sub->next_idx);
+    ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title);
+    
+    ijkmeta_append_child_l(meta, stream_meta);
+    
+    if (!ic) {
+        return;
+    }
     for (int i = 0; i < ic->nb_streams; i++) {
         AVStream *st = ic->streams[i];
-        if (!st || !st->codecpar)
-            continue;
+        if (st && st->codecpar) {
+            AVCodecParameters *codecpar = st->codecpar;
+            if (codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+                const char *codec_name = avcodec_get_name(codecpar->codec_id);
+                if (codec_name)
+                    ijkmeta_set_string_l(stream_meta, IJKM_KEY_CODEC_NAME, codec_name);
 
-        stream_meta = ijkmeta_create();
-        if (!stream_meta)
-            continue;
+                AVDictionaryEntry *lang = av_dict_get(st->metadata, "language", NULL, 0);
+                if (lang && lang->value)
+                    ijkmeta_set_string_l(stream_meta, IJKM_KEY_LANGUAGE, lang->value);
 
-        AVCodecParameters *codecpar = st->codecpar;
-        const char *codec_name = avcodec_get_name(codecpar->codec_id);
-        if (codec_name)
-            ijkmeta_set_string_l(stream_meta, IJKM_KEY_CODEC_NAME, codec_name);
-
-        if (codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-            ijkmeta_set_string_l(stream_meta, IJKM_KEY_TYPE, IJKM_VAL_TYPE__TIMEDTEXT);
-                
-            ijkmeta_set_string_l(stream_meta, IJKM_KEY_EX_SUBTITLE_URL, ic->url);
+                AVDictionaryEntry *t = av_dict_get(st->metadata, "title", NULL, 0);
+                if (t && t->value) {
+                    ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, t->value);
+                }
+                break;
+            }
         }
-
-        AVDictionaryEntry *lang = av_dict_get(st->metadata, "language", NULL, 0);
-        if (lang && lang->value)
-            ijkmeta_set_string_l(stream_meta, IJKM_KEY_LANGUAGE, lang->value);
-
-        AVDictionaryEntry *t = av_dict_get(st->metadata, "title", NULL, 0);
-        if (t && t->value) {
-            ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, t->value);
-        } else {
-            char title[64];
-            snprintf(title, 64, "Track%d", sub->next_idx);
-            ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title);
-        }
-        
-        int stream_idx = (sub->next_idx - 1) % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET) + IJK_EX_SUBTITLE_STREAM_OFFSET;
-        ijkmeta_set_int64_l(stream_meta, IJKM_KEY_STREAM_IDX, stream_idx);
-
-        ijkmeta_append_child_l(meta, stream_meta);
-        stream_meta = NULL;
     }
 }
 
@@ -308,14 +307,15 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
         return 1;
     }
     
-    //if open failed not add to ex_sub_url.
-    AVFormatContext* ic = avformat_alloc_context();
-    int err = avformat_open_input(&ic, file_name, NULL, NULL);
-    if (err < 0) {
-        av_log(NULL, AV_LOG_ERROR, "open subtitle failed:%s,err:%d\n", file_name, err);
-        avformat_close_input(&ic);
-        return -3;
-    }
+    AVFormatContext* ic = NULL;
+//    //if open failed not add to ex_sub_url.
+//    AVFormatContext* ic = avformat_alloc_context();
+//    int err = avformat_open_input(&ic, file_name, NULL, NULL);
+//    if (err < 0) {
+//        av_log(NULL, AV_LOG_ERROR, "open subtitle failed:%s,err:%d\n", file_name, err);
+//        avformat_close_input(&ic);
+//        return -3;
+//    }
     
     SDL_LockMutex(sub->mutex);
     //recycle; release mem if the url array has been used
@@ -328,7 +328,7 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
     sub->next_idx++;
     ijkmeta_set_ex_subtitle_context_l(meta, ic, sub, -1);
     SDL_UnlockMutex(sub->mutex);
-    avformat_close_input(&ic);
+//    avformat_close_input(&ic);
     return 0;
 }
 
@@ -345,7 +345,6 @@ int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub)
         }
     }
     SDL_UnlockMutex(sub->mutex);
-    
     return already_added;
 }
 

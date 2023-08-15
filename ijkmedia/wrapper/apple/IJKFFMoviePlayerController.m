@@ -351,22 +351,38 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_prepare_async(_mediaPlayer);
 }
 
-- (BOOL)loadThenActiveSubtitleFile:(NSString *)url
+- (BOOL)loadThenActiveSubtitle:(NSURL *)url
 {
-    if (!_mediaPlayer)
+    if (!_mediaPlayer || !url)
         return NO;
-    
-    int ret = ijkmp_add_active_external_subtitle(_mediaPlayer, [url UTF8String]);
-    return ret >= 0;
+    NSString *file = [url isFileURL] ? [url path] : [url absoluteString];
+    int ret = ijkmp_add_active_external_subtitle(_mediaPlayer, [file UTF8String]);
+    return ret == 0;
 }
 
-- (BOOL)loadSubtitleFileOnly:(NSString *)url
+- (BOOL)loadSubtitleOnly:(NSURL *)url
 {
-    if (!_mediaPlayer)
+    if (!_mediaPlayer || !url)
         return NO;
+    NSString *file = [url isFileURL] ? [url path] : [url absoluteString];
+    int ret = ijkmp_addOnly_external_subtitle(_mediaPlayer, [file UTF8String]);
+    return ret == 0;
+}
+
+- (BOOL)loadSubtitlesOnly:(NSArray<NSURL *> *)urlArr
+{
+    if (!_mediaPlayer || urlArr.count == 0)
+        return NO;
+    const char *files[512] = {0};
+    for (int i = 0; i < MIN(urlArr.count, 512); i++) {
+        NSURL *url = [urlArr objectAtIndex:i];
+        NSString *filePath = [url isFileURL] ? [url path] : [url absoluteString];
+        const char *file = [filePath UTF8String];
+        files[i] = file;
+    }
     
-    int ret = ijkmp_addOnly_external_subtitle(_mediaPlayer, [url UTF8String]);
-    return ret >= 0;
+    int ret = ijkmp_addOnly_external_subtitles(_mediaPlayer, files, (int)urlArr.count);
+    return ret > 0;
 }
 
 - (void)play

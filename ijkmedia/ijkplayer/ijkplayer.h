@@ -219,10 +219,12 @@ void           *ijkmp_set_weak_thiz(IjkMediaPlayer *mp, void *weak_thiz);
 int             ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block);
 void            ijkmp_set_subtitle_extra_delay(IjkMediaPlayer *mp,const float delay);
 float           ijkmp_get_subtitle_extra_delay(IjkMediaPlayer *mp);
-/* add + avtive ex-subtitle */
+/* add + active ex-subtitle */
 int             ijkmp_add_active_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 /* add only ex-subtitle */
 int             ijkmp_addOnly_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
+/* add only ex-subtitle */
+int             ijkmp_addOnly_external_subtitles(IjkMediaPlayer* mp, const char* file_names [], int count);
 /* get video frame queue cache remaining count*/
 int             ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp);
 /* get audio frame queue cache remaining count*/

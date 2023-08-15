@@ -109,10 +109,12 @@ struct IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp);
 //when get or set extra delay,make sure already added external subtitle.
 void      ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay);
 float     ffp_get_subtitle_extra_delay(FFPlayer *ffp);
-/* add + avtive ex-subtitle */
+/* ex-subtitle: add + active */
 int       ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name);
-/* add only ex-subtitle */
+/* ex-subtitle: add but not active; return 0 means succ,1 means already added */
 int       ffp_addOnly_external_subtitle(FFPlayer *ffp, const char *file_name);
+/* ex-subtitle: add but not active; return added count*/
+int       ffp_addOnly_external_subtitles(FFPlayer *ffp, const char *file_names [], int count);
 int       ffp_get_video_frame_cache_remaining(FFPlayer *ffp);
 int       ffp_get_audio_frame_cache_remaining(FFPlayer *ffp);
 /* audio samples realtime observer callback, callback can be NULL */

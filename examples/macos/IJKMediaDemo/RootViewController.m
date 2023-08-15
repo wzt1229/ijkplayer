@@ -1171,11 +1171,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
     
     NSURL *lastUrl = [subtitles lastObject];
     [subtitles removeLastObject];
-    for (NSURL *url in subtitles) {
-        [self.player loadSubtitleFileOnly:[url path]];
-    }
+    [self.player loadSubtitlesOnly:subtitles];
     if (lastUrl) {
-        [self.player loadThenActiveSubtitleFile:[lastUrl path]];
+        [self.player loadThenActiveSubtitle:lastUrl];
     }
 }
 

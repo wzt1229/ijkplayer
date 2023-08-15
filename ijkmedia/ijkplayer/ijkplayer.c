@@ -818,6 +818,15 @@ int ijkmp_addOnly_external_subtitle(IjkMediaPlayer* mp, const char* file_name)
     return retval;
 }
 
+int ijkmp_addOnly_external_subtitles(IjkMediaPlayer* mp, const char* file_names [], int count)
+{
+    assert(file_names);
+    MPTRACE("ijkmp_load_external_subtitles(%d)\n", count);
+    int retval = ffp_addOnly_external_subtitles(mp->ffplayer, file_names, count);
+    MPTRACE("ijkmp_load_external_subtitles()=%d\n", retval);
+    return retval;
+}
+
 int ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp)
 {
     assert(mp);
