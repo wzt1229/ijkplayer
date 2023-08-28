@@ -56,16 +56,17 @@ static int read_packets(FFSubComponent *sub)
             } else {
                 return -3;
             }
-        } while (1);
+        } while (sub->packetq->abort_request == 0);
     }
     return -4;
 }
 
 static int get_packet(FFSubComponent *sub, Decoder *d)
 {
-    while (1) {
+    while (sub->packetq->abort_request == 0) {
         
         if (sub->seek_req >= 0) {
+            av_log(NULL, AV_LOG_DEBUG,"sub seek to:%lld\n",fftime_to_seconds(sub->seek_req));
             if (avformat_seek_file(sub->ic, -1, INT64_MIN, sub->seek_req, INT64_MAX, 0) < 0) {
                 av_log(NULL, AV_LOG_WARNING, "%d: could not seek to position %lld\n",
                        sub->st_idx, sub->seek_req);
@@ -90,20 +91,21 @@ static int get_packet(FFSubComponent *sub, Decoder *d)
             return 0;
         }
     }
+    return -3;
 }
 
-static int decode_a_frame(FFSubComponent *c, Decoder *d, AVSubtitle *sub)
+static int decode_a_frame(FFSubComponent *sub, Decoder *d, AVSubtitle *pkt)
 {
     int ret = AVERROR(EAGAIN);
 
-    for (;;) {
+    for (;sub->packetq->abort_request == 0;) {
         
         do {
             if (d->packet_pending) {
                 d->packet_pending = 0;
             } else {
                 int old_serial = d->pkt_serial;
-                if (get_packet(c, d) < 0)
+                if (get_packet(sub, d) < 0)
                     return -1;
                 if (old_serial != d->pkt_serial) {
                     avcodec_flush_buffers(d->avctx);
@@ -115,12 +117,12 @@ static int decode_a_frame(FFSubComponent *c, Decoder *d, AVSubtitle *sub)
             if (d->queue->serial == d->pkt_serial)
                 break;
             av_packet_unref(d->pkt);
-        } while (1);
+        } while (sub->packetq->abort_request == 0);
 
         int got_frame = 0;
         
         //av_log(NULL, AV_LOG_DEBUG, "sub stream decoder pkt serial:%d\n",d->pkt_serial);
-        ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
+        ret = avcodec_decode_subtitle2(d->avctx, pkt, &got_frame, d->pkt);
         if (ret < 0) {
             ret = AVERROR(EAGAIN);
         } else {
@@ -134,6 +136,7 @@ static int decode_a_frame(FFSubComponent *c, Decoder *d, AVSubtitle *sub)
         if (ret >= 0)
             return 1;
     }
+    return -2;
 }
 
 static int subtitle_thread(void *arg)
@@ -142,8 +145,8 @@ static int subtitle_thread(void *arg)
     Frame *sp;
     int got_subtitle;
     double pts;
-
-    for (;;) {
+    
+    for (;sub->packetq->abort_request == 0;) {
         if (!(sp = frame_queue_peek_writable(sub->frameq)))
             return 0;
         
@@ -155,7 +158,7 @@ static int subtitle_thread(void *arg)
             if (sp->sub.pts != AV_NOPTS_VALUE)
                 pts = sp->sub.pts / (double)AV_TIME_BASE;
             sp->pts = pts;
-            
+            //av_log(NULL, AV_LOG_DEBUG,"sub received frame:%f\n",pts);
             int serial = sub->decoder.pkt_serial;
             if (sub->packetq->serial == serial) {
                 sp->serial = serial;
@@ -225,9 +228,9 @@ int subComponent_close(FFSubComponent **subp)
         return -3;
     }
     
-    av_packet_free(&sub->pkt);
     decoder_abort(&sub->decoder, sub->frameq);
     decoder_destroy(&sub->decoder);
+    av_packet_free(&sub->pkt);
     av_log(NULL, AV_LOG_DEBUG, "sub stream closed:%d\n",sub->st_idx);
     sub->st_idx = -1;
     av_freep(subp);
