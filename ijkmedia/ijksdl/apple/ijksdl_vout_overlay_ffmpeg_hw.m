@@ -21,7 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "ijksdl_vout_overlay_videotoolbox.h"
+#include "ijksdl_vout_overlay_ffmpeg_hw.h"
 
 #include <assert.h>
 #include "ijksdl_stdinc.h"
@@ -132,7 +132,7 @@ static bool check_object(SDL_VoutOverlay* object, const char *func_name)
     return true;
 }
 
-CVPixelBufferRef SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(SDL_VoutOverlay *overlay)
+CVPixelBufferRef SDL_VoutFFmpeg_HW_GetCVPixelBufferRef(SDL_VoutOverlay *overlay)
 {
     if (!check_object(overlay, __func__))
         return NULL;
@@ -141,9 +141,9 @@ CVPixelBufferRef SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(SDL_VoutOverlay
     return opaque->pixel_buffer;
 }
 
-SDL_VoutOverlay *SDL_VoutVideoToolBox_CreateOverlay(int width, int height, SDL_Vout *display)
+SDL_VoutOverlay *SDL_VoutFFmpeg_HW_CreateOverlay(int width, int height, SDL_Vout *display)
 {
-    SDLTRACE("SDL_VoutVideoToolBox_CreateOverlay(w=%d, h=%d, fmt=_VTB, dp=%p)\n",
+    SDLTRACE("SDL_FFmpeg_HW_CreateOverlay(w=%d, h=%d, fmt=_VTB, dp=%p)\n",
              width, height, display);
     SDL_VoutOverlay *overlay = SDL_VoutOverlay_CreateInternal(sizeof(SDL_VoutOverlay_Opaque));
     if (!overlay) {

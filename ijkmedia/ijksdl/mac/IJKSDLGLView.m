@@ -52,7 +52,7 @@
 #import <OpenGL/glext.h>
 #import "ijksdl_timer.h"
 #import "ijksdl_gles2.h"
-#import "ijksdl_vout_overlay_videotoolbox.h"
+#import "ijksdl_vout_overlay_ffmpeg_hw.h"
 #import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
@@ -453,13 +453,15 @@ static bool _is_need_dispath_to_global(void)
     CVPixelBufferRef pixelBuffer = NULL;
     NSDictionary *options = @{
         (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
-        (__bridge NSString*)kCVPixelBufferMetalCompatibilityKey : @YES,
         (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
     };
     
     CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict.w, pict.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
     
-    NSParameterAssert(ret == kCVReturnSuccess && pixelBuffer != NULL);
+    if (ret != kCVReturnSuccess || pixelBuffer == NULL) {
+        ALOGE("CVPixelBufferCreate subtitle failed:%d",ret);
+        return NULL;
+    }
     
     CVPixelBufferLockBaseAddress(pixelBuffer, 0);
     

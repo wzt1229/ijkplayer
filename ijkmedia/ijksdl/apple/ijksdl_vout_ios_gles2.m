@@ -27,7 +27,7 @@
 #include "ijksdl/ijksdl_vout.h"
 #include "ijksdl/ijksdl_vout_internal.h"
 #include "ijksdl_vout_overlay_ffmpeg.h"
-#include "ijksdl_vout_overlay_videotoolbox.h"
+#include "ijksdl_vout_overlay_ffmpeg_hw.h"
 #if TARGET_OS_IOS
 #include "../ios/IJKSDLGLView.h"
 #else
@@ -74,7 +74,7 @@ static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_for
 {
     switch (src_format) {
         case AV_PIX_FMT_VIDEOTOOLBOX:
-            return SDL_VoutVideoToolBox_CreateOverlay(width, height, vout);
+            return SDL_VoutFFmpeg_HW_CreateOverlay(width, height, vout);
         default:
             return SDL_VoutFFmpeg_CreateOverlay(width, height, src_format, cvpixelbufferpool, vout);
     }
@@ -110,7 +110,7 @@ static CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay
 {
     switch (overlay->format) {
         case SDL_FCC__VTB:
-            return SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(overlay);
+            return SDL_VoutFFmpeg_HW_GetCVPixelBufferRef(overlay);
         case SDL_FCC__FFVTB:
             return SDL_VoutFFmpeg_GetCVPixelBufferRef(overlay);
         default:

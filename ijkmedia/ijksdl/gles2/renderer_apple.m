@@ -38,7 +38,7 @@
 #endif
 
 #import <CoreVideo/CoreVideo.h>
-#include "ijksdl_vout_overlay_videotoolbox.h"
+#include "ijksdl_vout_overlay_ffmpeg_hw.h"
 #include "ijksdl_vout_overlay_ffmpeg.h"
 #include "renderer_pixfmt.h"
 #import "ijk_vout_common.h"

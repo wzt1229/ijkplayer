@@ -192,6 +192,15 @@ float arib_b67_inverse_oetf(float x)
     x = (exp((x - ARIB_B67_C) / ARIB_B67_A) + ARIB_B67_B) / 12.0;
     return x;
 }
+
+float3 arib_b67_inverse_oetf_vec(float3 v)
+{
+    float r = arib_b67_inverse_oetf(v.r);
+    float g = arib_b67_inverse_oetf(v.g);
+    float b = arib_b67_inverse_oetf(v.b);
+    return float3(r, g, b);
+}
+
 float ootf_1_2(float x)
 {
     return x < 0.0 ? x : pow(x, 1.2);
@@ -200,6 +209,15 @@ float arib_b67_eotf(float x)
 {
     return ootf_1_2(arib_b67_inverse_oetf(x));
 }
+
+float3 arib_b67_eotf_vec(float3 v)
+{
+    float r = arib_b67_eotf(v.r);
+    float g = arib_b67_eotf(v.g);
+    float b = arib_b67_eotf(v.b);
+    return float3(r, g, b);
+}
+
 // arib b67 eotf]
 
 // [st 2084 eotf
@@ -211,13 +229,21 @@ float st_2084_eotf(float x)
     constexpr float ST2084_C1 = 0.8359375;
     constexpr float ST2084_C2 = 18.8515625;
     constexpr float ST2084_C3 = 18.6875;
-//    constexpr float FLT_MIN = 1.17549435082228750797e-38;
     
     float xpow = pow(x, float(1.0 / ST2084_M2));
     float num = max(xpow - ST2084_C1, 0.0);
     float den = max(ST2084_C2 - ST2084_C3 * xpow, FLT_MIN);
     return pow(num/den, 1.0 / ST2084_M1);
 }
+
+float3 st_2084_eotf_vec(float3 v)
+{
+    float r = st_2084_eotf(v.r);
+    float g = st_2084_eotf(v.g);
+    float b = st_2084_eotf(v.b);
+    return float3(r, g, b);
+}
+
 // st 2084 eotf]
 
 // [tonemap hable
@@ -234,16 +260,46 @@ float hableF(float inVal)
 }
 // tonemap hable]
 
+float mobius(float in, float j, float peak)
+{
+    float a, b;
+
+    if (in <= j)
+        return in;
+
+    a = -j * j * (peak - 1.0f) / (j * j - 2.0f * j + peak);
+    b = (j * j - 2.0f * j * peak + peak) / max(peak - 1.0f, 1e-6);
+
+    return (b * b + 2.0f * b * j + j * j) / (b - a) * (in + a) / (in + b);
+}
+
 // [bt709
 float rec_1886_inverse_eotf(float x)
 {
     return x < 0.0 ? 0.0 : pow(x, 1.0 / 2.4);
 }
 
+float3 rec_1886_inverse_eotf_vec(float3 v)
+{
+    float r = rec_1886_inverse_eotf(v.r);
+    float g = rec_1886_inverse_eotf(v.g);
+    float b = rec_1886_inverse_eotf(v.b);
+    return float3(r, g, b);
+}
+
 float rec_1886_eotf(float x)
 {
     return x < 0.0 ? 0.0 : pow(x, 2.4);
 }
+
+float3 rec_1886_eotf_vec(float3 v)
+{
+    float r = rec_1886_eotf(v.r);
+    float g = rec_1886_eotf(v.g);
+    float b = rec_1886_eotf(v.b);
+    return float3(r, g, b);
+}
+
 // bt709]
 // mark -hdr helps
 
@@ -268,7 +324,7 @@ fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
                         textureUV.sample(textureSampler, input.textureCoordinate).rg);
     //使用 BT.2020 矩阵转为RGB
     device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
-    
+    //这里的RGB是经过 伽马 校正的，因此是曲线的
     float3 rgb10bit = convertMatrix->matrix * (yuv + convertMatrix->offset);
     
     float3 myFragColor;
@@ -277,22 +333,23 @@ fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
         float peak_luminance = 50.0;
         if (convertMatrix->transferFun == IJKColorTransferFuncPQ) {
            float to_linear_scale = 10000.0 / peak_luminance;
-           myFragColor = to_linear_scale * float3(st_2084_eotf(rgb10bit.r), st_2084_eotf(rgb10bit.g), st_2084_eotf(rgb10bit.b));
+           myFragColor = to_linear_scale * st_2084_eotf_vec(rgb10bit);
         } else if (convertMatrix->transferFun == IJKColorTransferFuncHLG) {
            float to_linear_scale = 1000.0 / peak_luminance;
-           myFragColor = to_linear_scale * float3(arib_b67_eotf(rgb10bit.r), arib_b67_eotf(rgb10bit.g), arib_b67_eotf(rgb10bit.b));
+           myFragColor = to_linear_scale * arib_b67_eotf_vec(rgb10bit);
         } else {
-           myFragColor = float3(rec_1886_eotf(rgb10bit.r), rec_1886_eotf(rgb10bit.g), rec_1886_eotf(rgb10bit.b));
+           myFragColor = rec_1886_eotf_vec(rgb10bit);
         }
 
         // 2、HDR 线性光信号做颜色空间转换（Color Space Converting）
         // color-primaries REC_2020 to REC_709
         matrix_float3x3 rgb2xyz2020 = matrix_float3x3(0.6370, 0.1446, 0.1689,
-                               0.2627, 0.6780, 0.0593,
-                               0.0000, 0.0281, 1.0610);
+                                                      0.2627, 0.6780, 0.0593,
+                                                      0.0000, 0.0281, 1.0610);
         matrix_float3x3 xyz2rgb709 = matrix_float3x3(3.2410, -1.5374, -0.4986,
-                              -0.9692, 1.8760, 0.0416,
-                              0.0556, -0.2040, 1.0570);
+                                                    -0.9692, 1.8760, 0.0416,
+                                                     0.0556, -0.2040, 1.0570);
+        
         myFragColor *= rgb2xyz2020 * xyz2rgb709;
 
         // 3、HDR 线性光信号色调映射为 SDR 线性光信号（Tone Mapping）
@@ -303,7 +360,7 @@ fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
         myFragColor *= sig / sig_orig;
 
         // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
-        myFragColor = float3(rec_1886_inverse_eotf(myFragColor.r), rec_1886_inverse_eotf(myFragColor.g), rec_1886_inverse_eotf(myFragColor.b));
+        myFragColor = rec_1886_inverse_eotf_vec(myFragColor);
     } else {
         myFragColor = rgb10bit;
     }

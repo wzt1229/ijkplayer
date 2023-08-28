@@ -633,14 +633,16 @@ typedef CGRect NSRect;
 {
     CVPixelBufferRef pixelBuffer = NULL;
     NSDictionary *options = @{
-        (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
         (__bridge NSString*)kCVPixelBufferMetalCompatibilityKey : @YES,
         (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
     };
     
     CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict.w, pict.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
     
-    NSParameterAssert(ret == kCVReturnSuccess && pixelBuffer != NULL);
+    if (ret != kCVReturnSuccess || pixelBuffer == NULL) {
+        ALOGE("CVPixelBufferCreate subtitle failed:%d",ret);
+        return NULL;
+    }
     
     CVPixelBufferLockBaseAddress(pixelBuffer, 0);
     

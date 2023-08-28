@@ -21,15 +21,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef __IJKMediaPlayer__ijksdl_vout_overlay_videotoolbox__
-#define __IJKMediaPlayer__ijksdl_vout_overlay_videotoolbox__
+#ifndef __IJKMediaPlayer__ijksdl_vout_overlay_ffmpeg_hw__
+#define __IJKMediaPlayer__ijksdl_vout_overlay_ffmpeg_hw__
 
 #import <CoreVideo/CoreVideo.h>
 #include "ijksdl_stdinc.h"
 #include "ijksdl_vout.h"
 #include "ijksdl_inc_ffmpeg.h"
 
-SDL_VoutOverlay *SDL_VoutVideoToolBox_CreateOverlay(int width, int height, SDL_Vout *vout);
-CVPixelBufferRef SDL_VoutOverlayVideoToolBox_GetCVPixelBufferRef(SDL_VoutOverlay *overlay);
+SDL_VoutOverlay *SDL_VoutFFmpeg_HW_CreateOverlay(int width, int height, SDL_Vout *vout);
+CVPixelBufferRef SDL_VoutFFmpeg_HW_GetCVPixelBufferRef(SDL_VoutOverlay *overlay);
 
 #endif
