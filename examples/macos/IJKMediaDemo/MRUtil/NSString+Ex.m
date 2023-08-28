@@ -25,4 +25,25 @@
             ];
 }
 
+- (NSString *)percentEncoding
+{
+    NSString *encodedString = nil;
+    NSString *needPercentCharacters = @"?!@#$^&%*+,:;='\"`<>()[]{}/\\| ";
+    NSCharacterSet *notAllowedCharacters = [NSCharacterSet characterSetWithCharactersInString:needPercentCharacters];
+    NSCharacterSet *allowedCharacters = [notAllowedCharacters invertedSet];
+    
+    encodedString = [self stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
+    if(!encodedString)
+        encodedString = @"";
+    return encodedString;
+}
+
+- (NSString *)percentDecoding
+{
+    NSString *encodedString = [self stringByRemovingPercentEncoding];
+    if(!encodedString)
+        encodedString = @"";
+    return encodedString;
+}
+
 @end

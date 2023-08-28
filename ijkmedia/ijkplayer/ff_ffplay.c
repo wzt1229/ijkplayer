@@ -1009,10 +1009,6 @@ retry:
                 }
             }
             
-            if (ff_sub_drop_frames_lessThan_pts(is->ffSub, is->vidclk.pts) > 0) {
-                update_subtitle_text(ffp, "");
-            }
-            
             frame_queue_next(&is->pictq);
             is->force_refresh = 1;
 
@@ -3506,7 +3502,8 @@ static int read_thread(void *arg)
                 //seek the extra subtitle
                 int sec = (int)fftime_to_seconds(seek_target);
                 float delay = ff_sub_get_delay(is->ffSub);
-                ff_sub_set_delay(is->ffSub, delay, sec);
+                ff_sub_seek_to(is->ffSub, delay, sec);
+                //ff_sub_set_delay(is->ffSub, delay, sec);
             }
             //seek 后降低水位线，让播放器更快满足条件
             ffp->dcc.current_high_water_mark_in_ms = ffp->dcc.first_high_water_mark_in_ms;
@@ -5064,7 +5061,9 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             //seek the extra subtitle
             float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
             float delay = ff_sub_get_delay(is->ffSub);
-            return ff_sub_set_delay(is->ffSub, delay, sec);
+            //when exchang stream force seek stream instead of ff_sub_set_delay
+            ff_sub_seek_to(is->ffSub, delay, sec);
+            return 0;
         } else if (r > 0){
             return 0;
         } else {
@@ -5274,6 +5273,10 @@ int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
         ff_sub_close_current(is->ffSub);
         int ret = ff_exSub_add_active_subtitle(is->ffSub, file_name, ffp->meta);
         if (ret == 0) {
+            //seek the extra subtitle
+            float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
+            float delay = ff_sub_get_delay(is->ffSub);
+            ff_sub_seek_to(is->ffSub, delay, sec);
             ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
         }
         return ret;

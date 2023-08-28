@@ -93,7 +93,6 @@ static BOOL hdrAnimationShown = 0;
     [NSEvent removeMonitor:self.eventMonitor];
 }
 
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do view setup here.
@@ -675,8 +674,7 @@ static BOOL hdrAnimationShown = 0;
     [options setPlayerOptionIntValue:hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
-    int startTime = (int)([self readCurrentPlayRecord] * 1000);
-    [options setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
+    
     options.metalRenderer = !self.use_openGL;
     options.showHudView = self.shouldShowHudView;
     
@@ -963,7 +961,7 @@ static BOOL hdrAnimationShown = 0;
                 NSString *url = stream[k_IJKM_KEY_EX_SUBTITLE_URL];
                 NSString *title = nil;
                 if (url) {
-                    title = [[url lastPathComponent] stringByDeletingPathExtension];
+                    title = [[url lastPathComponent] stringByRemovingPercentEncoding];
                 } else {
                     title = stream[k_IJKM_KEY_TITLE];
                     if (title.length == 0) {
@@ -1043,6 +1041,9 @@ static BOOL hdrAnimationShown = 0;
     p.ratio = [number floatValue];
     self.player.view.subtitlePreference = p;
     
+    int startTime = (int)([self readCurrentPlayRecord] * 1000);
+//    [options setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
+    [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
     [self.player prepareToPlay];
     [self onTick:nil];
 }

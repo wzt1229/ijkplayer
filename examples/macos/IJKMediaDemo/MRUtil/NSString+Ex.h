@@ -13,6 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface NSString (Ex)
 
 - (NSString *)md5Hash;
+- (NSString *)percentEncoding;
+- (NSString *)percentDecoding;
 
 @end
 
