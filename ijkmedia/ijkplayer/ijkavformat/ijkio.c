@@ -108,9 +108,10 @@ static int ijkio_close(URLContext *h)
 
 #define OFFSET(x) offsetof(Context, x)
 #define D AV_OPT_FLAG_DECODING_PARAM
-
+//https://github.com/bilibili/ijkplayer/issues/4188#issuecomment-748018496
 static const AVOption options[] = {
     { "ijkiomanager", "IjkIOManagerContext", OFFSET(io_manager_ctx), AV_OPT_TYPE_INT64, { .i64 = 0 }, INT64_MIN, INT64_MAX, .flags = D },
+    { NULL }
 };
 
 #undef D

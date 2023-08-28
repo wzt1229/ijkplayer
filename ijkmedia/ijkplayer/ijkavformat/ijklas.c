@@ -214,7 +214,7 @@ typedef struct LasContext {
 } LasContext;
 
 #pragma mark common util
-inline static int64_t get_current_time_ms() {
+inline static int64_t get_current_time_ms(void) {
     return av_gettime_relative() / 1000;
 }
 

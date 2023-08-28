@@ -536,7 +536,7 @@ static const AVOption options[] = {
     { "async-backwards-capacity",   "max bytes that may be seek backward without seeking in inner protocol",
         OFFSET(backwards_capacity), AV_OPT_TYPE_INT64, {.i64 = 128 * 1024}, 128 * 1024, 128 * 1024 * 1024, D },
     { "ijkapplication", "AVApplicationContext", OFFSET(app_ctx_intptr), AV_OPT_TYPE_INT64, { .i64 = 0 }, INT64_MIN, INT64_MAX, .flags = D },
-    {NULL},
+    {NULL}
 };
 
 #undef D
@@ -638,7 +638,7 @@ static int64_t async_test_seek(URLContext *h, int64_t pos, int whence)
 static const AVOption async_test_options[] = {
     { "async-test-read-error",      "cause read fail",
         OFFSET(opt_read_error),     AV_OPT_TYPE_INT, { .i64 = 0 }, INT_MIN, INT_MAX, .flags = D },
-    {NULL},
+    {NULL}
 };
 
 #undef D
