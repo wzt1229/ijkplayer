@@ -2,9 +2,11 @@
 
 set -e
 
-VERSION_CODE=1000000
-VERSION_NAME=0.10.0
+VERSION_CODE=1000100
+VERSION_NAME=0.10.1
 VERSION_TARGET=$1
+
+echo "alter version to $VERSION_NAME"
 
 do_version_readme() {
     # README.md
