@@ -14,17 +14,18 @@
 #include "ff_ass_parser.h"
 #include "ff_sub_component.h"
 
-#define IJK_EX_SUBTITLE_STREAM_OFFSET   1000
-#define IJK_EX_SUBTITLE_STREAM_MAX      1100
+#define IJK_EX_SUBTITLE_STREAM_MAX_COUNT 100
+#define IJK_EX_SUBTITLE_STREAM_MIN_OFFSET   1000
+#define IJK_EX_SUBTITLE_STREAM_MAX_OFFSET (IJK_EX_SUBTITLE_STREAM_MIN_OFFSET + IJK_EX_SUBTITLE_STREAM_MAX_COUNT)
 
 typedef struct IJKEXSubtitle {
     SDL_mutex* mutex;
     FFSubComponent* opaque;
     AVFormatContext* ic;
-    int stream_idx;//相对于 IJK_EX_SUBTITLE_STREAM_OFFSET 的
+    int stream_idx;//相对于 IJK_EX_SUBTITLE_STREAM_MIN_OFFSET 的
     FrameQueue * frameq;
     PacketQueue * pktq;
-    char* pathArr[IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET];
+    char* pathArr[IJK_EX_SUBTITLE_STREAM_MAX_COUNT];
     int   next_idx;
 }IJKEXSubtitle;
 
@@ -71,8 +72,8 @@ int exSub_seek_to(IJKEXSubtitle *sub, float sec)
 static int convert_idx_from_stream(int idx)
 {
     int arr_idx = -1;
-    if (idx >= IJK_EX_SUBTITLE_STREAM_OFFSET && idx < IJK_EX_SUBTITLE_STREAM_MAX) {
-        arr_idx = (idx - IJK_EX_SUBTITLE_STREAM_OFFSET) % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
+    if (idx >= IJK_EX_SUBTITLE_STREAM_MIN_OFFSET && idx < IJK_EX_SUBTITLE_STREAM_MAX_OFFSET) {
+        arr_idx = (idx - IJK_EX_SUBTITLE_STREAM_MIN_OFFSET) % IJK_EX_SUBTITLE_STREAM_MAX_COUNT;
     }
     return arr_idx;
 }
@@ -234,8 +235,7 @@ void exSub_subtitle_destroy(IJKEXSubtitle **subp)
     exSub_close_current(sub);
 
     SDL_LockMutex(sub->mutex);
-    int sub_max = IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET;
-    for (int i = 0; i < sub_max; i++) {
+    for (int i = 0; i < sub->next_idx; i++) {
         if (sub->pathArr[i]) {
             av_free(sub->pathArr[i]);
         }
@@ -261,7 +261,7 @@ static void ijkmeta_set_ex_subtitle_context_l(IjkMediaMeta *meta, struct AVForma
         return;
     int idx = sub->next_idx - 1;
     char *url = sub->pathArr[idx];
-    int stream_idx = idx % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET) + IJK_EX_SUBTITLE_STREAM_OFFSET;
+    int stream_idx = idx + IJK_EX_SUBTITLE_STREAM_MIN_OFFSET;
     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_STREAM_IDX, stream_idx);
     ijkmeta_set_string_l(stream_meta, IJKM_KEY_TYPE, IJKM_VAL_TYPE__TIMEDTEXT);
     ijkmeta_set_string_l(stream_meta, IJKM_KEY_EX_SUBTITLE_URL, url);
@@ -307,28 +307,16 @@ int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMe
         return 1;
     }
     
-    AVFormatContext* ic = NULL;
-//    //if open failed not add to ex_sub_url.
-//    AVFormatContext* ic = avformat_alloc_context();
-//    int err = avformat_open_input(&ic, file_name, NULL, NULL);
-//    if (err < 0) {
-//        av_log(NULL, AV_LOG_ERROR, "open subtitle failed:%s,err:%d\n", file_name, err);
-//        avformat_close_input(&ic);
-//        return -3;
-//    }
-    
-    SDL_LockMutex(sub->mutex);
-    //recycle; release mem if the url array has been used
-    int idx = sub->next_idx % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
-    char* current = sub->pathArr[idx];
-    if (current) {
-        av_free(current);
+    if (sub->next_idx < IJK_EX_SUBTITLE_STREAM_MAX_COUNT) {
+        SDL_LockMutex(sub->mutex);
+        int idx = sub->next_idx;
+        sub->pathArr[idx] = av_strdup(file_name);
+        sub->next_idx++;
+        ijkmeta_set_ex_subtitle_context_l(meta, NULL, sub, -1);
+        SDL_UnlockMutex(sub->mutex);
+    } else {
+        return -2;
     }
-    sub->pathArr[idx] = av_strdup(file_name);
-    sub->next_idx++;
-    ijkmeta_set_ex_subtitle_context_l(meta, ic, sub, -1);
-    SDL_UnlockMutex(sub->mutex);
-//    avformat_close_input(&ic);
     return 0;
 }
 
@@ -337,7 +325,7 @@ int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub)
     SDL_LockMutex(sub->mutex);
     bool already_added = 0;
     //maybe already added.
-    for (int i = 0; i < IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET; i++) {
+    for (int i = 0; i < sub->next_idx; i++) {
         char* next = sub->pathArr[i];
         if (next && (0 == av_strcasecmp(next, file_name))) {
             already_added = 1;
@@ -358,25 +346,24 @@ int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name,IjkMedia
         return 1;
     }
     
-    //recycle; release memory if the url array has been used
-    int idx = sub->next_idx % (IJK_EX_SUBTITLE_STREAM_MAX - IJK_EX_SUBTITLE_STREAM_OFFSET);
+    int idx = sub->next_idx;
     
-    int r = exSub_open_filepath(sub, file_name, idx + IJK_EX_SUBTITLE_STREAM_OFFSET);
-    if (r != 0) {
-        av_log(NULL, AV_LOG_ERROR, "could not open ex subtitle:(%d)%s\n", r, file_name);
-        return -5;
+    if (idx < IJK_EX_SUBTITLE_STREAM_MAX_COUNT) {
+        int r = exSub_open_filepath(sub, file_name, idx + IJK_EX_SUBTITLE_STREAM_MIN_OFFSET);
+        if (r != 0) {
+            av_log(NULL, AV_LOG_ERROR, "could not open ex subtitle:(%d)%s\n", r, file_name);
+            return -2;
+        }
+        
+        SDL_LockMutex(sub->mutex);
+        sub->pathArr[idx] = av_strdup(file_name);
+        sub->next_idx++;
+        ijkmeta_set_ex_subtitle_context_l(meta, sub->ic, sub, idx + IJK_EX_SUBTITLE_STREAM_MIN_OFFSET);
+        SDL_UnlockMutex(sub->mutex);
+        return 0;
+    } else {
+        return -3;
     }
-    
-    SDL_LockMutex(sub->mutex);
-    char* current = sub->pathArr[idx];
-    if (current) {
-        av_free(current);
-    }
-    sub->pathArr[idx] = av_strdup(file_name);
-    sub->next_idx++;
-    ijkmeta_set_ex_subtitle_context_l(meta, sub->ic, sub, idx + IJK_EX_SUBTITLE_STREAM_OFFSET);
-    SDL_UnlockMutex(sub->mutex);
-    return 0;
 }
 
 int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx)
@@ -387,7 +374,7 @@ int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx)
     
     SDL_LockMutex(sub->mutex);
     int arr_idx = convert_idx_from_stream(idx);
-    if (NULL == sub->pathArr[arr_idx]) {
+    if (arr_idx < 0 || arr_idx >= sub->next_idx || NULL == sub->pathArr[arr_idx]) {
         av_log(NULL, AV_LOG_ERROR, "invalid stream index %d is NULL\n", idx);
         arr_idx = -1;
     }
