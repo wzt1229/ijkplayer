@@ -25,6 +25,7 @@
 #include "ijksdl_vout_overlay_ffmpeg.h"
 #include "../ijksdl_vout_internal.h"
 #include "ijk_vout_common.h"
+#include <libavutil/hwcontext_videotoolbox.h>
 
 #define USE_VIMAGE_ACCELERATE 0
 
@@ -184,7 +185,7 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
         //Y′ values are conventionally shifted and scaled to the range [16, 235] (referred to as studio swing or "TV levels") rather than using the full range of [0, 255] (referred to as full swing or "PC levels").
         //https://en.wikipedia.org/wiki/YUV#Numerical_approximations
         
-        const bool fullRange = frame->color_range != AVCOL_RANGE_MPEG;
+        const bool fullRange = frame->color_range == AVCOL_RANGE_JPEG;
         NSDictionary * attributes = prepareCVPixelBufferAttibutes(format, fullRange, h, w);
         
         if (!attributes) {
@@ -203,64 +204,7 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
     }
     
     if (kCVReturnSuccess == result) {
-        switch (frame->color_primaries) {
-            case AVCOL_PRI_BT709:
-            {
-                CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldNotPropagate);
-            }
-                break;
-            case AVCOL_PRI_BT2020:
-            {
-                CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_2020, kCVAttachmentMode_ShouldNotPropagate);
-                //only HDR video need trc info.
-                switch (frame->color_trc) {
-                    case AVCOL_TRC_LINEAR:
-                    {
-                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, IJK_TransferFunction_Linear, kCVAttachmentMode_ShouldNotPropagate);
-                    }
-                        break;
-                    case AVCOL_TRC_SMPTE2084:
-                    {
-                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, IJK_TransferFunction_SMPTE_ST_2084_PQ, kCVAttachmentMode_ShouldNotPropagate);
-                    }
-                        break;
-                    case AVCOL_TRC_SMPTE428:
-                    {
-                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, IJK_TransferFunction_SMPTE_ST_428_1, kCVAttachmentMode_ShouldNotPropagate);
-                    }
-                        break;
-                    case AVCOL_TRC_BT2020_10:
-                    case AVCOL_TRC_BT2020_12:
-                    {
-                        //unverified feature
-                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_2020, kCVAttachmentMode_ShouldNotPropagate);
-                    }
-                        break;
-                    case AVCOL_TRC_ARIB_STD_B67:
-                    {
-                        CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, IJK_TransferFunction_ITU_R_2100_HLG, kCVAttachmentMode_ShouldNotPropagate);
-                    }
-                        break;
-                    default:
-                        break;
-                }
-            }
-                break;
-            case AVCOL_PRI_BT470BG:
-            case AVCOL_PRI_BT470M:
-            case AVCOL_PRI_SMPTE170M:
-            case AVCOL_PRI_SMPTE240M:
-            {
-                CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_601_4, kCVAttachmentMode_ShouldNotPropagate);
-            }
-                break;
-            default:
-            {
-                //some video is AVCOL_PRI_UNSPECIFIED
-                CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldNotPropagate);
-            }
-                break;
-        }
+        av_vt_pixbuf_set_attachments(NULL, pixelBuffer, frame);
         
         int planes = 1;
         if (CVPixelBufferIsPlanar(pixelBuffer)) {

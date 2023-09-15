@@ -31,52 +31,52 @@ static BOOL hdrAnimationShown = 0;
     FILE *my_stdout;
 }
 
-@property (weak) IBOutlet NSStackView *advancedView;
-@property (weak) IBOutlet MRBaseView *playerCtrlPanel;
-@property (weak) IBOutlet NSTextField *playedTimeLb;
-@property (weak) IBOutlet NSTextField *durationTimeLb;
-@property (weak) IBOutlet NSButton *playCtrlBtn;
-@property (weak) IBOutlet MRProgressIndicator *playerSlider;
+@property (nonatomic, weak) IBOutlet NSStackView *advancedView;
+@property (nonatomic, weak) IBOutlet MRBaseView *playerCtrlPanel;
+@property (nonatomic, weak) IBOutlet NSTextField *playedTimeLb;
+@property (nonatomic, weak) IBOutlet NSTextField *durationTimeLb;
+@property (nonatomic, weak) IBOutlet NSButton *playCtrlBtn;
+@property (nonatomic, weak) IBOutlet MRProgressIndicator *playerSlider;
 
-@property (weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
-@property (weak) IBOutlet NSPopUpButton *audioPopUpBtn;
-@property (weak) IBOutlet NSPopUpButton *videoPopUpBtn;
-@property (weak) IBOutlet NSTextField *seekCostLb;
-
-@property (weak) NSTrackingArea *trackingArea;
+@property (nonatomic, weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
+@property (nonatomic, weak) IBOutlet NSPopUpButton *audioPopUpBtn;
+@property (nonatomic, weak) IBOutlet NSPopUpButton *videoPopUpBtn;
+@property (nonatomic, weak) IBOutlet NSTextField *seekCostLb;
+@property (nonatomic, weak) NSTrackingArea *trackingArea;
 
 //for cocoa binding begin
-@property (assign) float volume;
-@property (assign) float subtitleDelay;
-@property (assign) float subtitleMargin;
+@property (nonatomic, assign) float volume;
+@property (nonatomic, assign) float subtitleDelay;
+@property (nonatomic, assign) float subtitleMargin;
 
-@property (assign) float brightness;
-@property (assign) float saturation;
-@property (assign) float contrast;
-@property (assign) BOOL use_openGL;
-@property (copy) NSString *fcc;
-@property (assign) int snapshot;
-@property (assign) BOOL shouldShowHudView;
-@property (assign) BOOL accurateSeek;
-@property (assign) BOOL loop;
+@property (nonatomic, assign) float brightness;
+@property (nonatomic, assign) float saturation;
+@property (nonatomic, assign) float contrast;
+@property (nonatomic, assign) BOOL use_openGL;
+@property (nonatomic, copy) NSString *fcc;
+@property (nonatomic, assign) int snapshot;
+@property (nonatomic, assign) BOOL shouldShowHudView;
+@property (nonatomic, assign) BOOL accurateSeek;
+@property (nonatomic, assign) BOOL loop;
 //for cocoa binding end
 
-@property (assign) BOOL seeking;
-@property (weak) id eventMonitor;
+@property (nonatomic, assign) BOOL seeking;
+@property (nonatomic, weak) id eventMonitor;
 
-@property (assign) BOOL autoTest;
+@property (nonatomic, assign) BOOL autoTest;
 //
-@property (assign) BOOL autoSeeked;
-@property (assign) BOOL snapshot2;
-@property (assign) int tickCount;
+@property (nonatomic, assign) BOOL autoSeeked;
+@property (nonatomic, assign) BOOL snapshot2;
+@property (nonatomic, assign) int tickCount;
 
 //player
-@property (strong) IJKFFMoviePlayerController * player;
-@property (strong) IJKKVOController * kvoCtrl;
+@property (nonatomic, strong) IJKFFMoviePlayerController * player;
+@property (nonatomic, strong) IJKKVOController * kvoCtrl;
 
 @property (nonatomic, strong) NSMutableArray *playList;
-@property (copy) NSURL *playingUrl;
-@property (weak) NSTimer *tickTimer;
+@property (nonatomic, strong) NSMutableArray *subtitles;
+@property (nonatomic, copy) NSURL *playingUrl;
+@property (nonatomic, weak) NSTimer *tickTimer;
 
 @end
 
@@ -577,6 +577,14 @@ static BOOL hdrAnimationShown = 0;
     return _playList;
 }
 
+- (NSMutableArray *)subtitles
+{
+    if (!_subtitles) {
+        _subtitles = [NSMutableArray array];
+    }
+    return _subtitles;
+}
+
 - (void)perpareIJKPlayer:(NSURL *)url hwaccel:(BOOL)hwaccel
 {
     if (self.playingUrl) {
@@ -1045,6 +1053,13 @@ static BOOL hdrAnimationShown = 0;
 //    [options setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
     [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
     [self.player prepareToPlay];
+    
+    if ([self.subtitles count] > 0) {
+        NSURL *firstUrl = [self.subtitles firstObject];
+        [self.player loadThenActiveSubtitle:firstUrl];
+        [self.player loadSubtitlesOnly:[self.subtitles subarrayWithRange:NSMakeRange(1, self.subtitles.count - 1)]];
+    }
+    
     [self onTick:nil];
 }
 
@@ -1170,11 +1185,13 @@ static IOPMAssertionID g_displaySleepAssertionID;
         [self playFirstIfNeed];
     }
     
-    NSURL *lastUrl = [subtitles lastObject];
-    [subtitles removeLastObject];
-    [self.player loadSubtitlesOnly:subtitles];
-    if (lastUrl) {
-        [self.player loadThenActiveSubtitle:lastUrl];
+    if ([subtitles count] > 0) {
+        [self.subtitles addObjectsFromArray:subtitles];
+        
+        NSURL *firstUrl = [subtitles firstObject];
+        [subtitles removeObjectAtIndex:0];
+        [self.player loadThenActiveSubtitle:firstUrl];
+        [self.player loadSubtitlesOnly:subtitles];
     }
 }
 
