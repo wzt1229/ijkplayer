@@ -91,7 +91,6 @@ Frame *frame_queue_peek_writable(FrameQueue *f)
 
 Frame *frame_queue_peek_readable(FrameQueue *f)
 {
-    /* wait until we have a readable a new frame */
     SDL_LockMutex(f->mutex);
     while (f->size - f->rindex_shown <= 0 &&
            !f->pktq->abort_request) {
@@ -104,6 +103,23 @@ Frame *frame_queue_peek_readable(FrameQueue *f)
 
     return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
 }
+
+Frame *frame_queue_peek_readable_noblock(FrameQueue *f)
+{
+    SDL_LockMutex(f->mutex);
+    if (f->size - f->rindex_shown <= 0 &&
+           !f->pktq->abort_request) {
+        SDL_UnlockMutex(f->mutex);
+        return NULL;
+    }
+    SDL_UnlockMutex(f->mutex);
+
+    if (f->pktq->abort_request)
+        return NULL;
+
+    return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
+}
+
 
 void frame_queue_push(FrameQueue *f)
 {

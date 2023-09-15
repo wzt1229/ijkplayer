@@ -18,7 +18,10 @@ Frame *frame_queue_peek(FrameQueue *f);
 Frame *frame_queue_peek_next(FrameQueue *f);
 Frame *frame_queue_peek_last(FrameQueue *f);
 Frame *frame_queue_peek_writable(FrameQueue *f);
+// wait until we have a readable a new frame
 Frame *frame_queue_peek_readable(FrameQueue *f);
+//return a readable frame or NULL, not wait
+Frame *frame_queue_peek_readable_noblock(FrameQueue *f);
 void frame_queue_push(FrameQueue *f);
 int frame_queue_nb_remaining(FrameQueue *f);
 void frame_queue_next(FrameQueue *f);

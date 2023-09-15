@@ -25,56 +25,56 @@ static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
     return queue->abort_request || queue->nb_packets > min_frames;
 }
 
-static int read_packets(FFSubComponent *sub)
+static int read_packets(FFSubComponent *sc)
 {
-    if (!sub) {
+    if (!sc) {
         return -1;
     }
     
-    if (sub->eof) {
+    if (sc->eof) {
         return -2;
     }
     
-    if (sub->ic) {
-        sub->pkt->flags = 0;
+    if (sc->ic) {
+        sc->pkt->flags = 0;
         do {
-            if (stream_has_enough_packets(sub->packetq, 5)) {
+            if (stream_has_enough_packets(sc->packetq, 5)) {
                 return 1;
             }
-            int ret = av_read_frame(sub->ic, sub->pkt);
+            int ret = av_read_frame(sc->ic, sc->pkt);
             if (ret >= 0) {
-                if (sub->pkt->stream_index != sub->st_idx) {
-                    av_packet_unref(sub->pkt);
+                if (sc->pkt->stream_index != sc->st_idx) {
+                    av_packet_unref(sc->pkt);
                     continue;
                 }
-                packet_queue_put(sub->packetq, sub->pkt);
+                packet_queue_put(sc->packetq, sc->pkt);
                 continue;
             } else if (ret == AVERROR_EOF) {
-                packet_queue_put_nullpacket(sub->packetq, sub->pkt, sub->st_idx);
-                sub->eof = 1;
+                packet_queue_put_nullpacket(sc->packetq, sc->pkt, sc->st_idx);
+                sc->eof = 1;
                 return 1;
             } else {
                 return -3;
             }
-        } while (sub->packetq->abort_request == 0);
+        } while (sc->packetq->abort_request == 0);
     }
     return -4;
 }
 
-static int get_packet(FFSubComponent *sub, Decoder *d)
+static int get_packets(FFSubComponent *sc, Decoder *d)
 {
-    while (sub->packetq->abort_request == 0) {
+    while (sc->packetq->abort_request == 0) {
         
-        if (sub->seek_req >= 0) {
-            av_log(NULL, AV_LOG_DEBUG,"sub seek to:%lld\n",fftime_to_seconds(sub->seek_req));
-            if (avformat_seek_file(sub->ic, -1, INT64_MIN, sub->seek_req, INT64_MAX, 0) < 0) {
+        if (sc->seek_req >= 0) {
+            av_log(NULL, AV_LOG_DEBUG,"sub seek to:%lld\n",fftime_to_seconds(sc->seek_req));
+            if (avformat_seek_file(sc->ic, -1, INT64_MIN, sc->seek_req, INT64_MAX, 0) < 0) {
                 av_log(NULL, AV_LOG_WARNING, "%d: could not seek to position %lld\n",
-                       sub->st_idx, sub->seek_req);
-                sub->seek_req = -1;
+                       sc->st_idx, sc->seek_req);
+                sc->seek_req = -1;
                 return -2;
             }
-            sub->seek_req = -1;
-            packet_queue_flush(sub->packetq);
+            sc->seek_req = -1;
+            packet_queue_flush(sc->packetq);
             continue;
         }
         
@@ -82,7 +82,7 @@ static int get_packet(FFSubComponent *sub, Decoder *d)
         if (r < 0) {
             return -1;
         } else if (r == 0) {
-            if (read_packets(sub) >= 0) {
+            if (read_packets(sc) >= 0) {
                 continue;
             } else {
                 av_usleep(1000 * 3);
@@ -94,22 +94,95 @@ static int get_packet(FFSubComponent *sub, Decoder *d)
     return -3;
 }
 
-static int decode_a_frame(FFSubComponent *sub, Decoder *d, AVSubtitle *pkt)
-{
-    int ret = AVERROR(EAGAIN);
+static int decoder_decode_frame(FFSubComponent *sc, AVFrame *frame, AVSubtitle *sub) {
+    
+    Decoder *d = &sc->decoder;
+    int status = 0;
+    for (;sc->packetq->abort_request == 0;) {
+        
+        if (d->queue->serial == d->pkt_serial) {
+            
+            int ret = AVERROR(EAGAIN);
+            do {
+                if (d->queue->abort_request) {
+                    status = -1;
+                    goto abort_end;
+                }
 
-    for (;sub->packetq->abort_request == 0;) {
+                switch (d->avctx->codec_type) {
+                    case AVMEDIA_TYPE_VIDEO:
+                        ret = avcodec_receive_frame(d->avctx, frame);
+                        if (ret >= 0) {
+                            frame->pts = frame->best_effort_timestamp;
+                            if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+                                /* retrieve data from GPU to CPU */
+                                AVFrame *sw_frame = av_frame_alloc();
+                                //use av_hwframe_map instead of av_hwframe_transfer_data
+                                if ((ret = av_hwframe_map(sw_frame, frame, 0)) < 0) {
+                                    fprintf(stderr, "Error transferring the data to system memory\n");
+                                }
+                                av_frame_unref(frame);
+                                av_frame_move_ref(frame, sw_frame);
+                            }
+                        }
+                        break;
+                    case AVMEDIA_TYPE_AUDIO:
+                        ret = avcodec_receive_frame(d->avctx, frame);
+                        if (ret >= 0) {
+                            AVRational tb = (AVRational){1, frame->sample_rate};
+                            if (frame->pts != AV_NOPTS_VALUE)
+                                frame->pts = av_rescale_q(frame->pts, d->avctx->pkt_timebase, tb);
+                            else if (d->next_pts != AV_NOPTS_VALUE)
+                                frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
+                            if (frame->pts != AV_NOPTS_VALUE) {
+                                d->next_pts = frame->pts + frame->nb_samples;
+                                d->next_pts_tb = tb;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                
+                if (ret >= 0) {
+                    status = 1;
+                    goto abort_end;
+                } else if (ret == AVERROR_EOF) {
+                    d->finished = d->pkt_serial;
+                    avcodec_flush_buffers(d->avctx);
+                    status = 0;
+                    goto abort_end;
+                }
+            } while (ret != AVERROR(EAGAIN));
+        } else {
+            if (d->queue->abort_request) {
+                status = -1;
+                goto abort_end;
+            }
+        }
         
         do {
+            if (d->queue->nb_packets == 0) {
+                //read_packets
+                if (get_packets(sc,d) < 0) {
+                    status = -2;
+                    goto abort_end;
+                }
+            }
+                
             if (d->packet_pending) {
                 d->packet_pending = 0;
             } else {
                 int old_serial = d->pkt_serial;
-                if (get_packet(sub, d) < 0)
-                    return -1;
+                if (packet_queue_get(d->queue, d->pkt, 1, &d->pkt_serial) < 0) {
+                    status = -1;
+                    goto abort_end;
+                }
+
                 if (old_serial != d->pkt_serial) {
                     avcodec_flush_buffers(d->avctx);
                     d->finished = 0;
+                    d->hw_failed_count = 0;
                     d->next_pts = d->start_pts;
                     d->next_pts_tb = d->start_pts_tb;
                 }
@@ -117,109 +190,212 @@ static int decode_a_frame(FFSubComponent *sub, Decoder *d, AVSubtitle *pkt)
             if (d->queue->serial == d->pkt_serial)
                 break;
             av_packet_unref(d->pkt);
-        } while (sub->packetq->abort_request == 0);
+        } while (sc->packetq->abort_request == 0);
 
-        int got_frame = 0;
-        
-        //av_log(NULL, AV_LOG_DEBUG, "sub stream decoder pkt serial:%d\n",d->pkt_serial);
-        ret = avcodec_decode_subtitle2(d->avctx, pkt, &got_frame, d->pkt);
-        if (ret < 0) {
-            ret = AVERROR(EAGAIN);
-        } else {
-            if (got_frame && !d->pkt->data) {
-                d->packet_pending = 1;
-            }
-            ret = got_frame ? 0 : (d->pkt->data ? AVERROR(EAGAIN) : AVERROR_EOF);
-        }
-        av_packet_unref(d->pkt);
-        
-        if (ret >= 0)
-            return 1;
-    }
-    return -2;
-}
-
-static int subtitle_thread(void *arg)
-{
-    FFSubComponent *sub = arg;
-    Frame *sp;
-    int got_subtitle;
-    double pts;
-    
-    for (;sub->packetq->abort_request == 0;) {
-        if (!(sp = frame_queue_peek_writable(sub->frameq)))
-            return 0;
-        
-        if ((got_subtitle = decode_a_frame(sub, &sub->decoder, &sp->sub)) < 0)
-            break;
-
-        pts = 0;
-        if (got_subtitle) {
-            if (sp->sub.pts != AV_NOPTS_VALUE)
-                pts = sp->sub.pts / (double)AV_TIME_BASE;
-            sp->pts = pts;
-            //av_log(NULL, AV_LOG_DEBUG,"sub received frame:%f\n",pts);
-            int serial = sub->decoder.pkt_serial;
-            if (sub->packetq->serial == serial) {
-                sp->serial = serial;
-                sp->width  = sub->decoder.avctx->width;
-                sp->height = sub->decoder.avctx->height;
-                sp->uploaded = 0;
-                /* now we can update the picture count */
-                frame_queue_push(sub->frameq);
+        if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+            int got_frame = 0;
+            int ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
+            if (ret < 0) {
+                ret = AVERROR(EAGAIN);
             } else {
-                av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
+                if (got_frame && !d->pkt->data) {
+                    d->packet_pending = 1;
+                }
+                ret = got_frame ? 0 : (d->pkt->data ? AVERROR(EAGAIN) : AVERROR_EOF);
+            }
+            if (ret >= 0) {
+                status = 1;
+                goto abort_end;
+            } else if (ret == AVERROR_EOF) {
+                d->finished = d->pkt_serial;
+                avcodec_flush_buffers(d->avctx);
+                status = 0;
+                goto abort_end;
+            }
+            av_packet_unref(d->pkt);
+        } else {
+            if (d->queue->abort_request){
+                status = -1;
+                goto abort_end;
+            }
+            int send = avcodec_send_packet(d->avctx, d->pkt);
+            if (send == AVERROR(EAGAIN)) {
+                av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
+                d->packet_pending = 1;
+            } else {
+                av_packet_unref(d->pkt);
+                
+                if (send != 0) {
+                    char errbuf[128] = { '\0' };
+                    av_strerror(send, errbuf, sizeof(errbuf));
+                    av_log(d->avctx, AV_LOG_ERROR, "avcodec_send_packet failed:%s(%d).\n",errbuf,send);
+                }
             }
         }
     }
-    return 0;
+abort_end:
+    if (d->queue->abort_request && status == -1) {
+        av_log(NULL, AV_LOG_INFO, "will destroy avcodec:%d,flush buffers.\n",d->avctx->codec_type);
+        avcodec_send_packet(d->avctx, NULL);
+        avcodec_flush_buffers(d->avctx);
+    }
+    return status;
 }
 
-int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq)
+static int get_video_frame(FFSubComponent *sc, AVFrame *frame)
 {
-    if (!subp) {
+    return decoder_decode_frame(sc, frame, NULL);
+}
+
+static int get_audio_frame(FFSubComponent *sc, AVFrame *frame)
+{
+    return decoder_decode_frame(sc, frame, NULL);
+}
+
+static int get_subtitle_frame(FFSubComponent *sc, AVSubtitle *pkt)
+{
+    return decoder_decode_frame(sc, NULL, pkt);
+}
+
+static int sub_component_thread(void *arg)
+{
+    FFSubComponent *sc = arg;
+    int ret = 0;
+    AVFrame *frame = av_frame_alloc();
+    for (;sc->packetq->abort_request == 0;) {
+        
+        switch (sc->decoder.avctx->codec_type) {
+            case AVMEDIA_TYPE_VIDEO: {
+                if (get_video_frame(sc, frame) > 0) {
+                    AVStream *stream = sc->ic->streams[sc->st_idx];
+                    AVRational tb = stream->time_base;
+                    AVRational frame_rate = av_guess_frame_rate(sc->ic, stream, NULL);
+                    double duration = (frame_rate.num && frame_rate.den ? av_q2d((AVRational){frame_rate.den, frame_rate.num}) : 0);
+                    double pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
+                    
+                    Frame *sp = frame_queue_peek_writable(sc->frameq);
+                    if (!sp)
+                        return 0;
+                    
+                    sp->pos = frame->pkt_pos;
+                    sp->pts = pts;
+                    sp->duration = duration;
+                    sp->serial = sc->decoder.pkt_serial;
+                    sp->sar = frame->sample_aspect_ratio;
+                    av_frame_move_ref(sp->frame, frame);
+                    frame_queue_push(sc->frameq);
+                } else {
+                    av_usleep(10);
+                    ret = -1;
+                }
+                    break;
+            }
+                break;
+            case AVMEDIA_TYPE_AUDIO: {
+                if (get_audio_frame(sc, frame) > 0) {
+                    AVRational tb = (AVRational){1, frame->sample_rate};
+
+                    Frame *sp = frame_queue_peek_writable(sc->frameq);
+                    if (!sp)
+                        return 0;
+                    sp->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
+                    sp->pos = frame->pkt_pos;
+                    sp->serial = sc->decoder.pkt_serial;
+                    sp->duration = av_q2d((AVRational){frame->nb_samples, frame->sample_rate});
+                    av_frame_move_ref(sp->frame, frame);
+                    frame_queue_push(sc->frameq);
+                } else {
+                    av_usleep(10);
+                    ret = -1;
+                }
+                break;
+            }
+            case AVMEDIA_TYPE_SUBTITLE: {
+                Frame *sp = frame_queue_peek_writable(sc->frameq);
+                if (!sp)
+                    return 0;
+                if (get_subtitle_frame(sc, &sp->sub) > 0) {
+                    //av_log(NULL, AV_LOG_DEBUG,"sub received frame:%f\n",pts);
+                    int serial = sc->decoder.pkt_serial;
+                    if (sc->packetq->serial == serial) {
+                        Frame *sp = frame_queue_peek_writable(sc->frameq);
+                        if (!sp)
+                            return 0;
+                        
+                        double pts = 0;
+                        if (sp->sub.pts != AV_NOPTS_VALUE)
+                            pts = sp->sub.pts / (double)AV_TIME_BASE;
+                        sp->pts = pts;
+                        sp->serial = serial;
+                        sp->width  = sc->decoder.avctx->width;
+                        sp->height = sc->decoder.avctx->height;
+                        sp->uploaded = 0;
+                        frame_queue_push(sc->frameq);
+                    } else {
+                        av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
+                    }
+                } else {
+                    av_usleep(10);
+                    ret = -1;
+                }
+                break;
+            }
+            default:
+            {
+                ret = -1;
+            }
+                break;
+        }
+    }
+    av_frame_free(&frame);
+    return ret;
+}
+
+int subComponent_open(FFSubComponent **scp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq)
+{
+    if (!scp) {
         return -1;
     }
     
-    FFSubComponent *sub = av_mallocz(sizeof(FFSubComponent));
-    if (!sub) {
+    FFSubComponent *sc = av_mallocz(sizeof(FFSubComponent));
+    if (!sc) {
         return -2;
     }
     
     assert(frameq);
     assert(packetq);
     
-    sub->frameq = frameq;
-    sub->packetq = packetq;
-    sub->seek_req = -1;
-    sub->ic = ic;
-    sub->pkt = av_packet_alloc();
-    sub->eof = 0;
-    int ret = decoder_init(&sub->decoder, avctx, sub->packetq, NULL);
+    sc->frameq = frameq;
+    sc->packetq = packetq;
+    sc->seek_req = -1;
+    sc->ic = ic;
+    sc->pkt = av_packet_alloc();
+    sc->eof = 0;
+    int ret = decoder_init(&sc->decoder, avctx, sc->packetq, NULL);
     
     if (ret < 0) {
-        av_free(sub);
+        av_free(sc);
         return ret;
     }
     
-    ret = decoder_start(&sub->decoder, subtitle_thread, sub, "ff_subtitle_dec");
+    ret = decoder_start(&sc->decoder, sub_component_thread, sc, "ff_sc_dec");
     if (ret < 0) {
-        decoder_destroy(&sub->decoder);
-        av_free(sub);
+        decoder_destroy(&sc->decoder);
+        av_free(sc);
         return ret;
     }
-    sub->st_idx = stream_index;
+    sc->st_idx = stream_index;
     av_log(NULL, AV_LOG_DEBUG, "sub stream opened:%d,serial:%d\n",stream_index,packetq->serial);
-    *subp = sub;
+    *scp = sc;
     return 0;
 }
 
-int subComponent_close(FFSubComponent **subp)
+int subComponent_close(FFSubComponent **scp)
 {
-    if (!subp) {
+    if (!scp) {
         return -1;
     }
-    FFSubComponent *sub = *subp;
+    FFSubComponent *sub = *scp;
     if (!sub) {
         return -2;
     }
@@ -233,27 +409,44 @@ int subComponent_close(FFSubComponent **subp)
     av_packet_free(&sub->pkt);
     av_log(NULL, AV_LOG_DEBUG, "sub stream closed:%d\n",sub->st_idx);
     sub->st_idx = -1;
-    av_freep(subp);
+    av_freep(scp);
     return 0;
 }
 
-int subComponent_get_stream(FFSubComponent *sub)
+int subComponent_get_stream(FFSubComponent *sc)
 {
-    if (sub) {
-        return sub->st_idx;
+    if (sc) {
+        return sc->st_idx;
     }
     return -1;
 }
 
-int subComponent_seek_to(FFSubComponent *sub, int sec)
+int subComponent_seek_to(FFSubComponent *sc, int sec)
 {
-    if (!sub || !sub->ic) {
+    if (!sc || !sc->ic) {
         return -1;
     }
     if (sec < 0) {
         sec = 0;
     }
-    sub->seek_req = seconds_to_fftime(sec);
-    sub->eof = 0;
+    sc->seek_req = seconds_to_fftime(sec);
+    sc->eof = 0;
     return 0;
+}
+
+int subComponent_get_pkt_serial(FFSubComponent *sc)
+{
+    if (!sc || !sc->ic) {
+        return -1;
+    }
+    return sc->decoder.pkt_serial;
+}
+
+int subComponent_eof_and_pkt_empty(FFSubComponent *sc)
+{
+    if (!sc) {
+        return -1;
+    }
+    
+    return sc->eof && sc->decoder.finished == sc->packetq->serial && frame_queue_nb_remaining(sc->frameq) == 0;
 }

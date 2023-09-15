@@ -72,7 +72,8 @@ TODO: Add long description of the pod here.
   s.source_files = 
     'ijkmedia/ijkplayer/**/*.{h,c,m,cpp}',
     'ijkmedia/ijksdl/**/*.{h,c,m,cpp,metal}',
-    'ijkmedia/wrapper/apple/*.{h,m}'
+    'ijkmedia/wrapper/apple/*.{h,m}',
+    'ijkmedia/peek/*.{h,c}'
   # s.project_header_files = 'ijkmedia/**/*.{h}'
   s.public_header_files =
     'ijkmedia/wrapper/apple/IJKMediaPlayback.h',
@@ -85,7 +86,8 @@ TODO: Add long description of the pod here.
     'ijkmedia/wrapper/apple/IJKKVOController.h',
     'ijkmedia/wrapper/apple/IJKVideoRenderingProtocol.h',
     'ijkmedia/wrapper/apple/IJKMediaPlayerKit.h',
-    'ijkmedia/wrapper/apple/IJKInternalRenderView.h'
+    'ijkmedia/wrapper/apple/IJKInternalRenderView.h',
+    'ijkmedia/peek/*.{h}'
   s.exclude_files = 
     'ijkmedia/ijksdl/ijksdl_extra_log.c',
     'ijkmedia/ijkplayer/ijkversion.h',

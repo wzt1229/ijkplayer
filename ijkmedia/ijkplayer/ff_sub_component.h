@@ -21,5 +21,7 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
 int subComponent_close(FFSubComponent **subp);
 int subComponent_get_stream(FFSubComponent *sub);
 int subComponent_seek_to(FFSubComponent *sub, int sec);
+int subComponent_get_pkt_serial(FFSubComponent *sub);
+int subComponent_eof_and_pkt_empty(FFSubComponent *sc);
 
 #endif /* ff_sub_component_h */
