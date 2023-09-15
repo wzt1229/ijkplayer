@@ -40,7 +40,7 @@
 #include "../ijkmedia/ijkplayer/ijkmeta.h"
 #include "../ijkmedia/ijkplayer/ff_ffmsg_queue.h"
 
-static const char *kIJKFFRequiredFFmpegVersion = "ff5.1-ijk0.10.0-12"; //"ff5.1-ijk0.10.0-12-g0f1a0cb";
+static const char *kIJKFFRequiredFFmpegVersion = "ff5.1-ijk0.10.1-13"; //"ff5.1-ijk0.10.0-12-g0f1a0cb";
 
 static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
