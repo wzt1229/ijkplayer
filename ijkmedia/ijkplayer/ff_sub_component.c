@@ -164,7 +164,7 @@ static int decoder_decode_frame(FFSubComponent *sc, AVFrame *frame, AVSubtitle *
         do {
             if (d->queue->nb_packets == 0) {
                 //read_packets
-                if (get_packets(sc,d) < 0) {
+                if (get_packets(sc, d) < 0) {
                     status = -2;
                     goto abort_end;
                 }
@@ -174,7 +174,7 @@ static int decoder_decode_frame(FFSubComponent *sc, AVFrame *frame, AVSubtitle *
                 d->packet_pending = 0;
             } else {
                 int old_serial = d->pkt_serial;
-                if (packet_queue_get(d->queue, d->pkt, 1, &d->pkt_serial) < 0) {
+                if (packet_queue_get(d->queue, d->pkt, 0, &d->pkt_serial) < 0) {
                     status = -1;
                     goto abort_end;
                 }
