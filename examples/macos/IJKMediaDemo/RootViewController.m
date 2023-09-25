@@ -1199,7 +1199,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 
 - (void)handleDragFileList:(nonnull NSArray<NSURL *> *)fileUrls
 {
-    BOOL hasVideo = NO;
+    BOOL needPlay = YES;
     NSMutableArray *bookmarkArr = [NSMutableArray array];
     for (NSURL *url in fileUrls) {
         //先判断是不是文件夹
@@ -1216,8 +1216,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
             } else {
                 NSString *pathExtension = [[url pathExtension] lowercaseString];
                 if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
-                    if ([[MRUtil videoType] containsObject:pathExtension]) {
-                        hasVideo = YES;
+                    if ([[MRUtil subtitleType] containsObject:pathExtension]) {
+                        needPlay = NO;
                     }
                     NSDictionary *dic = [MRUtil makeBookmarkWithURL:url];
                     [bookmarkArr addObject:dic];
@@ -1226,7 +1226,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
         }
     }
     
-    if (hasVideo) {
+    if (needPlay) {
         //拖拽播放时清空原先的列表
         [self.playList removeAllObjects];
         [self doStopPlay];
