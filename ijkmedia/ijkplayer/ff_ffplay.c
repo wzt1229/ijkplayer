@@ -417,12 +417,12 @@ static void update_subtitle_text(FFPlayer *ffp,const char *str)
     ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)str, (int)strlen(str) + 1);
 }
 
-static void update_subtitle_pict(FFPlayer *ffp, const AVSubtitleRect *rect)
+static void update_subtitle_pict(FFPlayer *ffp, const AVSubtitleRect *bmp)
 {
     //update subtitle by bitmap, save into vout's opaque
     if (ffp->vout->update_subtitle_picture) {
         SDL_LockMutex(ffp->vout->mutex);
-        ffp->vout->update_subtitle_picture(ffp->vout, rect);
+        ffp->vout->update_subtitle_picture(ffp->vout, bmp);
         SDL_UnlockMutex(ffp->vout->mutex);
     }
     ffp_notify_msg1(ffp, FFP_MSG_TIMED_TEXT);
