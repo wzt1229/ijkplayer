@@ -145,13 +145,9 @@ typedef CGRect NSRect;
 - (void)cleanSubtitle
 {
     IJKOverlayAttach * attach = self.currentAttach;
-    if (attach && attach.sub) {
-        self.currentAttach.sub = nil;
-        if (attach.subPicture) {
-            CVPixelBufferRelease(attach.subPicture);
-            attach.subPicture = NULL;
-            attach.subTexture = nil;
-        }
+    if (attach && attach.subTexture) {
+        attach.sub = nil;
+        attach.subTexture = nil;
         [self setNeedsRefreshCurrentPic];
     }
 }
@@ -305,7 +301,7 @@ typedef CGRect NSRect;
         return;
     }
     
-    if (attach.sub && ![self setupSubPipelineIfNeed]) {
+    if (attach.subTexture && ![self setupSubPipelineIfNeed]) {
         return;
     }
     
@@ -346,12 +342,10 @@ typedef CGRect NSRect;
           hdrPercentage:hdrPer];
     
     if (attach.subTexture) {
-        
         float subScale = 1.0;
         if (attach.sub.pixels) {
             subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
         }
-        
         CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale];
         
         [self encodeSubtitle:renderEncoder
@@ -394,13 +388,6 @@ typedef CGRect NSRect;
     }
     CGSize ratio = [self computeNormalizedVerticesRatio:attach];
     float scale = width / (ratio.width * self.drawableSize.width);
-    float subScale = 1.0;
-    
-    if (attach.sub.pixels) {
-        subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-    }
-    
-    subScale *= scale;
     
     float darRatio = self.darPreference.ratio;
     
@@ -431,7 +418,7 @@ typedef CGRect NSRect;
         return NULL;
     }
     
-    if (attach.sub && ![self setupSubPipelineIfNeed]) {
+    if (drawSub && attach.subTexture && ![self setupSubPipelineIfNeed]) {
         return NULL;
     }
     
@@ -444,12 +431,18 @@ typedef CGRect NSRect;
                       ratio:CGSizeMake(1.0, 1.0)
               hdrPercentage:1.0];
         
-        if (drawSub) {
-            id subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device];
-            CGRect rect = [self subTextureTargetRect:subTexture scale:subScale];
+        if (drawSub && attach.subTexture) {
+            float subScale = 1.0;
+            
+            if (attach.sub.pixels) {
+                subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+            }
+            
+            subScale *= scale;
+            CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale];
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
-                         texture:subTexture
+                         texture:attach.subTexture
                             rect:rect];
         }
     }];
@@ -458,8 +451,11 @@ typedef CGRect NSRect;
 - (CGImageRef)_snapshotOrigin:(IJKOverlayAttach *)attach
 {
     CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(attach.videoPicture);
+    //[CIImage initWithCVPixelBuffer:options:] failed because its pixel format f420 is not supported.
     CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
-    
+    if (!ciImage) {
+        return NULL;
+    }
     static CIContext *context = nil;
     if (!context) {
         context = [CIContext contextWithOptions:NULL];
@@ -492,7 +488,7 @@ typedef CGRect NSRect;
         return NULL;
     }
     
-    if (attach.sub && ![self setupSubPipelineIfNeed]) {
+    if (attach.subTexture && ![self setupSubPipelineIfNeed]) {
         return NULL;
     }
     
@@ -507,21 +503,18 @@ typedef CGRect NSRect;
                   hdrPercentage:1.0];
         }
         
-        if (attach.sub) {
-            
+        if (attach.subTexture) {
             float subScale = 1.0;
             if (attach.sub.pixels) {
                 subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
             }
-            
-            id subTexture = [[self class] doGenerateSubTexture:attach.subPicture device:self.device];
-            CGRect rect = [self subTextureTargetRect:subTexture scale:subScale];
-            
+            CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale];
+
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
-                         texture:subTexture
+                         texture:attach.subTexture
                             rect:rect];
-            
+
         }
     }];
 }
@@ -587,7 +580,7 @@ typedef CGRect NSRect;
 {
     if (self.subtitlePreferenceChanged) {
         self.subtitlePreferenceChanged = NO;
-        [self generateSub:self.currentAttach];
+        [self generateSubTexture:self.currentAttach];
     }
     [self draw];
 }
@@ -666,7 +659,7 @@ typedef CGRect NSRect;
     }
 }
 
-- (void)generateSub:(IJKOverlayAttach *)attach
+- (void)generateSubTexture:(IJKOverlayAttach *)attach
 {
     CVPixelBufferRef subRef = NULL;
     IJKSDLSubtitle *sub = attach.sub;
@@ -677,7 +670,6 @@ typedef CGRect NSRect;
             subRef = [self _generateSubtitlePixelFromPicture:sub];
         }
     }
-    attach.subPicture = subRef;
     attach.subTexture = [[self class] doGenerateSubTexture:subRef device:self.device];
 }
 
@@ -724,7 +716,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 }
 
 + (id<MTLTexture>)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
-                      device:(id<MTLDevice>)device
+                                device:(id<MTLDevice>)device
 {
     if (!pixelBuff) {
         return nil;
@@ -805,8 +797,12 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
         return NO;
     }
     
-    //generate current subtitle.
-    [self generateSub:attach];
+    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub) {
+        [self generateSubTexture:attach];
+    } else if (self.currentAttach.sub) {
+        //reuse the expensive texture.
+        attach.subTexture = self.currentAttach.subTexture;
+    }
     
     if (self.subtitlePreferenceChanged) {
         self.subtitlePreferenceChanged = NO;
