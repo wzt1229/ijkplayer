@@ -218,17 +218,16 @@ static struct vt_format vt_formats[] = {
         #endif
         }
     },
+#if TARGET_OS_OSX
+    //iOS not support! [EAGLContext texImageIOSurface]: Failed to create IOSurface image (texture)
     {
         .cvpixfmt = kCVPixelFormatType_32ARGB,
         .planes = 1,
         .gl = {
-#if TARGET_OS_OSX
             { GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, GL_RGBA }
-#else
-            { GL_BGRA, GL_UNSIGNED_INT, GL_RGBA }
-#endif
         }
     },
+#endif
 #if 0
     {
 //        creating IOSurface texture invalid numerical value: kCVPixelFormatType_24RGB

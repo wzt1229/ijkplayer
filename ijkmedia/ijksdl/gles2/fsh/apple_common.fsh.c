@@ -21,13 +21,17 @@
 
 #include "ijksdl/gles2/internal.h"
 
-//only macOS use sampler2DRect,need texture dimensions                                                     );
+//for hdr (macos only,ios not support convert IOSurface to texture)
 static const char g_shader_hdr[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform sampler2DRect us2_Sampler0;
     uniform sampler2DRect us2_Sampler1;
+    uniform sampler2DRect subSampler;
+#if TARGET_OS_OSX
     uniform vec2 textureDimension0;
     uniform vec2 textureDimension1;
+    uniform vec2 subTextureDimension;
+#endif
     uniform mat3 um3_ColorConversion;
     uniform vec3 um3_rgbAdjustment;
     
@@ -36,9 +40,11 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
     uniform int transferFun;
     uniform float hdrPercentage;
                                                    
-    #define FFMAX(a,b) ((a) > (b) ? (a) : (b))
-    #define FFMAX3(a,b,c) FFMAX(FFMAX(a,b),c)
-
+    #define FF_MAX(a,b) ((a) > (b) ? (a) : (b))
+    #define FF_MAX3(a,b,c) FF_MAX(FF_MAX(a,b),c)
+    #define FF_FLT_MAX 3.402823466e+38
+    #define FF_FLT_MIN 1.175494351e-38
+                                                   
     // [arib b67 eotf
     const float ARIB_B67_A = 0.17883277;
     const float ARIB_B67_B = 0.28466892;
@@ -74,7 +80,7 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
     {
         float xpow = pow(x, float(1.0 / ST2084_M2));
         float num = max(xpow - ST2084_C1, 0.0);
-        float den = max(ST2084_C2 - ST2084_C3 * xpow, FLT_MIN);
+        float den = max(ST2084_C2 - ST2084_C3 * xpow, FF_FLT_MIN);
         return pow(num/den, 1.0 / ST2084_M1);
     }
     // st 2084 eotf]
@@ -109,20 +115,25 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
        
         if (isSubtitle == 1) {
         #if TARGET_OS_OSX
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
         #else
-            fragColor = texture2DRect(us2_Sampler0, vv2_Texcoord);
+            fragColor = texture2DRect(subSampler, vv2_Texcoord);
         #endif
             return;
         }
         // 0、先把 [0.0,1.0] 范围的YUV 处理为 [0.0,1.0] 范围的RGB
+        #if TARGET_OS_OSX
         vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
         vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
         //OpenGL会在将这些值存入帧缓冲前主动将值处理为0.0到1.0之间
         float x = texture2DRect(us2_Sampler0, recTexCoord0).r;
         vec2 yz = texture2DRect(us2_Sampler1, recTexCoord1).rg;
         vec3 yuv = vec3(x,yz);
+        #else
+        float x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
+        vec2 yz = texture2DRect(us2_Sampler1, vv2_Texcoord).rg;
+        vec3 yuv = vec3(x,yz);
+        #endif
         
         vec3 offset;
         if (isFullRange == 1) {
@@ -160,7 +171,7 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
             myFragColor *= rgb2xyz2020 * xyz2rgb709;
 
             // 3、HDR 线性光信号色调映射为 SDR 线性光信号（Tone Mapping）
-            float sig = FFMAX(FFMAX3(myFragColor.r, myFragColor.g, myFragColor.b), 1e-6);
+            float sig = FF_MAX(FF_MAX3(myFragColor.r, myFragColor.g, myFragColor.b), 1e-6);
             float sig_orig = sig;
             float peak = 10.0;
             sig = hableF(sig) / hableF(peak);
@@ -188,43 +199,44 @@ static const char g_shader_nv12[] = IJK_GLES_STRING(
 #if TARGET_OS_OSX
     uniform vec2 textureDimension0;
     uniform vec2 textureDimension1;
+    uniform vec2 subTextureDimension;
 #endif
     uniform int isSubtitle;
+    uniform sampler2DRect subSampler;
     uniform int isFullRange;
                                          
     void main()
     {
         if (isSubtitle == 1) {
 #if TARGET_OS_OSX
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
+            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
 #else
-            fragColor = texture2DRect(us2_Sampler0, vv2_Texcoord);
+            fragColor = texture2DRect(subSampler, vv2_Texcoord);
 #endif
-        } else {
-#if TARGET_OS_OSX
-            vec3 yuv;
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
-            
-            yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
-            yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).rg;
-#else
-            mediump vec3 yuv;
-            yuv.x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
-            yuv.yz = texture2DRect(us2_Sampler1, vv2_Texcoord).rg;
-#endif
-            vec3 offset;
-            if (isFullRange == 1) {
-                offset = vec3(0.0, -0.5, -0.5);
-            } else {
-                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
-            }
-            yuv += offset;
-            vec3 rgb = um3_ColorConversion * yuv;
-            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-            fragColor = vec4(rgb, 1.0);
+            return;
         }
+#if TARGET_OS_OSX
+        vec3 yuv;
+        vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+        vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
+        
+        yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
+        yuv.yz = texture2DRect(us2_Sampler1, recTexCoord1).rg;
+#else
+        mediump vec3 yuv;
+        yuv.x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
+        yuv.yz = texture2DRect(us2_Sampler1, vv2_Texcoord).rg;
+#endif
+        vec3 offset;
+        if (isFullRange == 1) {
+            offset = vec3(0.0, -0.5, -0.5);
+        } else {
+            offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
+        }
+        yuv += offset;
+        vec3 rgb = um3_ColorConversion * yuv;
+        rgb = rgb_adjust(rgb,um3_rgbAdjustment);
+        fragColor = vec4(rgb, 1.0);
     }
 );
 
@@ -234,74 +246,91 @@ static const char g_shader_rect_bgrx_1[] = IJK_GLES_STRING(
     uniform vec3 um3_rgbAdjustment;
     
     uniform sampler2DRect us2_Sampler0;
+#if TARGET_OS_OSX
     uniform vec2 textureDimension0;
-    
+    uniform vec2 subTextureDimension;
+#endif
     uniform int isSubtitle;
-                                         
+    uniform sampler2DRect subSampler;
+    
     void main()
     {
         if (isSubtitle == 1) {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
-        } else {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
-            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-
-            fragColor = vec4(rgb, 1.0);
+        #if TARGET_OS_OSX
+            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+        #else
+            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+        #endif
+            return;
         }
+        #if TARGET_OS_OSX
+        vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+        vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
+        #else
+        vec3 rgb = texture2DRect(us2_Sampler0, vv2_Texcoord).rgb;
+        #endif
+        rgb = rgb_adjust(rgb,um3_rgbAdjustment);
+        fragColor = vec4(rgb, 1.0);
     }
 );
 
-//for rgbx texture
-static const char g_shader_rect_rgbx_1[] = IJK_GLES_STRING(
+//for uyvy texture
+static const char g_shader_rect_uyvy_legacy_1[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform vec3 um3_rgbAdjustment;
     
     uniform sampler2DRect us2_Sampler0;
     uniform vec2 textureDimension0;
-    
+    uniform vec2 subTextureDimension;
     uniform int isSubtitle;
+    uniform sampler2DRect subSampler;
                                             
     void main()
     {
         if (isSubtitle == 1) {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
-        } else {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
-            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-
-            fragColor = vec4(rgb, 1.0);
+            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+            return;
         }
+        vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+        vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).rgb;
+        rgb = rgb_adjust(rgb,um3_rgbAdjustment);
+        fragColor = vec4(rgb, 1.0);
     }
 );
 
-//for xrgb texture
+//for xrgb texture (macos only,ios not support convert IOSurface to texture)
 static const char g_shader_rect_xrgb_1[] = IJK_GLES_STRING(
     varying vec2 vv2_Texcoord;
     uniform vec3 um3_rgbAdjustment;
     
     uniform sampler2DRect us2_Sampler0;
+#if TARGET_OS_OSX
     uniform vec2 textureDimension0;
-    
+    uniform vec2 subTextureDimension;
+#endif
     uniform int isSubtitle;
+    uniform sampler2DRect subSampler;
                                                  
     void main()
     {
         if (isSubtitle == 1) {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
-        } else {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            //bgra -> argb
-            //argb -> bgra
-            vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).gra;
-            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-
-            fragColor = vec4(rgb, 1.0);
+        #if TARGET_OS_OSX
+            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+        #else
+            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+        #endif
+            return;
         }
+        #if TARGET_OS_OSX
+        vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+        //bgra -> argb
+        //argb -> bgra
+        vec3 rgb = texture2DRect(us2_Sampler0, recTexCoord0).gra;
+        rgb = rgb_adjust(rgb,um3_rgbAdjustment);
+        #else
+        vec3 rgb = texture2DRect(us2_Sampler0, vv2_Texcoord).rgb;
+        #endif
+        fragColor = vec4(rgb, 1.0);
     }
 );
 
@@ -318,46 +347,47 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
     uniform vec2 textureDimension0;
     uniform vec2 textureDimension1;
     uniform vec2 textureDimension2;
+    uniform vec2 subTextureDimension;
 #endif
     uniform int isSubtitle;
+    uniform sampler2DRect subSampler;
     uniform int isFullRange;
                                                       
     void main()
     {
         if (isSubtitle == 1) {
-#if TARGET_OS_OSX
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
-#else
-            fragColor = texture2DRect(us2_Sampler0, vv2_Texcoord);
-#endif
-        } else {
-#if TARGET_OS_OSX
-            vec3 yuv;
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
-            vec2 recTexCoord2 = vv2_Texcoord * textureDimension2;
-
-            yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
-            yuv.y = texture2DRect(us2_Sampler1, recTexCoord1).r;
-            yuv.z = texture2DRect(us2_Sampler2, recTexCoord2).r;
-#else
-            mediump vec3 yuv;
-            yuv.x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
-            yuv.y = texture2DRect(us2_Sampler1, vv2_Texcoord).r;
-            yuv.z = texture2DRect(us2_Sampler2, vv2_Texcoord).r;
-#endif
-            vec3 offset;
-            if (isFullRange == 1) {
-                offset = vec3(0.0, -0.5, -0.5);
-            } else {
-                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
-            }
-            yuv += offset;
-            vec3 rgb = um3_ColorConversion * yuv;
-            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-            fragColor = vec4(rgb, 1.0);
+        #if TARGET_OS_OSX
+            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+        #else
+            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+        #endif
+            return;
         }
+#if TARGET_OS_OSX
+        vec3 yuv;
+        vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+        vec2 recTexCoord1 = vv2_Texcoord * textureDimension1;
+        vec2 recTexCoord2 = vv2_Texcoord * textureDimension2;
+
+        yuv.x = texture2DRect(us2_Sampler0, recTexCoord0).r;
+        yuv.y = texture2DRect(us2_Sampler1, recTexCoord1).r;
+        yuv.z = texture2DRect(us2_Sampler2, recTexCoord2).r;
+#else
+        mediump vec3 yuv;
+        yuv.x = texture2DRect(us2_Sampler0, vv2_Texcoord).r;
+        yuv.y = texture2DRect(us2_Sampler1, vv2_Texcoord).r;
+        yuv.z = texture2DRect(us2_Sampler2, vv2_Texcoord).r;
+#endif
+        vec3 offset;
+        if (isFullRange == 1) {
+            offset = vec3(0.0, -0.5, -0.5);
+        } else {
+            offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
+        }
+        yuv += offset;
+        vec3 rgb = um3_ColorConversion * yuv;
+        rgb = rgb_adjust(rgb,um3_rgbAdjustment);
+        fragColor = vec4(rgb, 1.0);
     }
 );
 
@@ -370,27 +400,32 @@ static const char g_shader_rect_uyvy_1[] = IJK_GLES_STRING(
     uniform vec2 textureDimension0;
     
     uniform int isSubtitle;
+    uniform sampler2DRect subSampler;
+    uniform vec2 subTextureDimension;
     uniform int isFullRange;
           
     void main()
     {
         if (isSubtitle == 1) {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            fragColor = texture2DRect(us2_Sampler0, recTexCoord0);
-        } else {
-            vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
-            vec3 yuv = texture2DRect(us2_Sampler0, recTexCoord0).gbr;
-            vec3 offset;
-            if (isFullRange == 1) {
-                offset = vec3(0.0, -0.5, -0.5);
-            } else {
-                offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
-            }
-            yuv += offset;
-            vec3 rgb = um3_ColorConversion * yuv;
-            rgb = rgb_adjust(rgb,um3_rgbAdjustment);
-            fragColor = vec4(rgb, 1.0);
+        #if TARGET_OS_OSX
+            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+        #else
+            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+        #endif
+            return;
         }
+        vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
+        vec3 yuv = texture2DRect(us2_Sampler0, recTexCoord0).gbr;
+        vec3 offset;
+        if (isFullRange == 1) {
+            offset = vec3(0.0, -0.5, -0.5);
+        } else {
+            offset = vec3(- (16.0 / 255.0), -0.5, -0.5);
+        }
+        yuv += offset;
+        vec3 rgb = um3_ColorConversion * yuv;
+        rgb = rgb_adjust(rgb,um3_rgbAdjustment);
+        fragColor = vec4(rgb, 1.0);
     }
 );
 
@@ -463,7 +498,7 @@ void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver
             if (ver >= 330) {
                 buffer = g_shader_rect_uyvy_1;
             } else {
-                buffer = g_shader_rect_rgbx_1;
+                buffer = g_shader_rect_uyvy_legacy_1;
             }
         }
             break;

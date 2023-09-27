@@ -49,19 +49,13 @@
 #define GL_TEXTURE_TARGET GL_TEXTURE_2D
 #endif
 
-typedef struct _Frame_Size
-{
-    int w;
-    int h;
-}Frame_Size;
-
 typedef struct IJK_GLES2_Renderer_Opaque
 {
     GLint                 isSubtitle;
     int samples;
 #if TARGET_OS_OSX
     GLint                 textureDimension[3];
-    Frame_Size            frameSize[3];
+    GLint                 subTextureDimension;
 #endif
 } IJK_GLES2_Renderer_Opaque;
 
@@ -132,14 +126,72 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
 //        glTexImage2D(gl_target, 0, plane_format.gl_internal_format, w, h, 0, plane_format.gl_format, plane_format.gl_type, CVPixelBufferGetBaseAddressOfPlane(pixel_buffer,i));
         
 #else
-        Frame_Size size = renderer->opaque->frameSize[i];
-        if (size.w != w || size.h != h) {
-            glUniform2f(renderer->opaque->textureDimension[i], w, h);
-            size.w = w;
-            size.h = h;
-            renderer->opaque->frameSize[i] = size;
-        }
+        glUniform2f(renderer->opaque->textureDimension[i], w, h);
         
+        CGLError err = CGLTexImageIOSurface2D(CGLGetCurrentContext(),
+                                              gl_target,
+                                              plane_format.gl_internal_format,
+                                              w,
+                                              h,
+                                              plane_format.gl_format,
+                                              plane_format.gl_type,
+                                              surface,
+                                              i);
+        if (err != kCGLNoError) {
+            ALOGE("creating IOSurface texture for plane %d failed: %s\n",
+                   i, CGLErrorString(err));
+            return GL_FALSE;
+        }
+#endif
+        {
+            glTexParameteri(gl_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(gl_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(gl_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameterf(gl_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+    }
+    return GL_TRUE;
+}
+
+GLboolean ijk_upload_texture_with_cvpixelbuffer(CVPixelBufferRef pixel_buffer, int textures[3])
+{
+    uint32_t cvpixfmt = CVPixelBufferGetPixelFormatType(pixel_buffer);
+    struct vt_format *f = vt_get_gl_format(cvpixfmt);
+    if (!f) {
+        ALOGE("CVPixelBuffer has unsupported format type\n");
+        return GL_FALSE;
+    }
+
+    const bool planar = CVPixelBufferIsPlanar(pixel_buffer);
+    const int planes  = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+    assert(planar && planes == f->planes || f->planes == 1);
+    
+    GLenum gl_target = GL_TEXTURE_TARGET;
+    
+    IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
+    
+    if (!surface) {
+        printf("CVPixelBuffer has no IOSurface\n");
+        return GL_FALSE;
+    }
+    
+    for (int i = 0; i < f->planes; i++) {
+        GLfloat w = (GLfloat)CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
+        GLfloat h = (GLfloat)CVPixelBufferGetHeightOfPlane(pixel_buffer, i);
+
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(gl_target, textures[i]);
+        struct vt_gl_plane_format plane_format = f->gl[i];
+#if TARGET_OS_IOS
+        if (![[EAGLContext currentContext] texImageIOSurface:surface target:gl_target internalFormat:plane_format.gl_internal_format width:w height:h format:plane_format.gl_format type:plane_format.gl_type plane:i invert:NO]) {
+            ALOGE("creating IOSurface texture for plane %d failed.\n",i);
+            return GL_FALSE;
+        }
+//
+//        //(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
+//        glTexImage2D(gl_target, 0, plane_format.gl_internal_format, w, h, 0, plane_format.gl_format, plane_format.gl_type, CVPixelBufferGetBaseAddressOfPlane(pixel_buffer,i));
+        
+#else
         CGLError err = CGLTexImageIOSurface2D(CGLGetCurrentContext(),
                                               gl_target,
                                               plane_format.gl_internal_format,
@@ -225,22 +277,30 @@ static GLvoid updateHDRAnimation(IJK_GLES2_Renderer *renderer,float per)
     renderer->hdrAnimationPercentage = per;
 }
 
-static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer,void *subtitle)
+static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer, int texture, int w, int h)
 {
-    if (!subtitle) {
+    if (!texture) {
         return GL_FALSE;
     }
-        
+
     IJK_GLES2_Renderer_Opaque *opaque = renderer->opaque;
     if (!opaque) {
         return GL_FALSE;
     }
-    
-    CVPixelBufferRef cvPixelRef = (CVPixelBufferRef)subtitle;
-    CVPixelBufferRetain(cvPixelRef);
-    GLboolean uploaded = upload_texture_use_IOSurface(cvPixelRef, renderer);
-    CVPixelBufferRelease(cvPixelRef);
-    return uploaded;
+
+    GLenum GLTarget = GL_TEXTURE_TARGET;
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GLTarget, texture);
+    //设置采样器位置，和纹理单元对应
+    glUniform1i(renderer->subSampler, 0);
+#if TARGET_OS_OSX
+    glUniform2f(renderer->opaque->subTextureDimension, w, h);
+#endif
+    glTexParameteri(GLTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GLTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GLTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GLTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    return true;
 }
 
 IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture, int openglVer)
@@ -330,7 +390,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
         tf = IJK_Color_Transfer_Function_LINEAR;
     }
         
-    char shader_buffer[4096] = { '\0' };
+    char shader_buffer[5120] = { '\0' };
     
     ijk_get_apple_common_fragment_shader(shaderType,shader_buffer,openglVer);
     IJK_GLES2_Renderer *renderer = IJK_GLES2_Renderer_create_base(shader_buffer,openglVer);
@@ -350,6 +410,8 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
         name[strlen(name)] = (char)i + '0';
         renderer->us2_sampler[i] = glGetUniformLocation(renderer->program, name); IJK_GLES2_checkError_TRACE("glGetUniformLocation(us2_Sampler)");
     }
+    
+    renderer->subSampler = glGetUniformLocation(renderer->program, "subSampler"); IJK_GLES2_checkError_TRACE("glGetUniformLocation(subSampler)");
     
     //yuv to rgb
     renderer->um3_color_conversion = glGetUniformLocation(renderer->program, "um3_ColorConversion");
@@ -381,6 +443,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
         assert(textureDimension >= 0);
         renderer->opaque->textureDimension[i] = textureDimension;
     }
+    renderer->opaque->subTextureDimension = glGetUniformLocation(renderer->program, "subTextureDimension");
 #endif
     renderer->format = cv_format;
     return renderer;

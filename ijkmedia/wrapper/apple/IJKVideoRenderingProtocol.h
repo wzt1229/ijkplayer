@@ -69,7 +69,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 //degrees
 @property(nonatomic) int autoZRotate;
 @property(nonatomic) CVPixelBufferRef videoPicture;
-@property(atomic) CVPixelBufferRef subPicture;
 @property(nonatomic) IJKSDLSubtitle *sub;
 @property(nonatomic) NSArray *videoTextures;
 @property(nonatomic) id subTexture;

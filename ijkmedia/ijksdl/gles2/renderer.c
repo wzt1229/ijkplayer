@@ -878,14 +878,14 @@ void IJK_GLES2_Renderer_endDrawSubtitle(IJK_GLES2_Renderer *renderer)
 /*
  * upload subtitle texture
  */
-GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer, void *texture)
+GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer, int texture, int w, int h)
 {
     if (!renderer || !renderer->func_uploadSubtitle)
         return GL_FALSE;
     
     assert(renderer->drawingSubtitle);
     
-    if (!renderer->func_uploadSubtitle(renderer, texture))
+    if (!renderer->func_uploadSubtitle(renderer, texture, w, h))
         return GL_FALSE;
     
     return GL_TRUE;

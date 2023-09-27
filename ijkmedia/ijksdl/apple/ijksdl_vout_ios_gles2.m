@@ -53,12 +53,7 @@
         CVPixelBufferRelease(self.videoPicture);
         self.videoPicture = NULL;
     }
-    
-    if (self.subPicture) {
-        CVPixelBufferRelease(self.subPicture);
-        self.subPicture = NULL;
-        self.subTexture = nil;
-    }
+    self.subTexture = nil;
 }
 
 @end

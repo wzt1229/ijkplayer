@@ -671,6 +671,7 @@ typedef CGRect NSRect;
         }
     }
     attach.subTexture = [[self class] doGenerateSubTexture:subRef device:self.device];
+    CVPixelBufferRelease(subRef);
 }
 
 mp_format * mp_get_metal_format(uint32_t cvpixfmt);
