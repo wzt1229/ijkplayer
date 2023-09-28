@@ -1,0 +1,94 @@
+name: IJKMediaPlayerKit
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Analyse-Publish
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Read Tag Version
+      run: |
+        grep -m 1 VERSION_NAME= version.sh | awk -F = '{printf "TAG=%s",$2}' | xargs > constants.env
+        cat constants.env
+    - name: Export Env
+      uses: cardinalby/export-env-action@v2
+      with:
+        envFile: 'constants.env'
+    - run: brew install tree
+    - name: Download Pre Compiled Dependencies
+      run: |
+        cd shell && ./download-pre.sh ios 0.10.1-230831144049-ijk && cd -
+        cd shell && ./download-pre.sh macos 0.10.1-230831144049-ijk && cd -
+    - name: Pod Install
+      run: |
+        pod install --project-directory=examples/ios
+        pod install --project-directory=examples/macos
+    - name: Validate iOS
+      run: |
+        pod lib lint --allow-warnings --platforms=ios
+    - name: Validate macOS
+      run: |
+        cd examples/macos
+        scheme_list=$(xcodebuild -list -json | tr -d "\n")
+        default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
+        echo $default | cat >default
+        echo Using default scheme: $default
+      env:
+        scheme: ${{ 'default' }}
+      run: |
+        cd examples/macos
+        if [ $scheme = default ]; then scheme=$(cat default); fi
+        if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
+        file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
+        xcodebuild clean build analyze -configuration Release -scheme "$scheme" -"$filetype_parameter" "$file_to_build" | xcpretty && exit ${PIPESTATUS[0]}
+
+    - name: Build Frameworks
+      run: cd examples/ios && ./build-framework.sh
+      run: cd examples/macos && ./build-framework.sh
+    - name: Zip Frameworks
+      run: |
+        cd examples/ios/build/Release-ios
+        zip -rq IJKMediaPlayerKit-iOS-${{ env.TAG }}.zip ./*
+      run: |
+        cd examples/macos/build/Release/IJKMediaPlayerKit
+        zip -rq IJKMediaPlayerKit-macOS-${{ env.TAG }}.zip ./*
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: IJKMediaPlayerKit-${{ env.TAG }}
+        release_name: Release IJKMediaPlayerKit-${{ env.TAG }}
+        draft: false
+        prerelease: false
+    - name: Upload iOS Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: examples/ios/build/Release-ios/IJKMediaPlayerKit-iOS-${{ env.TAG }}.zip
+        asset_name: "IJKMediaPlayerKit-iOS-${{ env.TAG }}.zip"
+        asset_content_type: application/zip
+    - name: Upload macOS Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: examples/macos/build/Release/IJKMediaPlayerKit/IJKMediaPlayerKit-macOS-${{ env.TAG }}.zip
+        asset_name: "IJKMediaPlayerKit-macOS-${{ env.TAG }}.zip"
+        asset_content_type: application/zip
+    
+
+    
+
