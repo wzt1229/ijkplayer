@@ -25,7 +25,7 @@ jobs:
     - run: pod lib lint --allow-warnings --platforms=ios
     - name: Publish Release
       run: |
-        cd examples/ios && build-framework.sh
+        cd examples/ios && ./build-framework.sh
     - name: Zip ios libs
       run: |
         cd examples/ios/build/Release-ios
