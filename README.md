@@ -3,8 +3,8 @@
 | Platform | Build Status                                                                                                                                                                         |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Android  | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/android.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/android.yml) ⚠️ unknown state |
-| iOS      | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios.yml)                          |
-| macOS    | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/macos.yml)                      |
+| iOS      | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml)                          |
+| macOS    | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml)                      |
 
 Video player based on [ffplay](http://ffmpeg.org)
 
