@@ -48,10 +48,11 @@ jobs:
       run: |
         cd examples/ios && ./build-framework.sh
         cd examples/macos && ./build-framework.sh
-    - name: Zip Frameworks
+    - name: Zip iOS Frameworks
       run: |
         cd examples/ios/build/Release-ios
         zip -rq IJKMediaPlayerKit-iOS-${{ env.TAG }}.zip ./*
+    - name: Zip macOS Frameworks        
       run: |
         cd examples/macos/build/Release/IJKMediaPlayerKit
         zip -rq IJKMediaPlayerKit-macOS-${{ env.TAG }}.zip ./*
