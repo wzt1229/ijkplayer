@@ -16,8 +16,7 @@ jobs:
       uses: actions/checkout@v3
     - name: Read Tag Version
       run: |
-        tag=$(git describe --abbrev=0 | cut -c 2-)
-        echo "TAG=ios-$tag" > constants.env
+        grep -m 1 VERSION_NAME= version.sh | awk -F = '{printf "TAG=iOS-%s",$2}' | xargs > constants.env
         cat constants.env
     - name: Export Env
       uses: cardinalby/export-env-action@v2
