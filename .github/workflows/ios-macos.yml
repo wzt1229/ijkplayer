@@ -48,14 +48,15 @@ jobs:
       run: cd examples/ios && ./build-framework.sh
     - name: Build macOS Framework      
       run: cd examples/macos && ./build-framework.sh
-    - name: Zip iOS Frameworks
+    - name: Zip Frameworks
       run: |
-        cd examples/ios/build/Release-ios
-        zip -rq IJKMediaPlayerKit-iOS-${{ env.TAG }}.zip ./*
-    - name: Zip macOS Frameworks        
-      run: |
-        cd examples/macos/build/Release/IJKMediaPlayerKit
-        zip -rq IJKMediaPlayerKit-macOS-${{ env.TAG }}.zip ./*
+        dst=IJKMediaPlayerKit-${{ env.TAG }}
+        mkdir -p ${dst}/iOS
+        mkdir -p ${dst}/macOS
+        cp -pPR examples/ios/build/Release-ios/* $dst/iOS
+        cp -pPR examples/macos/build/Release/IJKMediaPlayerKit/* $dst/macOS
+        cd $dst
+        zip -rq IJKMediaPlayerKit-${{ env.TAG }}.zip ./*
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1

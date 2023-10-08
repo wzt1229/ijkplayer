@@ -67,7 +67,7 @@ lipo -create -output ${OUTPUT_FMK_DIR}/${TARGET_NAME} ${DEVICE_DIR}/${TARGET_NAM
 # Copy dSYM files
 
 cp -pPR ${DEVICE_DIR}.dSYM ${OUTPUT_DIR}
-cp -pPR ${SIMULATOR_DIR}.dSYM ${OUTPUT_DIR}/${TARGET_NAME}'-simulator.framework.dSYM'
+# cp -pPR ${SIMULATOR_DIR}.dSYM ${OUTPUT_DIR}/${TARGET_NAME}'-simulator.framework.dSYM'
 
 cd ${OUTPUT_DIR}
 echo "framework dir: $PWD"
