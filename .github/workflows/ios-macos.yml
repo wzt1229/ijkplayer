@@ -52,8 +52,8 @@ jobs:
       run: |
         dst=IJKMediaPlayerKit-${{ env.TAG }}
         mkdir -p ${dst}/iOS
-        mkdir -p ${dst}/macOS
         cp -pPR examples/ios/build/Release-ios/* $dst/iOS
+        mkdir -p ${dst}/macOS
         cp -pPR examples/macos/build/Release/IJKMediaPlayerKit/* $dst/macOS
         cd $dst
         zip -rq IJKMediaPlayerKit-${{ env.TAG }}.zip ./*
@@ -67,23 +67,14 @@ jobs:
         release_name: 👏👏 IJKMediaPlayerKit k${{ env.TAG }}
         draft: false
         prerelease: false
-    - name: Upload iOS Release Asset
+    - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: examples/ios/build/Release-ios/IJKMediaPlayerKit-iOS-${{ env.TAG }}.zip
-        asset_name: "IJKMediaPlayerKit-iOS-${{ env.TAG }}.zip"
-        asset_content_type: application/zip
-    - name: Upload macOS Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: examples/macos/build/Release/IJKMediaPlayerKit/IJKMediaPlayerKit-macOS-${{ env.TAG }}.zip
-        asset_name: "IJKMediaPlayerKit-macOS-${{ env.TAG }}.zip"
+        asset_path: IJKMediaPlayerKit-${{ env.TAG }}/IJKMediaPlayerKit-${{ env.TAG }}.zip
+        asset_name: "IJKMediaPlayerKit-${{ env.TAG }}.zip"
         asset_content_type: application/zip
     
 
