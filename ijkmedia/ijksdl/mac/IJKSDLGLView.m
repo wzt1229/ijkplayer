@@ -56,6 +56,7 @@
 #import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
+#import "../gles2/internal.h"
 
 #define kHDRAnimationMaxCount 90
 
@@ -172,6 +173,68 @@ static bool _is_need_dispath_to_global(void)
 {
     // Bind the snapshot FBO and render the scene.
     glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+}
+
+@end
+
+@interface _IJKSDLSubTexture : NSObject
+
+@property(nonatomic) GLuint texture;
+@property(nonatomic) int w;
+@property(nonatomic) int h;
+
+@end
+
+@implementation _IJKSDLSubTexture
+
+- (void)dealloc
+{
+    if (_texture) {
+        glDeleteTextures(1, &_texture);
+    }
+}
+
+- (GLuint)texture
+{
+    return _texture;
+}
+
+- (instancetype)initWithCVPixelBuffer:(CVPixelBufferRef)pixelBuff
+{
+    self = [super init];
+    if (self) {
+        
+        self.w = (int)CVPixelBufferGetWidth(pixelBuff);
+        self.h = (int)CVPixelBufferGetHeight(pixelBuff);
+        
+        // Create a texture object that you apply to the model.
+        glGenTextures(1, &_texture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_RECTANGLE, _texture);
+        
+        int texutres[3] = {_texture,0,0};
+        ijk_upload_texture_with_cvpixelbuffer(pixelBuff, texutres);
+// glTexImage2D 不能处理字节对齐问题！会找成字幕倾斜显示，实际上有多余的padding填充，读取有误产生错行导致的
+//        // Set up filter and wrap modes for the texture object.
+//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//
+//        GLsizei width  = (GLsizei)CVPixelBufferGetWidth(pixelBuff);
+//        GLsizei height = (GLsizei)CVPixelBufferGetHeight(pixelBuff);
+//        CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
+//        void *src = CVPixelBufferGetBaseAddress(pixelBuff);
+//        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, src);
+//        CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
+        glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+    }
+    return self;
+}
+
++ (instancetype)generate:(CVPixelBufferRef)pixel
+{
+    return [[self alloc] initWithCVPixelBuffer:pixel];
 }
 
 @end
@@ -325,11 +388,7 @@ static bool _is_need_dispath_to_global(void)
 {
     if (self.currentAttach.sub) {
         self.currentAttach.sub = nil;
-        if (self.currentAttach.subPicture) {
-            CVPixelBufferRelease(self.currentAttach.subPicture);
-            self.currentAttach.subPicture = NULL;
-            self.currentAttach.subTexture = nil;
-        }
+        self.currentAttach.subTexture = nil;
         [self setNeedsRefreshCurrentPic];
     }
 }
@@ -487,7 +546,8 @@ static bool _is_need_dispath_to_global(void)
 
 - (void)doUploadSubtitle:(IJKOverlayAttach *)attach
 {
-    if (attach.subPicture) {
+    _IJKSDLSubTexture * subTexture = attach.subTexture;
+    if (subTexture) {
         float ratio = 1.0;
         if (attach.sub.pixels) {
             ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
@@ -495,8 +555,10 @@ static bool _is_need_dispath_to_global(void)
         ratio *= self.displayScreenScale;
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, ratio * CVPixelBufferGetWidth(attach.subPicture), ratio * CVPixelBufferGetHeight(attach.subPicture));
-        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, (void *)attach.subPicture)) {
+        
+        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, ratio * subTexture.w, ratio * subTexture.h);
+        
+        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
             IJK_GLES2_Renderer_drawArrays();
         } else {
             ALOGE("[GL] GLES2 Render Subtitle failed\n");
@@ -543,12 +605,9 @@ static bool _is_need_dispath_to_global(void)
     //update subtitle if need
     if (self.subtitlePreferenceChanged) {
         if (currentAttach.sub.text) {
-            if (currentAttach.subPicture) {
-                CVPixelBufferRelease(currentAttach.subPicture);
-                currentAttach.subPicture = NULL;
-                currentAttach.subTexture = nil;
-            }
-            currentAttach.subPicture = [self _generateSubtitlePixel:currentAttach.sub.text];
+            CVPixelBufferRef subPicture = [self _generateSubtitlePixel:currentAttach.sub.text];
+            currentAttach.subTexture = [_IJKSDLSubTexture generate:subPicture];
+            CVPixelBufferRelease(subPicture);
         }
         self.subtitlePreferenceChanged = NO;
     }
@@ -564,6 +623,7 @@ static bool _is_need_dispath_to_global(void)
     
     CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
+
     if ([self setupRendererIfNeed:attach] && IJK_GLES2_Renderer_isValid(_renderer)) {
         // Bind the FBO to screen.
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -592,24 +652,39 @@ static bool _is_need_dispath_to_global(void)
                          waitUntilDone:NO];
 }
 
-- (BOOL)displayAttach:(IJKOverlayAttach *)attach
+- (void)generateSubTexture:(IJKOverlayAttach *)attach
 {
-    if (!attach) {
-        ALOGW("IJKSDLGLView: overlay is nil\n");
-        return NO;
-    }
-    
-    //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
-    
     IJKSDLSubtitle *sub = attach.sub;
-    //generate current subtitle.
     CVPixelBufferRef subRef = NULL;
     if (sub.text.length > 0) {
         subRef = [self _generateSubtitlePixel:sub.text];
     } else if (sub.pixels != NULL) {
         subRef = [self _generateSubtitlePixelFromPicture:sub];
     }
-    attach.subPicture = subRef;
+    if (subRef) {
+        CGLLockContext([[self openGLContext] CGLContextObj]);
+        [[self openGLContext] makeCurrentContext];
+        attach.subTexture = [_IJKSDLSubTexture generate:subRef];
+        CGLUnlockContext([[self openGLContext] CGLContextObj]);
+        CVPixelBufferRelease(subRef);
+    }
+}
+
+- (BOOL)displayAttach:(IJKOverlayAttach *)attach
+{
+    if (!attach) {
+        ALOGW("IJKSDLGLView: overlay is nil\n");
+        return NO;
+    }
+    //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
+    
+    //generate current subtitle.
+    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub) {
+        [self generateSubTexture:attach];
+    } else if (self.currentAttach.sub) {
+        //reuse the expensive texture.
+        attach.subTexture = self.currentAttach.subTexture;
+    }
     
     if (self.subtitlePreferenceChanged) {
         self.subtitlePreferenceChanged = NO;

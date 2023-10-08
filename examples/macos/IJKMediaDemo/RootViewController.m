@@ -1608,7 +1608,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
 {
     CGImageRef img = [self.player.view snapshot:self.snapshot];
     if (img) {
-        NSString * dir = [self dirForCurrentPlayingUrl];
+        NSString *dir = [self dirForCurrentPlayingUrl];
         NSString *movieName = [self.playingUrl lastPathComponent];
         NSString *fileName = [NSString stringWithFormat:@"%@-%ld.jpg",movieName,(long)(CFAbsoluteTimeGetCurrent() * 1000)];
         NSString *filePath = [dir stringByAppendingPathComponent:fileName];

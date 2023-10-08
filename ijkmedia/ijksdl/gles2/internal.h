@@ -92,6 +92,7 @@ typedef struct IJK_GLES2_Renderer
     GLint um4_mvp;
 
     GLint us2_sampler[IJK_GLES2_MAX_PLANE];
+    GLint subSampler;//subtitle
     GLint um3_color_conversion;
     YUV_2_RGB_Color_Matrix colorMatrix;
     IJK_Color_Transfer_Function transferFun;
@@ -106,8 +107,8 @@ typedef struct IJK_GLES2_Renderer
     GLsizei   (*func_getBufferWidth)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
     GLboolean (*func_uploadTexture)(IJK_GLES2_Renderer *renderer, void *picture);
     GLvoid    (*func_useSubtitle)(IJK_GLES2_Renderer *renderer,GLboolean subtitle);
-    GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer,void* subtitle);
-    GLvoid    (*func_updateHDRAnimation)(IJK_GLES2_Renderer *renderer,float per);
+    GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer, int tex, int w, int h);
+    GLvoid    (*func_updateHDRAnimation)(IJK_GLES2_Renderer *renderer, float per);
     void*     (*func_getVideoImage)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
     GLvoid    (*func_destroy)(IJK_GLES2_Renderer *renderer);
 
@@ -169,14 +170,15 @@ IJK_GLES2_Renderer *IJK_GL_Renderer_create_xrgb(void);
 #else
 
 IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture, int openglVer);
-void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type,char *out,int ver);
+void ijk_get_apple_common_fragment_shader(IJK_SHADER_TYPE type, char *out, int ver);
 
+GLboolean ijk_upload_texture_with_cvpixelbuffer(CVPixelBufferRef pixel_buffer, int textures[3]);
 #endif
 
 const GLfloat *IJK_GLES2_getColorMatrix_bt2020(void);
 const GLfloat *IJK_GLES2_getColorMatrix_bt709(void);
 const GLfloat *IJK_GLES2_getColorMatrix_bt601(void);
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_source,int openglVer);
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_source, int openglVer);
 
 #endif

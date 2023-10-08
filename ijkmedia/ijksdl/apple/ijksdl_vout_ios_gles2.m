@@ -53,12 +53,7 @@
         CVPixelBufferRelease(self.videoPicture);
         self.videoPicture = NULL;
     }
-    
-    if (self.subPicture) {
-        CVPixelBufferRelease(self.subPicture);
-        self.subPicture = NULL;
-        self.subTexture = nil;
-    }
+    self.subTexture = nil;
 }
 
 @end
@@ -241,7 +236,7 @@ static uint8_t* copy_pal8_to_bgra(const AVSubtitleRect* rect)
     return (uint8_t*)buff;
 }
 
-static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *rect)
+static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *bmp)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (!opaque) {
@@ -249,7 +244,7 @@ static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *r
     }
     opaque->sub = nil;
     
-    if (!rect) {
+    if (!bmp) {
         return;
     }
     
@@ -258,9 +253,9 @@ static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *r
     /// https://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5
     /// need to be converted to BGRA32 before use
     /// PAL8 to BGRA32, bytes per line increased by multiplied 4
-    sub.w = rect->w;
-    sub.h = rect->h;
-    sub.pixels = copy_pal8_to_bgra(rect);
+    sub.w = bmp->w;
+    sub.h = bmp->h;
+    sub.pixels = copy_pal8_to_bgra(bmp);
     opaque->sub = sub;
 }
 

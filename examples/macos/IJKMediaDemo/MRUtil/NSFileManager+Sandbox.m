@@ -23,6 +23,10 @@
     //aDir is not exist
     NSError *err = nil;
     [[NSFileManager defaultManager] createDirectoryAtPath:aDir withIntermediateDirectories:YES attributes:nil error:&err];
+    
+    if (err) {
+        NSLog(@"mr_mkdirP error:%@",err);
+    }
     return err;
 }
 

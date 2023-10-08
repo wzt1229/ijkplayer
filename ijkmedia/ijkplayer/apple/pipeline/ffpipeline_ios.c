@@ -36,7 +36,7 @@ static void func_destroy(IJKFF_Pipeline *pipeline)
 
 static IJKFF_Pipenode *func_open_video_decoder(IJKFF_Pipeline *pipeline, FFPlayer *ffp)
 {
-    return ffpipenode_create_video_decoder_from_ffplay(ffp);;
+    return ffpipenode_create_video_decoder_from_ffplay(ffp);
 }
 
 static SDL_Aout *func_open_audio_output(IJKFF_Pipeline *pipeline, FFPlayer *ffp)
