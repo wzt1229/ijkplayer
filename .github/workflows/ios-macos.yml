@@ -62,8 +62,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: IJKMediaPlayerKit-${{ env.TAG }}
-        release_name: Release IJKMediaPlayerKit-${{ env.TAG }}
+        tag_name: k${{ env.TAG }}
+        release_name: 👏👏 IJKMediaPlayerKit k${{ env.TAG }}
         draft: false
         prerelease: false
     - name: Upload iOS Release Asset
