@@ -3,8 +3,8 @@
 | Platform | Build Status                                                                                                                                                                         |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Android  | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/android.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/android.yml) ⚠️ unknown state |
-| iOS      | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml)                          |
-| macOS    | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml)                      |
+| iOS      | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml)              |
+| macOS    | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml)              |
 
 Video player based on [ffplay](http://ffmpeg.org)
 
@@ -34,11 +34,10 @@ TODO check:
   - platform: iOS 9.0/macOS 10.11
   - cpu: arm64,x86_64
   - api: [MediaPlayer.framework-like](IJKMediaPlayerKit/IJKMediaPlayback.h)
-  - video-output: OpenGL ES 2.0/OpenGL 3.3
+  - video-output: Metal 2/OpenGL ES 2.0/OpenGL 3.3
   - audio-output: AudioQueue, AudioUnit
   - hw-decoder: auto use VideoToolbox accel by default
-  - subtitle: use Quartz to draw text into a CVPixelBufferRef then use OpenGL/Metal render
-  - alternative-backend: AVFoundation.Framework.AVPlayer, MediaPlayer.Framework.MPMoviePlayerControlelr (obselete since iOS 8)
+  - subtitle: use Quartz draw text into a CVPixelBufferRef then use OpenGL/Metal generate texture
 - Android (⚠️ unknown state)
   - platform: API 9~23
   - cpu: ARMv7a, ARM64v8a, x86 (ARMv5 is not tested on real devices)
@@ -51,6 +50,10 @@ TODO check:
 ### ON-PLAN
 
 - avfilter support
+
+### Installation with CocoaPods
+
+`pod 'IJKMediaPlayerKit'`
 
 ### Before Build
 
