@@ -56,7 +56,7 @@ jobs:
         mkdir -p ${dst}/macOS
         cp -pPR examples/macos/build/Release/IJKMediaPlayerKit/* $dst/macOS
         cd $dst
-        zip -rq IJKMediaPlayerKit-${{ env.TAG }}.zip ./*
+        zip -ryq IJKMediaPlayerKit-${{ env.TAG }}.zip ./*
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
