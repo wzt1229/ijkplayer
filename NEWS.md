@@ -1,4 +1,18 @@
-tag 0.10.0
+tag k0.10.2
+--------------------------------
+
+- improve subtitle rendering performance markedly
+- support cocoapods install pre-build framework
+
+tag k0.10.1
+--------------------------------
+
+- restore ijk custom protocols
+- support idx+sub subtitle
+- fix display old subtitle in a flash bug
+- fix two crashes
+
+tag k0.10.0
 --------------------------------
 
 - upgrade ffmpeg5.1.3
@@ -11,7 +25,7 @@ tag 0.10.0
 - sync lastest ffplay.c 
 - adapt ass parser
 
-tag 0.9.7
+tag k0.9.7
 --------------------------------
 
 - expose internal render view
@@ -19,7 +33,7 @@ tag 0.9.7
 - fix shutdown player crash,some video may cause
 - when pts changed abruptly throw FFP_MSG_WARNING
 
-tag 0.9.6
+tag k0.9.6
 --------------------------------
 
 - fix accurate seek waiting time out bug
@@ -27,7 +41,7 @@ tag 0.9.6
 - improve audio-video sync logic, especially drop audio frame
 - metal view snapshot support origin,screen,effect origin type
 
-tag 0.9.5
+tag k0.9.5
 --------------------------------
 
 - support apple metal display video picture
@@ -37,14 +51,14 @@ tag 0.9.5
 - fix after finish seek, video picture display slowly a few seconds bug
 - fix after seek near the end of the video, not play problem
 
-tag 0.9.4
+tag k0.9.4
 --------------------------------
 
 - use **videotoolbox_hwaccel** instead of videotoolbox option
 - add protocol_whitelist: rtmp,rtsp,rtp,srtp,udp
 - macos 10.14 later use exclusive thread for glview
 
-tag 0.9.3
+tag k0.9.3
 --------------------------------
 
 - use global single thread display fix SIGSEGV crash
@@ -53,7 +67,7 @@ tag 0.9.3
 - support Xcode 14.1
 - pass cocoapod lib lint
 
-tag 0.9.2
+tag k0.9.2
 --------------------------------
 
 - support morden picture format: jpg,jpeg,png,bmp,webp,pcx,tif,psd
@@ -64,7 +78,7 @@ tag 0.9.2
 - support set preventDisplay for snapshop feature (macOS only)
 - not depends libyuv
 
-tag 0.9.1
+tag k0.9.1
 --------------------------------
 
 - support morden audio format: aac,ac3,amr,wma,mp2,mp3,m4a,m4r,caf,ogg,oga,opus
@@ -75,7 +89,7 @@ tag 0.9.1
 - clean ijk videotoolbox hw decoder pipeline
 - fix some crash,eg: GBK encoding meta
 
-tag 0.9.0.5
+tag k0.9.0.5
 --------------------------------
 
 - support cocoapods
