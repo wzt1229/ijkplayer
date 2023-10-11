@@ -2809,6 +2809,23 @@ static AVDictionary *filter_codec_opts(AVDictionary *opts, enum AVCodecID codec_
     return ret;
 }
 
+static void _ijkmeta_set_stream(FFPlayer* ffp, int type, int stream)
+{
+    switch (type) {
+        case AVMEDIA_TYPE_VIDEO:
+            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_VIDEO_STREAM, stream);
+            break;
+        case AVMEDIA_TYPE_AUDIO:
+            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_AUDIO_STREAM, stream);
+            break;
+        case AVMEDIA_TYPE_SUBTITLE:
+        case AVMEDIA_TYPE_NB + 1:
+            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, stream);
+            break;
+        default:
+            break;
+    }
+}
 
 /* open a given stream. Return 0 if OK */
 static int stream_component_open(FFPlayer *ffp, int stream_index)
@@ -2970,6 +2987,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         if ((ret = decoder_start(&is->auddec, audio_thread, ffp, "ff_audio_dec")) < 0)
             goto out;
         SDL_AoutPauseAudio(ffp->aout, 0);
+        _ijkmeta_set_stream(ffp, avctx->codec_type, stream_index);
         break;
     case AVMEDIA_TYPE_VIDEO:
         is->video_stream = stream_index;
@@ -3029,7 +3047,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
             avctx->skip_loop_filter = FFMAX(avctx->skip_loop_filter, AVDISCARD_NONREF);
             avctx->skip_idct        = FFMAX(avctx->skip_loop_filter, AVDISCARD_NONREF);
         }
-
+        _ijkmeta_set_stream(ffp, avctx->codec_type, stream_index);
         break;
     case AVMEDIA_TYPE_SUBTITLE:
         if (!ffp->subtitle)
@@ -3394,13 +3412,6 @@ static int read_thread(void *arg)
         av_log(NULL, AV_LOG_DEBUG, "auto decision max buffer size:%dMB\n",ffp->dcc.max_buffer_size/1024/1024);
     }
     
-    if (st_index[AVMEDIA_TYPE_VIDEO] >= 0)
-        ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_VIDEO_STREAM, st_index[AVMEDIA_TYPE_VIDEO]);
-    if (st_index[AVMEDIA_TYPE_AUDIO] >= 0)
-        ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_AUDIO_STREAM, st_index[AVMEDIA_TYPE_AUDIO]);
-    if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0)
-        ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, st_index[AVMEDIA_TYPE_SUBTITLE]);
-
     if (is->video_stream < 0 && is->audio_stream < 0) {
         av_log(NULL, AV_LOG_FATAL, "Failed to open file '%s' or configure filtergraph\n",
                is->filename);
@@ -4919,24 +4930,6 @@ int ffp_get_video_rotate_degrees(FFPlayer *ffp)
     return theta;
 }
 
-static void _ijkmeta_set_stream(FFPlayer* ffp, int type, int stream)
-{
-    switch (type) {
-        case AVMEDIA_TYPE_VIDEO:
-            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_VIDEO_STREAM, stream);
-            break;
-        case AVMEDIA_TYPE_AUDIO:
-            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_AUDIO_STREAM, stream);
-            break;
-        case AVMEDIA_TYPE_SUBTITLE:
-        case AVMEDIA_TYPE_NB + 1:
-            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, stream);
-            break;
-        default:
-            break;
-    }
-}
-
 static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
 {
     if (!ffp->subtitle)
@@ -4970,7 +4963,7 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
                 av_log(NULL, AV_LOG_ERROR, "sub stream open failed:%d",stream);
             }
         } else {
-            if (ff_exSub_open_stream(is->ffSub,stream) == 0) {
+            if (ff_exSub_open_stream(is->ffSub, stream) == 0) {
                 opened = 1;
             } else {
                 av_log(NULL, AV_LOG_ERROR, "ex sub stream open failed:%d",stream);
