@@ -1230,8 +1230,10 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                     is->video_accurate_seek_req = 0;
                     SDL_CondSignal(is->audio_accurate_seek_cond);
                     if (video_seek_pos == is->seek_pos && is->audio_accurate_seek_req && !is->abort_request) {
-                        int wd = FFMIN((int)(av_gettime_relative() / 1000 - is->accurate_seek_start_time), ffp->accurate_seek_timeout);
-                        SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, wd);
+                        int wd = (int)(is->accurate_seek_start_time + ffp->accurate_seek_timeout - av_gettime_relative() / 1000);
+                        if (wd > 0) {
+                            SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, wd);
+                        }
                     } else {
                         ffp_notify_msg2(ffp, FFP_MSG_ACCURATE_SEEK_COMPLETE, (int)(pts * 1000));
                     }
@@ -1259,8 +1261,10 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
             is->video_accurate_seek_req = 0;
             SDL_CondSignal(is->audio_accurate_seek_cond);
             if (is->audio_accurate_seek_req && !is->abort_request) {
-                int wd = FFMIN((int)(av_gettime_relative() / 1000 - is->accurate_seek_start_time), ffp->accurate_seek_timeout);
-                SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, wd);
+                int wd = (int)(is->accurate_seek_start_time + ffp->accurate_seek_timeout - av_gettime_relative() / 1000);
+                if (wd > 0) {
+                    SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, wd);
+                }
             } else {
                 if (!isnan(pts)) {
                     ffp_notify_msg2(ffp, FFP_MSG_ACCURATE_SEEK_COMPLETE, (int)(pts * 1000));
@@ -1874,8 +1878,10 @@ static int audio_thread(void *arg)
                                 is->audio_accurate_seek_req = 0;
                                 SDL_CondSignal(is->video_accurate_seek_cond);
                                 if (audio_seek_pos == is->seek_pos && is->video_accurate_seek_req && !is->abort_request) {
-                                    int wd = FFMIN((int)(av_gettime_relative() / 1000 - is->accurate_seek_start_time), ffp->accurate_seek_timeout);
-                                    SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, wd);
+                                    int wd = (int)(is->accurate_seek_start_time + ffp->accurate_seek_timeout - av_gettime_relative() / 1000);
+                                    if (wd > 0) {
+                                        SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, wd);
+                                    }
                                 } else {
                                     ffp_notify_msg2(ffp, FFP_MSG_ACCURATE_SEEK_COMPLETE, (int)(audio_clock * 1000));
                                 }
@@ -1904,8 +1910,10 @@ static int audio_thread(void *arg)
                         is->audio_accurate_seek_req = 0;
                         SDL_CondSignal(is->video_accurate_seek_cond);
                         if (is->video_accurate_seek_req && !is->abort_request) {
-                            int wd = FFMIN((int)(av_gettime_relative() / 1000 - is->accurate_seek_start_time), ffp->accurate_seek_timeout);
-                            SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, wd);
+                            int wd = (int)(is->accurate_seek_start_time + ffp->accurate_seek_timeout - av_gettime_relative() / 1000);
+                            if (wd > 0) {
+                                SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, wd);
+                            }
                         } else {
                             ffp_notify_msg2(ffp, FFP_MSG_ACCURATE_SEEK_COMPLETE, (int)(audio_clock * 1000));
                         }
