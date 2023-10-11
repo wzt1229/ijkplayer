@@ -3034,13 +3034,17 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     case AVMEDIA_TYPE_SUBTITLE:
         if (!ffp->subtitle)
             break;
-        ret = ff_sub_open_component(is->ffSub, stream_index, NULL, avctx);
-        if (ret == 0) {
-            ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
-            goto out;
-        } else {
-            //if failed, freed context internal.
-            goto out;
+        //maybe already has ex subtile
+        if (0 == ff_sub_current_stream_type(is->ffSub, NULL)) {
+            ret = ff_sub_open_component(is->ffSub, stream_index, NULL, avctx);
+            if (ret == 0) {
+                ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
+                _ijkmeta_set_stream(ffp, avctx->codec_type, stream_index);
+                goto out;
+            } else {
+                //if failed, freed context internal.
+                goto out;
+            }
         }
         break;
     default:
