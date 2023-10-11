@@ -1197,7 +1197,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                     double fps = av_q2d(is->video_st->avg_frame_rate);
                     int need_drop = ceil(delta * fps / 1000 / 1000);
                     
-                    av_log(NULL, AV_LOG_INFO, "video accurate_seek start, is->seek_pos=%lld, first pts=%lf,estimate drop=%d is->accurate_seek_time = %lld\n", is->seek_pos, pts, need_drop, is->accurate_seek_start_time);
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek start, is->seek_pos=%lld, first pts=%lf,estimate drop=%d is->accurate_seek_start_time = %lld\n", is->seek_pos, pts, need_drop, is->accurate_seek_start_time);
                 }
                 is->drop_vframe_count++;
 
@@ -1839,25 +1839,26 @@ static int audio_thread(void *arg)
                                 av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, is->seek_pos=%lld, audio_clock=%lf, estimate drop=%d, is->accurate_seek_start_time = %lld\n", is->seek_pos, audio_clock, need_drop, is->accurate_seek_start_time);
                             }
                             is->drop_aframe_count++;
-/* 下面的逻辑是在丢帧的时候保持音视频时间戳在一定的范围内，否则就等待；
-   但是有可能导致持续等待，有的视频视音频帧可能是连续很久的，间隔很远，比如：
- VVVVVVVVVVVVAAAAAAAAAAAAAAAAVVVVVVVVVVVVVVVV
+/*
+ decode audio stream is faster, audio accurate seek finished in a flash.
+ some video stream decode is slow, accurate seek maybe timeout, thus video picture display in a flash, because video clock is later, so dropping frames need keep a safe distance.
  */
-//                            while (is->video_accurate_seek_req && !is->abort_request) {
-//                                int64_t vpts = is->accurate_seek_vframe_pts;
-//                                int64_t deviation2 = vpts - audio_clock * 1000 * 1000;
-//                                int64_t deviation3 = vpts - is->seek_pos;
-//                                if (deviation2 > -100 * 1000 && deviation3 < 0) {
-//                                    break;
-//                                } else {
-//                                    av_log(NULL, AV_LOG_INFO, "audio accurate_seek waiting\n");
-//                                    av_usleep(20 * 1000);
-//                                }
-//                                now = av_gettime_relative() / 1000;
-//                                if ((now - is->accurate_seek_start_time) > ffp->accurate_seek_timeout) {
-//                                    break;
-//                                }
-//                            }
+                            while (is->video_accurate_seek_req && !is->abort_request) {
+                                int64_t vpts = is->accurate_seek_vframe_pts;
+                                int64_t deviation2 = vpts - audio_clock * 1000 * 1000;
+                                int64_t deviation3 = vpts - is->seek_pos;
+                                //video is behind audio grather than 100ms;
+                                if (deviation2 > -100 * 1000 && deviation3 < 0) {
+                                    break;
+                                } else {
+                                    av_log(NULL, AV_LOG_INFO, "audio accurate_seek waiting\n");
+                                    av_usleep(20 * 1000);
+                                }
+                                now = av_gettime_relative() / 1000;
+                                if ((now - is->accurate_seek_start_time) > ffp->accurate_seek_timeout) {
+                                    break;
+                                }
+                            }
 
                             if(!is->video_accurate_seek_req && is->video_stream >= 0 && audio_clock * 1000 * 1000 > is->accurate_seek_vframe_pts) {
                                 audio_accurate_seek_fail = 1;
