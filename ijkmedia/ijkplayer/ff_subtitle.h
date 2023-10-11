@@ -39,6 +39,7 @@ int ff_sub_get_opened_stream_idx(FFSubtitle *sub);
 void ff_sub_seek_to(FFSubtitle *sub, float delay, float v_pts);
 int ff_sub_set_delay(FFSubtitle *sub, float delay, float cp);
 float ff_sub_get_delay(FFSubtitle *sub);
+enum AVCodecID ff_sub_get_codec_id(FFSubtitle *sub);
 
 int ff_inSub_packet_queue_flush(FFSubtitle *sub);
 // return 0 means not internal,but not means is external;

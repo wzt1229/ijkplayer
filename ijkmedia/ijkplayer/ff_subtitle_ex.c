@@ -336,7 +336,7 @@ int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub)
     return already_added;
 }
 
-int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name,IjkMediaMeta *meta)
+int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMeta *meta)
 {
     if (!sub) {
         return -1;
@@ -380,4 +380,9 @@ int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx)
     }
     SDL_UnlockMutex(sub->mutex);
     return arr_idx != -1;
+}
+
+AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub)
+{
+    return sub ? subComponent_get_avctx(sub->opaque) : NULL;
 }

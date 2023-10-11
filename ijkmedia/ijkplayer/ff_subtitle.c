@@ -351,6 +351,29 @@ int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic
     return subComponent_open(&sub->inSub, stream_index, ic, avctx, &sub->packetq, &sub->frameq);
 }
 
+enum AVCodecID ff_sub_get_codec_id(FFSubtitle *sub)
+{
+    if (!sub) {
+        return -1;
+    }
+    AVCodecContext *avctx = NULL;
+    int idx = -1;
+    if (sub->inSub) {
+        idx = subComponent_get_stream(sub->inSub);
+        if (idx != -1) {
+            avctx = subComponent_get_avctx(sub->inSub);
+        }
+    }
+    if (idx == -1 && sub->exSub) {
+        idx = exSub_get_opened_stream_idx(sub->exSub);
+        if (idx != -1) {
+            avctx = exSub_get_avctx(sub->exSub);
+        }
+    }
+    
+    return avctx ? avctx->codec_id : AV_CODEC_ID_NONE;
+}
+
 int ff_inSub_packet_queue_flush(FFSubtitle *sub)
 {
     if (sub) {

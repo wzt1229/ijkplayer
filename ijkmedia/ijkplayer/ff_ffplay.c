@@ -5069,6 +5069,10 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             float delay = ff_sub_get_delay(is->ffSub);
             //when exchang stream force seek stream instead of ff_sub_set_delay
             ff_sub_seek_to(is->ffSub, delay, sec);
+            enum AVCodecID cid = ff_sub_get_codec_id(is->ffSub);
+            if (cid != AV_CODEC_ID_NONE) {
+                ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(cid));
+            }
             return 0;
         } else if (r > 0){
             return 0;
@@ -5284,6 +5288,10 @@ int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
             float delay = ff_sub_get_delay(is->ffSub);
             ff_sub_seek_to(is->ffSub, delay, sec);
             ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+            enum AVCodecID cid = ff_sub_get_codec_id(is->ffSub);
+            if (cid != AV_CODEC_ID_NONE) {
+                ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(cid));
+            }
         }
         return ret;
     }

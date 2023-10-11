@@ -257,3 +257,8 @@ int subComponent_seek_to(FFSubComponent *sub, int sec)
     sub->eof = 0;
     return 0;
 }
+
+AVCodecContext * subComponent_get_avctx(FFSubComponent *sub)
+{
+    return sub ? sub->decoder.avctx : NULL;
+}

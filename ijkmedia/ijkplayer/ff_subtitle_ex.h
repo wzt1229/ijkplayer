@@ -15,6 +15,7 @@ typedef struct IJKEXSubtitle IJKEXSubtitle;
 typedef struct IjkMediaMeta IjkMediaMeta;
 typedef struct FrameQueue FrameQueue;
 typedef struct PacketQueue PacketQueue;
+typedef struct AVCodecContext AVCodecContext;
 
 int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq);
 int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub);
@@ -29,5 +30,6 @@ int exSub_get_opened_stream_idx(IJKEXSubtitle *sub);
 //when return zero means succ;
 int exSub_seek_to(IJKEXSubtitle *sub, float sec);
 int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx);
+AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub);
 
 #endif /* ff_subtitle_ex_h */

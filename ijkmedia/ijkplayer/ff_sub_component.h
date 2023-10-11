@@ -21,5 +21,6 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
 int subComponent_close(FFSubComponent **subp);
 int subComponent_get_stream(FFSubComponent *sub);
 int subComponent_seek_to(FFSubComponent *sub, int sec);
+AVCodecContext * subComponent_get_avctx(FFSubComponent *sub);
 
 #endif /* ff_sub_component_h */
