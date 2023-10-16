@@ -138,11 +138,6 @@ static int decoder_decode_frame(FFSubComponent *sc, AVFrame *frame, AVSubtitle *
                         }
                     }
                         break;
-                    case AVMEDIA_TYPE_SUBTITLE:
-                    {
-                        ret = avcodec_decode_subtitle2(d->avctx, sub, NULL, d->pkt);
-                    }
-                        break;
                     default:
                         break;
                 }
@@ -186,18 +181,44 @@ static int decoder_decode_frame(FFSubComponent *sc, AVFrame *frame, AVSubtitle *
             av_packet_unref(d->pkt);
         } while (sc->packetq->abort_request == 0);
         
-        
-        int send = avcodec_send_packet(d->avctx, d->pkt);
-        if (send == AVERROR(EAGAIN)) {
-            av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
-            d->packet_pending = 1;
-        } else {
+        if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+            int got_frame = 0;
+            int ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
+            if (ret < 0) {
+                ret = AVERROR(EAGAIN);
+            } else {
+                if (got_frame && !d->pkt->data) {
+                    d->packet_pending = 1;
+                }
+                ret = got_frame ? 0 : (d->pkt->data ? AVERROR(EAGAIN) : AVERROR_EOF);
+            }
+            if (ret >= 0) {
+                status = 1;
+                goto abort_end;
+            } else if (ret == AVERROR_EOF) {
+                d->finished = d->pkt_serial;
+                avcodec_flush_buffers(d->avctx);
+                status = 0;
+                goto abort_end;
+            }
             av_packet_unref(d->pkt);
-            
-            if (send != 0) {
-                char errbuf[128] = { '\0' };
-                av_strerror(send, errbuf, sizeof(errbuf));
-                av_log(d->avctx, AV_LOG_ERROR, "avcodec_send_packet failed:%s(%d).\n",errbuf,send);
+        } else {
+            if (d->queue->abort_request){
+                status = -1;
+                goto abort_end;
+            }
+            int send = avcodec_send_packet(d->avctx, d->pkt);
+            if (send == AVERROR(EAGAIN)) {
+                av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
+                d->packet_pending = 1;
+            } else {
+                av_packet_unref(d->pkt);
+                
+                if (send != 0) {
+                    char errbuf[128] = { '\0' };
+                    av_strerror(send, errbuf, sizeof(errbuf));
+                    av_log(d->avctx, AV_LOG_ERROR, "avcodec_send_packet failed:%s(%d).\n",errbuf,send);
+                }
             }
         }
         
@@ -285,7 +306,7 @@ static int sub_component_thread(void *arg)
                 if (!sp)
                     return 0;
                 if (get_subtitle_frame(sc, &sp->sub) > 0) {
-                    //av_log(NULL, AV_LOG_DEBUG,"sub received frame:%f\n",pts);
+                    
                     int serial = sc->decoder.pkt_serial;
                     if (sc->packetq->serial == serial) {
                         Frame *sp = frame_queue_peek_writable(sc->frameq);
@@ -301,6 +322,7 @@ static int sub_component_thread(void *arg)
                         sp->height = sc->decoder.avctx->height;
                         sp->uploaded = 0;
                         frame_queue_push(sc->frameq);
+                        //av_log(NULL, AV_LOG_DEBUG,"sub received frame:%f\n",pts);
                     } else {
                         av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
                     }
