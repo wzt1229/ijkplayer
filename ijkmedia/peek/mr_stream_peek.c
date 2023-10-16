@@ -117,12 +117,6 @@ static int audio_decode_frame(MRStreamPeek *sp)
     
     AVFrame *frame = af->frame;
     
-    int data_size = av_samples_get_buffer_size(NULL,
-                                               frame->ch_layout.nb_channels,
-                                               frame->nb_samples,
-                                               frame->format,
-                                               1);
-    
     static int flag = 1;
     
     if (flag) {
@@ -196,12 +190,17 @@ static int audio_decode_frame(MRStreamPeek *sp)
         resampled_data_size = len2 * MRNBChannels * bytes_per_sample;
     } else {
         sp->audio_buf = frame->data[0];
-        resampled_data_size = data_size;
+        resampled_data_size = av_samples_get_buffer_size(NULL,
+                                                   frame->ch_layout.nb_channels,
+                                                   frame->nb_samples,
+                                                   frame->format,
+                                                   1);
     }
 
     /* update the audio clock with the pts */
     if (!isnan(af->pts))
         sp->audio_clock = af->pts;
+    
     sp->audio_clock_serial = af->serial;
 
 //    if (file_pcm_l == NULL) {
@@ -213,10 +212,20 @@ static int audio_decode_frame(MRStreamPeek *sp)
     return resampled_data_size;
 }
 
+static int bytes_per_sec(void)
+{
+    static int _bytes_per_sec = 0;
+
+    if (_bytes_per_sec == 0) {
+        _bytes_per_sec = av_samples_get_buffer_size(NULL, MRNBChannels, MRSampleRate, MRSampleFormat, 1);
+    }
+    return _bytes_per_sec;
+}
+
 int mr_stream_peek_get_data(MRStreamPeek *sub, unsigned char *buffer, int len, double * pts_begin, double * pts_end)
 {
     const int len_want = len;
-    double begin = -1,end = -1;
+    double begin = -1, end = -1;
     
     if (!sub) {
         return -1;
@@ -229,12 +238,9 @@ int mr_stream_peek_get_data(MRStreamPeek *sub, unsigned char *buffer, int len, d
                 /* if error, just output silence */
                 sub->audio_buf = NULL;
                 sub->audio_buf_size = 0;
-                goto end;
+                goto the_end;
             } else {
                 sub->audio_buf_size = audio_size;
-                if (begin < 0) {
-                    begin = sub->audio_clock;
-                }
             }
             sub->audio_buf_index = 0;
         }
@@ -244,6 +250,11 @@ int mr_stream_peek_get_data(MRStreamPeek *sub, unsigned char *buffer, int len, d
             break;
         }
         int rest_len = sub->audio_buf_size - sub->audio_buf_index;
+        
+        if (begin < 0) {
+            begin = sub->audio_clock + sub->audio_buf_index / bytes_per_sec();
+        }
+        
         if (rest_len > len)
             rest_len = len;
         memcpy(buffer, (uint8_t *)sub->audio_buf + sub->audio_buf_index, rest_len);
@@ -251,13 +262,9 @@ int mr_stream_peek_get_data(MRStreamPeek *sub, unsigned char *buffer, int len, d
         buffer += rest_len;
         sub->audio_buf_index += rest_len;
     }
-end:
+the_end:
     
-    if (begin >= 0) {
-        int bytes_per_sec = av_samples_get_buffer_size(NULL, MRNBChannels, MRSampleRate, MRSampleFormat, 1);
-        end = begin + (len_want - len) / bytes_per_sec;
-    }
-    
+    end = sub->audio_clock + sub->audio_buf_index / bytes_per_sec();
     if (pts_begin) {
         *pts_begin = begin;
     }
@@ -392,6 +399,5 @@ void mr_stream_peek_destroy(MRStreamPeek **subp)
 
 int mr_stream_peek_get_buffer_size(int second)
 {
-    int bytes_per_sec = av_samples_get_buffer_size(NULL, MRNBChannels, MRSampleRate, MRSampleFormat, 1);
-    return bytes_per_sec * second;
+    return bytes_per_sec() * second;
 }
