@@ -27,7 +27,7 @@ TODO: Add long description of the pod here.
   s.source           = { :git => 'https://github.com/debugly/ijkplayer', :tag => s.version.to_s }
 
   #metal 2.0 required
-  s.osx.deployment_target = '10.13'
+  s.osx.deployment_target = '10.11'
   s.ios.deployment_target = '11.0'
 
   s.osx.pod_target_xcconfig = {
@@ -38,7 +38,8 @@ TODO: Add long description of the pod here.
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_USE_METAL_2=1',
-    'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework/Resources'
+    'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework/Resources',
+    'MTL_LANGUAGE_REVISION' => 'Metal20'
   }
 
   s.ios.pod_target_xcconfig = {
@@ -52,7 +53,8 @@ TODO: Add long description of the pod here.
     # fix apple m1 building iOS Simulator platform,linking xxx built
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64',
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_USE_METAL_2=1',
-    'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework'
+    'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework',
+    'MTL_LANGUAGE_REVISION' => 'Metal20'
   }
 
   # fix apple m1 building iOS Simulator platform,linking xxx built
