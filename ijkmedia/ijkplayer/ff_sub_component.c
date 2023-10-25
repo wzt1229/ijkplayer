@@ -262,3 +262,8 @@ AVCodecContext * subComponent_get_avctx(FFSubComponent *sub)
 {
     return sub ? sub->decoder.avctx : NULL;
 }
+
+int subComponent_get_serial(FFSubComponent *sub)
+{
+    return sub ? sub->packetq->serial : -1;
+}

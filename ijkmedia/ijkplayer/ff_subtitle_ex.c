@@ -386,3 +386,8 @@ AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub)
 {
     return sub ? subComponent_get_avctx(sub->opaque) : NULL;
 }
+
+int exSub_get_serial(IJKEXSubtitle *sub)
+{
+    return sub ? subComponent_get_serial(sub->opaque) : -1;
+}

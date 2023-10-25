@@ -142,14 +142,26 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
         return -1;
     }
     
-    if (ff_sub_get_opened_stream_idx(sub) < 0) {
-        return -1;
+    int serial = -1;
+    
+    if (sub->inSub) {
+        if (subComponent_get_stream(sub->inSub) != -1) {
+            serial = subComponent_get_serial(sub->inSub);
+        }
+    }
+    
+    if (serial == -1 && sub->exSub) {
+        if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
+            serial = exSub_get_serial(sub->exSub);
+            pts -= sub->streamStartTime;
+        }
+    }
+    
+    if (serial == -1) {
+        return -2;
     }
     
     int r = 1;
-    if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
-        pts -= sub->streamStartTime;
-    }
     int rem = 0;
     int dropped = 0;
     while ((rem = frame_queue_nb_remaining(&sub->frameq)) > 0) {
@@ -162,6 +174,11 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect *
             }
         }
         Frame * sp = frame_queue_peek(&sub->frameq);
+        if (sp->serial != serial) {
+            dropped++;
+            frame_queue_next(&sub->frameq);
+            continue;
+        }
         sub->current_pts = get_frame_real_begin_pts(sub, sp);
         float begin = sub->current_pts + (sub ? sub->delay : 0.0);
         float end = get_frame_end_pts(sub, sp);

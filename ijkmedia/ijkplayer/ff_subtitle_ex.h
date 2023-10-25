@@ -31,5 +31,6 @@ int exSub_get_opened_stream_idx(IJKEXSubtitle *sub);
 int exSub_seek_to(IJKEXSubtitle *sub, float sec);
 int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx);
 AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub);
+int exSub_get_serial(IJKEXSubtitle *sub);
 
 #endif /* ff_subtitle_ex_h */
