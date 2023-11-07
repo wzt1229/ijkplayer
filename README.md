@@ -1,25 +1,26 @@
 # ijkplayer
 
-| Platform | Build Status                                                                                                                                                                         |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Android  | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/android.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/android.yml) ⚠️ unknown state |
-| iOS      | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml)              |
-| macOS    | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml)              |
+| Platform    | Build Status                                                                                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~Android~~ | ~~unknown state~~                                                                                                                                                       |
+| iOS         | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml) |
+| macOS       | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml) |
 
 Video player based on [ffplay](http://ffmpeg.org)
 
 ### My Build Environment
 
-- macOS Monterey(13.1)
-- Xcode Version 14.3.1 (14E300c)
-- cocoapods 1.12.1
+- iOS/macOS
+  
+  - macOS Monterey(13.1)
+  - Xcode Version 14.3.1 (14E300c)
+  - cocoapods 1.12.1
 
-TODO check:
-
-- Android
-  - [NDK r10e](http://developer.android.com/tools/sdk/ndk/index.html)
-  - Android Studio 2.1.3
-  - Gradle 2.14.1
+- ~~Android~~
+  
+  - ~~[NDK r10e~~](http://developer.android.com/tools/sdk/ndk/index.html)
+  - ~~Android Studio 2.1.3~~
+  - ~~Gradle 2.14.1~~
 
 ### Latest Changes
 
@@ -31,25 +32,26 @@ TODO check:
   - remove rarely used ffmpeg components to reduce binary size [config/module-lite.sh](config/module-lite.sh)
   - workaround for some buggy online video.
 - iOS/macOS
-  - platform: iOS 9.0/macOS 10.11
+  - platform: iOS 11.0/macOS 10.11
   - cpu: arm64,x86_64
   - api: [MediaPlayer.framework-like](IJKMediaPlayerKit/IJKMediaPlayback.h)
   - video-output: Metal 2/OpenGL ES 2.0/OpenGL 3.3
   - audio-output: AudioQueue, AudioUnit
   - hw-decoder: auto use VideoToolbox accel by default
   - subtitle: use Quartz draw text into a CVPixelBufferRef then use OpenGL/Metal generate texture
-- Android (⚠️ unknown state)
-  - platform: API 9~23
-  - cpu: ARMv7a, ARM64v8a, x86 (ARMv5 is not tested on real devices)
-  - api: [MediaPlayer-like](android/ijkplayer/ijkplayer-java/src/main/java/tv/danmaku/ijk/media/player/IMediaPlayer.java)
-  - video-output: NativeWindow, OpenGL ES 2.0
-  - audio-output: AudioTrack, OpenSL ES
-  - hw-decoder: MediaCodec (API 16+, Android 4.1+)
-  - alternative-backend: android.media.MediaPlayer, ExoPlayer
+- ~~Android (⚠️ unknown state)~~
+  - ~~platform: API 9~23~~
+  - ~~cpu: ARMv7a, ARM64v8a, x86 (ARMv5 is not tested on real devices)~~
+  - ~~api: [MediaPlayer-like(android/ijkplayer/ijkplayer-java/src/main/java/tv/danmaku/ijk/media/player/IMediaPlayer.java)]~~
+  - ~~video-output: NativeWindow, OpenGL ES 2.0~~
+  - ~~audio-output: AudioTrack, OpenSL ES~~
+  - ~~hw-decoder: MediaCodec (API 16+, Android 4.1+)~~
+  - ~~alternative-backend: android.media.MediaPlayer, ExoPlayer~~
 
 ### ON-PLAN
 
 - avfilter support
+- exchange video resolution gapless
 
 ### Installation with CocoaPods
 
