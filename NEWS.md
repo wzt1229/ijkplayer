@@ -1,3 +1,11 @@
+tag k0.10.3
+--------------------------------
+
+- fix video stream accurate seek timeout bug
+- dropping frames need keep a safe distance
+- fix add external subtitle occur crash with certain scenes
+- fix display previous stream frames after exchange subtitle stream
+
 tag k0.10.2
 --------------------------------
 

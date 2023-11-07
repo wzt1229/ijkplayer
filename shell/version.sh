@@ -1,1 +1,1 @@
-export IJK_VERSION=0.10.2
+export IJK_VERSION=0.10.3

@@ -2,8 +2,8 @@
 
 set -e
 
-VERSION_CODE=1000200
-VERSION_NAME=0.10.2
+VERSION_CODE=1000300
+VERSION_NAME=0.10.3
 VERSION_TARGET=$1
 
 echo "alter version to $VERSION_NAME"
@@ -61,22 +61,10 @@ do_version_gradle() {
 }
 
 do_version_xcode() {
-    # examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj
-
-    cat examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj \
-    | sed "s/\(MARKETING_VERSION = \).*;/\1$VERSION_NAME;/g" \
-    > examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj.new
-
-    mv -f examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj.new examples/ios/IJKMediaDemo.xcodeproj/project.pbxproj
-
-    cat examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj \
-    | sed "s/\(MARKETING_VERSION = \).*;/\1$VERSION_NAME;/g" \
-    > examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj.new
-
-    mv -f examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj.new examples/macos/IJKMediaMacDemo.xcodeproj/project.pbxproj
-
     sed -i "" "s/\(export IJK_VERSION=\)[[:digit:].]*[[:digit:]]/\1$VERSION_NAME/g" shell/version.sh
-    
+    sed -i "" "s/\([[:space:]]*s.version[[:space:]]*=[[:space:]]*\)\'[[:digit:].]*[[:digit:]]\'/\1\'$VERSION_NAME\'/" IJKMediaPlayerKit.podspec
+    pod install --project-directory=examples/ios >/dev/null
+    pod install --project-directory=examples/macos >/dev/null
 }
 
 if [ "$VERSION_TARGET" = "readme" ]; then
