@@ -24,7 +24,7 @@ Video player based on [ffplay](http://ffmpeg.org)
 
 ### Latest Changes
 
-- [NEWS.md](NEWS.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
 ### Features
 
