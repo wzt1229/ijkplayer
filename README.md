@@ -18,7 +18,7 @@ Video player based on [ffplay](http://ffmpeg.org)
 
 - ~~Android~~
   
-  - ~~[NDK r10e~~](http://developer.android.com/tools/sdk/ndk/index.html)
+  - ~~[NDK r10e](http://developer.android.com/tools/sdk/ndk/index.html)~~
   - ~~Android Studio 2.1.3~~
   - ~~Gradle 2.14.1~~
 
