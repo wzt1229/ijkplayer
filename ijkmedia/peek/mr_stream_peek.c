@@ -212,14 +212,19 @@ static int audio_decode_frame(MRStreamPeek *sp)
     return resampled_data_size;
 }
 
+static int bytes_per_millisecond(void)
+{
+    static int _bytes_per_millisecond = 0;
+
+    if (_bytes_per_millisecond == 0) {
+        _bytes_per_millisecond = av_samples_get_buffer_size(NULL, MRNBChannels, MRSampleRate / 1000, MRSampleFormat, 1);
+    }
+    return _bytes_per_millisecond;
+}
+
 static int bytes_per_sec(void)
 {
-    static int _bytes_per_sec = 0;
-
-    if (_bytes_per_sec == 0) {
-        _bytes_per_sec = av_samples_get_buffer_size(NULL, MRNBChannels, MRSampleRate, MRSampleFormat, 1);
-    }
-    return _bytes_per_sec;
+    return bytes_per_millisecond() * 1000;
 }
 
 int mr_stream_peek_get_data(MRStreamPeek *sub, unsigned char *buffer, int len, double * pts_begin, double * pts_end)
@@ -397,7 +402,7 @@ void mr_stream_peek_destroy(MRStreamPeek **subp)
     av_freep(subp);
 }
 
-int mr_stream_peek_get_buffer_size(int second)
+int mr_stream_peek_get_buffer_size(int millisecond)
 {
-    return bytes_per_sec() * second;
+    return bytes_per_millisecond() * millisecond;
 }
