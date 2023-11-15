@@ -365,7 +365,7 @@ int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic
         packet_queue_flush(&sub->packetq);
         ff_sub_clean_frame_queue(sub);
     }
-    return subComponent_open(&sub->inSub, stream_index, ic, avctx, &sub->packetq, &sub->frameq);
+    return subComponent_open(&sub->inSub, stream_index, ic, avctx, &sub->packetq, &sub->frameq, NULL, NULL);
 }
 
 enum AVCodecID ff_sub_get_codec_id(FFSubtitle *sub)

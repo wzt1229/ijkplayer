@@ -18,6 +18,8 @@ typedef struct FFSubComponent{
     int64_t seek_req;
     AVPacket *pkt;
     int eof;
+    subComponent_retry_callback retry_callback;
+    void *retry_opaque;
 }FFSubComponent;
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -123,16 +125,20 @@ static int decode_a_frame(FFSubComponent *sub, Decoder *d, AVSubtitle *pkt)
         
         //av_log(NULL, AV_LOG_DEBUG, "sub stream decoder pkt serial:%d\n",d->pkt_serial);
         ret = avcodec_decode_subtitle2(d->avctx, pkt, &got_frame, d->pkt);
-        if (ret < 0) {
-            ret = AVERROR(EAGAIN);
-        } else {
+        if (ret >= 0) {
             if (got_frame && !d->pkt->data) {
                 d->packet_pending = 1;
             }
             ret = got_frame ? 0 : (d->pkt->data ? AVERROR(EAGAIN) : AVERROR_EOF);
         }
         av_packet_unref(d->pkt);
-        
+        //Invalid UTF-8 in decoded subtitles text; maybe missing -sub_charenc option
+        if (ret == AVERROR_INVALIDDATA) {
+            return -1000;
+        } else if (ret == -92) {
+            //iconv convert failed
+            return -1000;
+        }
         if (ret >= 0)
             return 1;
     }
@@ -150,9 +156,19 @@ static int subtitle_thread(void *arg)
         if (!(sp = frame_queue_peek_writable(sub->frameq)))
             return 0;
         
-        if ((got_subtitle = decode_a_frame(sub, &sub->decoder, &sp->sub)) < 0)
+        got_subtitle = decode_a_frame(sub, &sub->decoder, &sp->sub);
+        
+        if (got_subtitle == -1000) {
+            if (sub->retry_callback) {
+                sub->retry_callback(sub->retry_opaque);
+                return -1;
+            }
             break;
-
+        }
+        
+        if (got_subtitle < 0)
+            break;
+        
         pts = 0;
         if (got_subtitle) {
             if (sp->sub.pts != AV_NOPTS_VALUE)
@@ -175,7 +191,7 @@ static int subtitle_thread(void *arg)
     return 0;
 }
 
-int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq)
+int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq, subComponent_retry_callback callback, void *opaque)
 {
     if (!subp) {
         return -1;
@@ -195,6 +211,9 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
     sub->ic = ic;
     sub->pkt = av_packet_alloc();
     sub->eof = 0;
+    sub->retry_callback = callback;
+    sub->retry_opaque = opaque;
+    
     int ret = decoder_init(&sub->decoder, avctx, sub->packetq, NULL);
     
     if (ret < 0) {
@@ -209,7 +228,7 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
         return ret;
     }
     sub->st_idx = stream_index;
-    av_log(NULL, AV_LOG_DEBUG, "sub stream opened:%d,serial:%d\n",stream_index,packetq->serial);
+    av_log(NULL, AV_LOG_DEBUG, "sub stream opened:%d,serial:%d\n", stream_index, packetq->serial);
     *subp = sub;
     return 0;
 }
@@ -227,11 +246,12 @@ int subComponent_close(FFSubComponent **subp)
     if (sub->st_idx == -1) {
         return -3;
     }
-    
+    sub->retry_callback = NULL;
+    sub->retry_opaque = NULL;
     decoder_abort(&sub->decoder, sub->frameq);
     decoder_destroy(&sub->decoder);
     av_packet_free(&sub->pkt);
-    av_log(NULL, AV_LOG_DEBUG, "sub stream closed:%d\n",sub->st_idx);
+    av_log(NULL, AV_LOG_DEBUG, "sub stream closed:%d\n", sub->st_idx);
     sub->st_idx = -1;
     av_freep(subp);
     return 0;

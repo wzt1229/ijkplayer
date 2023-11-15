@@ -14,19 +14,24 @@
 #include "ff_ass_parser.h"
 #include "ff_sub_component.h"
 
-#define IJK_EX_SUBTITLE_STREAM_MAX_COUNT 100
+#define IJK_EX_SUBTITLE_STREAM_MAX_COUNT    100
 #define IJK_EX_SUBTITLE_STREAM_MIN_OFFSET   1000
-#define IJK_EX_SUBTITLE_STREAM_MAX_OFFSET (IJK_EX_SUBTITLE_STREAM_MIN_OFFSET + IJK_EX_SUBTITLE_STREAM_MAX_COUNT)
+#define IJK_EX_SUBTITLE_STREAM_MAX_OFFSET   (IJK_EX_SUBTITLE_STREAM_MIN_OFFSET + IJK_EX_SUBTITLE_STREAM_MAX_COUNT)
+
+static const char * ff_sub_backup_charenc[] = {"GBK","BIG5-2003"};//没有使用GB18030，否则会把BIG5编码显示成乱码
+static const int ff_sub_backup_charenc_len = 2;
 
 typedef struct IJKEXSubtitle {
     SDL_mutex* mutex;
-    FFSubComponent* opaque;
+    FFSubComponent* component;
     AVFormatContext* ic;
-    int stream_idx;//相对于 IJK_EX_SUBTITLE_STREAM_MIN_OFFSET 的
+    int st_offset_idx;//相对于 IJK_EX_SUBTITLE_STREAM_MIN_OFFSET 的
     FrameQueue * frameq;
     PacketQueue * pktq;
     char* pathArr[IJK_EX_SUBTITLE_STREAM_MAX_COUNT];
-    int   next_idx;
+    int next_idx;
+    //当前使用的哪个备选字符
+    int backup_charenc_idx;
 }IJKEXSubtitle;
 
 int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq)
@@ -48,25 +53,25 @@ int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq)
     }
     sub->frameq = frameq;
     sub->pktq = pktq;
-    sub->stream_idx = -1;
+    sub->st_offset_idx = -1;
     *subp = sub;
     return 0;
 }
 
 int exSub_get_opened_stream_idx(IJKEXSubtitle *sub)
 {
-    if (sub && sub->opaque) {
-        return sub->stream_idx;
+    if (sub && sub->component) {
+        return sub->st_offset_idx;
     }
     return -1;
 }
 
 int exSub_seek_to(IJKEXSubtitle *sub, float sec)
 {
-    if (!sub || !sub->opaque) {
+    if (!sub || !sub->component) {
         return -1;
     }
-    return subComponent_seek_to(sub->opaque, sec);
+    return subComponent_seek_to(sub->component, sec);
 }
 
 static int convert_idx_from_stream(int idx)
@@ -76,6 +81,68 @@ static int convert_idx_from_stream(int idx)
         arr_idx = (idx - IJK_EX_SUBTITLE_STREAM_MIN_OFFSET) % IJK_EX_SUBTITLE_STREAM_MAX_COUNT;
     }
     return arr_idx;
+}
+
+static void retry_callback(void *opaque)
+{
+    IJKEXSubtitle *sub = opaque;
+    if (!sub) {
+        return;
+    }
+    
+    if (sub->backup_charenc_idx >= ff_sub_backup_charenc_len) {
+        return;
+    }
+    
+    int stream_idx = subComponent_get_stream(sub->component);
+    if (stream_idx == -1) {
+        return;
+    }
+    
+    subComponent_close(&sub->component);
+    SDL_LockMutex(sub->mutex);
+    sub->component = NULL;
+    //reopen
+    
+    if (!sub->ic) {
+        goto fail;
+    }
+    AVCodecContext* avctx = avcodec_alloc_context3(NULL);
+    if (!avctx) {
+        goto fail;
+    }
+    
+    if (stream_idx >= sub->ic->nb_streams) {
+        goto fail;
+    }
+    
+    AVStream *sub_st = sub->ic->streams[stream_idx];
+    if (avcodec_parameters_to_context(avctx, sub_st->codecpar) < 0) {
+        goto fail;
+    }
+    
+    //so important,ohterwise,sub frame has not pts.
+    avctx->pkt_timebase = sub_st->time_base;
+    const char *enc = ff_sub_backup_charenc[sub->backup_charenc_idx];
+    avctx->sub_charenc = av_strdup(enc);
+    avctx->sub_charenc_mode = FF_SUB_CHARENC_MODE_AUTOMATIC;
+    sub->backup_charenc_idx++;
+    
+    const AVCodec* codec = avcodec_find_decoder(sub_st->codecpar->codec_id);
+    if (!codec) {
+        goto fail;
+    }
+    
+    if (avcodec_open2(avctx, codec, NULL) < 0) {
+        goto fail;
+    }
+
+    if (subComponent_open(&sub->component, stream_idx, sub->ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub) != 0) {
+        goto fail;
+    }
+    subComponent_seek_to(sub->component, 0);
+fail:
+    SDL_UnlockMutex(sub->mutex);
 }
 
 static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int idx)
@@ -143,21 +210,23 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
         ret = -6;
         goto fail;
     }
-    //so important,ohterwise, sub frame has not pts.
+    //so important,ohterwise,sub frame has not pts.
     avctx->pkt_timebase = sub_st->time_base;
+    //reset to 0
+    sub->backup_charenc_idx = 0;
     
     if (avcodec_open2(avctx, codec, NULL) < 0) {
         ret = -7;
         goto fail;
     }
     
-    if (subComponent_open(&sub->opaque, stream_id, ic, avctx, sub->pktq, sub->frameq) != 0) {
+    if (subComponent_open(&sub->component, stream_id, ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub) != 0) {
         ret = -8;
         goto fail;
     }
     
     sub->ic = ic;
-    sub->stream_idx = idx;
+    sub->st_offset_idx = idx;
     return 0;
 fail:
     if (ret < 0) {
@@ -204,7 +273,7 @@ int exSub_close_current(IJKEXSubtitle *sub)
         return -1;
     }
     
-    FFSubComponent *opaque = sub->opaque;
+    FFSubComponent *opaque = sub->component;
     
     if(!opaque) {
         if (sub->ic)
@@ -214,7 +283,7 @@ int exSub_close_current(IJKEXSubtitle *sub)
     
     int r = subComponent_close(&opaque);
     SDL_LockMutex(sub->mutex);
-    sub->opaque = NULL;
+    sub->component = NULL;
     if (sub->ic)
         avformat_close_input(&sub->ic);
     SDL_UnlockMutex(sub->mutex);
@@ -384,10 +453,10 @@ int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx)
 
 AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub)
 {
-    return sub ? subComponent_get_avctx(sub->opaque) : NULL;
+    return sub ? subComponent_get_avctx(sub->component) : NULL;
 }
 
 int exSub_get_serial(IJKEXSubtitle *sub)
 {
-    return sub ? subComponent_get_serial(sub->opaque) : -1;
+    return sub ? subComponent_get_serial(sub->component) : -1;
 }
