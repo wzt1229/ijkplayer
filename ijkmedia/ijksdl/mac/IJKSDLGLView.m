@@ -452,7 +452,7 @@ static bool _is_need_dispath_to_global(void)
         self.backingWidth  = viewSizePixels.width;
         self.backingHeight = viewSizePixels.height;
         
-        CGSize screenSize = [[NSScreen mainScreen]frame].size;
+        CGSize screenSize = [[[NSScreen screens] firstObject]frame].size;
         self.displayScreenScale = FFMIN(1.0 * viewSize.width / screenSize.width,1.0 * viewSize.height / screenSize.height);
         if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
             self.displayVideoScale = FFMIN(1.0 * viewSize.width / self.videoNaturalSize.width,1.0 * viewSize.height / self.videoNaturalSize.height);
@@ -484,7 +484,7 @@ static bool _is_need_dispath_to_global(void)
     int32_t bgrValue = sp.color;
     //以800为标准，定义出字幕字体默认大小为30pt
     float scale = 1.0;
-    CGSize screenSize = [[NSScreen mainScreen]frame].size;
+    CGSize screenSize = [[[NSScreen screens] firstObject]frame].size;
     
     NSInteger degrees = self.videoDegrees;
     if (degrees / 90 % 2 == 1) {

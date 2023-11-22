@@ -262,10 +262,10 @@
 - (void)drawText:(NSRect)rect
 {
     // draw at offset position
-//    [self.attributedString drawInRect:rect];
-    NSStringDrawingContext *ctx = [[NSStringDrawingContext alloc] init];
-    ctx.minimumScaleFactor = [[NSScreen mainScreen] backingScaleFactor];
-    [self.attributedString drawWithRect:rect options:NSStringDrawingUsesLineFragmentOrigin context:ctx];
+    [self.attributedString drawInRect:rect];
+//    NSStringDrawingContext *ctx = [[NSStringDrawingContext alloc] init];
+//    ctx.minimumScaleFactor = [[[NSScreen screens] firstObject] backingScaleFactor];
+//    [self.attributedString drawWithRect:rect options:NSStringDrawingUsesLineFragmentOrigin context:ctx];
 //    不能左右居中
 //    [self.attributedString drawAtPoint:NSMakePoint(self.edgeInsets.left + originPoint.x, self.edgeInsets.top + originPoint.y)];
 }

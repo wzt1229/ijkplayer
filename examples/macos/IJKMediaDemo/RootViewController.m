@@ -829,15 +829,15 @@ static BOOL hdrAnimationShown = 0;
 //            static float kMaxRatio = 1.0;
 //            if (videoSize.width < videoSize.height) {
 //                rect.size.width = rect.size.height / videoSize.height * videoSize.width;
-//                if (rect.size.width > [[NSScreen mainScreen]frame].size.width * kMaxRatio) {
-//                    float ratio = [[NSScreen mainScreen]frame].size.width * kMaxRatio / rect.size.width;
+//                if (rect.size.width > [[[NSScreen screens] firstObject]frame].size.width * kMaxRatio) {
+//                    float ratio = [[[NSScreen screens] firstObject]frame].size.width * kMaxRatio / rect.size.width;
 //                    rect.size.width *= ratio;
 //                    rect.size.height *= ratio;
 //                }
 //            } else {
 //                rect.size.height = rect.size.width / videoSize.width * videoSize.height;
-//                if (rect.size.height > [[NSScreen mainScreen]frame].size.height * kMaxRatio) {
-//                    float ratio = [[NSScreen mainScreen]frame].size.height * kMaxRatio / rect.size.height;
+//                if (rect.size.height > [[[NSScreen screens] firstObject]frame].size.height * kMaxRatio) {
+//                    float ratio = [[[NSScreen screens] firstObject]frame].size.height * kMaxRatio / rect.size.height;
 //                    rect.size.width *= ratio;
 //                    rect.size.height *= ratio;
 //                }

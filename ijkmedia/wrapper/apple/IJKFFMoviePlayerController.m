@@ -253,7 +253,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
             glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         }
     #else
-        CGRect rect = [[NSScreen mainScreen]frame];
+        CGRect rect = [[[NSScreen screens] firstObject]frame];
         rect.origin = CGPointZero;
         NSOperatingSystemVersion sysVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
         if (options.metalRenderer && (sysVersion.majorVersion > 10 || (sysVersion.majorVersion == 10 && sysVersion.minorVersion >= 13))) {
@@ -1029,7 +1029,7 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         CGFloat screenWidth = [[UIScreen mainScreen]bounds].size.width;
 #else
         hudView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin;
-        CGFloat screenWidth = [[NSScreen mainScreen]frame].size.width;
+        CGFloat screenWidth = [[[NSScreen screens] firstObject]frame].size.width;
 #endif
         rect.size.width = MIN(screenWidth / 3.0, 350);
         rect.origin.x = CGRectGetWidth(self.view.bounds) - rect.size.width;
