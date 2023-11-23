@@ -74,6 +74,38 @@ struct vt_format {
 
 static struct vt_format vt_formats[] = {
     {
+        .cvpixfmt = kCVPixelFormatType_444YpCbCr8BiPlanarFullRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_444YpCbCr8BiPlanarVideoRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8BiPlanarFullRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8BiPlanarVideoRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RG,  GL_UNSIGNED_BYTE, GL_RG }
+        }
+    },
+    {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
         .planes = 2,
         .gl = {

@@ -10,6 +10,53 @@
 
 static mp_format mp_formats[] = {
     {
+        .cvpixfmt = kCVPixelFormatType_32BGRA,
+        .planes = 1,
+        .formats = {MTLPixelFormatBGRA8Unorm}
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_32ARGB,
+        .planes = 1,
+        .formats = {MTLPixelFormatBGRA8Unorm}
+    },
+#if TARGET_OS_OSX
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8,
+        .planes = 1,
+        .formats = {MTLPixelFormatBGRG422}
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8_yuvs,
+        .planes = 1,
+        .formats = {MTLPixelFormatGBGR422}
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8FullRange,
+        .planes = 1,
+        .formats = {MTLPixelFormatGBGR422}
+    },
+#endif
+    {
+        .cvpixfmt = kCVPixelFormatType_444YpCbCr8BiPlanarVideoRange,
+        .planes = 2,
+        .formats = {MTLPixelFormatR8Unorm,MTLPixelFormatRG8Unorm}
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_444YpCbCr8BiPlanarFullRange,
+        .planes = 2,
+        .formats = {MTLPixelFormatR8Unorm,MTLPixelFormatRG8Unorm}
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8BiPlanarVideoRange,
+        .planes = 2,
+        .formats = {MTLPixelFormatR8Unorm,MTLPixelFormatRG8Unorm}
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr8BiPlanarFullRange,
+        .planes = 2,
+        .formats = {MTLPixelFormatR8Unorm,MTLPixelFormatRG8Unorm}
+    },
+    {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
         .planes = 2,
         .formats = {MTLPixelFormatR8Unorm,MTLPixelFormatRG8Unorm}
@@ -49,23 +96,6 @@ static mp_format mp_formats[] = {
         .planes = 2,
         .formats = {MTLPixelFormatR16Unorm,MTLPixelFormatRG16Unorm}
     },
-#if TARGET_OS_OSX
-    {
-        .cvpixfmt = kCVPixelFormatType_422YpCbCr8,
-        .planes = 1,
-        .formats = {MTLPixelFormatBGRG422}
-    },
-    {
-        .cvpixfmt = kCVPixelFormatType_422YpCbCr8_yuvs,
-        .planes = 1,
-        .formats = {MTLPixelFormatGBGR422}
-    },
-    {
-        .cvpixfmt = kCVPixelFormatType_422YpCbCr8FullRange,
-        .planes = 1,
-        .formats = {MTLPixelFormatGBGR422}
-    },
-#endif
     {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8Planar,
         .planes = 3,
@@ -75,17 +105,7 @@ static mp_format mp_formats[] = {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr8PlanarFullRange,
         .planes = 3,
         .formats = {MTLPixelFormatR8Unorm,MTLPixelFormatR8Unorm,MTLPixelFormatR8Unorm}
-    },
-    {
-        .cvpixfmt = kCVPixelFormatType_32BGRA,
-        .planes = 1,
-        .formats = {MTLPixelFormatBGRA8Unorm}
-    },
-    {
-        .cvpixfmt = kCVPixelFormatType_32ARGB,
-        .planes = 1,
-        .formats = {MTLPixelFormatBGRA8Unorm}
-    },
+    }
 };
 
 #define MP_ARRAY_SIZE(s) (sizeof(s) / sizeof((s)[0]))

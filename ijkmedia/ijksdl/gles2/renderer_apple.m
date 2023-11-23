@@ -310,7 +310,12 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
     CFStringRef transferFuntion = CVBufferGetAttachment(videoPicture, kCVImageBufferTransferFunctionKey, NULL);
     
     IJK_SHADER_TYPE shaderType;
-    if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+    if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || 
+        cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange ||
+        cv_format == kCVPixelFormatType_422YpCbCr8BiPlanarVideoRange ||
+        cv_format == kCVPixelFormatType_422YpCbCr8BiPlanarFullRange  ||
+        cv_format == kCVPixelFormatType_444YpCbCr8BiPlanarVideoRange ||
+        cv_format == kCVPixelFormatType_444YpCbCr8BiPlanarFullRange) {
         ALOGI("create render yuv420sp\n");
         shaderType = YUV_2P_SDR_SHADER;
     } else if (cv_format == kCVPixelFormatType_32BGRA) {
@@ -369,8 +374,12 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
     }
     int fullRange = 0;
     //full color range
-    if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == cv_format ||
+    if (kCVPixelFormatType_Lossless_420YpCbCr8BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_Lossy_420YpCbCr8BiPlanarFullRange == cv_format ||
         kCVPixelFormatType_420YpCbCr8PlanarFullRange == cv_format ||
+        kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_422YpCbCr8BiPlanarFullRange == cv_format ||
+        kCVPixelFormatType_444YpCbCr8BiPlanarFullRange == cv_format ||
         kCVPixelFormatType_422YpCbCr8FullRange == cv_format ||
         kCVPixelFormatType_420YpCbCr10BiPlanarFullRange == cv_format ||
         kCVPixelFormatType_422YpCbCr10BiPlanarFullRange == cv_format ||
