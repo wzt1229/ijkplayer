@@ -30,6 +30,8 @@
 
 @synthesize subtitlePreference = _subtitlePreference;
 
+@synthesize showHdrAnimation = _showHdrAnimation;
+
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
     self = [super initWithFrame:frameRect];

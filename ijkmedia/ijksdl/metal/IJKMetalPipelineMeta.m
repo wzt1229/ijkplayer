@@ -7,53 +7,61 @@
 
 #import "IJKMetalPipelineMeta.h"
 #import "ijk_vout_common.h"
+#include "../ijksdl_log.h"
 
 @implementation IJKMetalPipelineMeta
 
 + (IJKMetalPipelineMeta *)createWithCVPixelbuffer:(CVPixelBufferRef)pixelBuffer
 {
-    OSType cv_format = CVPixelBufferGetPixelFormatType(pixelBuffer);
-    CFStringRef colorMatrix = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
-    CFStringRef transferFuntion = CVBufferGetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, NULL);
     NSString* shaderName;
+    
     BOOL needConvertColor = YES;
-    if (cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
-        shaderName = @"nv12FragmentShader";
-    } else if (cv_format == kCVPixelFormatType_32BGRA) {
-        needConvertColor = NO;
-        shaderName = @"bgraFragmentShader";
-    } else if (cv_format == kCVPixelFormatType_32ARGB) {
-        needConvertColor = NO;
-        shaderName = @"argbFragmentShader";
-    } else if (cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
-               cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange) {
+    int plane = CVPixelBufferIsPlanar(pixelBuffer) ? (int)CVPixelBufferGetPlaneCount(pixelBuffer) : 1;
+    if (plane == 3) {
+        /*
+         cv_format == kCVPixelFormatType_420YpCbCr8Planar ||
+         cv_format == kCVPixelFormatType_420YpCbCr8PlanarFullRange
+         */
         shaderName = @"yuv420pFragmentShader";
-    }
-    #if TARGET_OS_OSX
-    else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
-        shaderName = @"uyvy422FragmentShader";
-    } else if (cv_format == kCVPixelFormatType_422YpCbCr8_yuvs || cv_format == kCVPixelFormatType_422YpCbCr8FullRange) {
-        shaderName = @"uyvy422FragmentShader";
-    }
-    #endif
-    else if (cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange ||
-             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
-             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
-             ) {
-        if (colorMatrix != nil &&
-            CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-            shaderName = @"hdrBiPlanarFragmentShader";
-        } else {
-            shaderName = @"nv12FragmentShader";
+    } else if (plane == 2) {
+        /*
+         cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange ||
+         cv_format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange  ||
+         cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange||
+         cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange ||
+         cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange||
+         cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
+         cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange||
+         cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange
+         */
+        shaderName = @"nv12FragmentShader";
+    } else if (plane == 1) {
+        OSType cv_format = CVPixelBufferGetPixelFormatType(pixelBuffer);
+        if (cv_format == kCVPixelFormatType_32BGRA) {
+            needConvertColor = NO;
+            shaderName = @"bgraFragmentShader";
+        } else if (cv_format == kCVPixelFormatType_32ARGB) {
+            needConvertColor = NO;
+            shaderName = @"argbFragmentShader";
         }
+    #if TARGET_OS_OSX
+        else if (cv_format == kCVPixelFormatType_422YpCbCr8) {
+            shaderName = @"uyvy422FragmentShader";
+        } else if (cv_format == kCVPixelFormatType_422YpCbCr8_yuvs ||
+                   cv_format == kCVPixelFormatType_422YpCbCr8FullRange) {
+            shaderName = @"uyvy422FragmentShader";
+        }
+    #endif
     } else {
-        //ALOGE("create render failed,unknown format:%4s\n",(char *)&cv_format);
+        //wtf?
+        OSType cv_format = CVPixelBufferGetPixelFormatType(pixelBuffer);
+        ALOGE("create render failed,unsupported plane count:%d,unknown format:%4s\n",plane,(char *)&cv_format);
         return nil;
     }
-        
+
+    CFStringRef colorMatrix = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
+    CFStringRef transferFuntion = CVBufferGetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, NULL);
+    
     IJKYUV2RGBColorMatrixType colorMatrixType = IJKYUV2RGBColorMatrixNone;
     if (needConvertColor) {
         if (colorMatrix) {
@@ -69,8 +77,10 @@
             colorMatrixType = IJKYUV2RGBColorMatrixBT709;
         }
     }
-
+    
     BOOL fullRange = NO;
+    OSType cv_format = CVPixelBufferGetPixelFormatType(pixelBuffer);
+    
     //full color range
     if (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange == cv_format ||
         kCVPixelFormatType_420YpCbCr8PlanarFullRange == cv_format ||
@@ -99,6 +109,11 @@
     meta.fragmentName = shaderName;
     meta.fullRange = fullRange;
     meta.convertMatrixType = colorMatrixType;
+    if (colorMatrix != nil &&
+        CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
+        //HDR color space.
+        meta.hdr = YES;
+    }
     return meta;
 }
 
@@ -106,7 +121,7 @@
 {
     NSString *matrix = [@[@"None",@"BT601",@"BT709",@"BT2020"] objectAtIndex:self.convertMatrixType];
     NSString *tf = [@[@"LINEAR",@"PQ",@"HLG"] objectAtIndex:self.transferFunc];
-    return [NSString stringWithFormat:@"fragment:%@,fullRange:%d,matrix:%@,transfer:%@",self.fragmentName,self.fullRange,matrix,tf];
+    return [NSString stringWithFormat:@"%@,hdr:%d,fullRange:%d,matrix:%@,transfer:%@",self.fragmentName,self.hdr,self.fullRange,matrix,tf];
 }
 
 - (BOOL)metaMatchedCVPixelbuffer:(CVPixelBufferRef)pixelBuffer
@@ -127,6 +142,9 @@
         return NO;
     }
     if (self.fullRange != meta.fullRange) {
+        return NO;
+    }
+    if (self.hdr != meta.hdr) {
         return NO;
     }
     if (self.convertMatrixType != meta.convertMatrixType) {

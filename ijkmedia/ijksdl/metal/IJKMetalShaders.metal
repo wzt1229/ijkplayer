@@ -119,62 +119,6 @@ float3 rgb_adjust(float3 rgb,float4 rgbAdjustment) {
     }
 }
 
-/// @brief bgra fragment shader
-/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
-/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
-fragment float4 bgraFragmentShader(RasterizerData input [[stage_in]],
-                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
-{
-    // sampler是采样器
-    constexpr sampler textureSampler (mag_filter::linear,
-                                      min_filter::linear);
-    texture2d<float> textureY = fragmentShaderArgs.textureY;
-    //auto converted bgra -> rgba
-    float4 rgba = textureY.sample(textureSampler, input.textureCoordinate);
-    //color adjustment
-    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
-    return float4(rgb_adjust(rgba.rgb, convertMatrix->adjustment),rgba.a);
-}
-
-/// @brief argb fragment shader
-/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
-/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
-fragment float4 argbFragmentShader(RasterizerData input [[stage_in]],
-                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
-{
-    // sampler是采样器
-    constexpr sampler textureSampler (mag_filter::linear,
-                                      min_filter::linear);
-    texture2d<float> textureY = fragmentShaderArgs.textureY;
-    //auto converted bgra -> rgba;but data is argb,so target is grab
-    float4 grab = textureY.sample(textureSampler, input.textureCoordinate);
-    //color adjustment
-    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
-    return float4(rgb_adjust(grab.gra, convertMatrix->adjustment),grab.b);
-}
-
-/// @brief nv12 fragment shader
-/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
-/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY/UV 是索引
-/// @param buffer表明是缓存数据，IJKFragmentBufferIndexMatrix是索引
-fragment float4 nv12FragmentShader(RasterizerData input [[stage_in]],
-                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
-{
-    // sampler是采样器
-    constexpr sampler textureSampler (mag_filter::linear,
-                                      min_filter::linear);
-    texture2d<float> textureY = fragmentShaderArgs.textureY;
-    texture2d<float> textureUV = fragmentShaderArgs.textureU;
-    
-    float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
-                        textureUV.sample(textureSampler, input.textureCoordinate).rg);
-    
-    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
-    float3 rgb = convertMatrix->matrix * (yuv + convertMatrix->offset);
-    //color adjustment
-    return float4(rgb_adjust(rgb,convertMatrix->adjustment),1.0);
-}
-
 // mark -hdr helps
 
 // [arib b67 eotf
@@ -300,45 +244,27 @@ float3 rec_1886_eotf_vec(float3 v)
     return float3(r, g, b);
 }
 
-// bt709]
-// mark -hdr helps
-
 #define FFMAX(a,b) ((a) > (b) ? (a) : (b))
 #define FFMAX3(a,b,c) FFMAX(FFMAX(a,b),c)
 
+// bt709]
+// mark -hdr helps
 
-/// @brief hdr BiPlanar fragment shader
-/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
-/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY/UV 是索引
-/// @param buffer表明是缓存数据，IJKFragmentBufferIndexMatrix是索引
-fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
-                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
+float3 hdr2sdr(float3 rgb_2020,float x,float hdrPercentage,IJKColorTransferFunc transferFun)
 {
-    // sampler是采样器
-    constexpr sampler textureSampler (mag_filter::linear,
-                                      min_filter::linear);
-    texture2d<float> textureY = fragmentShaderArgs.textureY;
-    texture2d<float> textureUV = fragmentShaderArgs.textureU;
-    
-    float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
-                        textureUV.sample(textureSampler, input.textureCoordinate).rg);
-    //使用 BT.2020 矩阵转为RGB
-    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
-    //这里的RGB是经过 伽马 校正的，因此是曲线的
-    float3 rgb10bit = convertMatrix->matrix * (yuv + convertMatrix->offset);
-    
-    float3 myFragColor;
-    if (input.textureCoordinate.x <= convertMatrix->hdrPercentage) {
+    //已经使用矩阵转为RGB了，这里的RGB是经过 伽马 校正的，因此是曲线的
+    if (x > 0 && x <= hdrPercentage) {
+        float3 myFragColor;
         // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
         float peak_luminance = 50.0;
-        if (convertMatrix->transferFun == IJKColorTransferFuncPQ) {
+        if (transferFun == IJKColorTransferFuncPQ) {
            float to_linear_scale = 10000.0 / peak_luminance;
-           myFragColor = to_linear_scale * st_2084_eotf_vec(rgb10bit);
-        } else if (convertMatrix->transferFun == IJKColorTransferFuncHLG) {
+           myFragColor = to_linear_scale * st_2084_eotf_vec(rgb_2020);
+        } else if (transferFun == IJKColorTransferFuncHLG) {
            float to_linear_scale = 1000.0 / peak_luminance;
-           myFragColor = to_linear_scale * arib_b67_eotf_vec(rgb10bit);
+           myFragColor = to_linear_scale * arib_b67_eotf_vec(rgb_2020);
         } else {
-           myFragColor = rec_1886_eotf_vec(rgb10bit);
+           myFragColor = rec_1886_eotf_vec(rgb_2020);
         }
 
         // 2、HDR 线性光信号做颜色空间转换（Color Space Converting）
@@ -361,11 +287,43 @@ fragment float4 hdrBiPlanarFragmentShader(RasterizerData input [[stage_in]],
 
         // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
         myFragColor = rec_1886_inverse_eotf_vec(myFragColor);
+        return myFragColor;
     } else {
-        myFragColor = rgb10bit;
+        return rgb_2020;
+    }
+}
+
+float4 yuv2rgb(float3 yuv,device IJKConvertMatrix* convertMatrix,float x)
+{
+    //先把 [0.0,1.0] 范围的YUV 处理为 [0.0,1.0] 范围的RGB
+    float3 rgb = convertMatrix->colorMatrix * (yuv + convertMatrix->offset);
+    //HDR 转 SDR
+    float3 myFragColor;
+    if (convertMatrix->hdr) {
+        myFragColor = hdr2sdr(rgb,x,convertMatrix->hdrPercentage,convertMatrix->transferFun);
+    } else {
+        myFragColor = rgb;
     }
     //color adjustment
     return float4(rgb_adjust(myFragColor,convertMatrix->adjustment),1.0);
+}
+
+/// @brief hdr BiPlanar fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY/UV 是索引
+/// @param buffer表明是缓存数据，IJKFragmentBufferIndexMatrix是索引
+fragment float4 nv12FragmentShader(RasterizerData input [[stage_in]],
+                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    texture2d<float> textureY = fragmentShaderArgs.textureY;
+    texture2d<float> textureUV = fragmentShaderArgs.textureU;
+    
+    float3 yuv = float3(textureY.sample(textureSampler,  input.textureCoordinate).r,
+                        textureUV.sample(textureSampler, input.textureCoordinate).rg);
+    return yuv2rgb(yuv,fragmentShaderArgs.convertMatrix,input.textureCoordinate.x);
 }
 
 /// @brief yuv420p fragment shader
@@ -386,10 +344,7 @@ fragment float4 yuv420pFragmentShader(RasterizerData input [[stage_in]],
                         textureU.sample(textureSampler, input.textureCoordinate).r,
                         textureV.sample(textureSampler, input.textureCoordinate).r);
     
-    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
-    float3 rgb = convertMatrix->matrix * (yuv + convertMatrix->offset);
-    //color adjustment
-    return float4(rgb_adjust(rgb,convertMatrix->adjustment),1.0);
+    return yuv2rgb(yuv,fragmentShaderArgs.convertMatrix,input.textureCoordinate.x);
 }
 
 /// @brief uyvy422 fragment shader
@@ -406,10 +361,41 @@ fragment float4 uyvy422FragmentShader(RasterizerData input [[stage_in]],
     float3 tc = textureY.sample(textureSampler, input.textureCoordinate).rgb;
     float3 yuv = float3(tc.g, tc.b, tc.r);
     
+    return yuv2rgb(yuv,fragmentShaderArgs.convertMatrix,input.textureCoordinate.x);
+}
+
+/// @brief bgra fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
+fragment float4 bgraFragmentShader(RasterizerData input [[stage_in]],
+                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    texture2d<float> textureY = fragmentShaderArgs.textureY;
+    //auto converted bgra -> rgba
+    float4 rgba = textureY.sample(textureSampler, input.textureCoordinate);
+    //color adjustment
     device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
-    float3 rgb = convertMatrix->matrix * (yuv + convertMatrix->offset);
-    //color adjustment 
-    return float4(rgb_adjust(rgb,convertMatrix->adjustment),1.0);
+    return float4(rgb_adjust(rgba.rgb, convertMatrix->adjustment),rgba.a);
+}
+
+/// @brief argb fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
+fragment float4 argbFragmentShader(RasterizerData input [[stage_in]],
+                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    texture2d<float> textureY = fragmentShaderArgs.textureY;
+    //auto converted bgra -> rgba;but data is argb,so target is grab
+    float4 grab = textureY.sample(textureSampler, input.textureCoordinate);
+    //color adjustment
+    device IJKConvertMatrix* convertMatrix = fragmentShaderArgs.convertMatrix;
+    return float4(rgb_adjust(grab.gra, convertMatrix->adjustment),grab.b);
 }
 
 #else

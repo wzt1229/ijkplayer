@@ -20,8 +20,7 @@
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
 @property (nonatomic, strong) id<MTLRenderPipelineState> renderPipeline;
-@property (nonatomic, strong) id<MTLBuffer> vertices;
-@property (nonatomic, strong) id<MTLBuffer> mvp;
+@property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
 #if IJK_USE_METAL_2
 // The buffer that contains arguments for the fragment shader.
 @property (nonatomic, strong) id<MTLBuffer> fragmentShaderArgumentBuffer;
@@ -63,6 +62,11 @@
     [self.pilelineLock unlock];
 }
 
+- (BOOL)isHDR
+{
+    return self.pipelineMeta.hdr;
+}
+
 - (BOOL)matchPixelBuffer:(CVPixelBufferRef)pixelBuffer
 {
     return [self.pipelineMeta metaMatchedCVPixelbuffer:pixelBuffer];
@@ -83,7 +87,7 @@
     }
     
     self.convertMatrixChanged = YES;
-    ALOGI("render meta:%s",[[self.pipelineMeta description]UTF8String]);
+    ALOGI("render pipeline:%s",[[self.pipelineMeta description]UTF8String]);
     
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
     NSURL * libURL = [bundle URLForResource:@"default" withExtension:@"metallib"];
@@ -262,9 +266,9 @@
     }
     
     IJKVertexData data = {quadVertices[0],quadVertices[1],quadVertices[2],quadVertices[3],viewMatrix};
-    self.vertices = [_device newBufferWithBytes:&data
-                                         length:sizeof(data)
-                                        options:MTLResourceStorageModeShared]; // 创建顶点缓存
+    self.vertexBuffer = [_device newBufferWithBytes:&data
+                                             length:sizeof(data)
+                                            options:MTLResourceStorageModeShared]; // 创建顶点缓存
 }
 
 - (void)updateConvertMatrixBufferIfNeed
@@ -276,6 +280,7 @@
         convertMatrix.adjustment = _colorAdjustment;
         convertMatrix.transferFun = self.pipelineMeta.transferFunc;
         convertMatrix.hdrPercentage = self.hdrPercentage;
+        convertMatrix.hdr = self.pipelineMeta.hdr;
         self.convertMatrixBuff = [_device newBufferWithBytes:&convertMatrix
                                                       length:sizeof(IJKConvertMatrix)
                                                      options:MTLResourceStorageModeShared];
@@ -296,7 +301,7 @@
 {
     [self updateVertexIfNeed];
     // Pass in the parameter data.
-    [encoder setVertexBuffer:self.vertices
+    [encoder setVertexBuffer:self.vertexBuffer
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  

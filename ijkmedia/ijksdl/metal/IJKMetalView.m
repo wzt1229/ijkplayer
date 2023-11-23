@@ -27,7 +27,9 @@
 typedef CGRect NSRect;
 #endif
 
-#define kHDRAnimationMaxCount 90
+#define kHDRAnimationCount 90
+#define kHDRAnimationDelayCount 20
+#define kHDRAnimationMaxCount (kHDRAnimationDelayCount + kHDRAnimationCount)
 
 @interface IJKMetalView ()
 
@@ -338,16 +340,19 @@ typedef CGRect NSRect;
     [renderEncoder pushDebugGroup:@"encodePicture"];
     
     float hdrPer = 1.0;
-    if (self.showHdrAnimation) {
+    if (self.showHdrAnimation && [self.picturePipeline isHDR]) {
         if (self.hdrAnimationFrameCount == 0) {
             [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(1)}];
         } else if (self.hdrAnimationFrameCount == kHDRAnimationMaxCount) {
             [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(2)}];
         }
-        
         if (self.hdrAnimationFrameCount <= kHDRAnimationMaxCount) {
             self.hdrAnimationFrameCount++;
-            hdrPer = 1.0 * self.hdrAnimationFrameCount / kHDRAnimationMaxCount;
+            if (self.hdrAnimationFrameCount > kHDRAnimationDelayCount) {
+                hdrPer = 1.0 * (self.hdrAnimationFrameCount - kHDRAnimationDelayCount) / kHDRAnimationCount;
+            } else {
+                hdrPer = 0.0;
+            }
         }
     }
     CGSize viewport = self.drawableSize;

@@ -9,9 +9,10 @@
 #import "IJKMetalShaderTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
+NS_CLASS_AVAILABLE(10_13, 11_0)
 @interface IJKMetalPipelineMeta : NSObject
 
+@property (nonatomic) BOOL hdr;
 @property (nonatomic) BOOL fullRange;
 @property (nonatomic) NSString* fragmentName;
 @property (nonatomic) IJKColorTransferFunc transferFunc;

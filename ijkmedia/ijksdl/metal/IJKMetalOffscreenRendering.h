@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MTLDevice,MTLCommandBuffer,MTLRenderCommandEncoder;
 @import CoreGraphics;
 
+NS_CLASS_AVAILABLE(10_13, 11_0)
 @interface IJKMetalOffscreenRendering : NSObject
 
 - (CGImageRef)snapshot:(CGSize)targetSize

@@ -48,11 +48,12 @@ typedef struct
 } IJKVertexData;
 
 typedef struct {
-    matrix_float3x3 matrix;
+    matrix_float3x3 colorMatrix;
     vector_float3 offset;
     vector_float4 adjustment;
     IJKColorTransferFunc transferFun;
     float hdrPercentage;
+    bool hdr;
 } IJKConvertMatrix;
 
 typedef enum IJKFragmentBufferArguments

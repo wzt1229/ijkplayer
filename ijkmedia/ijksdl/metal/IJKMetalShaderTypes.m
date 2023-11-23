@@ -105,7 +105,7 @@ IJKConvertMatrix ijk_metal_create_color_matrix(IJKYUV2RGBColorMatrixType matrixT
     switch (matrixType) {
         case IJKYUV2RGBColorMatrixBT601:
         {
-            matrix.matrix = (matrix_float3x3){
+            matrix.colorMatrix = (matrix_float3x3){
                 (simd_float3){1.164,  1.164, 1.164},
                 (simd_float3){0.0,   -0.391, 2.018},
                 (simd_float3){1.596, -0.813, 0.0},
@@ -114,7 +114,7 @@ IJKConvertMatrix ijk_metal_create_color_matrix(IJKYUV2RGBColorMatrixType matrixT
             break;
         case IJKYUV2RGBColorMatrixBT709:
         {
-            matrix.matrix = (matrix_float3x3){
+            matrix.colorMatrix = (matrix_float3x3){
                 (simd_float3){1.164,  1.164, 1.164},
                 (simd_float3){0.0,   -0.213, 2.112},
                 (simd_float3){1.793, -0.533, 0.0},
@@ -123,7 +123,7 @@ IJKConvertMatrix ijk_metal_create_color_matrix(IJKYUV2RGBColorMatrixType matrixT
             break;
         case IJKYUV2RGBColorMatrixBT2020:
         {
-            matrix.matrix = (matrix_float3x3){
+            matrix.colorMatrix = (matrix_float3x3){
                 (simd_float3){1.164384, 1.164384 , 1.164384},
                 (simd_float3){0.0     , -0.187326, 2.14177},
                 (simd_float3){1.67867 , -0.65042 , 0.0},

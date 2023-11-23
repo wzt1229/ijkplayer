@@ -21,6 +21,7 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 //非HDR视频设置无效
 @property (nonatomic, assign) float hdrPercentage;
 
+- (BOOL)isHDR;
 - (instancetype)initWithDevice:(id<MTLDevice>)device
               colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
 

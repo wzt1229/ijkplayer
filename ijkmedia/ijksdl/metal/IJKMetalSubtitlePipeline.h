@@ -8,7 +8,7 @@
 @import MetalKit;
 
 NS_ASSUME_NONNULL_BEGIN
-
+NS_CLASS_AVAILABLE(10_13, 11_0)
 @interface IJKMetalSubtitlePipeline : NSObject
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
