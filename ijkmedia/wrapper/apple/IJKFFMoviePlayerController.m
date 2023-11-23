@@ -231,7 +231,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     [[IJKAudioKit sharedInstance] setupAudioSession];
     [self registerApplicationObservers];
 #endif
-    
 }
 
 - (id)initWithContentURL:(NSURL *)aUrl withOptions:(IJKFFOptions *)options
@@ -245,25 +244,19 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         UIView<IJKVideoRenderingProtocol> *glView = nil;
     #if TARGET_OS_IOS
         CGRect rect = [[UIScreen mainScreen] bounds];
-        if (options.metalRenderer && [[[UIDevice currentDevice] systemVersion] compare:@"11.0" options:NSNumericSearch] != NSOrderedAscending) {
-            glView = [[IJKMetalView alloc] initWithFrame:rect];
-        }
-        
-        if (!glView) {
-            glView = [[IJKSDLGLView alloc] initWithFrame:rect];
-        }
     #else
         CGRect rect = [[[NSScreen screens] firstObject]frame];
         rect.origin = CGPointZero;
-        NSOperatingSystemVersion sysVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
-        if (options.metalRenderer && (sysVersion.majorVersion > 10 || (sysVersion.majorVersion == 10 && sysVersion.minorVersion >= 13))) {
-            glView = [[IJKMetalView alloc] initWithFrame:rect];
-        }
-        
-        if (!glView) {
-            glView = [[IJKSDLGLView alloc] initWithFrame:rect];
-        }
     #endif
+        if (!options.metalRenderer) {
+            glView = [[IJKSDLGLView alloc] initWithFrame:rect];
+        } else {
+            if (@available(macOS 10.13, ios 11.0, *)) {
+                glView = [[IJKMetalView alloc] initWithFrame:rect];
+            } else {
+                glView = [[IJKSDLGLView alloc] initWithFrame:rect];
+            }
+        }
         [self _initWithContent:aUrl options:options glView:glView];
     }
     return self;
