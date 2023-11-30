@@ -438,6 +438,30 @@ static BOOL hdrAnimationShown = 0;
                 
             }
                 break;
+            case kVK_ANSI_S:
+            {
+                //快速切换字幕
+                NSDictionary *dic = self.player.monitor.mediaMeta;
+                int currentIdx = [dic[k_IJKM_VAL_TYPE__SUBTITLE] intValue];
+                int position = -1;
+                NSMutableArray *subStreamIdxArr = [NSMutableArray array];
+                for (NSDictionary *stream in dic[kk_IJKM_KEY_STREAMS]) {
+                    NSString *type = stream[k_IJKM_KEY_TYPE];
+                    if ([type isEqualToString:k_IJKM_VAL_TYPE__SUBTITLE]) {
+                        int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
+                        if (currentIdx == streamIdx) {
+                            position = (int)[subStreamIdxArr count];
+                        }
+                        [subStreamIdxArr addObject:@(streamIdx)];
+                    }
+                }
+                position++;
+                if (position >= [subStreamIdxArr count]) {
+                    position = 0;
+                }
+                [self.player exchangeSelectedStream:[subStreamIdxArr[position] intValue]];
+            }
+                break;
         }
     } else if (event.modifierFlags & NSEventModifierFlagOption) {
         switch ([event keyCode]) {
@@ -725,7 +749,7 @@ static BOOL hdrAnimationShown = 0;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerFirstVideoFrameRendered:) name:IJKMPMoviePlayerFirstVideoFrameRenderedNotification object:self.player];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:self.player];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerSelectedStreamDidChange:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:self.player];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self.player];
     
@@ -945,11 +969,17 @@ static BOOL hdrAnimationShown = 0;
     return 0.0;
 }
 
-- (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
+- (void)updateStreams 
 {
     if (self.player.isPreparedToPlay) {
         
         NSDictionary *dic = self.player.monitor.mediaMeta;
+        int audioIdx = [dic[k_IJKM_VAL_TYPE__AUDIO] intValue];
+        NSLog(@"当前音频：%d",audioIdx);
+        int videoIdx = [dic[k_IJKM_VAL_TYPE__VIDEO] intValue];
+        NSLog(@"当前视频：%d",videoIdx);
+        int subtitleIdx = [dic[k_IJKM_VAL_TYPE__SUBTITLE] intValue];
+        NSLog(@"当前字幕：%d",subtitleIdx);
         
         [self.subtitlePopUpBtn removeAllItems];
         NSString *currentTitle = @"选择字幕";
@@ -967,7 +997,7 @@ static BOOL hdrAnimationShown = 0;
             NSString *type = stream[k_IJKM_KEY_TYPE];
             int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
             if ([type isEqualToString:k_IJKM_VAL_TYPE__SUBTITLE]) {
-                NSLog(@"subtile all meta:%@",stream);
+                NSLog(@"subtile meta:%@",stream);
                 NSString *url = stream[k_IJKM_KEY_EX_SUBTITLE_URL];
                 NSString *title = nil;
                 if (url) {
@@ -987,7 +1017,7 @@ static BOOL hdrAnimationShown = 0;
                 }
                 [self.subtitlePopUpBtn addItemWithTitle:title];
             } else if ([type isEqualToString:k_IJKM_VAL_TYPE__AUDIO]) {
-                NSLog(@"audio all meta:%@",stream);
+                NSLog(@"audio meta:%@",stream);
                 NSString *title = stream[k_IJKM_KEY_TITLE];
                 if (title.length == 0) {
                     title = stream[k_IJKM_KEY_LANGUAGE];
@@ -1001,7 +1031,7 @@ static BOOL hdrAnimationShown = 0;
                 }
                 [self.audioPopUpBtn addItemWithTitle:title];
             } else if ([type isEqualToString:k_IJKM_VAL_TYPE__VIDEO]) {
-                NSLog(@"video all meta:%@",stream);
+                NSLog(@"video meta:%@",stream);
                 NSString *title = stream[k_IJKM_KEY_TITLE];
                 if (title.length == 0) {
                     title = stream[k_IJKM_KEY_LANGUAGE];
@@ -1024,6 +1054,16 @@ static BOOL hdrAnimationShown = 0;
             self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
         }
     }
+}
+
+- (void)ijkPlayerSelectedStreamDidChange:(NSNotification *)notifi
+{
+    [self updateStreams];
+}
+
+- (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
+{
+    [self updateStreams];
 }
 
 - (void)playURL:(NSURL *)url hwaccel:(BOOL)hwaccel
