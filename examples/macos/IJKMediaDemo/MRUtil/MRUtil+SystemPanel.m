@@ -34,38 +34,48 @@
     return nil;
 }
 
-+ (NSArray <NSDictionary *>*)scanFolderWithPath:(NSString *)dir filter:(NSArray<NSString *>*)types{
++ (NSArray <NSDictionary *>*)scanFolder:(NSURL *)url filter:(NSArray<NSString *>*)types
+{
     NSError *error = nil;
     NSMutableArray *bookmarkArr = [NSMutableArray arrayWithCapacity:3];
-    NSArray<NSString *> *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:&error];
-    if (!error && contents) {
-        for (NSString *c in contents) {
-            NSString*item = [dir stringByAppendingPathComponent:c];
-            NSURL*item_url = [NSURL fileURLWithPath:item];
-            NSString *pathExtension = [[item_url pathExtension] lowercaseString];
-            BOOL add = NO;
-            if ([types count] > 0) {
-                if ([types containsObject:pathExtension]) {
-                    add = YES;
+    
+    //先判断是不是文件夹
+    BOOL isDirectory = NO;
+    NSString *path = [url path];
+    BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
+    if (isExist) {
+        if (isDirectory) {
+            //扫描文件夹
+            NSString *dir = path;
+            NSArray<NSString *> *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:&error];
+            if (!error && contents) {
+                for (NSString *c in contents) {
+                    if ([c isEqualToString:@".DS_Store"]) {
+                        continue;
+                    }
+                    NSString*fullPath = [dir stringByAppendingPathComponent:c];
+                    NSArray *scaned = [self scanFolder:[NSURL fileURLWithPath:fullPath] filter:types];
+                    if ([scaned count] > 0) {
+                        [bookmarkArr addObjectsFromArray:scaned];
+                    }
                 }
-            } else {
-                add = YES;
+                ///按照文件名排序
+                [bookmarkArr sortUsingComparator:^NSComparisonResult(NSDictionary * obj1, NSDictionary * obj2) {
+                    NSURL *url1 = obj1[@"url"];
+                    NSURL *url2 = obj2[@"url"];
+                    return (NSComparisonResult)[[url1 lastPathComponent] compare:[url2 lastPathComponent] options:NSNumericSearch];
+                }];
+                return [bookmarkArr copy];
             }
-            if (add) {
-                NSDictionary *dic = [self makeBookmarkWithURL:item_url];
+        } else {
+            NSString *pathExtension = [[path pathExtension] lowercaseString];
+            if ([[self acceptMediaType] containsObject:pathExtension]) {
+                NSDictionary *dic = [MRUtil makeBookmarkWithURL:url];
                 [bookmarkArr addObject:dic];
             }
         }
-        ///按照文件名排序
-        [bookmarkArr sortUsingComparator:^NSComparisonResult(NSDictionary * obj1, NSDictionary * obj2) {
-            NSURL *url1 = obj1[@"url"];
-            NSURL *url2 = obj2[@"url"];
-            return (NSComparisonResult)[[url1 lastPathComponent] compare:[url2 lastPathComponent] options:NSNumericSearch];
-        }];
-        
-        return [bookmarkArr copy];
     }
-    return nil;
+    return bookmarkArr;
 }
 
 + (NSArray<NSDictionary *> *)_showSystemChooseFileOrFolderPanelWithType:(NSArray<NSString *>*)types {
@@ -84,22 +94,8 @@
     if ([openPanel runModal] == NSModalResponseOK) {
         NSArray<NSURL *> *urls = [openPanel URLs];
         for (NSURL *url in urls) {
-            BOOL isDirectory = NO;
-            BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:[url path] isDirectory:&isDirectory];
-            if (isExist) {
-                if (isDirectory) {
-                    ///扫描文件夹
-                    NSString *dir = [url path];
-                    
-                    NSArray *dicArr = [self scanFolderWithPath:dir filter:types];
-                    if ([dicArr count] > 0) {
-                        [bookmarkArr addObjectsFromArray:dicArr];
-                    }
-                } else {
-                    NSDictionary *dic = [self makeBookmarkWithURL:url];
-                    [bookmarkArr addObject:dic];
-                }
-            }
+            NSArray *dicArr = [self scanFolder:url filter:types];
+            [bookmarkArr addObjectsFromArray:dicArr];
         }
     }
     
@@ -131,7 +127,8 @@
         if (singleSelect && autoScan) {
             NSURL *url = [openPanel URL];
             NSString *dir = [[url path] stringByDeletingLastPathComponent];
-            NSArray *dicArr = [self scanFolderWithPath:dir filter:types];
+            
+            NSArray *dicArr = [self scanFolder:[NSURL fileURLWithPath:dir] filter:types];
             
             if ([dicArr count] > 0) {
                 for (int i = 0; i < [dicArr count]; i ++) {
@@ -186,13 +183,11 @@
     
     NSMutableArray *bookmarkArr = [NSMutableArray array];
     
-    if ([openPanel runModal] == NSModalResponseOK)
-    {
+    if ([openPanel runModal] == NSModalResponseOK) {
         ///扫描文件夹
         NSURL *url = [openPanel URL];
-        NSString *dir = [url path];
-        
-        NSArray *dicArr = [self scanFolderWithPath:dir filter:types];
+        NSArray *dicArr = [self scanFolder:url filter:types];
+        [bookmarkArr addObjectsFromArray:dicArr];
         if ([dicArr count] > 0) {
             [bookmarkArr addObjectsFromArray:dicArr];
         }
@@ -259,7 +254,8 @@
 }
 
 // 中文字符串转换成拼音
-+ (NSString *) chineseStringTransformPinyin:(NSString *)chineseString {
++ (NSString *)chineseStringTransformPinyin:(NSString *)chineseString
+{
     if (chineseString == nil) {
         return nil;
     }
@@ -294,7 +290,6 @@
     }
     return resultArray;
 }
-
 
 + (NSArray<NSDictionary *> *)showSystemChooseSubtitlesPanel4Share:(NSString *)optDir
 {

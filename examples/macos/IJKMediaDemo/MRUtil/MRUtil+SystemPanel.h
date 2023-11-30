@@ -22,9 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSArray<NSDictionary *> *)showSystemChooseVideoPanel4Share;
 ///展示系统选择文件夹面板;
 + (NSArray<NSDictionary *> *)showSystemChooseFolderPanel;
-
-+ (NSArray <NSDictionary *>*)scanFolderWithPath:(NSString *)dir filter:(NSArray<NSString *>*)types;
-
+///递归扫描文件夹
++ (NSArray <NSDictionary *>*)scanFolder:(NSURL *)url filter:(NSArray<NSString *>*)types;
 + (NSDictionary *)makeBookmarkWithURL:(NSURL *)url;
 
 @end

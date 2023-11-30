@@ -914,7 +914,7 @@ static BOOL hdrAnimationShown = 0;
             } else {
                 NSString *key = [[self.playingUrl absoluteString] md5Hash];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-                self.playingUrl = nil;
+//                self.playingUrl = nil;
                 [self playNext:nil];
             }
         }
@@ -1204,23 +1204,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
     NSMutableArray *bookmarkArr = [NSMutableArray array];
     for (NSURL *url in fileUrls) {
         //先判断是不是文件夹
-        BOOL isDirectory = NO;
-        BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:[url path] isDirectory:&isDirectory];
-        if (isExist) {
-            if (isDirectory) {
-                //扫描文件夹
-                NSString *dir = [url path];
-                NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil acceptMediaType]];
-                if ([dicArr count] > 0) {
-                    [bookmarkArr addObjectsFromArray:dicArr];
-                }
-            } else {
-                NSString *pathExtension = [[url pathExtension] lowercaseString];
-                if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
-                    NSDictionary *dic = [MRUtil makeBookmarkWithURL:url];
-                    [bookmarkArr addObject:dic];
-                }
-            }
+        NSArray *dicArr = [MRUtil scanFolder:url filter:[MRUtil acceptMediaType]];
+        if ([dicArr count] > 0) {
+            [bookmarkArr addObjectsFromArray:dicArr];
         }
     }
     
@@ -1251,11 +1237,12 @@ static IOPMAssertionID g_displaySleepAssertionID;
             if (isExist) {
                 if (isDirectory) {
                    //扫描文件夹
-                   NSString *dir = [url path];
-                   NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil acceptMediaType]];
-                    if ([dicArr count] > 0) {
-                        return NSDragOperationCopy;
-                    }
+//                   NSString *dir = [url path];
+//                   NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil acceptMediaType]];
+//                    if ([dicArr count] > 0) {
+//                        return NSDragOperationCopy;
+//                    }
+                    return NSDragOperationCopy;
                 } else {
                     NSString *pathExtension = [[url pathExtension] lowercaseString];
                     if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
