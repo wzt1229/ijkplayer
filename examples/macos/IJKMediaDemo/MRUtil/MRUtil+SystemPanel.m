@@ -48,6 +48,10 @@
             //扫描文件夹
             NSString *dir = path;
             NSArray<NSString *> *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:&error];
+            contents = [contents sortedArrayUsingComparator:^NSComparisonResult(NSString *  _Nonnull obj1, NSString *  _Nonnull obj2) {
+                return (NSComparisonResult)[obj1 compare:obj2 options:NSNumericSearch];
+            }];
+            
             if (!error && contents) {
                 for (NSString *c in contents) {
                     if ([c isEqualToString:@".DS_Store"]) {
@@ -59,12 +63,6 @@
                         [bookmarkArr addObjectsFromArray:scaned];
                     }
                 }
-                ///按照文件名排序
-                [bookmarkArr sortUsingComparator:^NSComparisonResult(NSDictionary * obj1, NSDictionary * obj2) {
-                    NSURL *url1 = obj1[@"url"];
-                    NSURL *url2 = obj2[@"url"];
-                    return (NSComparisonResult)[[url1 lastPathComponent] compare:[url2 lastPathComponent] options:NSNumericSearch];
-                }];
                 return [bookmarkArr copy];
             }
         } else {
