@@ -32,6 +32,7 @@ typedef struct IJKEXSubtitle {
     int next_idx;
     //当前使用的哪个备选字符
     int backup_charenc_idx;
+    SDL_Thread tmp_retry_thread;
 }IJKEXSubtitle;
 
 int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq)
@@ -83,11 +84,25 @@ static int convert_idx_from_stream(int idx)
     return arr_idx;
 }
 
+static int do_retry_next_charenc(void *opaque);
+
 static void retry_callback(void *opaque)
 {
     IJKEXSubtitle *sub = opaque;
     if (!sub) {
         return;
+    }
+    //fix "Use of deallocated memory" crash
+    //in other thread close this ex subtitle stream is necessory:because when destroy decoder,will join this thread,but join self won't join anything,then freed SDL_Thread struct,and func return value can't assign to retval! (thread->retval = thread->func(thread->data);)
+    //if you want reproduce the crash,may need open "Address Sanitizer" option
+    SDL_CreateThreadEx(&sub->tmp_retry_thread, do_retry_next_charenc, opaque, "tmp_retry");
+}
+
+static int do_retry_next_charenc(void *opaque)
+{
+    IJKEXSubtitle *sub = opaque;
+    if (!sub) {
+        return -1;
     }
     
     SDL_LockMutex(sub->mutex);
@@ -143,7 +158,7 @@ static void retry_callback(void *opaque)
     subComponent_seek_to(sub->component, 0);
 fail:
     SDL_UnlockMutex(sub->mutex);
-    return;
+    return 0;
 }
 
 static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int idx)
