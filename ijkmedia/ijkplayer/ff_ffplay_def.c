@@ -9,7 +9,8 @@
 #include "ff_packet_list.h"
 #include "ff_frame_queue.h"
 
-int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond) {
+int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond) 
+{
     memset(d, 0, sizeof(Decoder));
     d->pkt = av_packet_alloc();
     if (!d->pkt)

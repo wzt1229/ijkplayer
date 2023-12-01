@@ -90,23 +90,23 @@ static void retry_callback(void *opaque)
         return;
     }
     
+    SDL_LockMutex(sub->mutex);
+    
     if (sub->backup_charenc_idx >= ff_sub_backup_charenc_len) {
-        return;
+        goto fail;
     }
     
     int stream_idx = subComponent_get_stream(sub->component);
     if (stream_idx == -1) {
-        return;
+        goto fail;
     }
-    
+
     subComponent_close(&sub->component);
-    SDL_LockMutex(sub->mutex);
-    sub->component = NULL;
     //reopen
-    
     if (!sub->ic) {
         goto fail;
     }
+    
     AVCodecContext* avctx = avcodec_alloc_context3(NULL);
     if (!avctx) {
         goto fail;
@@ -143,6 +143,7 @@ static void retry_callback(void *opaque)
     subComponent_seek_to(sub->component, 0);
 fail:
     SDL_UnlockMutex(sub->mutex);
+    return;
 }
 
 static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int idx)
@@ -212,8 +213,6 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
     }
     //so important,ohterwise,sub frame has not pts.
     avctx->pkt_timebase = sub_st->time_base;
-    //reset to 0
-    sub->backup_charenc_idx = 0;
     
     if (avcodec_open2(avctx, codec, NULL) < 0) {
         ret = -7;
@@ -225,6 +224,8 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
         goto fail;
     }
     
+    //reset to 0
+    sub->backup_charenc_idx = 0;
     sub->ic = ic;
     sub->st_offset_idx = idx;
     return 0;
@@ -272,18 +273,8 @@ int exSub_close_current(IJKEXSubtitle *sub)
     if(!sub) {
         return -1;
     }
-    
-    FFSubComponent *opaque = sub->component;
-    
-    if(!opaque) {
-        if (sub->ic)
-            avformat_close_input(&sub->ic);
-        return -2;
-    }
-    
-    int r = subComponent_close(&opaque);
     SDL_LockMutex(sub->mutex);
-    sub->component = NULL;
+    int r = subComponent_close(&sub->component);
     if (sub->ic)
         avformat_close_input(&sub->ic);
     SDL_UnlockMutex(sub->mutex);
@@ -418,13 +409,13 @@ int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMedi
     int idx = sub->next_idx;
     
     if (idx < IJK_EX_SUBTITLE_STREAM_MAX_COUNT) {
+        SDL_LockMutex(sub->mutex);
         int r = exSub_open_filepath(sub, file_name, idx + IJK_EX_SUBTITLE_STREAM_MIN_OFFSET);
         if (r != 0) {
             av_log(NULL, AV_LOG_ERROR, "could not open ex subtitle:(%d)%s\n", r, file_name);
+            SDL_UnlockMutex(sub->mutex);
             return -2;
         }
-        
-        SDL_LockMutex(sub->mutex);
         sub->pathArr[idx] = av_strdup(file_name);
         sub->next_idx++;
         ijkmeta_set_ex_subtitle_context_l(meta, sub->ic, sub, idx + IJK_EX_SUBTITLE_STREAM_MIN_OFFSET);
