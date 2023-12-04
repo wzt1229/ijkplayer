@@ -96,9 +96,6 @@ typedef enum IJKLogLevel {
 - (float)dropFrameRate;
 - (int)dropFrameCount;
 - (void)setPauseInBackground:(BOOL)pause;
-//解码第一帧视频后，可以获取到正确的值
-- (BOOL)isUsingHardwareAccelerae;
-
 - (void)setHudValue:(NSString *)value forKey:(NSString *)key;
 
 + (void)setLogReport:(BOOL)preferLogReport;

@@ -71,12 +71,11 @@ static BOOL hdrAnimationShown = 0;
 
 //player
 @property (nonatomic, strong) IJKFFMoviePlayerController * player;
-@property (nonatomic, strong) IJKKVOController * kvoCtrl;
-
 @property (nonatomic, strong) NSMutableArray *playList;
 @property (nonatomic, strong) NSMutableArray *subtitles;
 @property (nonatomic, copy) NSURL *playingUrl;
 @property (nonatomic, weak) NSTimer *tickTimer;
+@property (nonatomic, assign, getter=isUsingHardwareAccelerate) BOOL usingHardwareAccelerate;
 
 @end
 
@@ -111,7 +110,7 @@ static BOOL hdrAnimationShown = 0;
     self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
-    [self reSetLoglevel:@"info"];
+    [self reSetLoglevel:@"verbose"];
     self.seekCostLb.stringValue = @"";
     self.accurateSeek = 1;
     self.loop = 0;
@@ -588,8 +587,8 @@ static BOOL hdrAnimationShown = 0;
     }
     if (lastUrl) {
         [self doStopPlay];
-        BOOL hwaccel = [self preferHW];
-        [self playURL:lastUrl hwaccel:hwaccel];
+        self.usingHardwareAccelerate = [self preferHW];
+        [self playURL:lastUrl];
     } else {
         [self playFirstIfNeed];
     }
@@ -768,9 +767,6 @@ static BOOL hdrAnimationShown = 0;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerHdrAnimationStateChanged:) name:IJKMoviePlayerHDRAnimationStateChanged object:self.player.view];
     
-    
-    self.kvoCtrl = [[IJKKVOController alloc] initWithTarget:self.player.monitor];
-    [self.kvoCtrl safelyAddObserver:self forKeyPath:@"vdecoder" options:NSKeyValueObservingOptionNew context:nil];
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
 }
@@ -814,11 +810,12 @@ static BOOL hdrAnimationShown = 0;
 - (void)ijkPlayerVideoDecoderFatal:(NSNotification *)notifi
 {
     if (self.player == notifi.object) {
-        if (self.player.isUsingHardwareAccelerae) {
+        if (self.isUsingHardwareAccelerate) {
+            self.usingHardwareAccelerate = NO;
             NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo);
             NSURL *playingUrl = self.playingUrl;
             [self doStopPlay];
-            [self playURL:playingUrl hwaccel:NO];
+            [self playURL:playingUrl];
             return;
         }
     }
@@ -1066,13 +1063,13 @@ static BOOL hdrAnimationShown = 0;
     [self updateStreams];
 }
 
-- (void)playURL:(NSURL *)url hwaccel:(BOOL)hwaccel
+- (void)playURL:(NSURL *)url
 {
     if (!url) {
         return;
     }
     [self destroyPlayer];
-    [self perpareIJKPlayer:url hwaccel:hwaccel];
+    [self perpareIJKPlayer:url hwaccel:self.isUsingHardwareAccelerate];
     NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     
     NSInteger idx = [self.playList indexOfObject:self.playingUrl] + 1;
@@ -1103,15 +1100,6 @@ static BOOL hdrAnimationShown = 0;
     }
     
     [self onTick:nil];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
-{
-    if (object == self.player.monitor) {
-        if ([keyPath isEqualToString:@"vdecoder"]) {
-            NSLog(@"current video decoder:%@",change[NSKeyValueChangeNewKey]);
-        }
-    }
 }
 
 static IOPMAssertionID g_displaySleepAssertionID;
@@ -1347,8 +1335,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
 {
     NSURL *url = self.playingUrl;
     [self doStopPlay];
-    BOOL hwaccel = [self preferHW];
-    [self playURL:url hwaccel:hwaccel];
+    self.usingHardwareAccelerate = [self preferHW];
+    [self playURL:url];
 }
 
 - (void)onStop
@@ -1360,7 +1348,6 @@ static IOPMAssertionID g_displaySleepAssertionID;
 - (void)destroyPlayer
 {
     if (self.player) {
-        [self.kvoCtrl safelyRemoveAllObservers];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:nil object:self.player];
         [self.player.view removeFromSuperview];
         [self.player pause];
@@ -1409,8 +1396,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     NSURL *url = self.playList[idx];
-    BOOL hwaccel = [self preferHW];
-    [self playURL:url hwaccel:hwaccel];
+    self.usingHardwareAccelerate = [self preferHW];
+    [self playURL:url];
 }
 
 - (IBAction)playNext:(NSButton *)sender
@@ -1440,8 +1427,8 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     NSURL *url = self.playList[idx];
-    BOOL hwaccel = [self preferHW];
-    [self playURL:url hwaccel:hwaccel];
+    self.usingHardwareAccelerate = [self preferHW];
+    [self playURL:url];
 }
 
 - (void)seekTo:(float)cp

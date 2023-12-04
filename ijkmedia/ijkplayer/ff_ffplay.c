@@ -2910,9 +2910,9 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         }
         
         if (config && hw_decoder_init(avctx, config) == 0) {
-            ALOGI("use videotoolbox accel!\n");
+            ALOGI("try use videotoolbox accel\n");
         } else {
-            ALOGW("can't use videotoolbox accel!\n");
+            ALOGW("not try use videotoolbox accel\n");
         }
     }
 #endif

@@ -421,12 +421,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     _pauseInBackground = pause;
 }
 
-- (BOOL)isUsingHardwareAccelerae
-{
-    int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
-    return vdec == FFP_PROPV_DECODER_AVCODEC_HW;
-}
-
 inline static int getPlayerOption(IJKFFOptionCategory category)
 {
     int mp_category = -1;
