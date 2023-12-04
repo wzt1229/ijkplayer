@@ -59,6 +59,13 @@
 
 #define SDL_FCC_NV12        SDL_FOURCC('N', 'V', '1', '2')
 #define SDL_FCC_UYVY        SDL_FOURCC('U', 'Y', 'V', 'Y')
+
+// newer
+#define SDL_FCC_P010        SDL_FOURCC('P', '0', '1', '0')    /**< bpp=30, like NV12, YUV 4:2:0,10bit */
+#define SDL_FCC_P216        SDL_FOURCC('P', '2', '1', '6')    /**< bpp=32, like NV12, YUV 4:2:2,16bit*/
+#define SDL_FCC_P416        SDL_FOURCC('P', '4', '1', '6')    /**< bpp=48, like NV12, YUV 4:4:4,16bit*/
+#define SDL_FCC_AYUV64      SDL_FOURCC('A', 'Y', '6', '4')    /**< bpp=64,  AYUV 4:4:4,16bit (1 Cr & Cb sample per 1x1 Y & A samples), little-endian with alpha 16bit*/
+
 // RGB formats
 #define SDL_FCC_BGR0        SDL_FOURCC('B', 'G', 'R', 0)      /**< bpp=32, BGRXBGRX */
 #define SDL_FCC_BGRA        SDL_FOURCC('B', 'G', 'R', 'A')    /**< bpp=32, BGRABGRA */
@@ -67,9 +74,6 @@
 #define SDL_FCC_RV16        SDL_FOURCC('R', 'V', '1', '6')    /**< bpp=16, RGB565 */
 #define SDL_FCC_RV24        SDL_FOURCC('R', 'V', '2', '4')    /**< bpp=24, RGB888 */
 #define SDL_FCC_RV32        SDL_FOURCC('R', 'V', '3', '2')    /**< bpp=32, RGBX8888 */
-#define SDL_FCC_P010        SDL_FOURCC('P', '0', '1', '0')    /**< bpp=10, like NV12, data in the high bits, zeros in the low bits */
-
-
 
 // opaque formats
 #define SDL_FCC__AMC        SDL_FOURCC('_', 'A', 'M', 'C')    /**< Android MediaCodec */

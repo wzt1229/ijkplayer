@@ -1323,6 +1323,12 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                 overlay_format = SDL_FCC_P010;
             } else if (src_format == AV_PIX_FMT_YUV444P10) {
                 overlay_format = SDL_FCC_P010;
+            } else if (src_format == AV_PIX_FMT_YUV444P16 || src_format == AV_PIX_FMT_P416) {
+                overlay_format = SDL_FCC_P416;
+            } else if (src_format == AV_PIX_FMT_YUV422P16 || src_format == AV_PIX_FMT_P216) {
+                overlay_format = SDL_FCC_P216;
+            } else if (src_format == AV_PIX_FMT_YUVA444P16 || src_format == AV_PIX_FMT_AYUV64) {
+                overlay_format = SDL_FCC_AYUV64;
             } else {
                 const AVPixFmtDescriptor *pfd = av_pix_fmt_desc_get(src_format);
                 if (pfd->nb_components > 0) {
@@ -1340,52 +1346,64 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         
         enum AVPixelFormat dst_format = AV_PIX_FMT_NONE;
         switch (overlay_format) {
-                case SDL_FCC_J420:
-                case SDL_FCC_I420:
-                case SDL_FCC_YV12:
-                {
-                    if (overlay_format == SDL_FCC_J420) {
-                        dst_format = AV_PIX_FMT_YUVJ420P;
-                    } else {
-                        dst_format = AV_PIX_FMT_YUV420P;
-                    }
-                    break;
-                }
-                case SDL_FCC_NV12: {
-                    dst_format = AV_PIX_FMT_NV12;
-                    break;
-                }
-                case SDL_FCC_BGRA: {
-                    dst_format = AV_PIX_FMT_BGRA;
-                    break;
-                }
-                case SDL_FCC_BGR0: {
-                    dst_format = AV_PIX_FMT_BGR0;
-                    break;
-                }
-                case SDL_FCC_ARGB: {
-                    dst_format = AV_PIX_FMT_ARGB;
-                    break;
-                }
-                case SDL_FCC_0RGB: {
-                    dst_format = AV_PIX_FMT_0RGB;
-                    break;
-                }
-                case SDL_FCC_UYVY: {
-                    dst_format = AV_PIX_FMT_UYVY422;
-                    break;
-                }
-                case SDL_FCC_YUV2: {
-                    dst_format = AV_PIX_FMT_YUYV422;
-                    break;
-                }
-                case SDL_FCC_P010: {
-                    dst_format = AV_PIX_FMT_P010;
+            case SDL_FCC_J420:
+            case SDL_FCC_I420:
+            case SDL_FCC_YV12:
+            {
+                if (overlay_format == SDL_FCC_J420) {
+                    dst_format = AV_PIX_FMT_YUVJ420P;
+                } else {
+                    dst_format = AV_PIX_FMT_YUV420P;
                 }
                 break;
-                default:
-                    ALOGE("unknow overly format:%.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
-                    break;
+            }
+            case SDL_FCC_NV12: {
+                dst_format = AV_PIX_FMT_NV12;
+                break;
+            }
+            case SDL_FCC_BGRA: {
+                dst_format = AV_PIX_FMT_BGRA;
+                break;
+            }
+            case SDL_FCC_BGR0: {
+                dst_format = AV_PIX_FMT_BGR0;
+                break;
+            }
+            case SDL_FCC_ARGB: {
+                dst_format = AV_PIX_FMT_ARGB;
+                break;
+            }
+            case SDL_FCC_0RGB: {
+                dst_format = AV_PIX_FMT_0RGB;
+                break;
+            }
+            case SDL_FCC_UYVY: {
+                dst_format = AV_PIX_FMT_UYVY422;
+                break;
+            }
+            case SDL_FCC_YUV2: {
+                dst_format = AV_PIX_FMT_YUYV422;
+                break;
+            }
+            case SDL_FCC_P010: {
+                dst_format = AV_PIX_FMT_P010;
+            }
+                break;
+            case SDL_FCC_P416: {
+                dst_format = AV_PIX_FMT_P416;
+            }
+                break;
+            case SDL_FCC_P216: {
+                dst_format = AV_PIX_FMT_P216;
+            }
+                break;
+            case SDL_FCC_AYUV64: {
+                dst_format = AV_PIX_FMT_AYUV64;
+            }
+                break;
+            default:
+                ALOGE("unknow overly format:%.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
+                break;
         }
         
         if (src_format != dst_format) {

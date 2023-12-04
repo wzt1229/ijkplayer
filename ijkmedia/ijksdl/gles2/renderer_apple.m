@@ -343,7 +343,9 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
              cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange ||
              cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
              cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange ||
-             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
+             cv_format == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange ||
+             cv_format == kCVPixelFormatType_422YpCbCr16BiPlanarVideoRange ||
+             cv_format == kCVPixelFormatType_444YpCbCr16BiPlanarVideoRange
              ) {
         if (colorMatrixStr != nil &&
             CFStringCompare(colorMatrixStr, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {

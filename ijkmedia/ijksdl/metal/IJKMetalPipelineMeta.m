@@ -32,7 +32,9 @@
          cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange||
          cv_format == kCVPixelFormatType_422YpCbCr10BiPlanarFullRange ||
          cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarVideoRange||
-         cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange
+         cv_format == kCVPixelFormatType_444YpCbCr10BiPlanarFullRange ||
+         cv_format == kCVPixelFormatType_422YpCbCr16BiPlanarVideoRange||
+         cv_format == kCVPixelFormatType_444YpCbCr16BiPlanarVideoRange
          */
         shaderName = @"nv12FragmentShader";
     } else if (plane == 1) {
@@ -43,6 +45,9 @@
         } else if (cv_format == kCVPixelFormatType_32ARGB) {
             needConvertColor = NO;
             shaderName = @"argbFragmentShader";
+        } else if (cv_format == kCVPixelFormatType_4444AYpCbCr16) {
+            needConvertColor = YES;
+            shaderName = @"ayuvFragmentShader";
         }
     #if TARGET_OS_OSX
         else if (cv_format == kCVPixelFormatType_422YpCbCr8) {

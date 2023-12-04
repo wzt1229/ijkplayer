@@ -68,6 +68,12 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
         pixelFormatType = fullRange ? kCVPixelFormatType_422YpCbCr8FullRange : kCVPixelFormatType_422YpCbCr8_yuvs;
     } else if (format == AV_PIX_FMT_P010) {
         pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr10BiPlanarFullRange : kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange;
+    } else if (format == AV_PIX_FMT_P216) {
+        pixelFormatType = kCVPixelFormatType_422YpCbCr16BiPlanarVideoRange;
+    } else if (format == AV_PIX_FMT_P416) {
+        pixelFormatType = kCVPixelFormatType_444YpCbCr16BiPlanarVideoRange;
+    } else if (format == AV_PIX_FMT_AYUV64) {
+        pixelFormatType = kCVPixelFormatType_4444AYpCbCr16;
     }
 //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8_yuvs
 //    Y'0 Cb Y'1 Cr kCVPixelFormatType_422YpCbCr8FullRange
@@ -99,8 +105,9 @@ static NSDictionary* prepareCVPixelBufferAttibutes(const int format,const bool f
 //        pixelFormatType = kCVPixelFormatType_16LE555;
 //    }
     else {
-        ALOGE("unsupported pixel format:%d!",format);
-        assert(false);
+        enum AVPixelFormat const avformat = format;
+        const AVPixFmtDescriptor *pd = av_pix_fmt_desc_get(avformat);
+        ALOGE("unsupported pixel format:%s!",pd->name);
         return nil;
     }
     

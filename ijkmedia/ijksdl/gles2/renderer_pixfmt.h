@@ -173,6 +173,22 @@ static struct vt_format vt_formats[] = {
             { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
         }
     },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr16BiPlanarVideoRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_SHORT, GL_RED },
+            { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
+        }
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_444YpCbCr16BiPlanarVideoRange,
+        .planes = 2,
+        .gl = {
+            { GL_RED, GL_UNSIGNED_SHORT, GL_RED },
+            { GL_RG,  GL_UNSIGNED_SHORT, GL_RG }
+        }
+    },
 #if TARGET_OS_OSX
     {
         .cvpixfmt = kCVPixelFormatType_422YpCbCr8,

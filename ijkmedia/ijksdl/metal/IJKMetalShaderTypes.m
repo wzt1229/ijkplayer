@@ -19,6 +19,11 @@ static mp_format mp_formats[] = {
         .planes = 1,
         .formats = {MTLPixelFormatBGRA8Unorm}
     },
+    {
+        .cvpixfmt = kCVPixelFormatType_4444AYpCbCr16,
+        .planes = 1,
+        .formats = {MTLPixelFormatRGBA16Unorm}
+    },
 #if TARGET_OS_OSX
     {
         .cvpixfmt = kCVPixelFormatType_422YpCbCr8,
@@ -93,6 +98,16 @@ static mp_format mp_formats[] = {
     },
     {
         .cvpixfmt = kCVPixelFormatType_420YpCbCr10BiPlanarFullRange,
+        .planes = 2,
+        .formats = {MTLPixelFormatR16Unorm,MTLPixelFormatRG16Unorm}
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_444YpCbCr16BiPlanarVideoRange,
+        .planes = 2,
+        .formats = {MTLPixelFormatR16Unorm,MTLPixelFormatRG16Unorm}
+    },
+    {
+        .cvpixfmt = kCVPixelFormatType_422YpCbCr16BiPlanarVideoRange,
         .planes = 2,
         .formats = {MTLPixelFormatR16Unorm,MTLPixelFormatRG16Unorm}
     },

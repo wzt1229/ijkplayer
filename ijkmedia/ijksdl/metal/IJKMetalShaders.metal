@@ -21,11 +21,11 @@ struct RasterizerData
     // returned from the vertex function.
     float4 clipSpacePosition [[position]];
     
-//    // Since this member does not have a special attribute, the rasterizer
-//    // interpolates its value with the values of the other triangle vertices
-//    // and then passes the interpolated value to the fragment shader for each
-//    // fragment in the triangle.
-//    float4 color;
+    //    // Since this member does not have a special attribute, the rasterizer
+    //    // interpolates its value with the values of the other triangle vertices
+    //    // and then passes the interpolated value to the fragment shader for each
+    //    // fragment in the triangle.
+    //    float4 color;
     
     float2 textureCoordinate; // 纹理坐标，会做插值处理
 };
@@ -63,7 +63,7 @@ struct RasterizerData
 /// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
 /// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
 fragment float4 subtileFragmentShader(RasterizerData input [[stage_in]],
-                                   texture2d<float> textureY [[ texture(IJKFragmentTextureIndexTextureY) ]])
+                                      texture2d<float> textureY [[ texture(IJKFragmentTextureIndexTextureY) ]])
 {
     // sampler是采样器
     constexpr sampler textureSampler (mag_filter::linear,
@@ -83,7 +83,7 @@ struct IJKFragmentShaderArguments {
 };
 
 vertex RasterizerData subVertexShader(uint vertexID [[vertex_id]],
-             constant IJKVertex *vertices [[buffer(IJKVertexInputIndexVertices)]])
+                                      constant IJKVertex *vertices [[buffer(IJKVertexInputIndexVertices)]])
 {
     RasterizerData out;
     out.clipSpacePosition = float4(vertices[vertexID].position, 0.0, 1.0);
@@ -93,7 +93,7 @@ vertex RasterizerData subVertexShader(uint vertexID [[vertex_id]],
 
 //支持mvp矩阵
 vertex RasterizerData mvpShader(uint vertexID [[vertex_id]],
-             constant IJKVertexData & data [[buffer(IJKVertexInputIndexVertices)]])
+                                constant IJKVertexData & data [[buffer(IJKVertexInputIndexVertices)]])
 {
     RasterizerData out;
     IJKVertex _vertex = data.vertexes[vertexID];
@@ -131,9 +131,9 @@ float arib_b67_inverse_oetf(float x)
     // Prevent negative pixels expanding into positive values.
     x = max(x, 0.0);
     if (x <= 0.5)
-    x = (x * x) * (1.0 / 3.0);
+        x = (x * x) * (1.0 / 3.0);
     else
-    x = (exp((x - ARIB_B67_C) / ARIB_B67_A) + ARIB_B67_B) / 12.0;
+        x = (exp((x - ARIB_B67_C) / ARIB_B67_A) + ARIB_B67_B) / 12.0;
     return x;
 }
 
@@ -207,13 +207,13 @@ float hableF(float inVal)
 float mobius(float in, float j, float peak)
 {
     float a, b;
-
+    
     if (in <= j)
         return in;
-
+    
     a = -j * j * (peak - 1.0f) / (j * j - 2.0f * j + peak);
     b = (j * j - 2.0f * j * peak + peak) / max(peak - 1.0f, 1e-6);
-
+    
     return (b * b + 2.0f * b * j + j * j) / (b - a) * (in + a) / (in + b);
 }
 
@@ -258,33 +258,33 @@ float3 hdr2sdr(float3 rgb_2020,float x,float hdrPercentage,IJKColorTransferFunc 
         // 1、HDR 非线性电信号转为 HDR 线性光信号（EOTF）
         float peak_luminance = 50.0;
         if (transferFun == IJKColorTransferFuncPQ) {
-           float to_linear_scale = 10000.0 / peak_luminance;
-           myFragColor = to_linear_scale * st_2084_eotf_vec(rgb_2020);
+            float to_linear_scale = 10000.0 / peak_luminance;
+            myFragColor = to_linear_scale * st_2084_eotf_vec(rgb_2020);
         } else if (transferFun == IJKColorTransferFuncHLG) {
-           float to_linear_scale = 1000.0 / peak_luminance;
-           myFragColor = to_linear_scale * arib_b67_eotf_vec(rgb_2020);
+            float to_linear_scale = 1000.0 / peak_luminance;
+            myFragColor = to_linear_scale * arib_b67_eotf_vec(rgb_2020);
         } else {
-           myFragColor = rec_1886_eotf_vec(rgb_2020);
+            myFragColor = rec_1886_eotf_vec(rgb_2020);
         }
-
+        
         // 2、HDR 线性光信号做颜色空间转换（Color Space Converting）
         // color-primaries REC_2020 to REC_709
         matrix_float3x3 rgb2xyz2020 = matrix_float3x3(0.6370, 0.1446, 0.1689,
                                                       0.2627, 0.6780, 0.0593,
                                                       0.0000, 0.0281, 1.0610);
         matrix_float3x3 xyz2rgb709 = matrix_float3x3(3.2410, -1.5374, -0.4986,
-                                                    -0.9692, 1.8760, 0.0416,
+                                                     -0.9692, 1.8760, 0.0416,
                                                      0.0556, -0.2040, 1.0570);
         
         myFragColor *= rgb2xyz2020 * xyz2rgb709;
-
+        
         // 3、HDR 线性光信号色调映射为 SDR 线性光信号（Tone Mapping）
         float sig = FFMAX(FFMAX3(myFragColor.r, myFragColor.g, myFragColor.b), 1e-6);
         float sig_orig = sig;
         float peak = 10.0;
         sig = hableF(sig) / hableF(peak);
         myFragColor *= sig / sig_orig;
-
+        
         // 4、SDR 线性光信号转 SDR 非线性电信号（OETF）
         myFragColor = rec_1886_inverse_eotf_vec(myFragColor);
         return myFragColor;
@@ -364,6 +364,23 @@ fragment float4 uyvy422FragmentShader(RasterizerData input [[stage_in]],
     return yuv2rgb(yuv,fragmentShaderArgs.convertMatrix,input.textureCoordinate.x);
 }
 
+/// @brief ayuv fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
+/// @param buffer表明是缓存数据，IJKFragmentBufferIndexMatrix是索引
+fragment float4 ayuvFragmentShader(RasterizerData input [[stage_in]],
+                                   device IJKFragmentShaderArguments & fragmentShaderArgs [[ buffer(IJKFragmentBufferLocation0) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    texture2d<float> textureY = fragmentShaderArgs.textureY;
+    float4 tc = textureY.sample(textureSampler, input.textureCoordinate).rgba;
+    float3 yuv = float3(tc.g, tc.b, tc.a);
+    
+    return yuv2rgb(yuv,fragmentShaderArgs.convertMatrix,input.textureCoordinate.x);
+}
+
 /// @brief bgra fragment shader
 /// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
 /// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
@@ -401,7 +418,7 @@ fragment float4 argbFragmentShader(RasterizerData input [[stage_in]],
 #else
 
 vertex RasterizerData subVertexShader(uint vertexID [[vertex_id]],
-             constant IJKVertex *vertices [[buffer(IJKVertexInputIndexVertices)]])
+                                      constant IJKVertex *vertices [[buffer(IJKVertexInputIndexVertices)]])
 {
     RasterizerData out;
     out.clipSpacePosition = float4(vertices[vertexID].position, 0.0, 1.0);
@@ -411,7 +428,7 @@ vertex RasterizerData subVertexShader(uint vertexID [[vertex_id]],
 
 //支持mvp矩阵
 vertex RasterizerData mvpShader(uint vertexID [[vertex_id]],
-             constant IJKVertexData & data [[buffer(IJKVertexInputIndexVertices)]])
+                                constant IJKVertexData & data [[buffer(IJKVertexInputIndexVertices)]])
 {
     RasterizerData out;
     IJKVertex _vertex = data.vertexes[vertexID];
