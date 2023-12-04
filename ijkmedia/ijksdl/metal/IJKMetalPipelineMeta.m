@@ -59,11 +59,9 @@
         return nil;
     }
 
-    CFStringRef colorMatrix = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
-    CFStringRef transferFuntion = CVBufferGetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, NULL);
-    
     IJKYUV2RGBColorMatrixType colorMatrixType = IJKYUV2RGBColorMatrixNone;
     if (needConvertColor) {
+        CFStringRef colorMatrix = CVBufferGetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, NULL);
         if (colorMatrix) {
             if (CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_709_2, 0) == kCFCompareEqualTo) {
                 colorMatrixType = IJKYUV2RGBColorMatrixBT709;
@@ -91,28 +89,29 @@
         fullRange = YES;
     }
     
-    IJKColorTransferFunc tf;
-    if (transferFuntion) {
-        if (CFStringCompare(transferFuntion, IJK_TransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
-            tf = IJKColorTransferFuncHLG;
-        } else if (CFStringCompare(transferFuntion, IJK_TransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo || CFStringCompare(transferFuntion, IJK_TransferFunction_SMPTE_ST_428_1, 0) == kCFCompareEqualTo) {
-            tf = IJKColorTransferFuncPQ;
-        } else {
-            tf = IJKColorTransferFuncLINEAR;
-        }
-    } else {
-        tf = IJKColorTransferFuncLINEAR;
-    }
-    
     IJKMetalPipelineMeta *meta = [IJKMetalPipelineMeta new];
-    meta.transferFunc = tf;
     meta.fragmentName = shaderName;
     meta.fullRange = fullRange;
     meta.convertMatrixType = colorMatrixType;
-    if (colorMatrix != nil &&
-        CFStringCompare(colorMatrix, kCVImageBufferYCbCrMatrix_ITU_R_2020, 0) == kCFCompareEqualTo) {
-        //HDR color space.
+    //HDR color space.
+    if (colorMatrixType == IJKYUV2RGBColorMatrixBT2020) {
         meta.hdr = YES;
+        
+        IJKColorTransferFunc tf;
+        CFStringRef transferFuntion = CVBufferGetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, NULL);
+        if (transferFuntion) {
+            if (CFStringCompare(transferFuntion, IJK_TransferFunction_ITU_R_2100_HLG, 0) == kCFCompareEqualTo) {
+                tf = IJKColorTransferFuncHLG;
+            } else if (CFStringCompare(transferFuntion, IJK_TransferFunction_SMPTE_ST_2084_PQ, 0) == kCFCompareEqualTo || CFStringCompare(transferFuntion, IJK_TransferFunction_SMPTE_ST_428_1, 0) == kCFCompareEqualTo) {
+                tf = IJKColorTransferFuncPQ;
+            } else {
+                tf = IJKColorTransferFuncLINEAR;
+            }
+        } else {
+            tf = IJKColorTransferFuncLINEAR;
+        }
+        
+        meta.transferFunc = tf;
     }
     return meta;
 }
@@ -120,8 +119,12 @@
 - (NSString *)description
 {
     NSString *matrix = [@[@"None",@"BT601",@"BT709",@"BT2020"] objectAtIndex:self.convertMatrixType];
-    NSString *tf = [@[@"LINEAR",@"PQ",@"HLG"] objectAtIndex:self.transferFunc];
-    return [NSString stringWithFormat:@"%@,hdr:%d,fullRange:%d,matrix:%@,transfer:%@",self.fragmentName,self.hdr,self.fullRange,matrix,tf];
+    if (self.hdr) {
+        NSString *tf = [@[@"LINEAR",@"PQ",@"HLG"] objectAtIndex:self.transferFunc];
+        return [NSString stringWithFormat:@"%@,hdr:%d,fullRange:%d,matrix:%@,transfer:%@",self.fragmentName,self.hdr,self.fullRange,matrix,tf];
+    } else {
+        return [NSString stringWithFormat:@"%@,fullRange:%d,matrix:%@",self.fragmentName,self.fullRange,matrix];
+    }
 }
 
 - (BOOL)metaMatchedCVPixelbuffer:(CVPixelBufferRef)pixelBuffer
