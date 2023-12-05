@@ -114,6 +114,13 @@ int SDL_VoutConvertFrame(SDL_Vout *vout, int dst_format,const AVFrame *inFrame, 
         
         vout->image_converter = convert;
         convert->frame_buffer = NULL;
+        
+        enum AVPixelFormat const in_avformat = inFrame->format;
+        const AVPixFmtDescriptor *in_pd = av_pix_fmt_desc_get(in_avformat);
+        
+        enum AVPixelFormat const dst_avformat = dst_format;
+        const AVPixFmtDescriptor *dst_pd = av_pix_fmt_desc_get(dst_avformat);
+        ALOGI("convert pixel format:%s->%s",in_pd->name,dst_pd->name);
     }
     
     int frame_bytes = av_image_get_buffer_size(dst_format, inFrame->width, inFrame->height, 1);
