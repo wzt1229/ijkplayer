@@ -612,6 +612,8 @@ typedef CGRect NSRect;
 
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize
 {
+    //call super is needed, otherwise some device [self bounds] is not right.
+    [super resizeWithOldSuperviewSize:oldSize];
     [self refreshSubtitleExtSacle];
     if (!self.window.inLiveResize) {
         [self setNeedsRefreshCurrentPic];
