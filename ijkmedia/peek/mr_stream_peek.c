@@ -18,7 +18,7 @@
 #define MRSampleRate   16000
 #define MRNBChannels   1
 
-typedef struct MRStreamPeek {
+typedef struct MRStreamPeeker {
     SDL_mutex* mutex;
     FFSubComponent* opaque;
     AVFormatContext* ic;
@@ -36,19 +36,21 @@ typedef struct MRStreamPeek {
     unsigned int audio_buf1_size;
     double audio_clock;
     int audio_clock_serial;
-}MRStreamPeek;
+    //video duration
+    int duration;
+}MRStreamPeeker;
 
-int mr_stream_peek_create(MRStreamPeek **spp,int frameMaxCount)
+int mr_stream_peek_create(MRStreamPeeker **spp,int frameCacheCount)
 {
     if (!spp) {
         return -1;
     }
     
-    MRStreamPeek *sp = av_malloc(sizeof(MRStreamPeek));
+    MRStreamPeeker *sp = av_malloc(sizeof(MRStreamPeeker));
     if (!sp) {
         return -2;
     }
-    bzero(sp, sizeof(MRStreamPeek));
+    bzero(sp, sizeof(MRStreamPeeker));
     
     sp->mutex = SDL_CreateMutex();
     if (NULL == sp->mutex) {
@@ -61,7 +63,7 @@ int mr_stream_peek_create(MRStreamPeek **spp,int frameMaxCount)
         return -3;
     }
     
-    if (frame_queue_init(&sp->frameq, &sp->pktq, frameMaxCount, 0) < 0) {
+    if (frame_queue_init(&sp->frameq, &sp->pktq, frameCacheCount, 0) < 0) {
         packet_queue_destroy(&sp->pktq);
         av_free(sp);
         return -4;
@@ -72,7 +74,7 @@ int mr_stream_peek_create(MRStreamPeek **spp,int frameMaxCount)
     return 0;
 }
 
-int mr_stream_peek_get_opened_stream_idx(MRStreamPeek *sp)
+int mr_stream_peek_get_opened_stream_idx(MRStreamPeeker *sp)
 {
     if (sp && sp->opaque) {
         return sp->stream_idx;
@@ -80,7 +82,7 @@ int mr_stream_peek_get_opened_stream_idx(MRStreamPeek *sp)
     return -1;
 }
 
-int mr_stream_peek_seek_to(MRStreamPeek *sp, float sec)
+int mr_stream_peek_seek_to(MRStreamPeeker *sp, float sec)
 {
     if (!sp || !sp->opaque) {
         return -1;
@@ -89,7 +91,7 @@ int mr_stream_peek_seek_to(MRStreamPeek *sp, float sec)
 }
 
 //FILE *file_pcm_l = NULL;
-static int audio_decode_frame(MRStreamPeek *sp)
+static int audio_decode_frame(MRStreamPeeker *sp)
 {
     if (sp->pktq.abort_request)
         return -1;
@@ -227,49 +229,49 @@ static int bytes_per_sec(void)
     return bytes_per_millisecond() * 1000;
 }
 
-int mr_stream_peek_get_data(MRStreamPeek *sub, unsigned char *buffer, int len, double * pts_begin, double * pts_end)
+int mr_stream_peek_get_data(MRStreamPeeker *peeker, unsigned char *buffer, int len, double * pts_begin, double * pts_end)
 {
     const int len_want = len;
     double begin = -1, end = -1;
     
-    if (!sub) {
+    if (!peeker) {
         return -1;
     }
     
     while (len > 0) {
-        if (sub->audio_buf_index >= sub->audio_buf_size) {
-            int audio_size = audio_decode_frame(sub);
+        if (peeker->audio_buf_index >= peeker->audio_buf_size) {
+            int audio_size = audio_decode_frame(peeker);
             if (audio_size < 0) {
                 /* if error, just output silence */
-                sub->audio_buf = NULL;
-                sub->audio_buf_size = 0;
+                peeker->audio_buf = NULL;
+                peeker->audio_buf_size = 0;
                 goto the_end;
             } else {
-                sub->audio_buf_size = audio_size;
+                peeker->audio_buf_size = audio_size;
             }
-            sub->audio_buf_index = 0;
+            peeker->audio_buf_index = 0;
         }
         
-        if (subComponent_get_pkt_serial(sub->opaque) != sub->pktq.serial) {
-            sub->audio_buf_index = sub->audio_buf_size;
+        if (subComponent_get_pkt_serial(peeker->opaque) != peeker->pktq.serial) {
+            peeker->audio_buf_index = peeker->audio_buf_size;
             break;
         }
-        int rest_len = sub->audio_buf_size - sub->audio_buf_index;
+        int rest_len = peeker->audio_buf_size - peeker->audio_buf_index;
         
         if (begin < 0) {
-            begin = sub->audio_clock + sub->audio_buf_index / bytes_per_sec();
+            begin = peeker->audio_clock + peeker->audio_buf_index / bytes_per_sec();
         }
         
         if (rest_len > len)
             rest_len = len;
-        memcpy(buffer, (uint8_t *)sub->audio_buf + sub->audio_buf_index, rest_len);
+        memcpy(buffer, (uint8_t *)peeker->audio_buf + peeker->audio_buf_index, rest_len);
         len -= rest_len;
         buffer += rest_len;
-        sub->audio_buf_index += rest_len;
+        peeker->audio_buf_index += rest_len;
     }
 the_end:
     
-    end = sub->audio_clock + sub->audio_buf_index / bytes_per_sec();
+    end = peeker->audio_clock + peeker->audio_buf_index / bytes_per_sec();
     if (pts_begin) {
         *pts_begin = begin;
     }
@@ -281,9 +283,9 @@ the_end:
     return len_want - len;
 }
 
-int mr_stream_peek_open_filepath(MRStreamPeek *sub, const char *file_name, int idx)
+int mr_stream_peek_open_filepath(MRStreamPeeker *peeker, const char *file_name, int idx)
 {
-    if (!sub) {
+    if (!peeker) {
         return -1;
     }
 
@@ -343,13 +345,13 @@ int mr_stream_peek_open_filepath(MRStreamPeek *sub, const char *file_name, int i
         goto fail;
     }
     
-    if (subComponent_open(&sub->opaque, idx, ic, avctx, &sub->pktq, &sub->frameq) != 0) {
+    if (subComponent_open(&peeker->opaque, idx, ic, avctx, &peeker->pktq, &peeker->frameq) != 0) {
         ret = -8;
         goto fail;
     }
-    
-    sub->ic = ic;
-    sub->stream_idx = idx;
+    peeker->duration = (int)(ic->duration / AV_TIME_BASE);
+    peeker->ic = ic;
+    peeker->stream_idx = idx;
     return 0;
 fail:
     if (ret < 0) {
@@ -361,48 +363,56 @@ fail:
     return ret;
 }
 
-int mr_stream_peek_close(MRStreamPeek *sub)
+int mr_stream_peek_close(MRStreamPeeker *peeker)
 {
-    if(!sub) {
+    if(!peeker) {
         return -1;
     }
     
-    FFSubComponent *opaque = sub->opaque;
+    FFSubComponent *opaque = peeker->opaque;
     
     if(!opaque) {
-        if (sub->ic)
-            avformat_close_input(&sub->ic);
+        if (peeker->ic)
+            avformat_close_input(&peeker->ic);
         return -2;
     }
     
     int r = subComponent_close(&opaque);
-    SDL_LockMutex(sub->mutex);
-    sub->opaque = NULL;
-    if (sub->ic)
-        avformat_close_input(&sub->ic);
-    SDL_UnlockMutex(sub->mutex);
+    SDL_LockMutex(peeker->mutex);
+    peeker->opaque = NULL;
+    if (peeker->ic)
+        avformat_close_input(&peeker->ic);
+    SDL_UnlockMutex(peeker->mutex);
     return r;
 }
 
-void mr_stream_peek_destroy(MRStreamPeek **subp)
+void mr_stream_peek_destroy(MRStreamPeeker **peeker_out)
 {
-    if (!subp) {
+    if (!peeker_out) {
         return;
     }
     
-    MRStreamPeek *sub = *subp;
-    if (!sub) {
+    MRStreamPeeker *peeker = *peeker_out;
+    if (!peeker) {
         return;
     }
     
-    mr_stream_peek_close(sub);
+    mr_stream_peek_close(peeker);
     
-    SDL_DestroyMutex(sub->mutex);
+    SDL_DestroyMutex(peeker->mutex);
     
-    av_freep(subp);
+    av_freep(peeker_out);
 }
 
 int mr_stream_peek_get_buffer_size(int millisecond)
 {
     return bytes_per_millisecond() * millisecond;
+}
+
+int mr_stream_duration(MRStreamPeeker *peeker)
+{
+    if (peeker) {
+        return peeker->duration;
+    }
+    return 0;
 }

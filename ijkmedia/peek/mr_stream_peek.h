@@ -9,16 +9,17 @@
 #define mr_stream_peek_h
 
 #include <stdio.h>
-typedef struct MRStreamPeek MRStreamPeek;
+typedef struct MRStreamPeeker MRStreamPeeker;
 
-int mr_stream_peek_create(MRStreamPeek **subp,int frameMaxCount);
-int mr_stream_peek_open_filepath(MRStreamPeek *sub, const char *file_name, int idx);
+int mr_stream_peek_create(MRStreamPeeker **peeker_out,int frameCacheCount);
+int mr_stream_peek_open_filepath(MRStreamPeeker *peeker, const char *file_name, int idx);
 
-int mr_stream_peek_get_opened_stream_idx(MRStreamPeek *sub);
-int mr_stream_peek_seek_to(MRStreamPeek *sub, float sec);
-int mr_stream_peek_get_data(MRStreamPeek *sub, unsigned char *buffer, int len, double * pts_begin, double * pts_end);
-int mr_stream_peek_close(MRStreamPeek *sub);
-void mr_stream_peek_destroy(MRStreamPeek **subp);
+int mr_stream_peek_get_opened_stream_idx(MRStreamPeeker *peeker);
+int mr_stream_peek_seek_to(MRStreamPeeker *peeker, float sec);
+int mr_stream_peek_get_data(MRStreamPeeker *peeker, unsigned char *buffer, int len, double * pts_begin, double * pts_end);
+int mr_stream_peek_close(MRStreamPeeker *peeker);
+void mr_stream_peek_destroy(MRStreamPeeker **peeker_out);
 int mr_stream_peek_get_buffer_size(int millisecond);
+int mr_stream_duration(MRStreamPeeker *peeker);
 
 #endif /* mr_stream_peek_h */
