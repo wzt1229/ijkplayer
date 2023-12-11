@@ -25,8 +25,7 @@ jobs:
     - run: brew install tree
     - name: Download Pre Compiled Dependencies
       run: |
-        cd shell && ./download-pre.sh ios 0.10.1-230831144049-ijk && cd -
-        cd shell && ./download-pre.sh macos 0.10.1-230831144049-ijk && cd -
+        cd shell && ./install-pre-any.sh all all && cd -
     - name: Pod Install
       run: |
         pod install --project-directory=examples/ios
