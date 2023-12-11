@@ -11,6 +11,6 @@ tag=$(git describe --abbrev=0)
 echo '=== will push master branch to github ==='
 git push github master
 echo "=== will push ${tag} tag to github ==="
-git push github ${tag}
+git push github ${tag} --force
 
 git remote remove github
