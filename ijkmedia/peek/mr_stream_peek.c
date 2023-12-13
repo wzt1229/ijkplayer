@@ -310,12 +310,49 @@ int mr_stream_peek_open_filepath(MRStreamPeeker *peeker, const char *file_name, 
     if (ic) {
         av_log(NULL, AV_LOG_DEBUG, "ex subtitle demuxer:%s\n",ic->iformat->name);
     }
+    
+    if (idx == -1) {
+        int st_index_video = -1;
+        int st_index_audio = -1;
+        for (int i = 0; i < ic->nb_streams; i++) {
+            AVStream *st = ic->streams[i];
+            enum AVMediaType type = st->codecpar->codec_type;
+            st->discard = AVDISCARD_ALL;
+            // choose first h264
+
+            if (type == AVMEDIA_TYPE_VIDEO) {
+                enum AVCodecID codec_id = st->codecpar->codec_id;
+                if (codec_id == AV_CODEC_ID_H264) {
+                    st_index_video = i;
+                    break;
+                }
+            }
+        }
+        
+        st_index_video =
+            av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO,
+                                st_index_video, -1, NULL, 0);
+            
+        st_index_audio =
+            av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO,
+                                st_index_audio,
+                                st_index_video,
+                                NULL, 0);
+        idx = st_index_audio;
+    }
+    
+    if (idx == -1) {
+        av_log(NULL, AV_LOG_WARNING, "could find audio stream:%s\n", file_name);
+        ret = -3;
+        goto fail;
+    }
+    
     AVStream *stream = ic->streams[idx];
     stream->discard = AVDISCARD_DEFAULT;
     
     if (!stream) {
         ret = -3;
-        av_log(NULL, AV_LOG_ERROR, "none subtitle stream in %s\n", file_name);
+        av_log(NULL, AV_LOG_ERROR, "none audio stream in %s\n", file_name);
         goto fail;
     }
     
