@@ -55,20 +55,20 @@ FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-pic"
 FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-neon"
 FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-asm"
 
+FFMPEG_C_FLAGS=
+FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS -fno-stack-check -arch $XC_ARCH"
+FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS $XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS"
+
 if [[ "$XC_OPTS" == "debug" ]]; then
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --disable-optimizations"
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-debug"
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --disable-small"
+    FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS -D DEBUG_BLURAY=1"
 else
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-optimizations"
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --disable-debug"
     FFMPEG_CFG_FLAGS="$FFMPEG_CFG_FLAGS --enable-small"
 fi
-
-# FFMPEG_C_FLAGS
-FFMPEG_C_FLAGS=
-FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS -fno-stack-check -arch $XC_ARCH"
-FFMPEG_C_FLAGS="$FFMPEG_C_FLAGS $XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS"
 
 # for cross compile
 if [[ $(uname -m) != "$XC_ARCH" || "$XC_FORCE_CROSS" ]]; then
