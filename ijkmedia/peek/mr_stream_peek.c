@@ -338,7 +338,9 @@ int mr_stream_peek_open_filepath(MRStreamPeeker *peeker, const char *file_name, 
                                 st_index_audio,
                                 st_index_video,
                                 NULL, 0);
-        idx = st_index_audio;
+        if (st_index_audio >= 0) {
+            idx = st_index_audio;
+        }
     }
     
     if (idx == -1) {
