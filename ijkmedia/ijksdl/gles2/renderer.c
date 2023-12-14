@@ -297,6 +297,15 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay,int openg
     }
     return renderer;
 }
+
+void* IJK_GLES2_Renderer_getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
+{
+    if (renderer->func_getVideoImage) {
+        return renderer->func_getVideoImage(renderer,overlay);
+    } else {
+        return NULL;
+    }
+}
 #endif
 
 GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer)
@@ -638,15 +647,6 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
     IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
     IJK_GLES2_updateMVP_ifNeed(renderer);
     return GL_TRUE;
-}
-
-void* IJK_GLES2_Renderer_getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
-{
-    if (renderer->func_getVideoImage) {
-        return renderer->func_getVideoImage(renderer,overlay);
-    } else {
-        return NULL;
-    }
 }
 
 void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer,float brightness,float satutaion,float contrast)

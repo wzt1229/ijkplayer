@@ -166,32 +166,33 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
     if (NULL == frame) {
         return NULL;
     }
-    CVPixelBufferRef pixelBuffer = NULL;
-    CVReturn result = kCVReturnError;
     
     const int w = frame->width;
     const int h = frame->height;
     const int format = frame->format;
     
-    assert(w);
-    assert(h);
+    if (NULL == frame || w == 0 || h == 0) {
+        return NULL;
+    }
+    
+    CVPixelBufferRef pixelBuffer = NULL;
+    CVReturn result = kCVReturnError;
     
     if (poolRef) {
         result = CVPixelBufferPoolCreatePixelBuffer(NULL, poolRef, &pixelBuffer);
     }
     
     if (kCVReturnSuccess != result) {
-        ALOGE("CVPixelBufferPoolCreatePixelBuffer Failed:%d\n", result);
+        ALOGE("Overly FFmpeg Create CVPixelBuffer Failed:%d\n", result);
         //AVCOL_RANGE_MPEG对应tv，AVCOL_RANGE_JPEG对应pc
         //Y′ values are conventionally shifted and scaled to the range [16, 235] (referred to as studio swing or "TV levels") rather than using the full range of [0, 255] (referred to as full swing or "PC levels").
         //https://en.wikipedia.org/wiki/YUV#Numerical_approximations
         
         const bool fullRange = frame->color_range == AVCOL_RANGE_JPEG;
-        NSDictionary * attributes = prepareCVPixelBufferAttibutes(format, fullRange, h, w);
+        NSDictionary* attributes = prepareCVPixelBufferAttibutes(format, fullRange, h, w);
         
         if (!attributes) {
-            ALOGE("CVPixelBufferCreate Failed: no attributes\n");
-            assert(0);
+            ALOGE("Overly FFmpeg Create CVPixelBuffer Failed: no attributes\n");
             return NULL;
         }
         const int pixelFormatType = [attributes[(NSString*)kCVPixelBufferPixelFormatTypeKey] intValue];
@@ -264,8 +265,7 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
         CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
         return pixelBuffer;
     } else {
-        ALOGE("CVPixelBufferCreate Failed:%d\n", result);
-        assert(0);
+        ALOGE("Overly FFmpeg Create CVPixelBuffer Failed:%d\n", result);
         return NULL;
     }
 }
@@ -296,7 +296,7 @@ CVPixelBufferRef SDL_VoutFFmpeg_GetCVPixelBufferRef(SDL_VoutOverlay *overlay)
 
 static void func_free_l(SDL_VoutOverlay *overlay)
 {
-    ALOGE("SDL_Overlay(ffmpeg): overlay_free_l(%p)\n", overlay);
+    SDLTRACE("SDL_Overlay(ffmpeg): overlay_free_l(%p)\n", overlay);
     if (!overlay)
         return;
 
@@ -329,39 +329,39 @@ static int func_unlock(SDL_VoutOverlay *overlay)
 
 static int func_fill_avframe_to_cvpixelbuffer(SDL_VoutOverlay *overlay, const AVFrame *frame)
 {
-    assert(overlay);
-    SDL_VoutOverlay_Opaque *opaque = overlay->opaque;
-    
-    if (opaque->pixelBuffer) {
-        CVPixelBufferRelease(opaque->pixelBuffer);
-        opaque->pixelBuffer = NULL;
-    }
-    
-    CVPixelBufferPoolRef poolRef = NULL;
-    if (opaque->pixelBufferPool) {
-        NSDictionary *attributes = (__bridge NSDictionary *)CVPixelBufferPoolGetPixelBufferAttributes(opaque->pixelBufferPool);
-        int _width = [[attributes objectForKey:(NSString*)kCVPixelBufferWidthKey] intValue];
-        int _height = [[attributes objectForKey:(NSString*)kCVPixelBufferHeightKey] intValue];
-        if (frame->width == _width && frame->height == _height) {
-            poolRef = opaque->pixelBufferPool;
-        }
-    }
-    
-    CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, poolRef);
-    if (pixel_buffer) {
-        opaque->pixelBuffer = pixel_buffer;
+    if (overlay) {
+        SDL_VoutOverlay_Opaque *opaque = overlay->opaque;
         
-        if (CVPixelBufferIsPlanar(pixel_buffer)) {
-            int planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
-            for (int i = 0; i < planes; i ++) {
-                overlay->pitches[i] = CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
-            }
-        } else {
-            overlay->pitches[0] = CVPixelBufferGetWidth(pixel_buffer);
+        if (opaque->pixelBuffer) {
+            CVPixelBufferRelease(opaque->pixelBuffer);
+            opaque->pixelBuffer = NULL;
         }
-        return 0;
+        
+        CVPixelBufferPoolRef poolRef = NULL;
+        if (opaque->pixelBufferPool) {
+            NSDictionary *attributes = (__bridge NSDictionary *)CVPixelBufferPoolGetPixelBufferAttributes(opaque->pixelBufferPool);
+            int _width = [[attributes objectForKey:(NSString*)kCVPixelBufferWidthKey] intValue];
+            int _height = [[attributes objectForKey:(NSString*)kCVPixelBufferHeightKey] intValue];
+            if (frame->width == _width && frame->height == _height) {
+                poolRef = opaque->pixelBufferPool;
+            }
+        }
+        
+        CVPixelBufferRef pixel_buffer = createCVPixelBufferFromAVFrame(frame, poolRef);
+        if (pixel_buffer) {
+            opaque->pixelBuffer = pixel_buffer;
+            if (CVPixelBufferIsPlanar(pixel_buffer)) {
+                int planes = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
+                for (int i = 0; i < planes; i ++) {
+                    overlay->pitches[i] = CVPixelBufferGetWidthOfPlane(pixel_buffer, i);
+                }
+            } else {
+                overlay->pitches[0] = CVPixelBufferGetWidth(pixel_buffer);
+            }
+            return 0;
+        }
     }
-    return 1;
+    return -100;
 }
 
 struct SDL_Vout_Opaque {
@@ -369,15 +369,23 @@ struct SDL_Vout_Opaque {
     int cv_format;
 };
 
-#ifndef __clang_analyzer__
 SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_format, int cvpixelbufferpool, SDL_Vout *display)
 {
+    enum AVPixelFormat const format = src_format;
+    if(format == AV_PIX_FMT_NONE) {
+        return NULL;
+    }
+    
     SDL_VoutOverlay *overlay = SDL_VoutOverlay_CreateInternal(sizeof(SDL_VoutOverlay_Opaque));
     if (!overlay) {
-        ALOGE("overlay allocation failed");
+        ALOGE("VoutFFmpeg allocation failed");
         return NULL;
     }
 
+    const AVPixFmtDescriptor *pd = av_pix_fmt_desc_get(format);
+    SDLTRACE("Create FFmpeg Overlay(w=%d, h=%d, fmt=%s, dp=%p)\n",
+             width, height, (const char*) pd->name, display);
+    
     SDL_VoutOverlay_Opaque *opaque = overlay->opaque;
     opaque->mutex         = SDL_CreateMutex();
     overlay->opaque_class = &g_vout_overlay_ffmpeg_class;
@@ -390,12 +398,6 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_form
     overlay->lock               = func_lock;
     overlay->unlock             = func_unlock;
     overlay->func_fill_frame    = func_fill_avframe_to_cvpixelbuffer;
-    
-    enum AVPixelFormat const format = src_format;
-    assert(format != AV_PIX_FMT_NONE);
-    const AVPixFmtDescriptor *pd = av_pix_fmt_desc_get(format);
-    SDLTRACE("SDL_VoutFFmpeg_CreateOverlay(w=%d, h=%d, fmt=%s, dp=%p)\n",
-             width, height, (const char*) pd->name, display);
     
     SDL_Vout_Opaque * voutOpaque = display->opaque;
     if (cvpixelbufferpool && !voutOpaque->cvPixelBufferPool) {
@@ -411,4 +413,3 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_form
 
     return overlay;
 }
-#endif//__clang_analyzer__

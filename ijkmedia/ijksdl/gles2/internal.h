@@ -70,7 +70,6 @@ static inline const int IJK_Sample_Count_For_Shader(IJK_SHADER_TYPE type)
         }
         case NONE_SHADER:
         {
-            assert(0);
             return 0;
         }
     }
@@ -109,7 +108,9 @@ typedef struct IJK_GLES2_Renderer
     GLvoid    (*func_useSubtitle)(IJK_GLES2_Renderer *renderer,GLboolean subtitle);
     GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer, int tex, int w, int h);
     GLvoid    (*func_updateHDRAnimation)(IJK_GLES2_Renderer *renderer, float per);
+#ifndef __APPLE__
     void*     (*func_getVideoImage)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
+#endif
     GLvoid    (*func_destroy)(IJK_GLES2_Renderer *renderer);
 
     GLsizei buffer_width;

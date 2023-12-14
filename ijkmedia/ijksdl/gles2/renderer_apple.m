@@ -66,8 +66,9 @@ static GLboolean use(IJK_GLES2_Renderer *renderer)
     //glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
     IJK_GLES2_Renderer_Opaque * opaque = renderer->opaque;
-    assert(opaque->samples);
-    
+    if (opaque->samples == 0) {
+        ALOGE("renderer apple samples must not be zero");
+    }
     if (0 == renderer->plane_textures[0])
         glGenTextures(opaque->samples, renderer->plane_textures);
     return GL_TRUE;
@@ -78,11 +79,7 @@ static GLsizei getBufferWidth(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *ove
     if (!overlay)
         return 0;
 
-    if (overlay->format == SDL_FCC__VTB || overlay->format == SDL_FCC__FFVTB) {
-        return overlay->pitches[0];
-    } else {
-        assert(0);
-    }
+    return overlay->pitches[0];
 }
 
 static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_GLES2_Renderer *renderer)
@@ -96,7 +93,11 @@ static GLboolean upload_texture_use_IOSurface(CVPixelBufferRef pixel_buffer,IJK_
 
     const bool planar = CVPixelBufferIsPlanar(pixel_buffer);
     const int planes  = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
-    assert(planar && planes == f->planes || f->planes == 1);
+    
+    if ((planar && planes != f->planes) || (!planar && f->planes != 1)) {
+        ALOGE("CVPixelBuffer planes is wrong:%d,%d\n", planes, f->planes);
+        return GL_FALSE;
+    }
     
     GLenum gl_target = GL_TEXTURE_TARGET;
     
@@ -164,8 +165,11 @@ GLboolean ijk_upload_texture_with_cvpixelbuffer(CVPixelBufferRef pixel_buffer, i
 
     const bool planar = CVPixelBufferIsPlanar(pixel_buffer);
     const int planes  = (int)CVPixelBufferGetPlaneCount(pixel_buffer);
-    assert(planar && planes == f->planes || f->planes == 1);
     
+    if ((planar && planes != f->planes) || (!planar && f->planes != 1)) {
+        ALOGE("CVPixelBuffer planes is wrong:%d,%d\n", planes, f->planes);
+        return GL_FALSE;
+    }
     GLenum gl_target = GL_TEXTURE_TARGET;
     
     IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixel_buffer);
@@ -250,13 +254,6 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *picture)
     GLboolean uploaded = upload_texture_use_IOSurface(pixel_buffer, renderer);
     CVPixelBufferRelease(pixel_buffer);
     return uploaded;
-}
-
-static void * getVideoImage(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay)
-{
-    assert(0);
-    //why call me?
-    return NULL;
 }
 
 static GLvoid destroy(IJK_GLES2_Renderer *renderer)
@@ -414,7 +411,6 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
     renderer->transferFun = tf;
     
     const int samples = IJK_Sample_Count_For_Shader(shaderType);
-    assert(samples);
     
     for (int i = 0; i < samples; i++) {
         char name[20] = "us2_Sampler";
@@ -434,7 +430,6 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
     renderer->func_use            = use;
     renderer->func_getBufferWidth = getBufferWidth;
     renderer->func_uploadTexture  = upload_Texture;
-    renderer->func_getVideoImage  = getVideoImage;
     renderer->func_destroy        = destroy;
     renderer->func_useSubtitle    = useSubtitle;
     renderer->func_uploadSubtitle = uploadSubtitle;
@@ -451,7 +446,6 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
         char name[20] = "textureDimension";
         name[strlen(name)] = (char)i + '0';
         GLint textureDimension = glGetUniformLocation(renderer->program, name);
-        assert(textureDimension >= 0);
         renderer->opaque->textureDimension[i] = textureDimension;
     }
     renderer->opaque->subTextureDimension = glGetUniformLocation(renderer->program, "subTextureDimension");

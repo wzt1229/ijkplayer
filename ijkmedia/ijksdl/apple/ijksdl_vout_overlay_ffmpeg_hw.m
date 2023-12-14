@@ -22,8 +22,6 @@
  */
 
 #include "ijksdl_vout_overlay_ffmpeg_hw.h"
-
-#include <assert.h>
 #include "ijksdl_stdinc.h"
 #include "ijksdl_mutex.h"
 #include "ijksdl_vout_internal.h"
@@ -83,7 +81,6 @@ static int func_fill_frame(SDL_VoutOverlay *overlay, const AVFrame *frame)
     if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
         pixel_buffer = (CVPixelBufferRef)frame->data[3];
     } else {
-        assert(0);
         return -100;
     }
     
