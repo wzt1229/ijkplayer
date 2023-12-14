@@ -36,6 +36,10 @@ echo "===check env end==="
 BLURAY_CFG_FLAGS="--prefix=$XC_BUILD_PREFIX --disable-dependency-tracking --disable-silent-rules --disable-bdjava-jar --without-freetype --without-fontconfig --disable-doxygen-doc"
 CFLAGS="-arch $XC_ARCH $XC_DEPLOYMENT_TARGET $XC_OTHER_CFLAGS"
 
+if [[ "$XC_OPTS" == "debug" ]];then
+   BLURAY_CFG_FLAGS="${BLURAY_CFG_FLAGS} use_examples=yes"
+fi
+
 # for cross compile
 if [[ $(uname -m) != "$XC_ARCH" || "$XC_FORCE_CROSS" ]];then
     echo "[*] cross compile, on $(uname -m) compile $XC_PLAT $XC_ARCH."
