@@ -354,7 +354,7 @@
 {
     [self updateVertexIfNeed];
     // Pass in the parameter data.
-    [encoder setVertexBuffer:self.vertices
+    [encoder setVertexBuffer:self.vertexBuffer
                       offset:0
                      atIndex:IJKVertexInputIndexVertices]; // 设置顶点缓存
  

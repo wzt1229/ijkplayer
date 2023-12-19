@@ -152,6 +152,7 @@
 				<string>mpeg</string>
 				<string>mpe</string>
 				<string>m2v</string>
+				<string>iso</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>MPEG.icns</string>

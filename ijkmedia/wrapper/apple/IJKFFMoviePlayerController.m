@@ -31,6 +31,7 @@
 #import "IJKNotificationManager.h"
 #import "NSString+IJKMedia.h"
 #import "ijkioapplication.h"
+#import "IJKBlurayTools.h"
 #include "string.h"
 #if TARGET_OS_IOS
 #import "IJKAudioKit.h"
@@ -330,7 +331,17 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     
     NSString *filePath = nil;
     if (self.contentURL.isFileURL) {
-        filePath = [self.contentURL path];
+        //针对 iso 格式，如果是蓝光原盘则使用 bluray:// 协议打开
+        NSString *path = [self.contentURL path];
+        BOOL isBluray = NO;
+        if ([@"iso" isEqualToString:[path pathExtension]]) {
+            isBluray = [IJKBlurayTools isBlurayVideo:path keyFile:nil];
+        }
+        if (isBluray) {
+            filePath = [@"bluray://" stringByAppendingString:path];
+        } else {
+            filePath = path;
+        }
     } else if ([self.contentURL.scheme isEqualToString:@"bluray"]) {
         filePath = [[self.contentURL absoluteString] stringByRemovingPercentEncoding];
     } else {
