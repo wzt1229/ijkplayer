@@ -1591,6 +1591,23 @@ fail:
     return ret;
 }
 
+static double get_rotation(int32_t *displaymatrix)
+{
+    double theta = 0;
+    if (displaymatrix)
+        theta = -round(av_display_rotation_get((int32_t*) displaymatrix));
+
+    theta -= 360*floor(theta/360 + 0.9/360);
+
+    if (fabs(theta - 90*round(theta/90)) > 2)
+        av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
+               "If you want to help, upload a sample "
+               "of this file to https://streams.videolan.org/upload/ "
+               "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
+
+    return theta;
+}
+
 static int configure_video_filters(FFPlayer *ffp, AVFilterGraph *graph, VideoState *is, const char *vfilters, AVFrame *frame)
 {
     static const enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_YUV420P, AV_PIX_FMT_BGRA, AV_PIX_FMT_NONE };
@@ -1712,24 +1729,25 @@ static int configure_audio_filters(FFPlayer *ffp, const char *afilters, int forc
     avfilter_graph_free(&is->agraph);
     if (!(is->agraph = avfilter_graph_alloc()))
         return AVERROR(ENOMEM);
+    //just use single thread per graph
+    int filter_nbthreads = 1;
     is->agraph->nb_threads = filter_nbthreads;
 
     av_bprint_init(&bp, 0, AV_BPRINT_SIZE_AUTOMATIC);
+    
     while ((e = av_dict_get(ffp->swr_opts, "", e, AV_DICT_IGNORE_SUFFIX)))
         av_strlcatf(aresample_swr_opts, sizeof(aresample_swr_opts), "%s=%s:", e->key, e->value);
+    
     if (strlen(aresample_swr_opts))
         aresample_swr_opts[strlen(aresample_swr_opts)-1] = '\0';
     av_opt_set(is->agraph, "aresample_swr_opts", aresample_swr_opts, 0);
-    
+
     av_channel_layout_describe_bprint(&is->audio_filter_src.ch_layout, &bp);
-    
+
     ret = snprintf(asrc_args, sizeof(asrc_args),
                    "sample_rate=%d:sample_fmt=%s:time_base=%d/%d:channel_layout=%s",
                    is->audio_filter_src.freq, av_get_sample_fmt_name(is->audio_filter_src.fmt),
                    1, is->audio_filter_src.freq, bp.str);
-    if (is->audio_filter_src.channel_layout)
-        snprintf(asrc_args + ret, sizeof(asrc_args) - ret,
-                 ":channel_layout=0x%"PRIx64,  is->audio_filter_src.channel_layout);
 
     ret = avfilter_graph_create_filter(&filt_asrc,
                                        avfilter_get_by_name("abuffer"), "ffplay_abuffer",
@@ -1762,7 +1780,6 @@ static int configure_audio_filters(FFPlayer *ffp, const char *afilters, int forc
     afilters_args[0] = 0;
     if (afilters)
         snprintf(afilters_args, sizeof(afilters_args), "%s", afilters);
-
 #ifdef FFP_AVFILTER_PLAYBACK_RATE
     if (fabsf(ffp->pf_playback_rate) > 0.00001 &&
         fabsf(ffp->pf_playback_rate - 1.0f) > 0.00001) {
@@ -4400,6 +4417,28 @@ static void ffp_show_version_int(FFPlayer *ffp, const char *module, unsigned ver
            (unsigned int)IJKVERSION_GET_MICRO(version));
 }
 
+static void *grow_array(void *array, int elem_size, int *size, int new_size)
+{
+    if (new_size >= INT_MAX / elem_size) {
+        av_log(NULL, AV_LOG_ERROR, "Array too big.\n");
+        return NULL;
+    }
+    if (*size < new_size) {
+        uint8_t *tmp = av_realloc_array(array, new_size, elem_size);
+        if (!tmp) {
+            av_log(NULL, AV_LOG_ERROR, "Could not alloc buffer.\n");
+            return NULL;
+        }
+        memset(tmp + *size*elem_size, 0, (new_size-*size) * elem_size);
+        *size = new_size;
+        return tmp;
+    }
+    return array;
+}
+
+#define GROW_ARRAY(array, nb_elems)\
+    array = grow_array(array, sizeof(*array), &nb_elems, nb_elems + 1)
+
 int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
 {
     assert(ffp);
@@ -4445,6 +4484,9 @@ int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
 #if CONFIG_AVFILTER
     if (ffp->vfilter0) {
         GROW_ARRAY(ffp->vfilters_list, ffp->nb_vfilters);
+        if (ffp->vfilters_list == NULL) {
+            return EIJK_OUT_OF_MEMORY;
+        }
         ffp->vfilters_list[ffp->nb_vfilters - 1] = ffp->vfilter0;
     }
 #endif
@@ -4904,23 +4946,6 @@ void ffp_set_playback_volume(FFPlayer *ffp, float volume)
         return;
     ffp->pf_playback_volume = volume;
     ffp->pf_playback_volume_changed = 1;
-}
-
-static double get_rotation(int32_t *displaymatrix)
-{
-    double theta = 0;
-    if (displaymatrix)
-        theta = -round(av_display_rotation_get((int32_t*) displaymatrix));
-
-    theta -= 360*floor(theta/360 + 0.9/360);
-
-    if (fabs(theta - 90*round(theta/90)) > 2)
-        av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
-               "If you want to help, upload a sample "
-               "of this file to https://streams.videolan.org/upload/ "
-               "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
-
-    return theta;
 }
 
 int ffp_get_video_rotate_degrees(FFPlayer *ffp)
