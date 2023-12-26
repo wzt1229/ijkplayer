@@ -267,10 +267,8 @@ static BOOL hdrAnimationShown = 0;
     NSArray *movies = info[@"obj"];
     
     if ([movies count] > 0) {
-        [self.playList removeAllObjects];
-        [self doStopPlay];
-        // 开始播放
-        [self appendToPlayList:movies];
+        // 追加到列表，开始播放
+        [self appendToPlayList:movies reset:YES];
     }
 }
 
@@ -569,7 +567,6 @@ static BOOL hdrAnimationShown = 0;
     nas_text = [nas_text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSArray *lines = [nas_text componentsSeparatedByString:@"\n"];
     NSString *host = [lines firstObject];
-    [self.playList removeAllObjects];
     NSString *lastVideo = [[NSUserDefaults standardUserDefaults] objectForKey:lastPlayedKey];
     NSURL *lastUrl = nil;
     for (int i = 1; i < lines.count; i++) {
@@ -1181,7 +1178,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
     return t;
 }
 
-- (void)appendToPlayList:(NSArray *)bookmarkArr
+- (void)appendToPlayList:(NSArray *)bookmarkArr reset:(BOOL)reset
 {
     NSMutableArray *videos = [NSMutableArray array];
     NSMutableArray *subtitles = [NSMutableArray array];
@@ -1191,6 +1188,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
         NSURL *url = dic[@"url"];
         if ([[[url pathExtension] lowercaseString] isEqualToString:@"xlist"]) {
             self.autoTest = YES;
+            if (reset) {
+                [self.playList removeAllObjects];
+            }
             [self loadNASPlayList:url];
             return;
         }
@@ -1212,6 +1212,9 @@ static IOPMAssertionID g_displaySleepAssertionID;
     }
     
     if ([videos count] > 0) {
+        if (reset) {
+            [self.playList removeAllObjects];
+        }
         [self.playList addObjectsFromArray:videos];
         [self playFirstIfNeed];
     }
@@ -1253,7 +1256,7 @@ static IOPMAssertionID g_displaySleepAssertionID;
         [self doStopPlay];
     }
     
-    [self appendToPlayList:bookmarkArr];
+    [self appendToPlayList:bookmarkArr reset:YES];
 }
 
 - (NSDragOperation)acceptDragOperation:(NSArray<NSURL *> *)list
