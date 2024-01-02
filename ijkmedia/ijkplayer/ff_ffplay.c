@@ -1547,6 +1547,23 @@ static int get_video_frame(FFPlayer *ffp, AVFrame *frame)
     return got_picture;
 }
 
+static double get_rotation(int32_t *displaymatrix)
+{
+    double theta = 0;
+    if (displaymatrix)
+        theta = -round(av_display_rotation_get((int32_t*) displaymatrix));
+
+    theta -= 360*floor(theta/360 + 0.9/360);
+
+    if (fabs(theta - 90*round(theta/90)) > 2)
+        av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
+               "If you want to help, upload a sample "
+               "of this file to https://streams.videolan.org/upload/ "
+               "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
+
+    return theta;
+}
+
 #if CONFIG_AVFILTER
 static int configure_filtergraph(AVFilterGraph *graph, const char *filtergraph,
                                  AVFilterContext *source_ctx, AVFilterContext *sink_ctx)
@@ -1589,23 +1606,6 @@ fail:
     avfilter_inout_free(&outputs);
     avfilter_inout_free(&inputs);
     return ret;
-}
-
-static double get_rotation(int32_t *displaymatrix)
-{
-    double theta = 0;
-    if (displaymatrix)
-        theta = -round(av_display_rotation_get((int32_t*) displaymatrix));
-
-    theta -= 360*floor(theta/360 + 0.9/360);
-
-    if (fabs(theta - 90*round(theta/90)) > 2)
-        av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
-               "If you want to help, upload a sample "
-               "of this file to https://streams.videolan.org/upload/ "
-               "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
-
-    return theta;
 }
 
 static int configure_video_filters(FFPlayer *ffp, AVFilterGraph *graph, VideoState *is, const char *vfilters, AVFrame *frame)
