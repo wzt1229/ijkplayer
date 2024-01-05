@@ -212,7 +212,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_set_option(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "overlay-format", "fcc-_es2");
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"safe", 0);
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_PLAYER,"protocol_whitelist","ffconcat,file,http,https");
-    ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray,rtmp,rtsp,rtp,srtp,udp");
+    ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray,dvd,rtmp,rtsp,rtp,srtp,udp");
     
     // init hud
     _hudCtrl = [IJKSDLHudControl new];
@@ -336,12 +336,15 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         BOOL isBluray = NO;
         if ([@"iso" isEqualToString:[path pathExtension]]) {
             isBluray = [IJKBlurayTools isBlurayVideo:path keyFile:nil];
-        }
-        if (isBluray) {
-            filePath = [@"bluray://" stringByAppendingString:path];
+            if (isBluray) {
+                filePath = [@"bluray://" stringByAppendingString:path];
+            } else {
+                filePath = [@"dvd://" stringByAppendingString:path];
+            }
         } else {
             filePath = path;
         }
+        
     } else if ([self.contentURL.scheme isEqualToString:@"bluray"]) {
         filePath = [[self.contentURL absoluteString] stringByRemovingPercentEncoding];
     } else {
