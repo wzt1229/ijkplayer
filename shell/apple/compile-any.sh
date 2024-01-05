@@ -51,7 +51,7 @@ if [[ -z "$LIBS" || "$LIBS" == "all" ]]; then
 fi
 
 if [[ -z "$ARCH" || "$ARCH" == 'all' ]]; then
-    ARCH="$ALL_ARCHS"
+    ARCH="$XC_ALL_ARCHS"
 fi
 
 if [[ -z "$CMD" ]]; then

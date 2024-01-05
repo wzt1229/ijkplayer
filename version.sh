@@ -61,7 +61,6 @@ do_version_gradle() {
 }
 
 do_version_xcode() {
-    sed -i "" "s/\(export IJK_VERSION=\)[[:digit:].]*[[:digit:]]/\1$VERSION_NAME/g" shell/version.sh
     sed -i "" "s/\([[:space:]]*s.version[[:space:]]*=[[:space:]]*\)\'[[:digit:].]*[[:digit:]]\'/\1\'$VERSION_NAME\'/" IJKMediaPlayerKit.podspec
     pod install --project-directory=examples/ios >/dev/null
     pod install --project-directory=examples/macos >/dev/null

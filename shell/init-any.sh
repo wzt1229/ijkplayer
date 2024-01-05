@@ -51,7 +51,9 @@ if [[ "x$LIBS" == "x" || "$LIBS" == "all" ]]; then
 fi
 
 if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' || "$PLAT" == 'all' ]]; then
-    source "$THIS_DIR/version.sh"
+    echo "=== will init ==="
+    echo "$LIBS"
+    echo "==="
     for lib in $LIBS
     do
         echo "===[init $lib]===================="
