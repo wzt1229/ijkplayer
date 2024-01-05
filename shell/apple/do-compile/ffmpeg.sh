@@ -256,15 +256,38 @@ fi
 #just wait videotoolbox support decode av1
 # CFG_FLAGS="$CFG_FLAGS --enable-decoder=av1"
 
+echo "----------------------"
+echo "[*] check dvdread"
+
+if [[ -f "${XC_PRODUCT_ROOT}/dvdread-$XC_ARCH/lib/pkgconfig/dvdread.pc" || -f "${XC_PRODUCT_ROOT}/universal/dvdread/lib/pkgconfig/dvdread.pc" ]]; then
+
+    CFG_FLAGS="$CFG_FLAGS --enable-libdvdread"
+
+    if [[ -n "$MY_PKG_CONFIG_LIBDIR" ]]; then
+        MY_PKG_CONFIG_LIBDIR="$MY_PKG_CONFIG_LIBDIR:"
+    fi
+
+    if [[ -f "${XC_PRODUCT_ROOT}/dvdread-$XC_ARCH/lib/pkgconfig/dvdread.pc" ]]; then
+        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/dvdread-$XC_ARCH/lib/pkgconfig"
+    else
+        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/universal/dvdread/lib/pkgconfig"
+    fi
+
+    echo "[*] --enable-libdvdread"
+else
+    echo "[*] --disable-libdvdread"
+fi
+
+
+echo "----------------------"
+echo "[*] PKG_CONFIG_LIBDIR"
+
 if [[ -n "$MY_PKG_CONFIG_LIBDIR" ]]; then
     export PKG_CONFIG_LIBDIR="$MY_PKG_CONFIG_LIBDIR"
 fi
 
-CC="$XCRUN_CC"
-
 echo "export PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR}"
-export PKG_LIBS=$(xml2-config --libs)
-export PKG_CFLAGS=$(xml2-config --cflags)
+
 # pkg-config --variable pc_path pkg-config
 # pkg-config --libs dav1d
 # pkg-config --cflags --libs libbluray
@@ -286,7 +309,7 @@ if [[ -f "./config.h" ]]; then
     echo 'reuse configure'
 else
     echo
-    echo "CC: $CC"
+    echo "CC: $XCRUN_CC"
     echo
     echo "CFLAGS: $C_FLAGS"
     echo
@@ -296,7 +319,7 @@ else
     echo
     ./configure \
         $CFG_FLAGS \
-        --cc="$CC" \
+        --cc="$XCRUN_CC" \
         --extra-cflags="$C_FLAGS" \
         --extra-cxxflags="$C_FLAGS" \
         --extra-ldflags="$LDFLAGS $FFMPEG_DEP_LIBS"
@@ -304,10 +327,13 @@ fi
 
 #----------------------
 echo "----------------------"
-echo "[*] compile $LIB_NAME"
-echo "----------------------"
+echo "[*] compile"
 
 make
+
+echo "----------------------"
+echo "[*] install"
+
 cp config.* $XC_BUILD_PREFIX
 make install -j8 1>/dev/null
 mkdir -p $XC_BUILD_PREFIX/include/libffmpeg
