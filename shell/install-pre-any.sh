@@ -25,9 +25,10 @@
 #----------------------------------------------------------
 LIBYUV_TAG='libyuv-main-231127113441'
 OPUS_TAG='opus-1.4-231127183709'
-MAC_BLURAY_TAG='bluray-1.3.4-231127183939'
+MAC_BLURAY_TAG='bluray-1.3.4-240108102853'
 DAV1D_TAG='dav1d-1.3.0-231127183948'
 OPENSSL_TAG='openssl-1.1.1w-231127183927'
+DVDREAD_TAG='dvdread-6.1.3-240108102425'
 FFMPEG_TAG='ffmpeg-5.1.4-231128092946'
 #----------------------------------------------------------
 
@@ -55,7 +56,7 @@ function usage() {
     echo "=== useage ===================="
     echo "Download pre-compiled libs from github:"
     echo " $0 [ios,macos,all] [all|ffmpeg|libyuv|openssl|opus|bluray|dav1d]"
-    exit
+    exit 1
 }
 
 if [[ -z "$LIBS" || "$LIBS" == "all" ]]; then
@@ -96,6 +97,9 @@ if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' || "$PLAT" == 'all' ]]; then
             ;;
             'dav1d')
                 TAG=$DAV1D_TAG
+            ;;
+            'dvdread')
+                TAG=$DVDREAD_TAG
             ;;
             *)
                 echo "wrong lib name:$lib"
