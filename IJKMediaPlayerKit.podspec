@@ -49,7 +49,7 @@ TODO: Add long description of the pod here.
     'HEADER_SEARCH_PATHS' => [
       '$(inherited)',
       '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
-      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/bluray/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/dvdread/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'EXCLUDED_ARCHS' => 'armv7',
@@ -90,8 +90,7 @@ TODO: Add long description of the pod here.
     'ijkmedia/wrapper/apple/IJKKVOController.h',
     'ijkmedia/wrapper/apple/IJKVideoRenderingProtocol.h',
     'ijkmedia/wrapper/apple/IJKMediaPlayerKit.h',
-    'ijkmedia/wrapper/apple/IJKInternalRenderView.h',
-    'ijkmedia/wrapper/apple/IJKISOTools.h'
+    'ijkmedia/wrapper/apple/IJKInternalRenderView.h'
   s.exclude_files = 
     'ijkmedia/ijksdl/ijksdl_extra_log.c',
     'ijkmedia/ijkplayer/ijkversion.h',

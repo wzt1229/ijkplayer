@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)isDVDVideo:(NSString *)discRoot;
 
 
-/// Detect if it is BD
+/// Detect if it is BD; iOS plat alway return NO!!
 /// - Parameters:
 ///   - discRoot: iso path
 ///   - keyFile: keyfile is optional

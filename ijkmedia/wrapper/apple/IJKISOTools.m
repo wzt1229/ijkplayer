@@ -6,7 +6,9 @@
 //
 
 #import "IJKISOTools.h"
+#if TARGET_OS_OSX
 #include <libbluray/bluray.h>
+#endif
 #include <dvdread/dvd_reader.h>
 #include "../../ijksdl/ijksdl_log.h"
 
@@ -39,6 +41,7 @@
     }
 }
 
+#if TARGET_OS_OSX
 + (BOOL)isBlurayVideo:(NSString *)discRoot keyFile:(NSString *)keyFile
 {
     const char *disc_root = [discRoot UTF8String];
@@ -64,5 +67,11 @@
     bd_close(bd);
     return YES;
 }
+#else
++ (BOOL)isBlurayVideo:(NSString *)discRoot keyFile:(NSString *)keyFile
+{
+    return NO;
+}
+#endif
 
 @end
