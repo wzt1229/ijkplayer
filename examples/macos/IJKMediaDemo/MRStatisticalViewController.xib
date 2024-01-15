@@ -7,7 +7,7 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="RootViewController">
+        <customObject id="-2" userLabel="File's Owner" customClass="MRStatisticalViewController">
             <connections>
                 <outlet property="advancedView" destination="XnT-kB-NAs" id="jUr-cK-Lyg"/>
                 <outlet property="audioPopUpBtn" destination="KFC-zT-lZ2" id="b6Y-8T-piG"/>
@@ -758,32 +758,8 @@
                                                             <rect key="frame" x="202" y="0.0" width="5" height="40"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                         </box>
-                                                        <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="rTf-yz-joY" userLabel="循环播放">
-                                                            <rect key="frame" x="211" y="12" width="61" height="16"/>
-                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            <textFieldCell key="cell" lineBreakMode="clipping" title="循环播放:" id="eZS-fv-zIU">
-                                                                <font key="font" metaFont="system"/>
-                                                                <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                            </textFieldCell>
-                                                        </textField>
-                                                        <button verticalHuggingPriority="750" id="IxA-Gs-8Qb">
-                                                            <rect key="frame" x="276" y="11" width="18" height="18"/>
-                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="only" inset="2" id="qLc-tS-8bT">
-                                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                <font key="font" metaFont="system"/>
-                                                            </buttonCell>
-                                                            <connections>
-                                                                <action selector="onToggleLoopMode:" target="-2" id="tW8-Ua-jhK"/>
-                                                                <binding destination="-2" name="value" keyPath="loop" id="lYp-Je-NeH"/>
-                                                            </connections>
-                                                        </button>
-                                                        <box horizontalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="EX9-nB-qgh">
-                                                            <rect key="frame" x="298" y="0.0" width="5" height="40"/>
-                                                        </box>
                                                         <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="UVt-uL-Rtb">
-                                                            <rect key="frame" x="307" y="12" width="64" height="16"/>
+                                                            <rect key="frame" x="211" y="12" width="64" height="16"/>
                                                             <textFieldCell key="cell" lineBreakMode="clipping" title="色彩空间：" id="PAO-4R-gf5">
                                                                 <font key="font" metaFont="system"/>
                                                                 <color key="textColor" red="0.99215686270000003" green="0.99215686270000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
@@ -791,7 +767,7 @@
                                                             </textFieldCell>
                                                         </textField>
                                                         <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="FSV-WQ-3PP">
-                                                            <rect key="frame" x="374" y="6" width="151" height="25"/>
+                                                            <rect key="frame" x="278" y="6" width="247" height="25"/>
                                                             <popUpButtonCell key="cell" type="push" title="fcc-_es2" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Awd-8t-eW8" id="PXE-HZ-ezi">
                                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                                 <font key="font" metaFont="menu"/>
@@ -927,14 +903,8 @@
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
                                                         <integer value="1000"/>
-                                                        <integer value="1000"/>
-                                                        <integer value="1000"/>
-                                                        <integer value="1000"/>
                                                     </visibilityPriorities>
                                                     <customSpacing>
-                                                        <real value="3.4028234663852886e+38"/>
-                                                        <real value="3.4028234663852886e+38"/>
-                                                        <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>
                                                         <real value="3.4028234663852886e+38"/>

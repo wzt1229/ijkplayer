@@ -10,6 +10,10 @@
 		48785FCC6E8D62593A0839B8 /* Pods_IJKMediaMacDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DCADD1347BDB5B68E4C0CFA /* Pods_IJKMediaMacDemo.framework */; };
 		C905CF172B54C8D300D59730 /* MRAutoTestViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C905CF142B54C8D300D59730 /* MRAutoTestViewController.xib */; };
 		C905CF182B54C8D300D59730 /* MRAutoTestViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C905CF152B54C8D300D59730 /* MRAutoTestViewController.m */; };
+		C905CF1C2B550C7400D59730 /* MRStatisticalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C905CF192B550C7400D59730 /* MRStatisticalViewController.m */; };
+		C905CF1D2B550C7400D59730 /* MRStatisticalViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C905CF1B2B550C7400D59730 /* MRStatisticalViewController.xib */; };
+		C905CF212B55163C00D59730 /* MRRootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C905CF1F2B55163C00D59730 /* MRRootViewController.m */; };
+		C905CF222B55163C00D59730 /* MRRootViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C905CF202B55163C00D59730 /* MRRootViewController.xib */; };
 		C955003E27C75A580026AB17 /* Setting.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C955003D27C75A580026AB17 /* Setting.storyboard */; };
 		C955004227C75E740026AB17 /* LeftCategoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004127C75E740026AB17 /* LeftCategoryController.m */; };
 		C955004527C7634F0026AB17 /* SettingSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004427C7634F0026AB17 /* SettingSplitViewController.m */; };
@@ -48,8 +52,6 @@
 		DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9625A43A1300F01E2F /* MRUtil.m */; };
 		DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD050F9C25A43A1300F01E2F /* MRDragView.m */; };
 		DD1B345722CDD89400022FCA /* 996747-5277368-31.m3u8 in Resources */ = {isa = PBXBuildFile; fileRef = DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */; };
-		DD4EAF23272FC22D00FBCD3A /* RootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4EAF21272FC22D00FBCD3A /* RootViewController.m */; };
-		DD4EAF24272FC22D00FBCD3A /* RootViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = DD4EAF22272FC22D00FBCD3A /* RootViewController.xib */; };
 		DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4EB00027310F1C00FBCD3A /* WindowController.m */; };
 		DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DD9B138C22C23A79002D1D79 /* AppDelegate.m */; };
 		DD9B138F22C23A7A002D1D79 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD9B138E22C23A7A002D1D79 /* Assets.xcassets */; };
@@ -82,6 +84,12 @@
 		C905CF142B54C8D300D59730 /* MRAutoTestViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MRAutoTestViewController.xib; sourceTree = "<group>"; };
 		C905CF152B54C8D300D59730 /* MRAutoTestViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRAutoTestViewController.m; sourceTree = "<group>"; };
 		C905CF162B54C8D300D59730 /* MRAutoTestViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRAutoTestViewController.h; sourceTree = "<group>"; };
+		C905CF192B550C7400D59730 /* MRStatisticalViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRStatisticalViewController.m; sourceTree = "<group>"; };
+		C905CF1A2B550C7400D59730 /* MRStatisticalViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRStatisticalViewController.h; sourceTree = "<group>"; };
+		C905CF1B2B550C7400D59730 /* MRStatisticalViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MRStatisticalViewController.xib; sourceTree = "<group>"; };
+		C905CF1E2B55163C00D59730 /* MRRootViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRRootViewController.h; sourceTree = "<group>"; };
+		C905CF1F2B55163C00D59730 /* MRRootViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRRootViewController.m; sourceTree = "<group>"; };
+		C905CF202B55163C00D59730 /* MRRootViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MRRootViewController.xib; sourceTree = "<group>"; };
 		C955003D27C75A580026AB17 /* Setting.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Setting.storyboard; sourceTree = "<group>"; };
 		C955004027C75E740026AB17 /* LeftCategoryController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LeftCategoryController.h; sourceTree = "<group>"; };
 		C955004127C75E740026AB17 /* LeftCategoryController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LeftCategoryController.m; sourceTree = "<group>"; };
@@ -145,9 +153,6 @@
 		DD050F9B25A43A1300F01E2F /* MRDragView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRDragView.h; sourceTree = "<group>"; };
 		DD050F9C25A43A1300F01E2F /* MRDragView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRDragView.m; sourceTree = "<group>"; };
 		DD1B345622CDD89400022FCA /* 996747-5277368-31.m3u8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "996747-5277368-31.m3u8"; sourceTree = "<group>"; };
-		DD4EAF20272FC22D00FBCD3A /* RootViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RootViewController.h; sourceTree = "<group>"; };
-		DD4EAF21272FC22D00FBCD3A /* RootViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RootViewController.m; sourceTree = "<group>"; };
-		DD4EAF22272FC22D00FBCD3A /* RootViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RootViewController.xib; sourceTree = "<group>"; };
 		DD4EAFFF27310F1C00FBCD3A /* WindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WindowController.h; sourceTree = "<group>"; };
 		DD4EB00027310F1C00FBCD3A /* WindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WindowController.m; sourceTree = "<group>"; };
 		DD9B138822C23A79002D1D79 /* IJKMediaMacDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJKMediaMacDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -311,12 +316,15 @@
 				DD4EB00027310F1C00FBCD3A /* WindowController.m */,
 				C99B0F1829DE76B100E88ECB /* MRRenderViewAuxProxy.h */,
 				C99B0F1929DE76B100E88ECB /* MRRenderViewAuxProxy.m */,
-				DD4EAF20272FC22D00FBCD3A /* RootViewController.h */,
-				DD4EAF21272FC22D00FBCD3A /* RootViewController.m */,
-				DD4EAF22272FC22D00FBCD3A /* RootViewController.xib */,
+				C905CF1E2B55163C00D59730 /* MRRootViewController.h */,
+				C905CF1F2B55163C00D59730 /* MRRootViewController.m */,
+				C905CF202B55163C00D59730 /* MRRootViewController.xib */,
 				C905CF162B54C8D300D59730 /* MRAutoTestViewController.h */,
 				C905CF152B54C8D300D59730 /* MRAutoTestViewController.m */,
 				C905CF142B54C8D300D59730 /* MRAutoTestViewController.xib */,
+				C905CF1A2B550C7400D59730 /* MRStatisticalViewController.h */,
+				C905CF192B550C7400D59730 /* MRStatisticalViewController.m */,
+				C905CF1B2B550C7400D59730 /* MRStatisticalViewController.xib */,
 				C99B0F8F29DE9D2500E88ECB /* MultiRenderSample.h */,
 				C99B0F9029DE9D2500E88ECB /* MultiRenderSample.m */,
 				C99B0F9129DE9D2500E88ECB /* MultiRenderSample.xib */,
@@ -453,10 +461,11 @@
 				C969BEBA27BDEAD0008BC2AD /* 5003509-693880-1.m3u8 in Resources */,
 				C955005A27C7698F0026AB17 /* DecoderSettingViewController.xib in Resources */,
 				DD9B139222C23A7A002D1D79 /* MainMenu.xib in Resources */,
+				C905CF1D2B550C7400D59730 /* MRStatisticalViewController.xib in Resources */,
 				C97674EF2A1F333D00B7627E /* MRTextInfoViewController.xib in Resources */,
-				DD4EAF24272FC22D00FBCD3A /* RootViewController.xib in Resources */,
 				C961424D2A33253100335B5B /* ipad8225552_4897622324404_1436873.m3u8 in Resources */,
 				C96F5B9D291A4B1100C79E07 /* 2e0fb226-d7c3-4672-a4bc.m3u8 in Resources */,
+				C905CF222B55163C00D59730 /* MRRootViewController.xib in Resources */,
 				C955005027C769050026AB17 /* GeneralSettingViewController.xib in Resources */,
 				C969BBAF27BBA4E1008BC2AD /* 5003509-693880-2.webvtt in Resources */,
 				C99B0F9329DE9D2500E88ECB /* MultiRenderSample.xib in Resources */,
@@ -535,9 +544,11 @@
 				C97DCC0727C867EA0019874F /* MRBaseView.m in Sources */,
 				DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */,
 				C969BE4E27BDD34E008BC2AD /* MRUtil+SystemPanel.m in Sources */,
+				C905CF1C2B550C7400D59730 /* MRStatisticalViewController.m in Sources */,
 				DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */,
 				C96F5B9B291A052100C79E07 /* MRProgressIndicator.m in Sources */,
 				DDE9FC70273BD3CF00481560 /* NSFileManager+Sandbox.m in Sources */,
+				C905CF212B55163C00D59730 /* MRRootViewController.m in Sources */,
 				C955004227C75E740026AB17 /* LeftCategoryController.m in Sources */,
 				C955004527C7634F0026AB17 /* SettingSplitViewController.m in Sources */,
 				C955005927C7698F0026AB17 /* DecoderSettingViewController.m in Sources */,
@@ -548,7 +559,6 @@
 				DD0443E827E7749800CB946B /* MRActionManager.m in Sources */,
 				DD0443E627E7749800CB946B /* MRActionProcessor+Private.m in Sources */,
 				DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */,
-				DD4EAF23272FC22D00FBCD3A /* RootViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

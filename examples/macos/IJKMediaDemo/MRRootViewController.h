@@ -1,5 +1,5 @@
 //
-//  RootViewController.h
+//  MRRootViewController.h
 //  IJKMediaMacDemo
 //
 //  Created by Matt Reach on 2021/11/1.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RootViewController : NSViewController
+@interface MRRootViewController : NSViewController
 
 @end
 

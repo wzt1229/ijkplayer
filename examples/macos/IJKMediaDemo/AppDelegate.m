@@ -8,8 +8,9 @@
 
 #import "AppDelegate.h"
 #import "WindowController.h"
-#import "RootViewController.h"
+#import "MRRootViewController.h"
 #import "MRAutoTestViewController.h"
+#import "MRStatisticalViewController.h"
 #import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
 #import "MRGlobalNotification.h"
 #import "MRUtil+SystemPanel.h"
@@ -72,8 +73,10 @@
     
     NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:mask backing:NSBackingStoreBuffered defer:YES];
     
-    window.contentViewController = [[RootViewController alloc] init];
+    window.contentViewController = [[MRRootViewController alloc] init];
 //    window.contentViewController = [[MRAutoTestViewController alloc] init];
+//    window.contentViewController = [[MRStatisticalViewController alloc] init];
+    
     window.movableByWindowBackground = YES;
     
     self.windowCtrl = [[WindowController alloc] init];
