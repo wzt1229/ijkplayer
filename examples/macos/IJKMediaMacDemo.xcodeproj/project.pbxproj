@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		48785FCC6E8D62593A0839B8 /* Pods_IJKMediaMacDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DCADD1347BDB5B68E4C0CFA /* Pods_IJKMediaMacDemo.framework */; };
+		C905CF172B54C8D300D59730 /* MRAutoTestViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C905CF142B54C8D300D59730 /* MRAutoTestViewController.xib */; };
+		C905CF182B54C8D300D59730 /* MRAutoTestViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C905CF152B54C8D300D59730 /* MRAutoTestViewController.m */; };
 		C955003E27C75A580026AB17 /* Setting.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C955003D27C75A580026AB17 /* Setting.storyboard */; };
 		C955004227C75E740026AB17 /* LeftCategoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004127C75E740026AB17 /* LeftCategoryController.m */; };
 		C955004527C7634F0026AB17 /* SettingSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004427C7634F0026AB17 /* SettingSplitViewController.m */; };
@@ -77,6 +79,9 @@
 /* Begin PBXFileReference section */
 		9409D4EABED075A613A5C430 /* Pods-IJKMediaMacDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaMacDemo.release.xcconfig"; path = "Target Support Files/Pods-IJKMediaMacDemo/Pods-IJKMediaMacDemo.release.xcconfig"; sourceTree = "<group>"; };
 		9DCADD1347BDB5B68E4C0CFA /* Pods_IJKMediaMacDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IJKMediaMacDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C905CF142B54C8D300D59730 /* MRAutoTestViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MRAutoTestViewController.xib; sourceTree = "<group>"; };
+		C905CF152B54C8D300D59730 /* MRAutoTestViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRAutoTestViewController.m; sourceTree = "<group>"; };
+		C905CF162B54C8D300D59730 /* MRAutoTestViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRAutoTestViewController.h; sourceTree = "<group>"; };
 		C955003D27C75A580026AB17 /* Setting.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Setting.storyboard; sourceTree = "<group>"; };
 		C955004027C75E740026AB17 /* LeftCategoryController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LeftCategoryController.h; sourceTree = "<group>"; };
 		C955004127C75E740026AB17 /* LeftCategoryController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LeftCategoryController.m; sourceTree = "<group>"; };
@@ -309,6 +314,9 @@
 				DD4EAF20272FC22D00FBCD3A /* RootViewController.h */,
 				DD4EAF21272FC22D00FBCD3A /* RootViewController.m */,
 				DD4EAF22272FC22D00FBCD3A /* RootViewController.xib */,
+				C905CF162B54C8D300D59730 /* MRAutoTestViewController.h */,
+				C905CF152B54C8D300D59730 /* MRAutoTestViewController.m */,
+				C905CF142B54C8D300D59730 /* MRAutoTestViewController.xib */,
 				C99B0F8F29DE9D2500E88ECB /* MultiRenderSample.h */,
 				C99B0F9029DE9D2500E88ECB /* MultiRenderSample.m */,
 				C99B0F9129DE9D2500E88ECB /* MultiRenderSample.xib */,
@@ -440,6 +448,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C905CF172B54C8D300D59730 /* MRAutoTestViewController.xib in Resources */,
 				DD9B138F22C23A7A002D1D79 /* Assets.xcassets in Resources */,
 				C969BEBA27BDEAD0008BC2AD /* 5003509-693880-1.m3u8 in Resources */,
 				C955005A27C7698F0026AB17 /* DecoderSettingViewController.xib in Resources */,
@@ -513,6 +522,7 @@
 			files = (
 				C99B0F1A29DE76B100E88ECB /* MRRenderViewAuxProxy.m in Sources */,
 				C955004F27C769050026AB17 /* GeneralSettingViewController.m in Sources */,
+				C905CF182B54C8D300D59730 /* MRAutoTestViewController.m in Sources */,
 				C955004A27C768DD0026AB17 /* SubtitleSettingViewController.m in Sources */,
 				DD0443E927E7749800CB946B /* MRActionItem.m in Sources */,
 				C969BE4B27BDCD27008BC2AD /* MRGlobalNotification.m in Sources */,

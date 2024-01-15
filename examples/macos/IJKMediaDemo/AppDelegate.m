@@ -9,11 +9,13 @@
 #import "AppDelegate.h"
 #import "WindowController.h"
 #import "RootViewController.h"
+#import "MRAutoTestViewController.h"
 #import <IJKMediaPlayerKit/IJKMediaPlayerKit.h>
 #import "MRGlobalNotification.h"
 #import "MRUtil+SystemPanel.h"
 #import "MRActionKit.h"
 #import "MRTextInfoViewController.h"
+#import <IOKit/pwr_mgt/IOPMLib.h>
 
 @interface AppDelegate ()
 
@@ -63,14 +65,15 @@
     [self prepareActionProcessor];
 }
 
-
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // Insert code here to initialize your application
     NSWindowStyleMask mask = NSWindowStyleMaskBorderless | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView;
     
     NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:mask backing:NSBackingStoreBuffered defer:YES];
+    
     window.contentViewController = [[RootViewController alloc] init];
+//    window.contentViewController = [[MRAutoTestViewController alloc] init];
     window.movableByWindowBackground = YES;
     
     self.windowCtrl = [[WindowController alloc] init];
@@ -179,6 +182,24 @@
             [self playOpenedURL:urlArr];
             [NSApp activateIgnoringOtherApps:YES];
         }
+    }
+}
+
+static IOPMAssertionID g_displaySleepAssertionID;
+
+- (void)enableComputerSleep:(BOOL)enable
+{
+    if (!g_displaySleepAssertionID && !enable)
+    {
+        NSLog(@"enableComputerSleep:NO");
+        IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
+                                    (__bridge CFStringRef)[[NSBundle mainBundle] bundleIdentifier],&g_displaySleepAssertionID);
+    }
+    else if (g_displaySleepAssertionID && enable)
+    {
+        NSLog(@"enableComputerSleep:YES");
+        IOPMAssertionRelease(g_displaySleepAssertionID);
+        g_displaySleepAssertionID = 0;
     }
 }
 

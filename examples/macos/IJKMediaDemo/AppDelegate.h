@@ -11,6 +11,7 @@
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
 - (void)openDocument:(id)sender;
+- (void)enableComputerSleep:(BOOL)enable;
 
 @end
 
