@@ -212,6 +212,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_set_option(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "overlay-format", "fcc-_es2");
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"safe", 0);
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_PLAYER,"protocol_whitelist","ffconcat,file,http,https");
+    //httpproxy
     ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray,dvd,rtmp,rtsp,rtp,srtp,udp");
     
     // init hud

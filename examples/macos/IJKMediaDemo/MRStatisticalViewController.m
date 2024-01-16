@@ -642,6 +642,7 @@ static BOOL hdrAnimationShown = 0;
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
     
+    //protocol_whitelist need add httpproxy
     //[options setFormatOptionValue:@"http://10.7.36.42:8888" forKey:@"http_proxy"];
     [options setFormatOptionValue:@"Accept-Encoding: gzip, deflate" forKey:@"headers"];
     
