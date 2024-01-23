@@ -308,21 +308,21 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     NSString *render = [self.view name];
     [self setHudValue:render forKey:@"v-renderer"];
     
-//    if (![_contentURL isFileURL]) {
-//        [self setHudValue:nil forKey:@"scheme"];
-//        [self setHudValue:nil forKey:@"host"];
-//        [self setHudValue:nil forKey:@"path"];
-//        [self setHudValue:nil forKey:@"ip"];
-//        [self setHudValue:nil forKey:@"tcp-info"];
-//        [self setHudValue:nil forKey:@"http"];
-//        [self setHudValue:nil forKey:@"tcp-spd"];
-//        [self setHudValue:nil forKey:@"t-prepared"];
-//        [self setHudValue:nil forKey:@"t-render"];
-//        [self setHudValue:nil forKey:@"t-preroll"];
-//        [self setHudValue:nil forKey:@"t-http-open"];
-//        [self setHudValue:nil forKey:@"t-http-seek"];
-//    }
-//
+    if (![_contentURL isFileURL]) {
+        [self setHudValue:nil forKey:@"scheme"];
+        [self setHudValue:nil forKey:@"host"];
+        [self setHudValue:nil forKey:@"path"];
+        [self setHudValue:nil forKey:@"ip"];
+        [self setHudValue:nil forKey:@"tcp-info"];
+        [self setHudValue:nil forKey:@"http"];
+        [self setHudValue:nil forKey:@"tcp-spd"];
+        [self setHudValue:nil forKey:@"t-prepared"];
+        [self setHudValue:nil forKey:@"t-render"];
+        [self setHudValue:nil forKey:@"t-preroll"];
+        [self setHudValue:nil forKey:@"t-http-open"];
+        [self setHudValue:nil forKey:@"t-http-seek"];
+    }
+
     [self setHudUrl:_contentURL];
     
     //解决中文路径 bluray://中文编码/打不开流问题
@@ -1006,10 +1006,10 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
                            formatedDurationMilli(_monitor.lastHttpOpenDuration),
                            _monitor.httpOpenCount]
                    forKey:@"t-http-open"];
-//        [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
-//                           formatedDurationMilli(_monitor.lastHttpSeekDuration),
-//                           _monitor.httpSeekCount]
-//                   forKey:@"t-http-seek"];
+        [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
+                           formatedDurationMilli(_monitor.lastHttpSeekDuration),
+                           _monitor.httpSeekCount]
+                   forKey:@"t-http-seek"];
     }
 }
 
@@ -1709,8 +1709,10 @@ static int onInjectTcpIOControl(IJKFFMoviePlayerController *mpc, id<IJKMediaUrlO
             break;
     }
 
-    if (delegate == nil)
+    if (delegate == nil) {
+        [mpc setHudValue: [NSString stringWithFormat:@"fd:%d", realData->fd] forKey:@"tcp-info"];
         return 0;
+    }
 
     NSString *urlString = [NSString stringWithUTF8String:realData->ip];
 

@@ -1,17 +1,18 @@
-From 2ff4daa1d2b6edb4811bf52cdab14dad2b796b5d Mon Sep 17 00:00:00 2001
+From 563860663a921f07bcf868ddb9f91b64ce244432 Mon Sep 17 00:00:00 2001
 From: qianlongxu <qianlongxu@gmail.com>
-Date: Mon, 12 Jun 2023 16:32:25 +0800
-Subject: [PATCH 09/15] support to parse bluray protocol all tracks language meta
+Date: Tue, 23 Jan 2024 14:33:15 +0800
+Subject: [PATCH 11/15] support to parse bluray protocol all tracks
+ language meta
 
 ---
- libavformat/bluray.c | 65 ++++++++++++++++++++++++++++++++++++++++++++
- libavformat/bluray.h | 29 ++++++++++++++++++++
- libavformat/demux.c  | 14 ++++++++++
- 3 files changed, 108 insertions(+)
+ libavformat/bluray.c | 81 ++++++++++++++++++++++++++++++++++++++++++++
+ libavformat/bluray.h | 29 ++++++++++++++++
+ libavformat/demux.c  | 14 ++++++++
+ 3 files changed, 124 insertions(+)
  create mode 100644 libavformat/bluray.h
 
 diff --git a/libavformat/bluray.c b/libavformat/bluray.c
-index 635c4f1..644166f 100644
+index 635c4f1..8814dc2 100644
 --- a/libavformat/bluray.c
 +++ b/libavformat/bluray.c
 @@ -26,6 +26,8 @@
@@ -31,7 +32,32 @@ index 635c4f1..644166f 100644
  } BlurayContext;
  
  #define OFFSET(x) offsetof(BlurayContext, x)
-@@ -160,6 +163,7 @@ static int bluray_open(URLContext *h, const char *path, int flags)
+@@ -111,8 +114,24 @@ static int bluray_close(URLContext *h)
+     return 0;
+ }
+ 
++#ifdef DEBUG_BLURAY
++#include <libbluray/log_control.h>
++#define BLURAY_DEBUG_MASK 0xFFFFF //(0xFFFFF & ~DBG_STREAM)
++
++static void bluray_DebugHandler(const char *psz)
++{
++    size_t len = strlen(psz);
++    if(len < 1) return;
++    av_log(NULL, AV_LOG_DEBUG, "[bluray] %s\n",psz);
++}
++#endif
++
+ static int bluray_open(URLContext *h, const char *path, int flags)
+ {
++#ifdef DEBUG_BLURAY
++    bd_set_debug_mask(BLURAY_DEBUG_MASK);
++    bd_set_debug_handler(bluray_DebugHandler);
++#endif
+     BlurayContext *bd = h->priv_data;
+     int num_title_idx;
+     const char *diskname = path;
+@@ -160,6 +179,7 @@ static int bluray_open(URLContext *h, const char *path, int flags)
  
              if (info->duration > duration) {
                  bd->playlist = info->playlist;
@@ -39,7 +65,7 @@ index 635c4f1..644166f 100644
                  duration = info->duration;
              }
  
-@@ -223,6 +227,67 @@ static int64_t bluray_seek(URLContext *h, int64_t pos, int whence)
+@@ -223,6 +243,67 @@ static int64_t bluray_seek(URLContext *h, int64_t pos, int whence)
      return AVERROR(EINVAL);
  }
  
@@ -144,7 +170,7 @@ index 0000000..dfd3cb5
 +#endif /* AVFORMAT_BLURAY_H */
 \ No newline at end of file
 diff --git a/libavformat/demux.c b/libavformat/demux.c
-index 1620716..d518515 100644
+index 06216eb..48999b9 100644
 --- a/libavformat/demux.c
 +++ b/libavformat/demux.c
 @@ -38,6 +38,9 @@
@@ -157,7 +183,7 @@ index 1620716..d518515 100644
  
  #include "avformat.h"
  #include "avio_internal.h"
-@@ -335,6 +338,17 @@ int avformat_open_input(AVFormatContext **ps, const char *filename,
+@@ -348,6 +351,17 @@ int avformat_open_input(AVFormatContext **ps, const char *filename,
          ff_id3v2_free_extra_meta(&id3v2_extra_meta);
      }
  
