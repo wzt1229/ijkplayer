@@ -32,6 +32,7 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、libyuv、libopus、libblu
 ├── init-cfgs    #三方库的配置，包括库名，git仓库地址等信息
 │   ├── bluray
 │   ├── dav1d
+│   ├── dvdread
 │   ├── ffmpeg
 │   ├── libyuv
 │   ├── openssl
@@ -43,7 +44,6 @@ At present MRFFToolChain contained OpenSSL、FFmpeg 、libyuv、libopus、libblu
 │   └── compile-any.sh
 ├── patches            #补丁
 │   ├── README.md
-│   ├── dav1d
 │   ├── ffmpeg -> ffmpeg-release-5.1
 │   ├── ffmpeg-n4.0
 │   └── ffmpeg-release-5.1

@@ -29,7 +29,7 @@ MAC_BLURAY_TAG='bluray-1.3.4-240108180408'
 DAV1D_TAG='dav1d-1.3.0-231127183948'
 OPENSSL_TAG='openssl-1.1.1w-231127183927'
 DVDREAD_TAG='dvdread-6.1.3-240108102425'
-FFMPEG_TAG='ffmpeg-5.1.4-240108181435'
+FFMPEG_TAG='ffmpeg-5.1.4-240123163221'
 #----------------------------------------------------------
 
 set -e
@@ -55,7 +55,7 @@ function install_lib ()
 function usage() {
     echo "=== useage ===================="
     echo "Download pre-compiled libs from github:"
-    echo " $0 [ios,macos,all] [all|ffmpeg|libyuv|openssl|opus|bluray|dav1d]"
+    echo " $0 [ios,macos,all] [all|ffmpeg|libyuv|openssl|opus|bluray|dav1d|dvdread]"
     exit 1
 }
 
