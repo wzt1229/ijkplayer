@@ -91,12 +91,12 @@ static BOOL hdrAnimationShown = 0;
     //for debug
     //[self.view setWantsLayer:YES];
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
-    
+    self.title = @"Root";
     [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
         NSLog(@"[%@] [%d] %@",tag,level,msg);
 //        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
     }];
-
+    
     self.subtitleMargin = 0.7;
     self.fcc = @"fcc-_es2";
     self.snapshot = 3;
@@ -106,50 +106,6 @@ static BOOL hdrAnimationShown = 0;
     self.seekCostLb.stringValue = @"";
     self.accurateSeek = 1;
     self.loop = 0;
-//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream_ts.m3u8
-//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream.mpd
-//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream_fmp4.m3u8
-//https://events-delivery.apple.com/2807skttevpekgjkgcyolyxgkexyahqp/m3u8/vod_index-bHTtMFcgdqmJGoHoDBPadNWwGwrNevrj.m3u8
-//@"http://localhost/test-videos/av1-m3u8/res.m3u8"
-//    @"http://10.18.17.49/samba/video/BDMV%E7%9A%84%E5%BA%93/%E4%BB%A5%E5%AF%A1%E6%95%8C%E4%BC%97%5B%E7%AE%80%E7%B9%81%E8%8B%B1%E5%AD%97%E5%B9%95%5D.Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD/Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD.mkv"
-//    @"http://10.18.17.49/samba/video-library/movies/Fast.X.2023.1080p.WEB-DL.DDP5.1.Atmos.H264-AQLJ.m2ts"
-//    @"https://pan.baidu.com/rest/2.0/xpan/file?method=streaming&access_token=123.be0be15bf745faf4d16855c1690d6912.YBC2KjymwuTVhNLBrpv7f1LpYasEMPrFAl0eVUD.Uukf5A&adToken=&path=%2F%E5%85%84D%E8%BF%9E%EF%BC%88%E5%9B%BD%E9%85%8D%EF%BC%89%2FEP04%28%E6%96%B0%E5%85%B5%E6%94%AF%E6%8F%B4%29.2001.BluRay.1080p.x264.AAC.2Audios.Chs%26Eng.%E7%89%B9%E6%95%88%E4%B8%AD%E5%AD%97-DiaosMan.mp4&type=M3U8_AUTO_720"
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.jpg",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-//    @"https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
-//http://docs.evostream.com/sample_content/table_of_contents
-    NSArray *onlineArr = @[
-        @"http://docs.evostream.com/sample_content/assets/hls-sintel-abr3/sintel480p/playlist.m3u8",
-        @"https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-        @"http://10.18.17.49/samba/video/falsify-hdr-ali.ts",
-        @"http://10.18.17.49/samba/video/%E5%8F%8D%E8%B4%AA%E9%A3%8E%E6%9A%B45%EF%BC%9A%E6%9C%80%E7%BB%88%E7%AB%A0.2021.HD.4K.%E5%9B%BD%E7%B2%A4%E5%8F%8C%E8%AF%AD%E4%B8%AD%E5%AD%97.HEVC.mkv",
-        @"http://10.18.17.49/samba/video/0-%E6%B5%8B%E8%AF%95%E8%B6%85%E9%95%BF%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E5%90%8D/1-%E6%B5%8B%E8%AF%95%E8%B6%85%E9%95%BF%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E5%90%8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCC/2-%E6%B5%8B%E8%AF%95%E8%B6%85%E9%95%BF%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E5%90%8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCC/3-%E6%B5%8B%E8%AF%95%E8%B6%85%E9%95%BF%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E5%90%8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCC/%E4%B8%AD%E6%96%87%E8%B7%AF%E5%BE%84%E5%90%8D%E5%A4%A7%E6%B3%95%E4%B9%A6%E7%B1%8D%E5%B0%91%E5%B9%B4%E7%8A%AFiasninifsdjifjsdljfsldajf%E5%8F%91%E7%94%9F%E7%9A%84%E5%8F%91%E8%BE%BE%E7%9C%81%E4%BB%BD%E7%9A%84%E5%8D%81%E5%88%86%E5%A4%A7%E6%96%B9%E7%9A%84%E8%BE%85%E5%AF%BC%E6%96%B9%E6%B3%95%E7%9A%84%E6%B5%AE%E5%8A%A8%E5%B9%85%E5%BA%A6ijlj%E6%9D%A5%E7%9C%8B%E7%9C%8B%E4%BA%86%E7%A6%BB%E5%BC%80%E4%BA%86%E7%9C%8B%E7%9C%8B%E6%9D%A5%E7%9C%8B%E6%9D%A5%E7%9C%8B%E4%BA%86%E7%9C%8B%E4%BA%86%E7%9C%8B.mp4",
-        @"http://10.18.17.49/samba/audio/%E5%88%80%E9%83%8E/12%20%E7%88%B1%E6%98%AF%E4%BD%A0%E6%88%91--%E5%88%80%E9%83%8E%20%E4%BA%91%E6%9C%B5.wav",
-  @"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
-        @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
-        @"https://cdn10.vipbf-video.com/20221205/17013_50618fea/index.m3u8"
-    ];
-
-    for (NSString *url in onlineArr) {
-        [self.playList addObject:[NSURL URLWithString:url]];
-    }
-   
-    NSArray *bundleNameArr = @[@"996747-5277368-31.m3u8",
-                               @"ipad8225552_4897622324404_1436873-no-dis.m3u8",
-                               @"ipad8225552_4897622324404_1436873.m3u8",
-                               @"5003509-693880-3.m3u8"];
-    
-    for (NSString *fileName in bundleNameArr) {
-        NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
-        [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
-    }
         
     if ([self.view isKindOfClass:[SHBaseView class]]) {
         SHBaseView *baseView = (SHBaseView *)self.view;
@@ -1060,6 +1016,63 @@ static BOOL hdrAnimationShown = 0;
     return t;
 }
 
++ (NSArray *)parseXPlayList:(NSURL*)url
+{
+    NSString *str = [[NSString alloc] initWithContentsOfFile:[url path] encoding:NSUTF8StringEncoding error:nil];
+    str = [str stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *lines = [str componentsSeparatedByString:@"\n"];
+    NSMutableArray *preLines = [NSMutableArray array];
+    int begin = -1;
+    int end = -1;
+    
+    for (int i = 0; i < lines.count; i++) {
+        NSString *path = lines[i];
+        if (!path || [path length] == 0) {
+            continue;
+        } else if ([path hasPrefix:@"#"]) {
+            continue;
+        } else if ([path hasPrefix:@"--break"]) {
+            break;
+        } else if ([path hasPrefix:@"--begin"]) {
+            begin = (int)preLines.count;
+            continue;
+        } else if ([path hasPrefix:@"--end"]) {
+            end = (int)preLines.count;
+            continue;
+        }
+        [preLines addObject:path];
+    }
+    
+    if (begin == -1) {
+        begin = 0;
+    }
+    if (end == -1) {
+        end = (int)[preLines count] - 1;
+    }
+    if (begin >= end) {
+        NSLog(@"请检查XList文件里的begin位置");
+        return nil;
+    }
+    NSArray *preLines2 = [preLines subarrayWithRange:NSMakeRange(begin, end - begin)];
+    NSMutableArray *playList = [NSMutableArray array];
+    for (int i = 0; i < preLines2.count; i++) {
+        NSString *path = preLines2[i];
+        if (!path || [path length] == 0) {
+            continue;
+        }
+        if ([path hasPrefix:@"#"]) {
+            continue;
+        }
+        if ([path hasPrefix:@"--break"]) {
+            break;
+        }
+        NSURL *url = [NSURL URLWithString:path];
+        [playList addObject:url];
+    }
+    NSLog(@"从XList读取到：%lu个视频文件",(unsigned long)playList.count);
+    return [playList copy];
+}
+
 - (void)appendToPlayList:(NSArray *)bookmarkArr reset:(BOOL)reset
 {
     NSMutableArray *videos = [NSMutableArray array];
@@ -1069,6 +1082,14 @@ static BOOL hdrAnimationShown = 0;
         NSURL *url = dic[@"url"];
         
         if ([self existTaskForUrl:url]) {
+            continue;
+        }
+        if ([[[url pathExtension] lowercaseString] isEqualToString:@"xlist"]) {
+            if (reset) {
+                [self.playList removeAllObjects];
+            }
+            [self.playList addObjectsFromArray:[[self class] parseXPlayList:url]];
+            [self playFirstIfNeed];
             continue;
         }
         if ([dic[@"type"] intValue] == 0) {
@@ -1137,16 +1158,10 @@ static BOOL hdrAnimationShown = 0;
             BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:[url path] isDirectory:&isDirectory];
             if (isExist) {
                 if (isDirectory) {
-                   //扫描文件夹
-//                   NSString *dir = [url path];
-//                   NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil acceptMediaType]];
-//                    if ([dicArr count] > 0) {
-//                        return NSDragOperationCopy;
-//                    }
                     return NSDragOperationCopy;
                 } else {
                     NSString *pathExtension = [[url pathExtension] lowercaseString];
-                    if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
+                    if ([@"xlist" isEqualToString:pathExtension]) {
                         return NSDragOperationCopy;
                     }
                 }

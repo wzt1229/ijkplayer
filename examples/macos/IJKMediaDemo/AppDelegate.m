@@ -76,7 +76,9 @@
     window.contentViewController = [[MRRootViewController alloc] init];
 //    window.contentViewController = [[MRAutoTestViewController alloc] init];
 //    window.contentViewController = [[MRStatisticalViewController alloc] init];
-    
+    if (window.contentViewController.title) {
+        window.title = window.contentViewController.title;
+    }
     window.movableByWindowBackground = YES;
     
     self.windowCtrl = [[WindowController alloc] init];

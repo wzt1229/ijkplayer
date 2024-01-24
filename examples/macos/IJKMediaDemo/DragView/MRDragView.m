@@ -74,7 +74,7 @@
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
 {
     NSArray * list = [self draggedFileList:sender];
-    if (self.delegate) {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(acceptDragOperation:)]) {
         return [self.delegate acceptDragOperation:list];
     }
     return NSDragOperationNone;
@@ -84,7 +84,7 @@
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender
 {
     NSArray * list = [self draggedFileList:sender];
-    if (list.count && self.delegate) {
+    if (list.count && self.delegate && [self.delegate respondsToSelector:@selector(handleDragFileList:)]) {
         [self.delegate handleDragFileList:list];
     }
     return YES;

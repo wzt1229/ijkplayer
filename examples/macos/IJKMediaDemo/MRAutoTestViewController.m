@@ -95,7 +95,7 @@ static BOOL hdrAnimationShown = 0;
     //for debug
     //[self.view setWantsLayer:YES];
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
-    
+    self.title = @"AutoTest";
     [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
         NSLog(@"[%@] [%d] %@",tag,level,msg);
 //        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
@@ -1048,14 +1048,46 @@ static BOOL hdrAnimationShown = 0;
 
 - (void)appendToPlayList:(NSArray *)bookmarkArr reset:(BOOL)reset
 {
+    NSMutableArray *videos = [NSMutableArray array];
+    NSMutableArray *subtitles = [NSMutableArray array];
+    
     for (NSDictionary *dic in bookmarkArr) {
         NSURL *url = dic[@"url"];
+        
+        if ([self existTaskForUrl:url]) {
+            continue;
+        }
         if ([[[url pathExtension] lowercaseString] isEqualToString:@"xlist"]) {
             if (reset) {
                 [self.playList removeAllObjects];
             }
             [self loadNASPlayList:url];
+            continue;
         }
+        if ([dic[@"type"] intValue] == 0) {
+            [videos addObject:url];
+        } else if ([dic[@"type"] intValue] == 1) {
+            [subtitles addObject:url];
+        } else {
+            NSAssert(NO, @"没有处理的文件:%@",url);
+        }
+    }
+    
+    if ([videos count] > 0) {
+        if (reset) {
+            [self.playList removeAllObjects];
+        }
+        [self.playList addObjectsFromArray:videos];
+        [self playFirstIfNeed];
+    }
+    
+    if ([subtitles count] > 0) {
+        [self.subtitles addObjectsFromArray:subtitles];
+        
+        NSURL *firstUrl = [subtitles firstObject];
+        [subtitles removeObjectAtIndex:0];
+        [self.player loadThenActiveSubtitle:firstUrl];
+        [self.player loadSubtitlesOnly:subtitles];
     }
 }
 

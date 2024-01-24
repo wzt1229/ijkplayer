@@ -21,7 +21,6 @@
 #import "MultiRenderSample.h"
 #import "NSString+Ex.h"
 
-static NSString* lastPlayedKey = @"__lastPlayedKey";
 static BOOL hdrAnimationShown = 0;
 
 @interface MRStatisticalViewController ()<MRDragViewDelegate,SHBaseViewDelegate,NSMenuDelegate>
@@ -52,6 +51,7 @@ static BOOL hdrAnimationShown = 0;
 @property (nonatomic, assign) int snapshot;
 @property (nonatomic, assign) BOOL shouldShowHudView;
 @property (nonatomic, assign) BOOL accurateSeek;
+@property (nonatomic, assign) BOOL loop;
 //for cocoa binding end
 
 @property (nonatomic, assign) BOOL seeking;
@@ -89,7 +89,7 @@ static BOOL hdrAnimationShown = 0;
     //for debug
     //[self.view setWantsLayer:YES];
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
-    
+    self.title = @"Statistical";
     [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
         NSLog(@"[%@] [%d] %@",tag,level,msg);
 //        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
@@ -103,43 +103,8 @@ static BOOL hdrAnimationShown = 0;
     [self reSetLoglevel:@"verbose"];
     self.seekCostLb.stringValue = @"";
     self.accurateSeek = 1;
-
-//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream_ts.m3u8
-//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream.mpd
-//http://bitmovin-a.akamaihd.net/content/dataset/multi-codec/hevc/stream_fmp4.m3u8
-//https://events-delivery.apple.com/2807skttevpekgjkgcyolyxgkexyahqp/m3u8/vod_index-bHTtMFcgdqmJGoHoDBPadNWwGwrNevrj.m3u8
-//@"http://localhost/test-videos/av1-m3u8/res.m3u8"
-//    @"http://10.18.17.49/samba/video/BDMV%E7%9A%84%E5%BA%93/%E4%BB%A5%E5%AF%A1%E6%95%8C%E4%BC%97%5B%E7%AE%80%E7%B9%81%E8%8B%B1%E5%AD%97%E5%B9%95%5D.Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD/Widows.2018.BluRay.2160p.x265.10bit.HDR.2Audio-MiniHD.mkv"
-//    @"http://10.18.17.49/samba/video-library/movies/Fast.X.2023.1080p.WEB-DL.DDP5.1.Atmos.H264-AQLJ.m2ts"
-//    @"https://pan.baidu.com/rest/2.0/xpan/file?method=streaming&access_token=123.be0be15bf745faf4d16855c1690d6912.YBC2KjymwuTVhNLBrpv7f1LpYasEMPrFAl0eVUD.Uukf5A&adToken=&path=%2F%E5%85%84D%E8%BF%9E%EF%BC%88%E5%9B%BD%E9%85%8D%EF%BC%89%2FEP04%28%E6%96%B0%E5%85%B5%E6%94%AF%E6%8F%B4%29.2001.BluRay.1080p.x264.AAC.2Audios.Chs%26Eng.%E7%89%B9%E6%95%88%E4%B8%AD%E5%AD%97-DiaosMan.mp4&type=M3U8_AUTO_720"
-    NSArray *onlineArr = @[
-        @"http://docs.evostream.com/sample_content/assets/hls-sintel-abr3/sintel480p/playlist.m3u8",
-//        @"http://10.18.17.49/samba/video/m3u8/ipad5354607_4916343002285_8565928.m3u8",
-//        @"http://10.18.17.49/samba/video/m3u8/3323597-21/3323597-21.local.m3u8",
-//        @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4",
-//        @"http://10.18.17.49/samba/video/falsify-hdr-ali.ts",
-//        @"http://10.18.17.49/samba/video/%E5%8F%8D%E8%B4%AA%E9%A3%8E%E6%9A%B45%EF%BC%9A%E6%9C%80%E7%BB%88%E7%AB%A0.2021.HD.4K.%E5%9B%BD%E7%B2%A4%E5%8F%8C%E8%AF%AD%E4%B8%AD%E5%AD%97.HEVC.mkv",
-//        @"http://10.18.17.49/samba/video/0-%E6%B5%8B%E8%AF%95%E8%B6%85%E9%95%BF%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E5%90%8D/1-%E6%B5%8B%E8%AF%95%E8%B6%85%E9%95%BF%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E5%90%8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCC/2-%E6%B5%8B%E8%AF%95%E8%B6%85%E9%95%BF%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E5%90%8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCC/3-%E6%B5%8B%E8%AF%95%E8%B6%85%E9%95%BF%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E5%90%8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCC/%E4%B8%AD%E6%96%87%E8%B7%AF%E5%BE%84%E5%90%8D%E5%A4%A7%E6%B3%95%E4%B9%A6%E7%B1%8D%E5%B0%91%E5%B9%B4%E7%8A%AFiasninifsdjifjsdljfsldajf%E5%8F%91%E7%94%9F%E7%9A%84%E5%8F%91%E8%BE%BE%E7%9C%81%E4%BB%BD%E7%9A%84%E5%8D%81%E5%88%86%E5%A4%A7%E6%96%B9%E7%9A%84%E8%BE%85%E5%AF%BC%E6%96%B9%E6%B3%95%E7%9A%84%E6%B5%AE%E5%8A%A8%E5%B9%85%E5%BA%A6ijlj%E6%9D%A5%E7%9C%8B%E7%9C%8B%E4%BA%86%E7%A6%BB%E5%BC%80%E4%BA%86%E7%9C%8B%E7%9C%8B%E6%9D%A5%E7%9C%8B%E6%9D%A5%E7%9C%8B%E4%BA%86%E7%9C%8B%E4%BA%86%E7%9C%8B.mp4",
-//        @"http://10.18.17.49/samba/audio/%E5%88%80%E9%83%8E/12%20%E7%88%B1%E6%98%AF%E4%BD%A0%E6%88%91--%E5%88%80%E9%83%8E%20%E4%BA%91%E6%9C%B5.wav",
-//  @"https://data.vod.itc.cn/?new=/28/239/P2Z8sTDwIBxWRuh2jD5xxA.mp4&vid=376988099&plat=14&mkey=Wgy6JxP7PToFhTW12v9ypDGjtQdLtriy&ch=null&user=api&qd=8001&cv=6.11&uid=4216341A-7133-4718-A5FE-C46318838B7B&ca=2&pg=5&pt=1&prod=ifox&playType=p2p",
-//        @"https://data.vod.itc.cn/?new=/73/15/oFed4wzSTZe8HPqHZ8aF7J.mp4&vid=77972299&plat=14&mkey=XhSpuZUl_JtNVIuSKCB05MuFBiqUP7rB&ch=null&user=api&qd=8001&cv=3.13&uid=F45C89AE5BC3&ca=2&pg=5&pt=1&prod=ifox",
-//        @"https://cdn10.vipbf-video.com/20221205/17013_50618fea/index.m3u8"
-    ];
-
-    for (NSString *url in onlineArr) {
-        [self.playList addObject:[NSURL URLWithString:url]];
-    }
-   
-//    NSArray *bundleNameArr = @[@"996747-5277368-31.m3u8",
-//                               @"ipad8225552_4897622324404_1436873-no-dis.m3u8",
-//                               @"ipad8225552_4897622324404_1436873.m3u8",
-//                               @"5003509-693880-3.m3u8"];
-//    
-//    for (NSString *fileName in bundleNameArr) {
-//        NSString *localM3u8 = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
-//        [self.playList addObject:[NSURL fileURLWithPath:localM3u8]];
-//    }
-//        
+    self.loop = 1;
+    
     if ([self.view isKindOfClass:[SHBaseView class]]) {
         SHBaseView *baseView = (SHBaseView *)self.view;
         baseView.delegate = self;
@@ -592,7 +557,7 @@ static BOOL hdrAnimationShown = 0;
     //for mgeg-ts seek
     [options setFormatOptionIntValue:1 forKey:@"seek_flag_keyframe"];
 //    default is 5000000,but some high bit rate video probe faild cause no audio.
-    [options setFormatOptionValue:@"10000000" forKey:@"probesize"];
+//    [options setFormatOptionValue:@"10000000" forKey:@"probesize"];
 //    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
 //    [options setPlayerOptionIntValue:0      forKey:@"packet-buffering"];
 //    [options setPlayerOptionIntValue:1      forKey:@"render-wait-start"];
@@ -600,6 +565,29 @@ static BOOL hdrAnimationShown = 0;
 //    test video decoder performance.
 //    [options setPlayerOptionIntValue:1 forKey:@"an"];
 //    [options setPlayerOptionIntValue:1 forKey:@"nodisp"];
+//    [options setPlayerOptionValue:@"hls" forKey:@"iformat"];
+    [options setFormatOptionIntValue:0 forKey:@"fpsprobesize"];
+    
+    //加载流时清理一次，但是不会二次传递
+//    [options setFormatOptionIntValue:1 forKey:@"dns_cache_clear"];
+//    [options setFormatOptionIntValue:1 forKey:@"http_multiple"];
+    
+    //默认不使用dns缓存，指定超时时间才会使用；
+    [options setFormatOptionIntValue:300 * 1000 forKey:@"dns_cache_timeout"];
+    //实际测试效果不好，容易导致域名解析失败，谨慎使用;没有fallback逻辑
+    //决定dns的方式，大于0时使用tcp_getaddrinfo_nonblock方式
+    [options setFormatOptionIntValue:0 forKey:@"addrinfo_timeout"];
+    [options setFormatOptionIntValue:0 forKey:@"addrinfo_one_by_one"];
+//    [options setFormatOptionIntValue:1 forKey:@"http_persistent"];
+//    [options setFormatOptionValue:@"test=cookie" forKey:@"cookies"];
+    //if you want set ts segments options only:
+//    [options setFormatOptionValue:@"fastopen=2:dns_cache_timeout=600000:addrinfo_timeout=2000000" forKey:@"seg_format_options"];
+    //default inherit options : "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy",you can inherit more:
+    [options setFormatOptionValue:@"connect_timeout,ijkapplication,addrinfo_one_by_one,addrinfo_timeout,dns_cache_timeout,fastopen,dns_cache_clear" forKey:@"seg_inherit_options"];
+    
+    //protocol_whitelist need add httpproxy
+//    [options setFormatOptionValue:@"http://10.7.36.42:8888" forKey:@"http_proxy"];
+    [options setFormatOptionValue:@"Accept-Encoding: gzip, deflate" forKey:@"headers"];
     
     [options setPlayerOptionIntValue:[MRUtil boolForKey:@"values.copy_hw_frame"] forKey:@"copy_hw_frame"];
     if ([url isFileURL]) {
@@ -641,10 +629,6 @@ static BOOL hdrAnimationShown = 0;
     [options setPlayerOptionIntValue:hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
-    
-    //protocol_whitelist need add httpproxy
-    //[options setFormatOptionValue:@"http://10.7.36.42:8888" forKey:@"http_proxy"];
-    [options setFormatOptionValue:@"Accept-Encoding: gzip, deflate" forKey:@"headers"];
     
     options.metalRenderer = !self.use_openGL;
     options.showHudView = self.shouldShowHudView;
@@ -745,30 +729,38 @@ static BOOL hdrAnimationShown = 0;
 {
     NSLog(@"first frame cost:%lldms",self.player.monitor.firstVideoFrameLatency);
     self.seekCostLb.stringValue = [NSString stringWithFormat:@"%lldms",self.player.monitor.firstVideoFrameLatency];
-    [self.statisticalSample addObject:@(self.player.monitor.firstVideoFrameLatency)];
     
-    //播放5s后，重播
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self onStop];
-        //播放12次
-        if (++self.playCount < 12) {
-            [self pauseOrPlay:nil];
-        } else {
-            NSArray *sortedArr = [self.statisticalSample sortedArrayUsingComparator:^NSComparisonResult(NSNumber * _Nonnull obj1, NSNumber * _Nonnull obj2) {
-                return [obj1 compare:obj2];
-            }];
-            
-            NSMutableArray *tmpArr = [[NSMutableArray alloc] initWithArray:sortedArr];
-            [tmpArr removeObjectAtIndex:0];
-            [tmpArr removeLastObject];
-            int sum = 0;
-            for (NSNumber *num in tmpArr) {
-                sum += [num intValue];
+    if (self.loop) {
+        [self.statisticalSample addObject:@(self.player.monitor.firstVideoFrameLatency)];
+        self.seekCostLb.stringValue = [self.statisticalSample componentsJoinedByString:@","];
+        
+        //播放5s后，重播
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (!self.loop) {
+                return;
             }
-            int avg = sum / tmpArr.count;
-            NSLog(@"首帧去掉最低和最高，取[%lu]平均值：%d",tmpArr.count,avg);
-        }
-    });
+            [self onStop];
+            //播放12次
+            if (++self.playCount < 12) {
+                [self pauseOrPlay:nil];
+            } else {
+                NSArray *sortedArr = [self.statisticalSample sortedArrayUsingComparator:^NSComparisonResult(NSNumber * _Nonnull obj1, NSNumber * _Nonnull obj2) {
+                    return [obj1 compare:obj2];
+                }];
+                
+                NSMutableArray *tmpArr = [[NSMutableArray alloc] initWithArray:sortedArr];
+                [tmpArr removeObjectAtIndex:0];
+                [tmpArr removeLastObject];
+                int sum = 0;
+                for (NSNumber *num in tmpArr) {
+                    sum += [num intValue];
+                }
+                int avg = sum / tmpArr.count;
+                NSLog(@"first frame [%lu] avg cost:%d",tmpArr.count,avg);
+                self.seekCostLb.stringValue = [NSString stringWithFormat:@"%dms",avg];
+            }
+        });
+    }
 }
 
 - (void)ijkPlayerVideoDecoderFatal:(NSNotification *)notifi
@@ -809,18 +801,6 @@ static BOOL hdrAnimationShown = 0;
         if (IJKMPMovieFinishReasonPlaybackError == reason) {
             int errCode = [notifi.userInfo[@"code"] intValue];
             NSLog(@"播放出错:%d",errCode);
-            NSString *dir = [self saveDir:nil];
-            NSString *fileName = [NSString stringWithFormat:@"a错误汇总.txt"];
-            NSString *filePath = [dir stringByAppendingPathComponent:fileName];
-            FILE *pf = fopen([filePath UTF8String], "a+");
-            fprintf(pf, "%d:%s\n",errCode,[[self.playingUrl absoluteString]UTF8String]);
-            fflush(pf);
-            fclose(pf);
-            
-            //-5 网络错误
-            if (errCode != -5) {
-                [self playNext:nil];
-            }
         } else if (IJKMPMovieFinishReasonPlaybackEnded == reason) {
             NSLog(@"播放结束");
             if ([[MRUtil pictureType] containsObject:[[self.playingUrl lastPathComponent] pathExtension]]) {
@@ -943,11 +923,8 @@ static BOOL hdrAnimationShown = 0;
     
     NSInteger idx = [self.playList indexOfObject:self.playingUrl] + 1;
     
-    [[NSUserDefaults standardUserDefaults] setObject:videoName forKey:lastPlayedKey];
-    
     NSString *title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],videoName];
     [self.view.window setTitle:title];
-    
     [self onReset:nil];
     self.playCtrlBtn.state = NSControlStateValueOn;
     
@@ -1003,6 +980,63 @@ static BOOL hdrAnimationShown = 0;
     return t;
 }
 
++ (NSArray *)parseXPlayList:(NSURL*)url
+{
+    NSString *str = [[NSString alloc] initWithContentsOfFile:[url path] encoding:NSUTF8StringEncoding error:nil];
+    NSArray *lines = [str componentsSeparatedByString:@"\n"];
+    NSMutableArray *preLines = [NSMutableArray array];
+    int begin = -1;
+    int end = -1;
+    
+    for (int i = 0; i < lines.count; i++) {
+        NSString *path = lines[i];
+        if (!path || [path length] == 0) {
+            continue;
+        } else if ([path hasPrefix:@"#"]) {
+            continue;
+        } else if ([path hasPrefix:@"--break"]) {
+            break;
+        } else if ([path hasPrefix:@"--begin"]) {
+            begin = (int)preLines.count;
+            continue;
+        } else if ([path hasPrefix:@"--end"]) {
+            end = (int)preLines.count;
+            continue;
+        }
+        path = [path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        [preLines addObject:path];
+    }
+    
+    if (begin == -1) {
+        begin = 0;
+    }
+    if (end == -1) {
+        end = (int)[preLines count] - 1;
+    }
+    if (begin >= end) {
+        NSLog(@"请检查XList文件里的begin位置");
+        return nil;
+    }
+    NSArray *preLines2 = [preLines subarrayWithRange:NSMakeRange(begin, end - begin)];
+    NSMutableArray *playList = [NSMutableArray array];
+    for (int i = 0; i < preLines2.count; i++) {
+        NSString *path = preLines2[i];
+        if (!path || [path length] == 0) {
+            continue;
+        }
+        if ([path hasPrefix:@"#"]) {
+            continue;
+        }
+        if ([path hasPrefix:@"--break"]) {
+            break;
+        }
+        NSURL *url = [NSURL URLWithString:path];
+        [playList addObject:url];
+    }
+    NSLog(@"从XList读取到：%lu个视频文件",(unsigned long)playList.count);
+    return [playList copy];
+}
+
 - (void)appendToPlayList:(NSArray *)bookmarkArr reset:(BOOL)reset
 {
     NSMutableArray *videos = [NSMutableArray array];
@@ -1012,6 +1046,14 @@ static BOOL hdrAnimationShown = 0;
         NSURL *url = dic[@"url"];
         
         if ([self existTaskForUrl:url]) {
+            continue;
+        }
+        if ([[[url pathExtension] lowercaseString] isEqualToString:@"xlist"]) {
+            if (reset) {
+                [self.playList removeAllObjects];
+            }
+            [self.playList addObjectsFromArray:[[self class] parseXPlayList:url]];
+            [self playFirstIfNeed];
             continue;
         }
         if ([dic[@"type"] intValue] == 0) {
@@ -1079,10 +1121,16 @@ static BOOL hdrAnimationShown = 0;
             BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:[url path] isDirectory:&isDirectory];
             if (isExist) {
                 if (isDirectory) {
+                   //扫描文件夹
+//                   NSString *dir = [url path];
+//                   NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil acceptMediaType]];
+//                    if ([dicArr count] > 0) {
+//                        return NSDragOperationCopy;
+//                    }
                     return NSDragOperationCopy;
                 } else {
                     NSString *pathExtension = [[url pathExtension] lowercaseString];
-                    if ([@"xlist" isEqualToString:pathExtension]) {
+                    if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
                         return NSDragOperationCopy;
                     }
                 }
@@ -1218,7 +1266,6 @@ static BOOL hdrAnimationShown = 0;
     if (idx == self.playList.count - 1) {
         [self doStopPlay];
         [self.playList removeAllObjects];
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:lastPlayedKey];
         return;
     }
     
