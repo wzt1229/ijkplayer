@@ -927,6 +927,13 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 
 - (NSView *)hitTest:(NSPoint)point
 {
+    for (NSView *sub in [self subviews]) {
+        NSPoint pointInSelf = [self convertPoint:point fromView:self.superview];
+        NSPoint pointInSub = [self convertPoint:pointInSelf toView:sub];
+        if (NSPointInRect(pointInSub, sub.bounds)) {
+            return sub;
+        }
+    }
     return nil;
 }
 

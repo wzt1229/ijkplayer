@@ -1073,6 +1073,13 @@ static CGImageRef _FlipCGImage(CGImageRef src)
 
 - (NSView *)hitTest:(NSPoint)point
 {
+    for (NSView *sub in [self subviews]) {
+        NSPoint pointInSelf = [self convertPoint:point fromView:self.superview];
+        NSPoint pointInSub = [self convertPoint:pointInSelf toView:sub];
+        if (NSPointInRect(pointInSub, sub.bounds)) {
+            return sub;
+        }
+    }
     return nil;
 }
 
