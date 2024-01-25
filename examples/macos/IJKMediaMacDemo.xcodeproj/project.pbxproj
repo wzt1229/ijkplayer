@@ -37,6 +37,11 @@
 		C99B0F1A29DE76B100E88ECB /* MRRenderViewAuxProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = C99B0F1929DE76B100E88ECB /* MRRenderViewAuxProxy.m */; };
 		C99B0F9229DE9D2500E88ECB /* MultiRenderSample.m in Sources */ = {isa = PBXBuildFile; fileRef = C99B0F9029DE9D2500E88ECB /* MultiRenderSample.m */; };
 		C99B0F9329DE9D2500E88ECB /* MultiRenderSample.xib in Resources */ = {isa = PBXBuildFile; fileRef = C99B0F9129DE9D2500E88ECB /* MultiRenderSample.xib */; };
+		C9C7E27A2B60E37200D5F2E0 /* MRPlaylistViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C9C7E2782B60E37200D5F2E0 /* MRPlaylistViewController.m */; };
+		C9C7E27B2B60E37200D5F2E0 /* MRPlaylistViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C9C7E2792B60E37200D5F2E0 /* MRPlaylistViewController.xib */; };
+		C9C7E27E2B60E54A00D5F2E0 /* MRPlaylistRowView.m in Sources */ = {isa = PBXBuildFile; fileRef = C9C7E27D2B60E54A00D5F2E0 /* MRPlaylistRowView.m */; };
+		C9C7E2822B60F09100D5F2E0 /* MRPlayerSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C9C7E2802B60F09100D5F2E0 /* MRPlayerSettingsViewController.m */; };
+		C9C7E2832B60F09100D5F2E0 /* MRPlayerSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C9C7E2812B60F09100D5F2E0 /* MRPlayerSettingsViewController.xib */; };
 		C9FFF21527C864C100284B46 /* MRProgressSlider.m in Sources */ = {isa = PBXBuildFile; fileRef = C9FFF21327C864C100284B46 /* MRProgressSlider.m */; };
 		DD0443E627E7749800CB946B /* MRActionProcessor+Private.m in Sources */ = {isa = PBXBuildFile; fileRef = DD0443DE27E7749800CB946B /* MRActionProcessor+Private.m */; };
 		DD0443E727E7749800CB946B /* MRActionProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = DD0443E027E7749800CB946B /* MRActionProcessor.m */; };
@@ -121,6 +126,14 @@
 		C99B0F8F29DE9D2500E88ECB /* MultiRenderSample.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MultiRenderSample.h; sourceTree = "<group>"; };
 		C99B0F9029DE9D2500E88ECB /* MultiRenderSample.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MultiRenderSample.m; sourceTree = "<group>"; };
 		C99B0F9129DE9D2500E88ECB /* MultiRenderSample.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MultiRenderSample.xib; sourceTree = "<group>"; };
+		C9C7E2772B60E37200D5F2E0 /* MRPlaylistViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRPlaylistViewController.h; sourceTree = "<group>"; };
+		C9C7E2782B60E37200D5F2E0 /* MRPlaylistViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MRPlaylistViewController.m; sourceTree = "<group>"; };
+		C9C7E2792B60E37200D5F2E0 /* MRPlaylistViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MRPlaylistViewController.xib; sourceTree = "<group>"; };
+		C9C7E27C2B60E54A00D5F2E0 /* MRPlaylistRowView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRPlaylistRowView.h; sourceTree = "<group>"; };
+		C9C7E27D2B60E54A00D5F2E0 /* MRPlaylistRowView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRPlaylistRowView.m; sourceTree = "<group>"; };
+		C9C7E27F2B60F09100D5F2E0 /* MRPlayerSettingsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRPlayerSettingsViewController.h; sourceTree = "<group>"; };
+		C9C7E2802B60F09100D5F2E0 /* MRPlayerSettingsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MRPlayerSettingsViewController.m; sourceTree = "<group>"; };
+		C9C7E2812B60F09100D5F2E0 /* MRPlayerSettingsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MRPlayerSettingsViewController.xib; sourceTree = "<group>"; };
 		C9FFF21327C864C100284B46 /* MRProgressSlider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRProgressSlider.m; sourceTree = "<group>"; };
 		C9FFF21427C864C100284B46 /* MRProgressSlider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRProgressSlider.h; sourceTree = "<group>"; };
 		DD0443DC27E7749800CB946B /* MRActionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRActionManager.h; sourceTree = "<group>"; };
@@ -303,12 +316,20 @@
 				C905CF1E2B55163C00D59730 /* MRRootViewController.h */,
 				C905CF1F2B55163C00D59730 /* MRRootViewController.m */,
 				C905CF202B55163C00D59730 /* MRRootViewController.xib */,
+				C9C7E27F2B60F09100D5F2E0 /* MRPlayerSettingsViewController.h */,
+				C9C7E2802B60F09100D5F2E0 /* MRPlayerSettingsViewController.m */,
+				C9C7E2812B60F09100D5F2E0 /* MRPlayerSettingsViewController.xib */,
 				C905CF162B54C8D300D59730 /* MRAutoTestViewController.h */,
 				C905CF152B54C8D300D59730 /* MRAutoTestViewController.m */,
 				C905CF142B54C8D300D59730 /* MRAutoTestViewController.xib */,
 				C905CF1A2B550C7400D59730 /* MRStatisticalViewController.h */,
 				C905CF192B550C7400D59730 /* MRStatisticalViewController.m */,
 				C905CF1B2B550C7400D59730 /* MRStatisticalViewController.xib */,
+				C9C7E2772B60E37200D5F2E0 /* MRPlaylistViewController.h */,
+				C9C7E2782B60E37200D5F2E0 /* MRPlaylistViewController.m */,
+				C9C7E2792B60E37200D5F2E0 /* MRPlaylistViewController.xib */,
+				C9C7E27C2B60E54A00D5F2E0 /* MRPlaylistRowView.h */,
+				C9C7E27D2B60E54A00D5F2E0 /* MRPlaylistRowView.m */,
 				C99B0F8F29DE9D2500E88ECB /* MultiRenderSample.h */,
 				C99B0F9029DE9D2500E88ECB /* MultiRenderSample.m */,
 				C99B0F9129DE9D2500E88ECB /* MultiRenderSample.xib */,
@@ -438,11 +459,13 @@
 				DD9B139222C23A7A002D1D79 /* MainMenu.xib in Resources */,
 				C905CF1D2B550C7400D59730 /* MRStatisticalViewController.xib in Resources */,
 				C97674EF2A1F333D00B7627E /* MRTextInfoViewController.xib in Resources */,
+				C9C7E2832B60F09100D5F2E0 /* MRPlayerSettingsViewController.xib in Resources */,
 				C905CF222B55163C00D59730 /* MRRootViewController.xib in Resources */,
 				C955005027C769050026AB17 /* GeneralSettingViewController.xib in Resources */,
 				C99B0F9329DE9D2500E88ECB /* MultiRenderSample.xib in Resources */,
 				C955004B27C768DD0026AB17 /* SubtitleSettingViewController.xib in Resources */,
 				C955003E27C75A580026AB17 /* Setting.storyboard in Resources */,
+				C9C7E27B2B60E37200D5F2E0 /* MRPlaylistViewController.xib in Resources */,
 				C955005527C769770026AB17 /* SnapshotSettingViewController.xib in Resources */,
 				C955005F27C769D30026AB17 /* GraphicSettingViewController.xib in Resources */,
 			);
@@ -497,6 +520,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C9C7E2822B60F09100D5F2E0 /* MRPlayerSettingsViewController.m in Sources */,
 				C99B0F1A29DE76B100E88ECB /* MRRenderViewAuxProxy.m in Sources */,
 				C955004F27C769050026AB17 /* GeneralSettingViewController.m in Sources */,
 				C905CF182B54C8D300D59730 /* MRAutoTestViewController.m in Sources */,
@@ -515,6 +539,7 @@
 				C905CF1C2B550C7400D59730 /* MRStatisticalViewController.m in Sources */,
 				DD9B138D22C23A79002D1D79 /* AppDelegate.m in Sources */,
 				C96F5B9B291A052100C79E07 /* MRProgressIndicator.m in Sources */,
+				C9C7E27E2B60E54A00D5F2E0 /* MRPlaylistRowView.m in Sources */,
 				DDE9FC70273BD3CF00481560 /* NSFileManager+Sandbox.m in Sources */,
 				C905CF212B55163C00D59730 /* MRRootViewController.m in Sources */,
 				C955004227C75E740026AB17 /* LeftCategoryController.m in Sources */,
@@ -524,6 +549,7 @@
 				C9FFF21527C864C100284B46 /* MRProgressSlider.m in Sources */,
 				C97674EE2A1F333D00B7627E /* MRTextInfoViewController.m in Sources */,
 				DD050F9D25A43A1300F01E2F /* MRUtil.m in Sources */,
+				C9C7E27A2B60E37200D5F2E0 /* MRPlaylistViewController.m in Sources */,
 				DD0443E827E7749800CB946B /* MRActionManager.m in Sources */,
 				DD0443E627E7749800CB946B /* MRActionProcessor+Private.m in Sources */,
 				DD050F9E25A43A1300F01E2F /* MRDragView.m in Sources */,
@@ -680,7 +706,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 0.10.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "cn.debugly.IJKMediaMacDemo.${DEVELOPMENT_TEAM}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -709,7 +735,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 0.10.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "cn.debugly.IJKMediaMacDemo.${DEVELOPMENT_TEAM}";
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -20,14 +20,20 @@
 #import "MRBaseView.h"
 #import "MultiRenderSample.h"
 #import "NSString+Ex.h"
+#import "MRPlayerSettingsViewController.h"
+#import "MRPlaylistViewController.h"
 
 static NSString* lastPlayedKey = @"__lastPlayedKey";
 static BOOL hdrAnimationShown = 0;
 
 @interface MRRootViewController ()<MRDragViewDelegate,SHBaseViewDelegate,NSMenuDelegate>
 
-@property (nonatomic, weak) IBOutlet NSStackView *advancedView;
-@property (nonatomic, weak) IBOutlet MRBaseView *playerCtrlPanel;
+@property (nonatomic, weak) IBOutlet NSView *playerContainer;
+@property (nonatomic, weak) IBOutlet NSView *siderBarContainer;
+@property (weak) IBOutlet NSLayoutConstraint *siderBarWidthConstraint;
+
+@property (nonatomic, weak) IBOutlet NSView *playerCtrlPanel;
+
 @property (nonatomic, weak) IBOutlet NSTextField *playedTimeLb;
 @property (nonatomic, weak) IBOutlet NSTextField *durationTimeLb;
 @property (nonatomic, weak) IBOutlet NSButton *playCtrlBtn;
@@ -41,18 +47,6 @@ static BOOL hdrAnimationShown = 0;
 
 //for cocoa binding begin
 @property (nonatomic, assign) float volume;
-@property (nonatomic, assign) float subtitleDelay;
-@property (nonatomic, assign) float subtitleMargin;
-
-@property (nonatomic, assign) float brightness;
-@property (nonatomic, assign) float saturation;
-@property (nonatomic, assign) float contrast;
-@property (nonatomic, assign) BOOL use_openGL;
-@property (nonatomic, copy) NSString *fcc;
-@property (nonatomic, assign) int snapshot;
-@property (nonatomic, assign) BOOL shouldShowHudView;
-@property (nonatomic, assign) BOOL accurateSeek;
-@property (nonatomic, assign) BOOL loop;
 //for cocoa binding end
 
 @property (nonatomic, assign) BOOL seeking;
@@ -68,6 +62,21 @@ static BOOL hdrAnimationShown = 0;
 @property (nonatomic, copy) NSURL *playingUrl;
 @property (nonatomic, weak) NSTimer *tickTimer;
 @property (nonatomic, assign, getter=isUsingHardwareAccelerate) BOOL usingHardwareAccelerate;
+
+
+@property (nonatomic, assign) float subtitleDelay;
+@property (nonatomic, assign) float subtitleMargin;
+
+@property (nonatomic, assign) float brightness;
+@property (nonatomic, assign) float saturation;
+@property (nonatomic, assign) float contrast;
+@property (nonatomic, assign) BOOL use_openGL;
+@property (nonatomic, copy) NSString *fcc;
+@property (nonatomic, assign) int snapshot;
+@property (nonatomic, assign) BOOL shouldShowHudView;
+@property (nonatomic, assign) BOOL accurateSeek;
+@property (nonatomic, assign) BOOL loop;
+
 
 @end
 
@@ -147,10 +156,8 @@ static BOOL hdrAnimationShown = 0;
     self.playedTimeLb.stringValue = @"--:--";
     self.durationTimeLb.stringValue = @"--:--";
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self toggleAdvancedViewShow];
-    });
-
+//    [self.siderBarContainer setWantsLayer:YES];
+//    self.siderBarContainer.layer.backgroundColor = NSColor.redColor.CGColor;
 }
 
 - (void)prepareRightMenu
@@ -249,16 +256,51 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-- (void)toggleAdvancedViewShow
+- (void)showPlayerSettingsSideBar
 {
-    __weakSelf__
-    [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-        context.duration = 0.35;
-        context.allowsImplicitAnimation = YES;
-        context.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-        __strongSelf__
-        self.advancedView.animator.hidden = !self.advancedView.isHidden;
-    }];
+    if (self.siderBarWidthConstraint.constant > 0) {
+        
+        __weakSelf__
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+            context.duration = 0.35;
+            context.allowsImplicitAnimation = YES;
+            context.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+            __strongSelf__
+            [self.siderBarContainer.animator layoutSubtreeIfNeeded];
+            self.siderBarWidthConstraint.animator.constant = 0;
+            [self.siderBarContainer.animator setNeedsLayout:YES];
+        }];
+    } else {
+        
+        MRPlayerSettingsViewController *settings = nil;
+        for (NSViewController *vc in self.childViewControllers) {
+            if ([vc isKindOfClass:[MRPlayerSettingsViewController class]]) {
+                settings = (MRPlayerSettingsViewController *)vc;
+                break;
+            }
+        }
+        
+        if (!settings) {
+            settings = [[MRPlayerSettingsViewController alloc] initWithNibName:@"MRPlayerSettingsViewController" bundle:nil];
+            [self addChildViewController:settings];
+        }
+        
+        [self.siderBarContainer addSubview:settings.view];
+        CGRect frame = settings.view.bounds;
+        frame.size = CGSizeMake(frame.size.width, self.siderBarContainer.bounds.size.height);
+        settings.view.frame = frame;
+
+        __weakSelf__
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+            context.duration = 0.35;
+            context.allowsImplicitAnimation = YES;
+            context.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+            __strongSelf__
+            [self.siderBarContainer.animator layoutSubtreeIfNeeded];
+            self.siderBarWidthConstraint.animator.constant = frame.size.width;
+            [self.siderBarContainer.animator setNeedsLayout:YES];
+        }];
+    }
 }
 
 - (void)toggleTitleBar:(BOOL)show
@@ -322,7 +364,7 @@ static BOOL hdrAnimationShown = 0;
                 break;
             case kVK_ANSI_B:
             {
-                [self toggleAdvancedViewShow];
+                
             }
                 break;
             case kVK_ANSI_R:
@@ -631,14 +673,7 @@ static BOOL hdrAnimationShown = 0;
     rect.origin = CGPointZero;
     playerView.frame = rect;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    NSView *dragView = nil;
-    for (NSView *sub in [self.view subviews]) {
-        if ([sub isKindOfClass:[MRDragView class]]) {
-            dragView = sub;
-            break;
-        }
-    }
-    [self.view addSubview:playerView positioned:NSWindowAbove relativeTo:dragView];
+    [self.playerContainer addSubview:playerView positioned:NSWindowBelow relativeTo:self.playerCtrlPanel];
     
     playerView.showHdrAnimation = !hdrAnimationShown;
     //playerView.preventDisplay = YES;
@@ -1218,7 +1253,7 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)onMoreFunc:(id)sender
 {
-    [self toggleAdvancedViewShow];
+    [self showPlayerSettingsSideBar];
 }
 
 - (BOOL)preferHW

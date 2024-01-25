@@ -978,7 +978,7 @@
                                                     <rect key="frame" x="10" y="19.5" width="22.5" height="15"/>
                                                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="volume.3.fill" catalog="system" id="Nw6-Sd-YYo"/>
                                                 </imageView>
-                                                <slider horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YIg-F3-SGM">
+                                                <slider wantsLayer="YES" horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YIg-F3-SGM">
                                                     <rect key="frame" x="35" y="18" width="375" height="17"/>
                                                     <constraints>
                                                         <constraint firstAttribute="height" constant="45" id="8ME-aW-tMX"/>

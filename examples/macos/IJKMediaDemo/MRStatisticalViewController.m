@@ -661,14 +661,7 @@ static BOOL hdrAnimationShown = 0;
     rect.origin = CGPointZero;
     playerView.frame = rect;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    NSView *dragView = nil;
-    for (NSView *sub in [self.view subviews]) {
-        if ([sub isKindOfClass:[MRDragView class]]) {
-            dragView = sub;
-            break;
-        }
-    }
-    [self.view addSubview:playerView positioned:NSWindowAbove relativeTo:dragView];
+    [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:self.playerCtrlPanel];
     
     playerView.showHdrAnimation = !hdrAnimationShown;
     //playerView.preventDisplay = YES;
