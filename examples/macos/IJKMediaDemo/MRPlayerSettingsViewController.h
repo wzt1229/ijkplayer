@@ -21,6 +21,7 @@ typedef void(^MRPlayerSettingsCloseStreamBlock)(NSString *);
 - (void)updateTracks:(NSDictionary *)dic;
 - (void)onCloseCurrentStream:(MRPlayerSettingsCloseStreamBlock)block;
 - (void)onExchangeSelectedStream:(MRPlayerSettingsExchangeStreamBlock)block;
+- (void)onCaptureShot:(dispatch_block_t)block;
 
 @end
 

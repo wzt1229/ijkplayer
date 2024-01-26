@@ -953,6 +953,17 @@
                                             <binding destination="A8Q-JO-gdn" name="selectedValue" keyPath="values.snapshot_type" id="XMt-Es-arV"/>
                                         </connections>
                                     </popUpButton>
+                                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8d8-34-BFm">
+                                        <rect key="frame" x="217" y="195" width="57" height="32"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <buttonCell key="cell" type="push" title="截取" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="3CX-jb-X6Z">
+                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="smallSystem"/>
+                                        </buttonCell>
+                                        <connections>
+                                            <action selector="onSnapshot:" target="-2" id="MwZ-hf-9Cw"/>
+                                        </connections>
+                                    </button>
                                 </subviews>
                             </view>
                         </subviews>

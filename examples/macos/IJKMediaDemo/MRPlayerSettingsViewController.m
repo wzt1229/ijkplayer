@@ -26,6 +26,7 @@
 
 @property (nonatomic, copy) MRPlayerSettingsCloseStreamBlock closeCurrentStream;
 @property (nonatomic, copy) MRPlayerSettingsExchangeStreamBlock exchangeSelectedStream;
+@property (nonatomic, copy) dispatch_block_t captureShot;
 
 @end
 
@@ -196,6 +197,18 @@
     }
     if (key) {
         [MRCocoaBindingUserDefault resetValueForKey:key];
+    }
+}
+
+- (void)onCaptureShot:(dispatch_block_t)block
+{
+    self.captureShot = block;
+}
+
+- (IBAction)onSnapshot:(NSButton *)sender
+{
+    if (self.captureShot) {
+        self.captureShot();
     }
 }
 

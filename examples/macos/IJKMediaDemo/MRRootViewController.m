@@ -271,6 +271,12 @@ static BOOL hdrAnimationShown = 0;
                 __strongSelf__
                 [self.player exchangeSelectedStream:idx];
             }];
+            
+            [settings onCaptureShot:^{
+                __strongSelf__
+                [self onCaptureShot];
+            }];
+            
             created = YES;
             [self addChildViewController:settings];
         }
@@ -395,7 +401,7 @@ static BOOL hdrAnimationShown = 0;
                 break;
             case kVK_ANSI_S:
             {
-                [self onCaptureShot:nil];
+                [self onCaptureShot];
             }
                 break;
             case kVK_ANSI_Period:
@@ -1577,7 +1583,7 @@ static BOOL hdrAnimationShown = 0;
     return [self saveDir:[[self.playingUrl path] stringByDeletingLastPathComponent]];
 }
 
-- (IBAction)onCaptureShot:(id)sender
+- (void)onCaptureShot
 {
     CGImageRef img = [self.player.view snapshot:[MRCocoaBindingUserDefault snapshot_type]];
     if (img) {

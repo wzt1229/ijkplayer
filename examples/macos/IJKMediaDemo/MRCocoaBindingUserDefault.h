@@ -52,7 +52,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (float)subtitle_font_ratio;
 + (float)subtitle_bottom_margin;
 + (NSString *)overlay_format;
-+ (BOOL)accurate_seek;
 + (BOOL)use_opengl;
 + (int)snapshot_type;
 
