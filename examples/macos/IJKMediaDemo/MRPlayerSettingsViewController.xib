@@ -265,7 +265,7 @@
                                                         <binding destination="A8Q-JO-gdn" name="value" keyPath="values.color_adjust_contrast" id="epY-L1-OsE"/>
                                                     </connections>
                                                 </slider>
-                                                <button wantsLayer="YES" tag="2" verticalHuggingPriority="750" id="8CU-fN-vgh">
+                                                <button wantsLayer="YES" tag="3" verticalHuggingPriority="750" id="8CU-fN-vgh">
                                                     <rect key="frame" x="152" y="-1" width="42" height="32"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <buttonCell key="cell" type="push" bezelStyle="rounded" image="arrow.clockwise" catalog="system" imagePosition="overlaps" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="FDy-EB-kJw">
@@ -286,22 +286,22 @@
                                             <rect key="frame" x="4" y="5" width="196" height="37"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
-                                                <button identifier="render_mode" verticalHuggingPriority="750" id="sR5-UB-hi3">
-                                                    <rect key="frame" x="7" y="9" width="76" height="18"/>
+                                                <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="Rrx-gK-jef">
+                                                    <rect key="frame" x="5" y="12" width="99" height="14"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                    <buttonCell key="cell" type="radio" title="OpenGL" bezelStyle="regularSquare" imagePosition="left" inset="2" id="KTz-oy-8Bp">
-                                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <textFieldCell key="cell" lineBreakMode="clipping" title="强制使用 OpenGL" id="vqc-hD-irx">
                                                         <font key="font" metaFont="smallSystem"/>
-                                                    </buttonCell>
-                                                </button>
-                                                <button identifier="render_mode" verticalHuggingPriority="750" id="ap5-op-yB4">
-                                                    <rect key="frame" x="97" y="9" width="66" height="18"/>
+                                                        <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                    </textFieldCell>
+                                                </textField>
+                                                <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="WBL-Kg-W6K">
+                                                    <rect key="frame" x="159" y="11" width="28" height="16"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                    <buttonCell key="cell" type="radio" title="Metal" bezelStyle="regularSquare" imagePosition="left" inset="2" id="LYA-JF-ihg">
-                                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                        <font key="font" metaFont="smallSystem"/>
-                                                    </buttonCell>
-                                                </button>
+                                                    <connections>
+                                                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.use_opengl" id="2Xx-k8-h78"/>
+                                                    </connections>
+                                                </switch>
                                             </subviews>
                                         </view>
                                     </box>
@@ -320,9 +320,9 @@
                                         <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="Naz-No-k3N">
                                             <font key="font" metaFont="smallSystem"/>
                                             <segments>
-                                                <segment label="拉伸填充" width="90" tag="1"/>
-                                                <segment label="等比填充" width="89" selected="YES" tag="2"/>
-                                                <segment label="等比适应" width="89" tag="3"/>
+                                                <segment label="拉伸填充" width="90" tag="2"/>
+                                                <segment label="等比填充" width="89" selected="YES" tag="1"/>
+                                                <segment label="等比适应" width="89"/>
                                             </segments>
                                         </segmentedCell>
                                         <connections>

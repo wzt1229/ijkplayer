@@ -25,7 +25,7 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <view id="lpW-6Y-TED" customClass="SHBaseView">
             <rect key="frame" x="0.0" y="0.0" width="1507" height="708"/>
-            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="bFq-6V-0jf" customClass="MRDragView">
                     <rect key="frame" x="0.0" y="0.0" width="1507" height="708"/>
@@ -57,8 +57,8 @@
                                                     </constraints>
                                                     <sliderCell key="cell" controlSize="mini" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="0.20000000000000001" tickMarkPosition="above" sliderType="linear" id="kZp-Qd-mSu"/>
                                                     <connections>
-                                                        <action selector="onVolumeChange:" target="-2" id="KHC-g3-34p"/>
-                                                        <binding destination="-2" name="value" keyPath="volume" id="7de-Wg-vU9"/>
+                                                        <action selector="onVolumeChange:" target="-2" id="Jmq-7B-rgt"/>
+                                                        <binding destination="OCk-Q5-1dK" name="value" keyPath="values.volume" id="1Nd-cY-qY3"/>
                                                     </connections>
                                                 </slider>
                                                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F43-uk-XPX" userLabel="seek cost">
@@ -123,7 +123,7 @@
                                                         <imageReference key="image" image="info.circle.fill" catalog="system" symbolScale="large"/>
                                                     </buttonCell>
                                                     <connections>
-                                                        <action selector="toggleHUD:" target="-2" id="jaf-71-OJc"/>
+                                                        <action selector="onToggleHUD:" target="-2" id="jaf-71-OJc"/>
                                                     </connections>
                                                 </button>
                                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="db2-qU-bhl">
@@ -134,7 +134,7 @@
                                                         <imageReference key="image" image="chevron.forward.2" catalog="system" symbolScale="large"/>
                                                     </buttonCell>
                                                     <connections>
-                                                        <action selector="onMoreFunc:" target="-2" id="Rqz-DO-V8r"/>
+                                                        <action selector="onToggleSiderBar:" target="-2" id="Rqz-DO-V8r"/>
                                                     </connections>
                                                 </button>
                                             </endViews>

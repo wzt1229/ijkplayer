@@ -1029,8 +1029,12 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         hudView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin;
         CGFloat screenWidth = [[UIScreen mainScreen]bounds].size.width;
 #else
-        hudView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin;
-        CGFloat screenWidth = [[[NSScreen screens] firstObject]frame].size.width;
+        hudView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin | NSViewMinYMargin | NSViewMaxYMargin;
+        NSScreen *screen = self.view.window.screen;
+        if (!screen) {
+            screen = [[NSScreen screens] firstObject];
+        }
+        CGFloat screenWidth = [screen frame].size.width;
 #endif
         rect.size.width = MIN(screenWidth / 3.0, 350);
         rect.origin.x = CGRectGetWidth(self.view.bounds) - rect.size.width;

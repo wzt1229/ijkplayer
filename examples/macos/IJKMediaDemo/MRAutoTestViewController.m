@@ -1191,7 +1191,7 @@ static BOOL hdrAnimationShown = 0;
 
 - (BOOL)preferHW
 {
-    return [MRCocoaBindingUserDefault hw];
+    return [MRCocoaBindingUserDefault use_hw];
 }
 
 - (void)retry

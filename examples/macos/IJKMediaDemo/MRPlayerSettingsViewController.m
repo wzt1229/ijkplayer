@@ -8,6 +8,7 @@
 
 #import "MRPlayerSettingsViewController.h"
 #import <IJKMediaPlayerKit/IJKFFMoviePlayerController.h>
+#import "MRCocoaBindingUserDefault.h"
 
 @interface MRPlayerSettingsViewController ()
 
@@ -56,18 +57,6 @@
 {
     self.exchangeSelectedStream = block;
 }
-
-- (IBAction)onResetColorAdjust:(NSButton *)sender {
-    int tag = (int)sender.tag;
-    if (tag == 1) {
-        
-    } else if (tag == 2){
-        
-    } else if (tag == 3){
-        
-    }
-}
-
 
 - (void)exchangeToNextSubtitle
 {
@@ -191,6 +180,22 @@
         if (self.exchangeSelectedStream) {
             self.exchangeSelectedStream(idx);
         }
+    }
+}
+
+- (IBAction)onResetColorAdjust:(NSButton *)sender
+{
+    int tag = (int)sender.tag;
+    NSString *key = nil;
+    if (tag == 1) {
+        key = @"color_adjust_brightness";
+    } else if (tag == 2){
+        key = @"color_adjust_saturation";
+    } else if (tag == 3){
+        key = @"color_adjust_contrast";
+    }
+    if (key) {
+        [MRCocoaBindingUserDefault resetValueForKey:key];
     }
 }
 

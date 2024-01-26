@@ -41,30 +41,42 @@
 {
     [[NSUserDefaultsController sharedUserDefaultsController] setInitialValues:@{
         @"values.log_level":@"info",
+        @"values.color_adjust_brightness" : @(1.0),
+        @"values.color_adjust_saturation" : @(1.0),
+        @"values.color_adjust_contrast" : @(1.0),
+        @"values.use_opengl" : @(0),
+        @"values.picture_fill_mode" : @(3),
+        @"values.picture_wh_ratio" : @(0),
+        @"values.picture_ratate_mode" : @(0),
+        @"values.picture_flip_mode" : @(0),
+        
         @"values.subtitle_font_ratio":@(1.5),
         @"values.subtitle_bottom_margin":@(1.5),
-        @"values.hw":@(1),
-        @"values.copy_hw_frame":@(1),
-        @"values.overlay_format":@"fcc-_es2",
-        @"values.accurate_seek":@(1),
-        @"values.use_opengl":@(0),
-        @"values.snapshot_type":@(0),
+        @"values.subtitle_border_size" : @(2),
+//        @"values.subtitle_border_color" : @(),
+        @"values.subtitle_font_size" : @(30),
+        @"values.subtitle_font_bold" : @(0),
+        @"values.subtitle_font_italic" : @(0),
+//        @"values.subtitle_bg_color" : @(),
+//        @"values.subtitle_text_color" : @(),
+//        @"values.subtitle_font_name" : @(),
+//        @"values.snapshot_type" : @(),
+        
+        @"values.use_hw" : @(1),
+        @"values.copy_hw_frame" : @(0),
+        @"values.de_interlace" : @(0),
+        @"values.open_hdr" : @(1),
+        @"values.overlay_format" : @"fcc-_es2",
+        @"values.accurate_seek" : @(1),
+        @"values.seek_step" : @(15),
+        @"values.open_gzip" : @(1),
+        @"values.use_dns_cache" : @(1),
+        @"values.dns_cache_period" : @(600),
+        @"values.volume" : @(0.4),
     }];
-//    [self initUserDefault:@"values.log_level" defaultValue:@"info"];
-//    
-//    [self initUserDefault:@"values.subtitle_font_ratio" defaultValue:@(1.5)];
-//    [self initUserDefault:@"values.subtitle_bottom_margin" defaultValue:@(1.5)];
-//    
-//    [self initUserDefault:@"values.hw" defaultValue:@(1)];
-//    [self initUserDefault:@"values.copy_hw_frame" defaultValue:@(1)];
-//    [self initUserDefault:@"values.overlay_format" defaultValue:@"fcc-_es2"];
-//    [self initUserDefault:@"values.accurate_seek" defaultValue:@(1)];
-//    [self initUserDefault:@"values.use_opengl" defaultValue:@(0)];
-//    
-//    [self initUserDefault:@"values.snapshot_type" defaultValue:@(0)];
 }
 
-+ (id)anyForKey:(NSString *)key
++ (NSString *)resolveKey:(NSString *)key
 {
     if (!key) {
         return nil;
@@ -72,7 +84,26 @@
     if (![key hasPrefix:@"values."]) {
         key = [@"values." stringByAppendingString:key];
     }
+    return key;
+}
+
++ (id)anyForKey:(NSString *)key
+{
+    key = [self resolveKey:key];
     return [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:key];
+}
+
++ (void)setValue:(id)value forKey:(NSString *)key
+{
+    key = [self resolveKey:key];
+    [[NSUserDefaultsController sharedUserDefaultsController] setValue:value forKeyPath:key];
+}
+
++ (void)resetValueForKey:(NSString *)key
+{
+    key = [self resolveKey:key];
+    id initValue = [[[NSUserDefaultsController sharedUserDefaultsController] initialValues] objectForKey:key];
+    [self setValue:initValue forKey:key];
 }
 
 + (BOOL)boolForKey:(NSString *)key
@@ -97,17 +128,33 @@
 
 - (void)onChange:(void(^)(id,BOOL*))observer forKey:(NSString *)key
 {
-    NSMutableArray *array = [self.observers objectForKey:key];
-    if (!array) {
-        array = [NSMutableArray array];
-        [self.observers setObject:array forKey:key];
-        NSUserDefaults *defaults = [[NSUserDefaultsController sharedUserDefaultsController] defaults];
-        [defaults addObserver:self
-                   forKeyPath:key
-                      options:NSKeyValueObservingOptionNew
-                      context:NULL];
+    [self onChange:observer forKey:key init:NO];
+}
+
+- (void)onChange:(void(^)(id,BOOL*))observer forKey:(NSString *)key init:(BOOL)init
+{
+    if (!observer) {
+        return;
     }
-    [array addObject:[observer copy]];
+    BOOL remove = NO;
+    if (init) {
+        id value = [[self class] anyForKey:key];
+        observer(value, &remove);
+    }
+    
+    if (!remove) {
+        NSMutableArray *array = [self.observers objectForKey:key];
+        if (!array) {
+            array = [NSMutableArray array];
+            [self.observers setObject:array forKey:key];
+            NSUserDefaults *defaults = [[NSUserDefaultsController sharedUserDefaultsController] defaults];
+            [defaults addObserver:self
+                       forKeyPath:key
+                          options:NSKeyValueObservingOptionNew
+                          context:NULL];
+        }
+        [array addObject:[observer copy]];
+    }
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -133,7 +180,7 @@
         NSMutableArray *result = [NSMutableArray arrayWithArray:array];
         NSEnumerator *enumerator = [removeArr reverseObjectEnumerator];
         id obj = nil;
-        while (obj = [enumerator nextObject]) { //通过枚举器，取数组里面的每一个元素
+        while (obj = [enumerator nextObject]) {
             [result removeObjectAtIndex:[obj intValue]];
         }
         [self.observers setObject:result forKey:keyPath];
@@ -149,14 +196,49 @@
     return [self stringForKey:@"log_level"];
 }
 
++ (float)color_adjust_brightness
+{
+    return [self floatForKey:@"color_adjust_brightness"];
+}
+
++ (float)color_adjust_saturation
+{
+    return [self floatForKey:@"color_adjust_saturation"];
+}
+
++ (float)color_adjust_contrast
+{
+    return [self floatForKey:@"color_adjust_contrast"];
+}
+
++ (int)picture_fill_mode
+{
+    return [self intForKey:@"picture_fill_mode"];
+}
+
++ (int)picture_wh_ratio
+{
+    return [self intForKey:@"picture_wh_ratio"];
+}
+
++ (int)picture_ratate_mode
+{
+    return [self intForKey:@"picture_ratate_mode"];
+}
+
++ (int)picture_flip_mode
+{
+    return [self intForKey:@"picture_flip_mode"];
+}
+
 + (BOOL)copy_hw_frame
 {
     return [self boolForKey:@"copy_hw_frame"];
 }
 
-+ (BOOL)hw
++ (BOOL)use_hw
 {
-    return [self boolForKey:@"hw"];
+    return [self boolForKey:@"use_hw"];
 }
 
 + (float)subtitle_font_ratio
@@ -167,6 +249,16 @@
 + (float)subtitle_bottom_margin
 {
     return [self floatForKey:@"subtitle_bottom_margin"];
+}
+
++ (float)volume
+{
+    return [self floatForKey:@"volume"];
+}
+
++ (void)setVolume:(float)aVolume
+{
+    [self setValue:@(aVolume) forKey:@"volume"];
 }
 
 + (NSString *)overlay_format
@@ -187,6 +279,11 @@
 + (int)snapshot_type
 {
     return [self intForKey:@"snapshot_type"];
+}
+
++ (int)seek_step
+{
+    return [self intForKey:@"seek_step"];
 }
 
 @end

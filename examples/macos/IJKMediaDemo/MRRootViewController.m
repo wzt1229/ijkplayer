@@ -43,10 +43,6 @@ static BOOL hdrAnimationShown = 0;
 @property (nonatomic, weak) IBOutlet NSTextField *seekCostLb;
 @property (nonatomic, weak) NSTrackingArea *trackingArea;
 
-//for cocoa binding begin
-@property (nonatomic, assign) float volume;
-//for cocoa binding end
-
 @property (nonatomic, assign) BOOL seeking;
 @property (nonatomic, weak) id eventMonitor;
 
@@ -90,8 +86,6 @@ static BOOL hdrAnimationShown = 0;
     //[self.view setWantsLayer:YES];
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
     self.title = @"Root";
-    self.volume = 0.4;
-    [self onReset:nil];
     self.seekCostLb.stringValue = @"";
     self.loop = 0;
         
@@ -137,6 +131,12 @@ static BOOL hdrAnimationShown = 0;
     
 //    [self.siderBarContainer setWantsLayer:YES];
 //    self.siderBarContainer.layer.backgroundColor = NSColor.redColor.CGColor;
+    
+    [self observerColorAdjustChange];
+    [self observerScaleModeChange];
+    [self observerDARChange];
+    [self observerRotateChange];
+    [self observerRenderModeChange];
 }
 
 - (void)prepareRightMenu
@@ -410,7 +410,7 @@ static BOOL hdrAnimationShown = 0;
             case kVK_ANSI_H:
             {
                 if (event.modifierFlags & NSEventModifierFlagShift) {
-                    [self toggleHUD:nil];
+                    [self onToggleHUD:nil];
                 }
             }
                 break;
@@ -475,23 +475,23 @@ static BOOL hdrAnimationShown = 0;
                 break;
             case kVK_DownArrow:
             {
-                float volume = self.volume;
+                float volume = [MRCocoaBindingUserDefault volume];
                 volume -= 0.1;
                 if (volume < 0) {
                     volume = .0f;
                 }
-                self.volume = volume;
+                [MRCocoaBindingUserDefault setVolume:volume];
                 [self onVolumeChange:nil];
             }
                 break;
             case kVK_UpArrow:
             {
-                float volume = self.volume;
+                float volume = [MRCocoaBindingUserDefault volume];
                 volume += 0.1;
                 if (volume > 1) {
                     volume = 1.0f;
                 }
-                self.volume = volume;
+                [MRCocoaBindingUserDefault setValue:@(volume) forKey:@"volume"];
                 [self onVolumeChange:nil];
             }
                 break;
@@ -564,9 +564,8 @@ static BOOL hdrAnimationShown = 0;
     if (self.playingUrl) {
         [self doStopPlay];
     }
-    
+
     self.playingUrl = url;
-    
     self.seeking = NO;
     
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
@@ -576,6 +575,7 @@ static BOOL hdrAnimationShown = 0;
     //    [options setPlayerOptionIntValue:50000      forKey:@"min-frames"];
     [options setPlayerOptionIntValue:119     forKey:@"max-fps"];
     [options setPlayerOptionIntValue:self.loop?0:1      forKey:@"loop"];
+#warning todo de_interlace
     [options setCodecOptionIntValue:IJK_AVDISCARD_DEFAULT forKey:@"skip_loop_filter"];
     //for mgeg-ts seek
     [options setFormatOptionIntValue:1 forKey:@"seek_flag_keyframe"];
@@ -657,9 +657,7 @@ static BOOL hdrAnimationShown = 0;
     self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
     
     NSView <IJKVideoRenderingProtocol>*playerView = self.player.view;
-    CGRect rect = self.view.frame;
-    rect.origin = CGPointZero;
-    playerView.frame = rect;
+    playerView.frame = self.playerContainer.bounds;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.playerContainer addSubview:playerView positioned:NSWindowBelow relativeTo:self.playerCtrlPanel];
     
@@ -690,7 +688,10 @@ static BOOL hdrAnimationShown = 0;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerHdrAnimationStateChanged:) name:IJKMoviePlayerHDRAnimationStateChanged object:self.player.view];
     
     self.player.shouldAutoplay = YES;
+    [self.player setScalingMode:[MRCocoaBindingUserDefault picture_fill_mode]];
     [self onVolumeChange:nil];
+    [self applyDAR];
+    [self applyRotate];
 }
 
 #pragma mark - ijkplayer
@@ -911,7 +912,7 @@ static BOOL hdrAnimationShown = 0;
     NSString *title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],videoName];
     [self.view.window setTitle:title];
     
-    [self onReset:nil];
+    [self onChangeBSC];
     self.playCtrlBtn.state = NSControlStateValueOn;
     
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
@@ -1159,20 +1160,20 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-- (IBAction)toggleHUD:(id)sender
+- (IBAction)onToggleHUD:(id)sender
 {
     self.shouldShowHudView = !self.shouldShowHudView;
     self.player.shouldShowHudView = self.shouldShowHudView;
 }
 
-- (IBAction)onMoreFunc:(id)sender
+- (IBAction)onToggleSiderBar:(id)sender
 {
     [self showPlayerSettingsSideBar];
 }
 
 - (BOOL)preferHW
 {
-    return [MRCocoaBindingUserDefault hw];
+    return [MRCocoaBindingUserDefault use_hw];
 }
 
 - (void)retry
@@ -1292,27 +1293,27 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-- (IBAction)fastRewind:(NSButton *)sender
+- (void)fastRewind:(NSButton *)sender
 {
     float cp = self.player.currentPlaybackTime;
-    cp -= 10;
+    cp -= [MRCocoaBindingUserDefault seek_step];
     [self seekTo:cp];
 }
 
-- (IBAction)fastForward:(NSButton *)sender
-{    
+- (void)fastForward:(NSButton *)sender
+{
     if (self.player.playbackState == IJKMPMoviePlaybackStatePaused) {
         [self.player stepToNextFrame];
     } else {
         float cp = self.player.currentPlaybackTime;
-        cp += 10;
+        cp += [MRCocoaBindingUserDefault seek_step];
         [self seekTo:cp];
     }
 }
 
 - (IBAction)onVolumeChange:(NSSlider *)sender
 {
-    self.player.playbackVolume = self.volume;
+    self.player.playbackVolume = [MRCocoaBindingUserDefault volume];
 }
 
 #pragma mark 倍速设置
@@ -1377,63 +1378,160 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-#pragma mark 画面设置
+#pragma mark 色彩调节
 
-- (IBAction)onChangeRenderType:(NSPopUpButton *)sender
+- (void)onChangeBSC
 {
-    [self retry];
-}
-
-- (IBAction)onChangeScaleMode:(NSPopUpButton *)sender
-{
-    NSMenuItem *item = [sender selectedItem];
-    if (item.tag == 1) {
-        //scale to fill
-        [self.player setScalingMode:IJKMPMovieScalingModeFill];
-    } else if (item.tag == 2) {
-        //aspect fill
-        [self.player setScalingMode:IJKMPMovieScalingModeAspectFill];
-    } else if (item.tag == 3) {
-        //aspect fit
-        [self.player setScalingMode:IJKMPMovieScalingModeAspectFit];
-    }
+    IJKSDLColorConversionPreference colorPreference = self.player.view.colorPreference;
+    colorPreference.brightness = [MRCocoaBindingUserDefault color_adjust_brightness];
+    colorPreference.saturation = [MRCocoaBindingUserDefault color_adjust_saturation];
+    colorPreference.contrast   = [MRCocoaBindingUserDefault color_adjust_contrast];
     
+    self.player.view.colorPreference = colorPreference;
     if (!self.player.isPlaying) {
         [self.player.view setNeedsRefreshCurrentPic];
     }
 }
 
-- (IBAction)onRotate:(NSPopUpButton *)sender
+- (void)observerColorAdjustChange
 {
-    NSMenuItem *item = [sender selectedItem];
+    __weakSelf__
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self onChangeBSC];
+    } forKey:@"color_adjust_brightness"];
     
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self onChangeBSC];
+    } forKey:@"color_adjust_saturation"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self onChangeBSC];
+    } forKey:@"color_adjust_contrast"];
+}
+
+#pragma mark 画面设置
+
+- (void)observerScaleModeChange
+{
+    __weakSelf__
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        int value = [v intValue];
+        [self.player setScalingMode:value];
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"picture_fill_mode"];
+}
+
+- (void)applyDAR
+{
+    int value = [MRCocoaBindingUserDefault picture_wh_ratio];
+    int dar_num = 0;
+    int dar_den = 1;
+    if (value == 1) {
+        dar_num = 4;
+        dar_den = 3;
+    } else if (value == 2) {
+        dar_num = 16;
+        dar_den = 9;
+    } else if (value == 3) {
+        dar_num = 1;
+        dar_den = 1;
+    }
+    self.player.view.darPreference = (IJKSDLDARPreference){1.0 * dar_num/dar_den};
+}
+
+- (void)observerDARChange
+{
+    __weakSelf__
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self applyDAR];
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"picture_wh_ratio"];
+}
+
+- (void)applyRotate
+{
     IJKSDLRotatePreference preference = self.player.view.rotatePreference;
-    
-    if (item.tag == 0) {
+    int rotate = [MRCocoaBindingUserDefault picture_ratate_mode];
+    if (rotate == 0) {
         preference.type = IJKSDLRotateNone;
         preference.degrees = 0;
-    } else if (item.tag == 1) {
+    } else if (rotate == 1) {
         preference.type = IJKSDLRotateZ;
         preference.degrees = -90;
-    } else if (item.tag == 2) {
+    } else if (rotate == 2) {
         preference.type = IJKSDLRotateZ;
         preference.degrees = -180;
-    } else if (item.tag == 3) {
+    } else if (rotate == 3) {
         preference.type = IJKSDLRotateZ;
         preference.degrees = -270;
-    } else if (item.tag == 4) {
+    } else if (rotate == 4) {
         preference.type = IJKSDLRotateY;
         preference.degrees = 180;
-    } else if (item.tag == 5) {
+    } else if (rotate == 5) {
         preference.type = IJKSDLRotateX;
         preference.degrees = 180;
     }
-    
     self.player.view.rotatePreference = preference;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
     NSLog(@"rotate:%@ %d",@[@"None",@"X",@"Y",@"Z"][preference.type],(int)preference.degrees);
+}
+
+- (void)observerRotateChange
+{
+    __weakSelf__
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self applyRotate];
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"picture_ratate_mode"];
+}
+
+- (void)observerRenderModeChange
+{
+    __weakSelf__
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self retry];
+    } forKey:@"use_opengl"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self retry];
+    } forKey:@"use_hw"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        if ([MRCocoaBindingUserDefault use_hw]) {
+            [self retry];
+        }
+    } forKey:@"copy_hw_frame"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self retry];
+    } forKey:@"de_interlace"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+#warning todo
+    } forKey:@"open_hdr"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        if (![MRCocoaBindingUserDefault use_hw]) {
+            [self retry];
+        }
+    } forKey:@"overlay_format"];
 }
 
 - (NSString *)saveDir:(NSString *)subDir
@@ -1467,61 +1565,6 @@ static BOOL hdrAnimationShown = 0;
         [MRUtil saveImageToFile:img path:filePath];
     }
 }
-
-- (IBAction)onChangeBSC:(NSSlider *)sender
-{
-#warning TODO
-//    if (sender.tag == 1) {
-//        self.brightness = sender.floatValue;
-//    } else if (sender.tag == 2) {
-//        self.saturation = sender.floatValue;
-//    } else if (sender.tag == 3) {
-//        self.contrast = sender.floatValue;
-//    }
-//    
-//    IJKSDLColorConversionPreference colorPreference = self.player.view.colorPreference;
-//    colorPreference.brightness = self.brightness;//B
-//    colorPreference.saturation = self.saturation;//S
-//    colorPreference.contrast = self.contrast;//C
-//    self.player.view.colorPreference = colorPreference;
-//    if (!self.player.isPlaying) {
-//        [self.player.view setNeedsRefreshCurrentPic];
-//    }
-}
-
-- (IBAction)onChangeDAR:(NSPopUpButton *)sender
-{
-    int dar_num = 0;
-    int dar_den = 1;
-    if (![sender.titleOfSelectedItem isEqual:@"还原"]) {
-        const char* str = sender.titleOfSelectedItem.UTF8String;
-        sscanf(str, "%d:%d", &dar_num, &dar_den);
-    }
-    self.player.view.darPreference = (IJKSDLDARPreference){1.0 * dar_num/dar_den};
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
-}
-
-- (IBAction)onReset:(NSButton *)sender
-{
-#warning TODO
-//    if (sender.tag == 1) {
-//        self.brightness = 1.0;
-//    } else if (sender.tag == 2) {
-//        self.saturation = 1.0;
-//    } else if (sender.tag == 3) {
-//        self.contrast = 1.0;
-//    } else {
-//        self.brightness = 1.0;
-//        self.saturation = 1.0;
-//        self.contrast = 1.0;
-//    }
-//    
-//    [self onChangeBSC:nil];
-}
-
-
 
 #pragma mark 解码设置
 
