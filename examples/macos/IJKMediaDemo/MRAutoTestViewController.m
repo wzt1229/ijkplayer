@@ -20,6 +20,7 @@
 #import "MRBaseView.h"
 #import "MultiRenderSample.h"
 #import "NSString+Ex.h"
+#import "MRCocoaBindingUserDefault.h"
 
 static NSString* lastPlayedKey = @"__lastPlayedKey";
 static BOOL hdrAnimationShown = 0;
@@ -617,7 +618,7 @@ static BOOL hdrAnimationShown = 0;
 //    [options setPlayerOptionIntValue:1 forKey:@"an"];
 //    [options setPlayerOptionIntValue:1 forKey:@"nodisp"];
     
-    [options setPlayerOptionIntValue:[MRUtil boolForKey:@"values.copy_hw_frame"] forKey:@"copy_hw_frame"];
+    [options setPlayerOptionIntValue:[MRCocoaBindingUserDefault copy_hw_frame] forKey:@"copy_hw_frame"];
     if ([url isFileURL]) {
         //图片不使用 cvpixelbufferpool
         NSString *ext = [[[url path] pathExtension] lowercaseString];
@@ -967,7 +968,7 @@ static BOOL hdrAnimationShown = 0;
     
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.bottomMargin = self.subtitleMargin;
-    NSNumber *number = [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.subtitleFontRatio"];
+    NSNumber *number = [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.subtitle_font_ratio"];
     p.ratio = [number floatValue];
     self.player.view.subtitlePreference = p;
     
@@ -1188,7 +1189,7 @@ static BOOL hdrAnimationShown = 0;
 
 - (BOOL)preferHW
 {
-    return [MRUtil boolForKey:@"values.hw"];
+    return [MRCocoaBindingUserDefault hw];
 }
 
 - (void)retry

@@ -12,9 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MRUtil : NSObject
 
-+ (void)initUserDefaults;
-+ (BOOL)boolForKey:(NSString *)key;
-
 + (NSArray <NSString *>*)audioType;
 + (NSArray <NSString *>*)videoType;
 + (NSArray <NSString *>*)subtitleType;

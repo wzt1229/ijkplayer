@@ -22,6 +22,7 @@
 #import "NSString+Ex.h"
 #import "MRPlayerSettingsViewController.h"
 #import "MRPlaylistViewController.h"
+#import "MRCocoaBindingUserDefault.h"
 
 static NSString* lastPlayedKey = @"__lastPlayedKey";
 static BOOL hdrAnimationShown = 0;
@@ -39,9 +40,6 @@ static BOOL hdrAnimationShown = 0;
 @property (nonatomic, weak) IBOutlet NSButton *playCtrlBtn;
 @property (nonatomic, weak) IBOutlet MRProgressIndicator *playerSlider;
 
-@property (nonatomic, weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
-@property (nonatomic, weak) IBOutlet NSPopUpButton *audioPopUpBtn;
-@property (nonatomic, weak) IBOutlet NSPopUpButton *videoPopUpBtn;
 @property (nonatomic, weak) IBOutlet NSTextField *seekCostLb;
 @property (nonatomic, weak) NSTrackingArea *trackingArea;
 
@@ -64,17 +62,8 @@ static BOOL hdrAnimationShown = 0;
 @property (nonatomic, assign, getter=isUsingHardwareAccelerate) BOOL usingHardwareAccelerate;
 
 
-@property (nonatomic, assign) float subtitleDelay;
-@property (nonatomic, assign) float subtitleMargin;
-
-@property (nonatomic, assign) float brightness;
-@property (nonatomic, assign) float saturation;
-@property (nonatomic, assign) float contrast;
-@property (nonatomic, assign) BOOL use_openGL;
-@property (nonatomic, copy) NSString *fcc;
-@property (nonatomic, assign) int snapshot;
 @property (nonatomic, assign) BOOL shouldShowHudView;
-@property (nonatomic, assign) BOOL accurateSeek;
+
 @property (nonatomic, assign) BOOL loop;
 
 
@@ -101,19 +90,9 @@ static BOOL hdrAnimationShown = 0;
     //[self.view setWantsLayer:YES];
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
     self.title = @"Root";
-    [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
-        NSLog(@"[%@] [%d] %@",tag,level,msg);
-//        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
-    }];
-    
-    self.subtitleMargin = 0.7;
-    self.fcc = @"fcc-_es2";
-    self.snapshot = 3;
     self.volume = 0.4;
     [self onReset:nil];
-    [self reSetLoglevel:@"verbose"];
     self.seekCostLb.stringValue = @"";
-    self.accurateSeek = 1;
     self.loop = 0;
         
     if ([self.view isKindOfClass:[SHBaseView class]]) {
@@ -460,16 +439,7 @@ static BOOL hdrAnimationShown = 0;
             case kVK_ANSI_S:
             {
                 //loop exchange subtitles
-                NSInteger idx = [self.subtitlePopUpBtn indexOfSelectedItem];
-                idx ++;
-                if (idx >= [self.subtitlePopUpBtn numberOfItems]) {
-                    idx = 0;
-                }
-                NSMenuItem *item = [self.subtitlePopUpBtn itemAtIndex:idx];
-                if (item) {
-                    [self.subtitlePopUpBtn selectItem:item];
-                    [self.subtitlePopUpBtn.target performSelector:self.subtitlePopUpBtn.action withObject:self.subtitlePopUpBtn];
-                }
+#warning TODO exchangeToNextSubtitle
             }
                 break;
         }
@@ -514,22 +484,22 @@ static BOOL hdrAnimationShown = 0;
                 break;
             case kVK_ANSI_Minus:
             {
-                if (self.player) {
-                    float delay = [self.player currentSubtitleExtraDelay];
-                    delay -= 2;
-                    self.subtitleDelay = delay;
-                    [self.player updateSubtitleExtraDelay:delay];
-                }
+//                if (self.player) {
+//                    float delay = [self.player currentSubtitleExtraDelay];
+//                    delay -= 2;
+//                    self.subtitleDelay = delay;
+//                    [self.player updateSubtitleExtraDelay:delay];
+//                }
             }
                 break;
             case kVK_ANSI_Equal:
             {
-                if (self.player) {
-                    float delay = [self.player currentSubtitleExtraDelay];
-                    delay += 2;
-                    self.subtitleDelay = delay;
-                    [self.player updateSubtitleExtraDelay:delay];
-                }
+//                if (self.player) {
+//                    float delay = [self.player currentSubtitleExtraDelay];
+//                    delay += 2;
+//                    self.subtitleDelay = delay;
+//                    [self.player updateSubtitleExtraDelay:delay];
+//                }
             }
                 break;
             case kVK_Escape:
@@ -601,7 +571,7 @@ static BOOL hdrAnimationShown = 0;
 //    [options setPlayerOptionIntValue:1 forKey:@"an"];
 //    [options setPlayerOptionIntValue:1 forKey:@"nodisp"];
     
-    [options setPlayerOptionIntValue:[MRUtil boolForKey:@"values.copy_hw_frame"] forKey:@"copy_hw_frame"];
+    [options setPlayerOptionIntValue:[MRCocoaBindingUserDefault copy_hw_frame] forKey:@"copy_hw_frame"];
     if ([url isFileURL]) {
         //图片不使用 cvpixelbufferpool
         NSString *ext = [[[url path] pathExtension] lowercaseString];
@@ -637,12 +607,12 @@ static BOOL hdrAnimationShown = 0;
 //    [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
 //    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
     
-    [options setPlayerOptionValue:self.fcc forKey:@"overlay-format"];
+    [options setPlayerOptionValue:[MRCocoaBindingUserDefault overlay_format] forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:hwaccel forKey:@"videotoolbox_hwaccel"];
-    [options setPlayerOptionIntValue:self.accurateSeek forKey:@"enable-accurate-seek"];
+    [options setPlayerOptionIntValue:[MRCocoaBindingUserDefault accurate_seek] forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
     
-    options.metalRenderer = !self.use_openGL;
+    options.metalRenderer = ![MRCocoaBindingUserDefault use_opengl];
     options.showHudView = self.shouldShowHudView;
     
     NSMutableArray *dus = [NSMutableArray array];
@@ -890,82 +860,8 @@ static BOOL hdrAnimationShown = 0;
     if (self.player.isPreparedToPlay) {
         
         NSDictionary *dic = self.player.monitor.mediaMeta;
-        int audioIdx = [dic[k_IJKM_VAL_TYPE__AUDIO] intValue];
-        NSLog(@"当前音频：%d",audioIdx);
-        int videoIdx = [dic[k_IJKM_VAL_TYPE__VIDEO] intValue];
-        NSLog(@"当前视频：%d",videoIdx);
-        int subtitleIdx = [dic[k_IJKM_VAL_TYPE__SUBTITLE] intValue];
-        NSLog(@"当前字幕：%d",subtitleIdx);
-        
-        [self.subtitlePopUpBtn removeAllItems];
-        NSString *currentTitle = @"选择字幕";
-        [self.subtitlePopUpBtn addItemWithTitle:currentTitle];
-        
-        [self.audioPopUpBtn removeAllItems];
-        NSString *currentAudio = @"选择音轨";
-        [self.audioPopUpBtn addItemWithTitle:currentAudio];
-        
-        [self.videoPopUpBtn removeAllItems];
-        NSString *currentVideo = @"选择视轨";
-        [self.videoPopUpBtn addItemWithTitle:currentVideo];
-        
-        for (NSDictionary *stream in dic[kk_IJKM_KEY_STREAMS]) {
-            NSString *type = stream[k_IJKM_KEY_TYPE];
-            int streamIdx = [stream[k_IJKM_KEY_STREAM_IDX] intValue];
-            if ([type isEqualToString:k_IJKM_VAL_TYPE__SUBTITLE]) {
-                NSLog(@"subtile meta:%@",stream);
-                NSString *url = stream[k_IJKM_KEY_EX_SUBTITLE_URL];
-                NSString *title = nil;
-                if (url) {
-                    title = [[url lastPathComponent] stringByRemovingPercentEncoding];
-                } else {
-                    title = stream[k_IJKM_KEY_TITLE];
-                    if (title.length == 0) {
-                        title = stream[k_IJKM_KEY_LANGUAGE];
-                    }
-                    if (title.length == 0) {
-                        title = @"未知";
-                    }
-                }
-                title = [NSString stringWithFormat:@"%@-%d",title,streamIdx];
-                if ([dic[k_IJKM_VAL_TYPE__SUBTITLE] intValue] == streamIdx) {
-                    currentTitle = title;
-                }
-                [self.subtitlePopUpBtn addItemWithTitle:title];
-            } else if ([type isEqualToString:k_IJKM_VAL_TYPE__AUDIO]) {
-                NSLog(@"audio meta:%@",stream);
-                NSString *title = stream[k_IJKM_KEY_TITLE];
-                if (title.length == 0) {
-                    title = stream[k_IJKM_KEY_LANGUAGE];
-                }
-                if (title.length == 0) {
-                    title = @"未知";
-                }
-                title = [NSString stringWithFormat:@"%@-%d",title,streamIdx];
-                if ([dic[k_IJKM_VAL_TYPE__AUDIO] intValue] == streamIdx) {
-                    currentAudio = title;
-                }
-                [self.audioPopUpBtn addItemWithTitle:title];
-            } else if ([type isEqualToString:k_IJKM_VAL_TYPE__VIDEO]) {
-                NSLog(@"video meta:%@",stream);
-                NSString *title = stream[k_IJKM_KEY_TITLE];
-                if (title.length == 0) {
-                    title = stream[k_IJKM_KEY_LANGUAGE];
-                }
-                if (title.length == 0) {
-                    title = @"未知";
-                }
-                title = [NSString stringWithFormat:@"%@-%d",title,streamIdx];
-                if ([dic[k_IJKM_VAL_TYPE__VIDEO] intValue] == streamIdx) {
-                    currentVideo = title;
-                }
-                [self.videoPopUpBtn addItemWithTitle:title];
-            }
-        }
-        [self.subtitlePopUpBtn selectItemWithTitle:currentTitle];
-        [self.audioPopUpBtn selectItemWithTitle:currentAudio];
-        [self.videoPopUpBtn selectItemWithTitle:currentVideo];
-        
+#warning TODO
+//        updateTracks
         if (!self.tickTimer) {
             self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
         }
@@ -1002,9 +898,8 @@ static BOOL hdrAnimationShown = 0;
     self.playCtrlBtn.state = NSControlStateValueOn;
     
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.bottomMargin = self.subtitleMargin;
-    NSNumber *number = [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.subtitleFontRatio"];
-    p.ratio = [number floatValue];
+    p.bottomMargin = [MRCocoaBindingUserDefault subtitle_bottom_margin];
+    p.ratio = [MRCocoaBindingUserDefault subtitle_font_ratio];
     self.player.view.subtitlePreference = p;
     
     int startTime = (int)([self readCurrentPlayRecord] * 1000);
@@ -1258,7 +1153,7 @@ static BOOL hdrAnimationShown = 0;
 
 - (BOOL)preferHW
 {
-    return [MRUtil boolForKey:@"values.hw"];
+    return [MRCocoaBindingUserDefault hw];
 }
 
 - (void)retry
@@ -1543,7 +1438,7 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)onCaptureShot:(id)sender
 {
-    CGImageRef img = [self.player.view snapshot:self.snapshot];
+    CGImageRef img = [self.player.view snapshot:[MRCocoaBindingUserDefault snapshot_type]];
     if (img) {
         NSString *dir = [self dirForCurrentPlayingUrl];
         NSString *movieName = [self.playingUrl lastPathComponent];
@@ -1556,22 +1451,23 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)onChangeBSC:(NSSlider *)sender
 {
-    if (sender.tag == 1) {
-        self.brightness = sender.floatValue;
-    } else if (sender.tag == 2) {
-        self.saturation = sender.floatValue;
-    } else if (sender.tag == 3) {
-        self.contrast = sender.floatValue;
-    }
-    
-    IJKSDLColorConversionPreference colorPreference = self.player.view.colorPreference;
-    colorPreference.brightness = self.brightness;//B
-    colorPreference.saturation = self.saturation;//S
-    colorPreference.contrast = self.contrast;//C
-    self.player.view.colorPreference = colorPreference;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+#warning TODO
+//    if (sender.tag == 1) {
+//        self.brightness = sender.floatValue;
+//    } else if (sender.tag == 2) {
+//        self.saturation = sender.floatValue;
+//    } else if (sender.tag == 3) {
+//        self.contrast = sender.floatValue;
+//    }
+//    
+//    IJKSDLColorConversionPreference colorPreference = self.player.view.colorPreference;
+//    colorPreference.brightness = self.brightness;//B
+//    colorPreference.saturation = self.saturation;//S
+//    colorPreference.contrast = self.contrast;//C
+//    self.player.view.colorPreference = colorPreference;
+//    if (!self.player.isPlaying) {
+//        [self.player.view setNeedsRefreshCurrentPic];
+//    }
 }
 
 - (IBAction)onChangeDAR:(NSPopUpButton *)sender
@@ -1590,19 +1486,20 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)onReset:(NSButton *)sender
 {
-    if (sender.tag == 1) {
-        self.brightness = 1.0;
-    } else if (sender.tag == 2) {
-        self.saturation = 1.0;
-    } else if (sender.tag == 3) {
-        self.contrast = 1.0;
-    } else {
-        self.brightness = 1.0;
-        self.saturation = 1.0;
-        self.contrast = 1.0;
-    }
-    
-    [self onChangeBSC:nil];
+#warning TODO
+//    if (sender.tag == 1) {
+//        self.brightness = 1.0;
+//    } else if (sender.tag == 2) {
+//        self.saturation = 1.0;
+//    } else if (sender.tag == 3) {
+//        self.contrast = 1.0;
+//    } else {
+//        self.brightness = 1.0;
+//        self.saturation = 1.0;
+//        self.contrast = 1.0;
+//    }
+//    
+//    [self onChangeBSC:nil];
 }
 
 #pragma mark 音轨设置
@@ -1642,50 +1539,13 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)onChangedAccurateSeek:(NSButton *)sender
 {
-    [self.player enableAccurateSeek:self.accurateSeek];
+#warning todo
+//    [self.player enableAccurateSeek:self.accurateSeek];
 }
 
 - (IBAction)onSelectFCC:(NSPopUpButton*)sender
 {
     [self retry];
-}
-
-#pragma mark 日志级别
-
-- (int)levelWithString:(NSString *)str
-{
-    str = [str lowercaseString];
-    if ([str isEqualToString:@"default"]) {
-        return k_IJK_LOG_DEFAULT;
-    } else if ([str isEqualToString:@"verbose"]) {
-        return k_IJK_LOG_VERBOSE;
-    } else if ([str isEqualToString:@"debug"]) {
-        return k_IJK_LOG_DEBUG;
-    } else if ([str isEqualToString:@"info"]) {
-        return k_IJK_LOG_INFO;
-    } else if ([str isEqualToString:@"warn"]) {
-        return k_IJK_LOG_WARN;
-    } else if ([str isEqualToString:@"error"]) {
-        return k_IJK_LOG_ERROR;
-    } else if ([str isEqualToString:@"fatal"]) {
-        return k_IJK_LOG_FATAL;
-    } else if ([str isEqualToString:@"silent"]) {
-        return k_IJK_LOG_SILENT;
-    } else {
-        return k_IJK_LOG_UNKNOWN;
-    }
-}
-
-- (void)reSetLoglevel:(NSString *)loglevel
-{
-    int level = [self levelWithString:loglevel];
-    [IJKFFMoviePlayerController setLogLevel:level];
-}
-
-- (IBAction)onChangeLogLevel:(NSPopUpButton*)sender
-{
-    NSString *title = sender.selectedItem.title;
-    [self reSetLoglevel:title];
 }
 
 - (IBAction)testMultiRenderSample:(NSButton *)sender
