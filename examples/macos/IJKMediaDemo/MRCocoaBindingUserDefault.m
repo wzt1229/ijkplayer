@@ -40,6 +40,8 @@
 + (void)initUserDefaults
 {
     [[NSUserDefaultsController sharedUserDefaultsController] setInitialValues:@{
+        @"values.volume" : @(0.4),
+        
         @"values.log_level":@"info",
         @"values.color_adjust_brightness" : @(1.0),
         @"values.color_adjust_saturation" : @(1.0),
@@ -49,6 +51,12 @@
         @"values.picture_wh_ratio" : @(0),
         @"values.picture_ratate_mode" : @(0),
         @"values.picture_flip_mode" : @(0),
+        
+        @"values.use_hw" : @(1),
+        @"values.copy_hw_frame" : @(0),
+        @"values.de_interlace" : @(0),
+        @"values.open_hdr" : @(1),
+        @"values.overlay_format" : @"fcc-_es2",
         
         @"values.subtitle_font_ratio":@(1.5),
         @"values.subtitle_bottom_margin":@(1.5),
@@ -61,18 +69,11 @@
 //        @"values.subtitle_text_color" : @(),
 //        @"values.subtitle_font_name" : @(),
 //        @"values.snapshot_type" : @(),
-        
-        @"values.use_hw" : @(1),
-        @"values.copy_hw_frame" : @(0),
-        @"values.de_interlace" : @(0),
-        @"values.open_hdr" : @(1),
-        @"values.overlay_format" : @"fcc-_es2",
         @"values.accurate_seek" : @(1),
         @"values.seek_step" : @(15),
         @"values.open_gzip" : @(1),
         @"values.use_dns_cache" : @(1),
         @"values.dns_cache_period" : @(600),
-        @"values.volume" : @(0.4),
     }];
 }
 
@@ -266,11 +267,6 @@
     return [self stringForKey:@"overlay_format"];
 }
 
-+ (BOOL)accurate_seek
-{
-    return [self boolForKey:@"accurate_seek"];
-}
-
 + (BOOL)use_opengl
 {
     return [self boolForKey:@"use_opengl"];
@@ -281,9 +277,29 @@
     return [self intForKey:@"snapshot_type"];
 }
 
++ (BOOL)accurate_seek
+{
+    return [self boolForKey:@"accurate_seek"];
+}
+
 + (int)seek_step
 {
     return [self intForKey:@"seek_step"];
+}
+
++ (int)open_gzip
+{
+    return [self intForKey:@"open_gzip"];
+}
+
++ (int)use_dns_cache
+{
+    return [self intForKey:@"use_dns_cache"];
+}
+
++ (int)dns_cache_period
+{
+    return [self intForKey:@"dns_cache_period"];
 }
 
 @end

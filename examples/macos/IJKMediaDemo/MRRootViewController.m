@@ -132,11 +132,7 @@ static BOOL hdrAnimationShown = 0;
 //    [self.siderBarContainer setWantsLayer:YES];
 //    self.siderBarContainer.layer.backgroundColor = NSColor.redColor.CGColor;
     
-    [self observerColorAdjustChange];
-    [self observerScaleModeChange];
-    [self observerDARChange];
-    [self observerRotateChange];
-    [self observerRenderModeChange];
+    [self observerCocoaBingsChange];
 }
 
 - (void)prepareRightMenu
@@ -629,9 +625,32 @@ static BOOL hdrAnimationShown = 0;
     [options setPlayerOptionIntValue:hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:[MRCocoaBindingUserDefault accurate_seek] forKey:@"enable-accurate-seek"];
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
-    
     options.metalRenderer = ![MRCocoaBindingUserDefault use_opengl];
     options.showHudView = self.shouldShowHudView;
+    
+    //默认不使用dns缓存，指定超时时间才会使用；
+    if ([MRCocoaBindingUserDefault use_dns_cache]) {
+        [options setFormatOptionIntValue:[MRCocoaBindingUserDefault dns_cache_period] * 1000 forKey:@"dns_cache_timeout"];
+        [options setFormatOptionValue:@"connect_timeout,ijkapplication,addrinfo_one_by_one,addrinfo_timeout,dns_cache_timeout,fastopen,dns_cache_clear" forKey:@"seg_inherit_options"];
+    } else {
+        [options setFormatOptionValue:@"ijkapplication" forKey:@"seg_inherit_options"];
+    }
+    
+    //实际测试效果不好，容易导致域名解析失败，谨慎使用;没有fallback逻辑
+    //决定dns的方式，大于0时使用tcp_getaddrinfo_nonblock方式
+    //[options setFormatOptionIntValue:0 forKey:@"addrinfo_timeout"];
+    //[options setFormatOptionIntValue:0 forKey:@"addrinfo_one_by_one"];
+//    [options setFormatOptionIntValue:1 forKey:@"http_persistent"];
+//    [options setFormatOptionValue:@"test=cookie" forKey:@"cookies"];
+    //if you want set ts segments options only:
+//    [options setFormatOptionValue:@"fastopen=2:dns_cache_timeout=600000:addrinfo_timeout=2000000" forKey:@"seg_format_options"];
+    //default inherit options : "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy",you can inherit more:
+    
+    if ([MRCocoaBindingUserDefault open_gzip]) {
+        [options setFormatOptionValue:@"Accept-Encoding: gzip, deflate" forKey:@"headers"];
+    }
+    //protocol_whitelist need add httpproxy
+    //[options setFormatOptionValue:@"http://10.7.36.42:8888" forKey:@"http_proxy"];
     
     NSMutableArray *dus = [NSMutableArray array];
     if ([url.scheme isEqualToString:@"file"] && [url.absoluteString.pathExtension isEqualToString:@"m3u8"]) {
@@ -1393,39 +1412,7 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-- (void)observerColorAdjustChange
-{
-    __weakSelf__
-    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
-        __strongSelf__
-        [self onChangeBSC];
-    } forKey:@"color_adjust_brightness"];
-    
-    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
-        __strongSelf__
-        [self onChangeBSC];
-    } forKey:@"color_adjust_saturation"];
-    
-    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
-        __strongSelf__
-        [self onChangeBSC];
-    } forKey:@"color_adjust_contrast"];
-}
-
 #pragma mark 画面设置
-
-- (void)observerScaleModeChange
-{
-    __weakSelf__
-    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
-        __strongSelf__
-        int value = [v intValue];
-        [self.player setScalingMode:value];
-        if (!self.player.isPlaying) {
-            [self.player.view setNeedsRefreshCurrentPic];
-        }
-    } forKey:@"picture_fill_mode"];
-}
 
 - (void)applyDAR
 {
@@ -1443,18 +1430,6 @@ static BOOL hdrAnimationShown = 0;
         dar_den = 1;
     }
     self.player.view.darPreference = (IJKSDLDARPreference){1.0 * dar_num/dar_den};
-}
-
-- (void)observerDARChange
-{
-    __weakSelf__
-    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
-        __strongSelf__
-        [self applyDAR];
-        if (!self.player.isPlaying) {
-            [self.player.view setNeedsRefreshCurrentPic];
-        }
-    } forKey:@"picture_wh_ratio"];
 }
 
 - (void)applyRotate
@@ -1484,9 +1459,41 @@ static BOOL hdrAnimationShown = 0;
     NSLog(@"rotate:%@ %d",@[@"None",@"X",@"Y",@"Z"][preference.type],(int)preference.degrees);
 }
 
-- (void)observerRotateChange
+- (void)observerCocoaBingsChange
 {
     __weakSelf__
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self onChangeBSC];
+    } forKey:@"color_adjust_brightness"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self onChangeBSC];
+    } forKey:@"color_adjust_saturation"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self onChangeBSC];
+    } forKey:@"color_adjust_contrast"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        int value = [v intValue];
+        [self.player setScalingMode:value];
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"picture_fill_mode"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self applyDAR];
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"picture_wh_ratio"];
+    
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__
         [self applyRotate];
@@ -1494,11 +1501,7 @@ static BOOL hdrAnimationShown = 0;
             [self.player.view setNeedsRefreshCurrentPic];
         }
     } forKey:@"picture_ratate_mode"];
-}
-
-- (void)observerRenderModeChange
-{
-    __weakSelf__
+    
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__
         [self retry];
@@ -1532,6 +1535,27 @@ static BOOL hdrAnimationShown = 0;
             [self retry];
         }
     } forKey:@"overlay_format"];
+    
+#warning todo open_gzip
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self retry];
+    } forKey:@"open_gzip"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self retry];
+    } forKey:@"use_dns_cache"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self retry];
+    } forKey:@"dns_cache_period"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self.player enableAccurateSeek:[v boolValue]];
+    } forKey:@"accurate_seek"];
 }
 
 - (NSString *)saveDir:(NSString *)subDir
@@ -1567,22 +1591,6 @@ static BOOL hdrAnimationShown = 0;
 }
 
 #pragma mark 解码设置
-
-- (IBAction)onChangedHWaccel:(NSButton *)sender
-{
-    [self retry];
-}
-
-- (IBAction)onChangedAccurateSeek:(NSButton *)sender
-{
-#warning todo
-//    [self.player enableAccurateSeek:self.accurateSeek];
-}
-
-- (IBAction)onSelectFCC:(NSPopUpButton*)sender
-{
-    [self retry];
-}
 
 - (IBAction)testMultiRenderSample:(NSButton *)sender
 {

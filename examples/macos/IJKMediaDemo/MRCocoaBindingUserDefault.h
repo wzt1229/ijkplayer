@@ -26,6 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MRCocoaBindingUserDefault (util)
 
++ (float)volume;
++ (void)setVolume:(float)aVolume;
+
 + (NSString *)log_level;
 
 + (float)color_adjust_brightness;
@@ -37,17 +40,21 @@ NS_ASSUME_NONNULL_BEGIN
 + (int)picture_ratate_mode;
 + (int)picture_flip_mode;
 
-+ (float)volume;
-+ (void)setVolume:(float)aVolume;
 + (BOOL)copy_hw_frame;
 + (BOOL)use_hw;
+
++ (BOOL)accurate_seek;
++ (int)seek_step;
++ (int)open_gzip;
++ (int)use_dns_cache;
++ (int)dns_cache_period;
+
 + (float)subtitle_font_ratio;
 + (float)subtitle_bottom_margin;
 + (NSString *)overlay_format;
 + (BOOL)accurate_seek;
 + (BOOL)use_opengl;
 + (int)snapshot_type;
-+ (int)seek_step;
 
 @end
 
