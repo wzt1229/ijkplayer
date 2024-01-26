@@ -1131,7 +1131,9 @@ static BOOL hdrAnimationShown = 0;
                     return NSDragOperationCopy;
                 } else {
                     NSString *pathExtension = [[url pathExtension] lowercaseString];
-                    if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
+                    if ([@"xlist" isEqualToString:pathExtension]) {
+                        return NSDragOperationCopy;
+                    } else if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
                         return NSDragOperationCopy;
                     }
                 }

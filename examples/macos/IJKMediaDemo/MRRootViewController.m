@@ -235,6 +235,17 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
+- (MRPlayerSettingsViewController *)findSettingViewController {
+    MRPlayerSettingsViewController *settings = nil;
+    for (NSViewController *vc in self.childViewControllers) {
+        if ([vc isKindOfClass:[MRPlayerSettingsViewController class]]) {
+            settings = (MRPlayerSettingsViewController *)vc;
+            break;
+        }
+    }
+    return settings;
+}
+
 - (void)showPlayerSettingsSideBar
 {
     if (self.siderBarWidthConstraint.constant > 0) {
@@ -250,25 +261,32 @@ static BOOL hdrAnimationShown = 0;
             [self.siderBarContainer.animator setNeedsLayout:YES];
         }];
     } else {
-        
-        MRPlayerSettingsViewController *settings = nil;
-        for (NSViewController *vc in self.childViewControllers) {
-            if ([vc isKindOfClass:[MRPlayerSettingsViewController class]]) {
-                settings = (MRPlayerSettingsViewController *)vc;
-                break;
-            }
-        }
-        
+        MRPlayerSettingsViewController *settings = [self findSettingViewController];
+        BOOL created = NO;
         if (!settings) {
             settings = [[MRPlayerSettingsViewController alloc] initWithNibName:@"MRPlayerSettingsViewController" bundle:nil];
+            __weakSelf__
+            [settings onCloseCurrentStream:^(NSString * _Nonnull st) {
+                __strongSelf__
+                [self.player closeCurrentStream:st];
+            }];
+            
+            [settings onExchangeSelectedStream:^(int idx) {
+                __strongSelf__
+                [self.player exchangeSelectedStream:idx];
+            }];
+            created = YES;
             [self addChildViewController:settings];
         }
-        
         [self.siderBarContainer addSubview:settings.view];
         CGRect frame = settings.view.bounds;
         frame.size = CGSizeMake(frame.size.width, self.siderBarContainer.bounds.size.height);
         settings.view.frame = frame;
 
+        if (created) {
+            [self updateStreams];
+        }
+        
         __weakSelf__
         [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
             context.duration = 0.35;
@@ -858,10 +876,9 @@ static BOOL hdrAnimationShown = 0;
 - (void)updateStreams 
 {
     if (self.player.isPreparedToPlay) {
-        
         NSDictionary *dic = self.player.monitor.mediaMeta;
-#warning TODO
-//        updateTracks
+        MRPlayerSettingsViewController *settings = [self findSettingViewController];
+        [settings updateTracks:dic];
         if (!self.tickTimer) {
             self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
         }
@@ -1099,6 +1116,8 @@ static BOOL hdrAnimationShown = 0;
                 } else {
                     NSString *pathExtension = [[url pathExtension] lowercaseString];
                     if ([@"xlist" isEqualToString:pathExtension]) {
+                        return NSDragOperationCopy;
+                    } else if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
                         return NSDragOperationCopy;
                     }
                 }
@@ -1502,33 +1521,7 @@ static BOOL hdrAnimationShown = 0;
 //    [self onChangeBSC:nil];
 }
 
-#pragma mark 音轨设置
 
-- (IBAction)onSelectAudioTrack:(NSPopUpButton*)sender
-{
-    if (sender.indexOfSelectedItem == 0) {
-        [self.player closeCurrentStream:k_IJKM_VAL_TYPE__AUDIO];
-    } else {
-        NSString *title = sender.selectedItem.title;
-        NSArray *items = [title componentsSeparatedByString:@"-"];
-        int idx = [[items lastObject] intValue];
-        NSLog(@"SelectAudioTrack:%d",idx);
-        [self.player exchangeSelectedStream:idx];
-    }
-}
-
-- (IBAction)onSelectVideoTrack:(NSPopUpButton*)sender
-{
-    if (sender.indexOfSelectedItem == 0) {
-        [self.player closeCurrentStream:k_IJKM_VAL_TYPE__VIDEO];
-    } else {
-        NSString *title = sender.selectedItem.title;
-        NSArray *items = [title componentsSeparatedByString:@"-"];
-        int idx = [[items lastObject] intValue];
-        NSLog(@"SelectVideoTrack:%d",idx);
-        [self.player exchangeSelectedStream:idx];
-    }
-}
 
 #pragma mark 解码设置
 

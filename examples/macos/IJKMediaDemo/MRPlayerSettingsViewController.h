@@ -10,12 +10,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef void(^MRPlayerSettingsExchangeStreamBlock)(int);
+typedef void(^MRPlayerSettingsCloseStreamBlock)(NSString *);
+
 @interface MRPlayerSettingsViewController : NSViewController
 
 + (float)viewWidth;
 
 - (void)exchangeToNextSubtitle;
 - (void)updateTracks:(NSDictionary *)dic;
+- (void)onCloseCurrentStream:(MRPlayerSettingsCloseStreamBlock)block;
+- (void)onExchangeSelectedStream:(MRPlayerSettingsExchangeStreamBlock)block;
 
 @end
 

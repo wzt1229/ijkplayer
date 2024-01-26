@@ -11,6 +11,8 @@
 
 @interface MRPlayerSettingsViewController ()
 
+@property (weak) IBOutlet NSScrollView *scrollView;
+
 @property (nonatomic, weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
 @property (nonatomic, weak) IBOutlet NSPopUpButton *audioPopUpBtn;
 @property (nonatomic, weak) IBOutlet NSPopUpButton *videoPopUpBtn;
@@ -20,6 +22,9 @@
 @property (nonatomic, assign) int snapshot;
 @property (nonatomic, assign) BOOL accurateSeek;
 //for cocoa binding end
+
+@property (nonatomic, copy) MRPlayerSettingsCloseStreamBlock closeCurrentStream;
+@property (nonatomic, copy) MRPlayerSettingsExchangeStreamBlock exchangeSelectedStream;
 
 @end
 
@@ -33,6 +38,23 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do view setup here.
+}
+
+- (void)viewDidAppear
+{
+    [super viewDidAppear];
+    NSPoint newOrigin = NSMakePoint(0, NSMaxY(self.scrollView.documentView.frame) - self.scrollView.bounds.size.height);
+    [self.scrollView.contentView scrollToPoint:newOrigin];
+}
+
+- (void)onCloseCurrentStream:(MRPlayerSettingsCloseStreamBlock)block
+{
+    self.closeCurrentStream = block;
+}
+
+- (void)onExchangeSelectedStream:(MRPlayerSettingsExchangeStreamBlock)block
+{
+    self.exchangeSelectedStream = block;
 }
 
 - (IBAction)onResetColorAdjust:(NSButton *)sender {
@@ -138,6 +160,38 @@
     [self.subtitlePopUpBtn selectItemWithTitle:currentTitle];
     [self.audioPopUpBtn selectItemWithTitle:currentAudio];
     [self.videoPopUpBtn selectItemWithTitle:currentVideo];
+}
+
+#pragma mark 音轨设置
+
+- (IBAction)onSelectTrack:(NSPopUpButton*)sender
+{
+    if (sender.indexOfSelectedItem == 0) {
+        if (self.closeCurrentStream) {
+            if (sender.tag == 1) {
+                self.closeCurrentStream(k_IJKM_VAL_TYPE__AUDIO);
+            } else if (sender.tag == 2) {
+                self.closeCurrentStream(k_IJKM_VAL_TYPE__VIDEO);
+            } else if (sender.tag == 3) {
+                self.closeCurrentStream(k_IJKM_VAL_TYPE__SUBTITLE);
+            }
+        }
+    } else {
+        NSString *title = sender.selectedItem.title;
+        NSArray *items = [title componentsSeparatedByString:@"-"];
+        int idx = [[items lastObject] intValue];
+        if (sender.tag == 1) {
+            NSLog(@"SelectAudioTrack:%d",idx);
+        } else if (sender.tag == 2) {
+            NSLog(@"SelectVideoTrack:%d",idx);
+        } else if (sender.tag == 3) {
+            NSLog(@"SelectSubtitleTrack:%d",idx);
+        }
+        
+        if (self.exchangeSelectedStream) {
+            self.exchangeSelectedStream(idx);
+        }
+    }
 }
 
 @end
