@@ -929,28 +929,28 @@
                                     <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VJf-nV-ERo">
                                         <rect key="frame" x="83" y="199" width="115" height="25"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                        <popUpButtonCell key="cell" type="push" title="origin + subtitle" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="sgq-8J-nOE" id="G4c-4x-Nvb">
+                                        <popUpButtonCell key="cell" type="push" title="origin + subtitle" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="sgq-8J-nOE" id="G4c-4x-Nvb">
                                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                             <font key="font" metaFont="smallSystem"/>
                                             <menu key="menu" id="zg1-tb-nOs">
                                                 <items>
-                                                    <menuItem title="origin + subtitle" state="on" tag="1" id="sgq-8J-nOE">
+                                                    <menuItem title="origin + subtitle" state="on" tag="3" id="sgq-8J-nOE">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                     </menuItem>
                                                     <menuItem title="origin effect" tag="2" id="xHK-Yl-Qvz">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                     </menuItem>
-                                                    <menuItem title="origin size" tag="3" id="Cnx-hr-GMe">
+                                                    <menuItem title="origin size" id="Cnx-hr-GMe">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                     </menuItem>
-                                                    <menuItem title="window size" tag="4" id="Egk-xU-fHn">
+                                                    <menuItem title="window size" tag="1" id="Egk-xU-fHn">
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                     </menuItem>
                                                 </items>
                                             </menu>
                                         </popUpButtonCell>
                                         <connections>
-                                            <binding destination="A8Q-JO-gdn" name="selectedValue" keyPath="values.snapshot_type" id="XMt-Es-arV"/>
+                                            <binding destination="A8Q-JO-gdn" name="selectedTag" keyPath="values.snapshot_type" id="oCQ-ii-SXD"/>
                                         </connections>
                                     </popUpButton>
                                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8d8-34-BFm">

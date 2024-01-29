@@ -68,7 +68,7 @@
 //        @"values.subtitle_bg_color" : @(),
 //        @"values.subtitle_text_color" : @(),
 //        @"values.subtitle_font_name" : @(),
-//        @"values.snapshot_type" : @(),
+        @"values.snapshot_type" : @(3),
         @"values.accurate_seek" : @(1),
         @"values.seek_step" : @(15),
         @"values.open_gzip" : @(1),
