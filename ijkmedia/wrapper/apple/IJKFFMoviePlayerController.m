@@ -321,6 +321,8 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         [self setHudValue:nil forKey:@"t-preroll"];
         [self setHudValue:nil forKey:@"t-http-open"];
         [self setHudValue:nil forKey:@"t-http-seek"];
+    } else {
+        [self setHudValue:nil forKey:@"path"];
     }
 
     [self setHudUrl:_contentURL];
@@ -1645,8 +1647,10 @@ static int media_player_msg_loop(void* arg)
 - (void)setHudUrl:(NSURL *)url
 {
     if ([[NSThread currentThread] isMainThread]) {
-        [self setHudValue:url.scheme forKey:@"scheme"];
-        [self setHudValue:url.host   forKey:@"host"];
+        if (![url.scheme isEqualToString:@"file"]) {
+            [self setHudValue:url.scheme forKey:@"scheme"];
+            [self setHudValue:url.host   forKey:@"host"];
+        }
         [self setHudValue:url.path   forKey:@"path"];
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
