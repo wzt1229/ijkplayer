@@ -105,12 +105,16 @@ static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,I
 
 static inline uint32_t color2int(UIColor *color) {
     if (@available(macOS 10.13, *)) {
-        if (color.type != NSColorTypeComponentBased) {
-            color = [color colorUsingType:NSColorTypeComponentBased];
+        if (color.type != NSColorSpaceModelRGB) {
+            
         }
+    }
+    if (![color.colorSpaceName isEqualToString:NSDeviceRGBColorSpace] && ![color.colorSpaceName isEqualToString:NSCalibratedRGBColorSpace]) {
+        color = [color colorUsingColorSpaceName:NSDeviceRGBColorSpace];
     }
     CGFloat r,g,b,a;
     [color getRed:&r green:&g blue:&b alpha:&a];
+    
     r *= 255;
     g *= 255;
     b *= 255;
