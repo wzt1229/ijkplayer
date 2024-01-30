@@ -68,8 +68,8 @@ fragment float4 subtileFragmentShader(RasterizerData input [[stage_in]],
     // sampler是采样器
     constexpr sampler textureSampler (mag_filter::linear,
                                       min_filter::linear);
-    //auto converted bgra -> rgba
-    float4 rgba = textureY.sample(textureSampler, input.textureCoordinate);
+    //auto converted bgra -> rgba,but the texture is fake bgra, is rgba!!
+    float4 rgba = textureY.sample(textureSampler, input.textureCoordinate).bgra;
     return rgba;
 }
 

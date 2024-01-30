@@ -114,11 +114,13 @@ static const char g_shader_hdr[] = IJK_GLES_STRING(
     void main() {
        
         if (isSubtitle == 1) {
+            vec4 subColor;
         #if TARGET_OS_OSX
-            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+            subColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
         #else
-            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+            subColor = texture2DRect(subSampler, vv2_Texcoord);
         #endif
+            fragColor = subColor.bgra;
             return;
         }
         // 0、先把 [0.0,1.0] 范围的YUV 处理为 [0.0,1.0] 范围的RGB
@@ -208,11 +210,13 @@ static const char g_shader_nv12[] = IJK_GLES_STRING(
     void main()
     {
         if (isSubtitle == 1) {
-#if TARGET_OS_OSX
-            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
-#else
-            fragColor = texture2DRect(subSampler, vv2_Texcoord);
-#endif
+            vec4 subColor;
+        #if TARGET_OS_OSX
+            subColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+        #else
+            subColor = texture2DRect(subSampler, vv2_Texcoord);
+        #endif
+            fragColor = subColor.bgra;
             return;
         }
 #if TARGET_OS_OSX
@@ -256,11 +260,13 @@ static const char g_shader_rect_bgrx_1[] = IJK_GLES_STRING(
     void main()
     {
         if (isSubtitle == 1) {
+            vec4 subColor;
         #if TARGET_OS_OSX
-            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+            subColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
         #else
-            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+            subColor = texture2DRect(subSampler, vv2_Texcoord);
         #endif
+            fragColor = subColor.bgra;
             return;
         }
         #if TARGET_OS_OSX
@@ -288,7 +294,8 @@ static const char g_shader_rect_uyvy_legacy_1[] = IJK_GLES_STRING(
     void main()
     {
         if (isSubtitle == 1) {
-            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+            vec4 subColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+            fragColor = subColor.bgra;
             return;
         }
         vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
@@ -314,11 +321,13 @@ static const char g_shader_rect_xrgb_1[] = IJK_GLES_STRING(
     void main()
     {
         if (isSubtitle == 1) {
+            vec4 subColor;
         #if TARGET_OS_OSX
-            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+            subColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
         #else
-            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+            subColor = texture2DRect(subSampler, vv2_Texcoord);
         #endif
+            fragColor = subColor.bgra;
             return;
         }
         #if TARGET_OS_OSX
@@ -356,11 +365,13 @@ static const char g_shader_rect_3[] = IJK_GLES_STRING(
     void main()
     {
         if (isSubtitle == 1) {
+            vec4 subColor;
         #if TARGET_OS_OSX
-            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+            subColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
         #else
-            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+            subColor = texture2DRect(subSampler, vv2_Texcoord);
         #endif
+            fragColor = subColor.bgra;
             return;
         }
 #if TARGET_OS_OSX
@@ -407,11 +418,13 @@ static const char g_shader_rect_uyvy_1[] = IJK_GLES_STRING(
     void main()
     {
         if (isSubtitle == 1) {
+            vec4 subColor;
         #if TARGET_OS_OSX
-            fragColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
+            subColor = texture2DRect(subSampler, vv2_Texcoord * subTextureDimension);
         #else
-            fragColor = texture2DRect(subSampler, vv2_Texcoord);
+            subColor = texture2DRect(subSampler, vv2_Texcoord);
         #endif
+            fragColor = subColor.bgra;
             return;
         }
         vec2 recTexCoord0 = vv2_Texcoord * textureDimension0;
