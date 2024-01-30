@@ -193,8 +193,7 @@
 
 - (IBAction)showPreferencesPanel:(id)sender
 {
-    NSStoryboard *sb = [NSStoryboard storyboardWithName:@"Setting" bundle:nil];
-    [self.windowCtrl.window.contentViewController presentViewControllerAsModalWindow:[sb instantiateInitialController]];
+    
 }
 
 - (IBAction)showSupportedDecoder:(id)sender
