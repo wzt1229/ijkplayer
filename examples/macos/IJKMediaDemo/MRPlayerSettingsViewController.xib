@@ -641,28 +641,6 @@
                                                         </binding>
                                                     </connections>
                                                 </colorWell>
-                                                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Cs7-Ym-z2t">
-                                                    <rect key="frame" x="93" y="66" width="63" height="24"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                    <buttonCell key="cell" type="check" title="粗体" bezelStyle="regularSquare" imagePosition="left" inset="2" id="Nll-i5-Py6">
-                                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                        <font key="font" metaFont="smallSystem"/>
-                                                    </buttonCell>
-                                                    <connections>
-                                                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.subtitle_font_bold" id="kS6-Kh-TWK"/>
-                                                    </connections>
-                                                </button>
-                                                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zWn-Au-5DZ">
-                                                    <rect key="frame" x="144" y="61" width="75" height="34"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                    <buttonCell key="cell" type="check" title="斜体" bezelStyle="regularSquare" imagePosition="left" inset="2" id="W8U-2i-3YN">
-                                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                        <font key="font" metaFont="smallSystem"/>
-                                                    </buttonCell>
-                                                    <connections>
-                                                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.subtitle_font_italic" id="4Xb-X5-UY9"/>
-                                                    </connections>
-                                                </button>
                                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="L3b-jl-IEb">
                                                     <rect key="frame" x="149" y="86" width="50" height="32"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>

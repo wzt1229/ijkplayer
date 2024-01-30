@@ -72,8 +72,6 @@
         
         @"subtitle_font_name" : @"STSongti-SC-Regular",
         @"subtitle_font_size" : @(30),
-        @"subtitle_font_bold" : @(0),
-        @"subtitle_font_italic" : @(0),
         @"subtitle_bottom_margin":@(0.5),
         @"subtitle_stroke_size" : @(5),
         @"subtitle_text_color" : text_color_data,
@@ -292,16 +290,6 @@
 + (void)setSubtitle_font_size:(float)font_size
 {
     return [self setValue:@(font_size) forKey:@"subtitle_font_size"];
-}
-
-+ (BOOL)subtitle_font_bold
-{
-    return [self boolForKey:@"subtitle_font_bold"];
-}
-
-+ (BOOL)subtitle_font_italic
-{
-    return [self boolForKey:@"subtitle_font_italic"];
 }
 
 + (float)subtitle_bottom_margin
