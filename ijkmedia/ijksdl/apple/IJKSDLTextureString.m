@@ -262,8 +262,30 @@
 
 - (void)drawText:(NSRect)rect
 {
-    // draw at offset position
-    [self.attributedString drawInRect:rect];
+    NSMutableAttributedString *mas = [[NSMutableAttributedString alloc] initWithAttributedString:self.attributedString];
+    __block BOOL hasStrokeWidth = NO;
+    __block BOOL hasStrokeColor = NO;
+    [self.attributedString enumerateAttribute:NSStrokeWidthAttributeName inRange:NSMakeRange(0, self.attributedString.length) options:0 usingBlock:^(id  _Nullable value, NSRange range, BOOL * _Nonnull stop) {
+        [mas removeAttribute:NSStrokeWidthAttributeName range:range];
+        hasStrokeWidth = YES;
+    }];
+    
+    __block NSColor *strokeColor = nil;
+    [self.attributedString enumerateAttribute:NSStrokeColorAttributeName inRange:NSMakeRange(0, self.attributedString.length) options:0 usingBlock:^(id  _Nullable value, NSRange range, BOOL * _Nonnull stop) {
+        [mas removeAttribute:NSStrokeWidthAttributeName range:range];
+        hasStrokeColor = YES;
+        strokeColor = value;
+    }];
+    
+    if (hasStrokeWidth && hasStrokeColor) {
+        //draw StokeColor (when has StokeColor ignored ForegroundColor)
+        [self.attributedString drawInRect:rect];
+        //draw ForegroundColor
+        [mas drawInRect:rect];
+    } else {
+        [self.attributedString drawInRect:rect];
+    }
+    
 //    NSStringDrawingContext *ctx = [[NSStringDrawingContext alloc] init];
 //    ctx.minimumScaleFactor = [[[NSScreen screens] firstObject] backingScaleFactor];
 //    [self.attributedString drawWithRect:rect options:NSStringDrawingUsesLineFragmentOrigin context:ctx];
