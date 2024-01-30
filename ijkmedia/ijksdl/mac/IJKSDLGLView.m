@@ -515,11 +515,8 @@ static bool _is_need_dispath_to_global(void)
     }
     [attributes setObject:subtitleFont forKey:NSFontAttributeName];
     [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
-    //字体描边
-    [attributes setObject:NSColor.blackColor forKey:NSStrokeColorAttributeName];
-    [attributes setObject:@(5) forKey:NSStrokeWidthAttributeName];
     
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withBoxColor:int2color(sp.bgColor) withBorderColor:int2color(sp.borderColor) withBorderSize:sp.borderSize];
+    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withStrokeColor:int2color(sp.strokeColor) withStrokeSize:sp.strokeSize];
     
     return [textureString createPixelBuffer];
 }

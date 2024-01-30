@@ -93,34 +93,44 @@
 #pragma mark Initializers
 
 // designated initializer
-- (id)initWithAttributedString:(NSAttributedString *)attributedString withBoxColor:(NSColor *)box withBorderColor:(NSColor *)border withBorderSize:(int)borderSize
+- (id)initWithAttributedString:(NSAttributedString *)attributedString
+               withStrokeColor:(NSColor *)strokeColor
+                withStrokeSize:(int)strokeSize
 {
     self = [super init];
     
     self.attributedString = attributedString;
     self.cRadius = 3;
-    self.boxColor = box;
-    self.borderColor = border;
-    self.borderSize = borderSize;
+    self.strokeColor = strokeColor;
+    self.strokeSize = strokeSize;
     self.antialias = YES;
     self.requiresUpdate = YES;
 	return self;
 }
 
-- (id)initWithString:(NSString *)aString withAttributes:(NSDictionary *)attribs withBoxColor:(NSColor *)box withBorderColor:(NSColor *)border withBorderSize:(int)borderSize
+- (id)initWithString:(NSString *)aString
+      withAttributes:(NSDictionary *)attribs
+     withStrokeColor:(NSColor *)strokeColor
+      withStrokeSize:(int)strokeSize
 {
-	return [self initWithAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs] withBoxColor:box withBorderColor:border withBorderSize:borderSize];
+	return [self initWithAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs]
+                          withStrokeColor:strokeColor
+                           withStrokeSize:strokeSize];
 }
 
 // basic methods that pick up defaults
 - (id)initWithAttributedString:(NSAttributedString *)attributedString;
 {
-	return [self initWithAttributedString:attributedString withBoxColor:nil withBorderColor:nil withBorderSize:0];
+	return [self initWithAttributedString:attributedString
+                          withStrokeColor:nil
+                           withStrokeSize:0];
 }
 
 - (id)initWithString:(NSString *)aString withAttributes:(NSDictionary *)attribs
 {
-	return [self initWithAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs] withBoxColor:nil withBorderColor:nil withBorderSize:0];
+	return [self initWithAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs]
+                          withStrokeColor:nil
+                           withStrokeSize:0];
 }
 
 #pragma mark -
@@ -162,12 +172,12 @@
     }
 }
 
-#pragma mark Border Color
+#pragma mark Stroke Color
 
-- (void)setBorderColor:(NSColor *)borderColor
+- (void)setStrokeColor:(NSColor *)strokeColor
 {
-    if (_borderColor != borderColor) {
-        _borderColor = borderColor;
+    if (_strokeColor != strokeColor) {
+        _strokeColor = strokeColor;
         self.requiresUpdate = YES;
     }
 }
@@ -247,21 +257,41 @@
         }
         [path fill];
     }
-    
-    if (self.borderSize > 0 && [self.borderColor alphaComponent]) {
-        [self.borderColor set];
-        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect (0.0f, 0.0f, bgSize.width, bgSize.height), 0.5, 0.5)
-                                                        cornerRadius:self.cRadius];
-        [path setLineWidth:self.borderSize];
-        if (transform) {
-            [path transformUsingAffineTransform:transform];
-        }
-        [path stroke];
-    }
+//    bg border
+//    if (self.strokeSize > 0 && [self.strokeColor alphaComponent]) {
+//        [self.strokeColor set];
+//        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect (0.0f, 0.0f, bgSize.width, bgSize.height), 0.5, 0.5)
+//                                                        cornerRadius:self.cRadius];
+//        [path setLineWidth:self.strokeSize];
+//        if (transform) {
+//            [path transformUsingAffineTransform:transform];
+//        }
+//        [path stroke];
+//    }
 }
 
 - (void)drawText:(NSRect)rect
 {
+    //use property set strke style
+    if (self.strokeColor && self.strokeSize > 0) {
+        NSMutableAttributedString *mas = [[NSMutableAttributedString alloc] initWithAttributedString:self.attributedString];
+        
+        [self.attributedString enumerateAttribute:NSStrokeWidthAttributeName inRange:NSMakeRange(0, self.attributedString.length) options:0 usingBlock:^(id  _Nullable value, NSRange range, BOOL * _Nonnull stop) {
+            [mas removeAttribute:NSStrokeWidthAttributeName range:range];
+        }];
+        
+        [self.attributedString enumerateAttribute:NSStrokeColorAttributeName inRange:NSMakeRange(0, self.attributedString.length) options:0 usingBlock:^(id  _Nullable value, NSRange range, BOOL * _Nonnull stop) {
+            [mas removeAttribute:NSStrokeWidthAttributeName range:range];
+        }];
+        
+        [mas addAttribute:NSStrokeColorAttributeName value:self.strokeColor range:NSMakeRange(0, self.attributedString.length)];
+        [mas addAttribute:NSStrokeWidthAttributeName value:@(self.strokeSize) range:NSMakeRange(0, self.attributedString.length)];
+        //draw StokeColor (when has StokeColor ignored ForegroundColor)
+        [mas drawInRect:rect];
+        //draw ForegroundColor
+        [self.attributedString drawInRect:rect];
+    }
+    
     NSMutableAttributedString *mas = [[NSMutableAttributedString alloc] initWithAttributedString:self.attributedString];
     __block BOOL hasStrokeWidth = NO;
     __block BOOL hasStrokeColor = NO;
@@ -282,9 +312,10 @@
         [self.attributedString drawInRect:rect];
         //draw ForegroundColor
         [mas drawInRect:rect];
-    } else {
-        [self.attributedString drawInRect:rect];
+        return;
     }
+    
+    [self.attributedString drawInRect:rect];
     
 //    NSStringDrawingContext *ctx = [[NSStringDrawingContext alloc] init];
 //    ctx.minimumScaleFactor = [[[NSScreen screens] firstObject] backingScaleFactor];

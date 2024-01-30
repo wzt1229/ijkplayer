@@ -42,14 +42,14 @@
 
 + (NSDictionary *)initValues 
 {
-    NSColor *text_color = [NSColor colorWithRed:0.3 green:0.2 blue:0.7 alpha:1.0];
+    NSColor *text_color = [NSColor whiteColor];
     NSData *text_color_data = [NSKeyedArchiver archivedDataWithRootObject:text_color];
     
-    NSColor *subtitle_bg_color = [NSColor colorWithRed:0.7 green:0.1 blue:0.7 alpha:1.0];
+    NSColor *subtitle_bg_color = [NSColor clearColor];
     NSData *subtitle_bg_color_data = [NSKeyedArchiver archivedDataWithRootObject:subtitle_bg_color];
     
-    NSColor *subtitle_border_color = [NSColor colorWithRed:0.8 green:0.2 blue:0.4 alpha:1.0];
-    NSData *subtitle_border_color_data = [NSKeyedArchiver archivedDataWithRootObject:subtitle_border_color];
+    NSColor *subtitle_stroke_color = [NSColor blackColor];
+    NSData *subtitle_stroke_color_data = [NSKeyedArchiver archivedDataWithRootObject:subtitle_stroke_color];
     
     NSDictionary *initValues = @{
         @"volume" : @(0.4),
@@ -70,16 +70,16 @@
         @"open_hdr" : @(1),
         @"overlay_format" : @"fcc-_es2",
         
-        @"subtitle_font_name" : @"sans-serif",
+        @"subtitle_font_name" : @"STSongti-SC-Regular",
         @"subtitle_font_size" : @(30),
         @"subtitle_font_bold" : @(0),
         @"subtitle_font_italic" : @(0),
         @"subtitle_bottom_margin":@(0.5),
-        @"subtitle_border_size" : @(2),
+        @"subtitle_stroke_size" : @(5),
         @"subtitle_text_color" : text_color_data,
         @"subtitle_bg_color" : subtitle_bg_color_data,
-        @"subtitle_border_color" : subtitle_border_color_data,
-        
+        @"subtitle_stroke_color" : subtitle_stroke_color_data,
+
         @"snapshot_type" : @(3),
         @"accurate_seek" : @(1),
         @"seek_step" : @(15),
@@ -309,9 +309,9 @@
     return [self floatForKey:@"subtitle_bottom_margin"];
 }
 
-+ (float)subtitle_border_size
++ (float)subtitle_stroke_size
 {
-    return [self floatForKey:@"subtitle_border_size"];
+    return [self floatForKey:@"subtitle_stroke_size"];
 }
 
 + (NSColor *)subtitle_text_color
@@ -332,9 +332,9 @@
     return nil;
 }
 
-+ (NSColor *)subtitle_border_color
++ (NSColor *)subtitle_stroke_color
 {
-    NSData *data = [self anyForKey:@"subtitle_border_color"];
+    NSData *data = [self anyForKey:@"subtitle_stroke_color"];
     if (data) {
         return [NSKeyedUnarchiver unarchiveObjectWithData:data];
     }

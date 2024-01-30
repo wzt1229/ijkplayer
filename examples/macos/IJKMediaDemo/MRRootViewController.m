@@ -1359,8 +1359,8 @@ static BOOL hdrAnimationShown = 0;
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
     p.color = color2int([MRCocoaBindingUserDefault subtitle_text_color]);
     p.bgColor = color2int([MRCocoaBindingUserDefault subtitle_bg_color]);
-    p.borderColor = color2int([MRCocoaBindingUserDefault subtitle_border_color]);
-    p.borderSize = [MRCocoaBindingUserDefault subtitle_border_size];
+    p.strokeColor = color2int([MRCocoaBindingUserDefault subtitle_stroke_color]);
+    p.strokeSize = [MRCocoaBindingUserDefault subtitle_stroke_size];
     p.bottomMargin = [MRCocoaBindingUserDefault subtitle_bottom_margin];
     p.size = [MRCocoaBindingUserDefault subtitle_font_size];
     NSString *name = [MRCocoaBindingUserDefault subtitle_font_name];
@@ -1538,22 +1538,22 @@ static BOOL hdrAnimationShown = 0;
         __strongSelf__
         NSColor *color = v;
         IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-        p.borderColor = color2int(color);
+        p.strokeColor = color2int(color);
         self.player.view.subtitlePreference = p;
         if (!self.player.isPlaying) {
             [self.player.view setNeedsRefreshCurrentPic];
         }
-    } forKey:@"subtitle_border_color"];
+    } forKey:@"subtitle_stroke_color"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
         __strongSelf__
         IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-        p.borderSize = [v intValue];
+        p.strokeSize = [v intValue];
         self.player.view.subtitlePreference = p;
         if (!self.player.isPlaying) {
             [self.player.view setNeedsRefreshCurrentPic];
         }
-    } forKey:@"subtitle_border_size"];
+    } forKey:@"subtitle_stroke_size"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__

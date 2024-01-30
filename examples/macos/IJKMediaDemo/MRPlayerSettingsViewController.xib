@@ -677,7 +677,7 @@
                                             </subviews>
                                         </view>
                                     </box>
-                                    <box title="边框" id="df3-tj-9u6">
+                                    <box title="描边" id="df3-tj-9u6">
                                         <rect key="frame" x="83" y="374" width="204" height="81"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <view key="contentView" id="5sn-h4-8CR">
@@ -696,14 +696,14 @@
                                                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DgX-jd-Cf6">
                                                     <rect key="frame" x="46" y="35" width="36" height="19"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                    <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" title="30" drawsBackground="YES" id="Wj8-QE-2U1">
+                                                    <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" title="5" drawsBackground="YES" id="Wj8-QE-2U1">
                                                         <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="Gp8-v4-uxT"/>
                                                         <font key="font" metaFont="smallSystem"/>
                                                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                     </textFieldCell>
                                                     <connections>
-                                                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.subtitle_border_size" id="lFo-Vc-R3F"/>
+                                                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.subtitle_stroke_size" id="5o5-tr-vHy"/>
                                                     </connections>
                                                 </textField>
                                                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fcd-b6-uyq">
@@ -720,7 +720,7 @@
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                     <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                     <connections>
-                                                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.subtitle_border_color" id="jV7-pL-rfm">
+                                                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.subtitle_stroke_color" id="OXx-OB-MMq">
                                                             <dictionary key="options">
                                                                 <string key="NSValueTransformerName">NSKeyedUnarchiveFromData</string>
                                                             </dictionary>
@@ -729,6 +729,7 @@
                                                 </colorWell>
                                             </subviews>
                                         </view>
+                                        <font key="titleFont" size="11" name=".PingFangSC-Regular"/>
                                     </box>
                                     <box title="位置" id="5q2-0b-Q0d" userLabel="位置">
                                         <rect key="frame" x="83" y="315" width="204" height="50"/>

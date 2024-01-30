@@ -58,10 +58,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)subtitle_font_bold;
 + (BOOL)subtitle_font_italic;
 + (float)subtitle_bottom_margin;
-+ (float)subtitle_border_size;
++ (float)subtitle_stroke_size;
 + (NSColor *)subtitle_text_color;
 + (NSColor *)subtitle_bg_color;
-+ (NSColor *)subtitle_border_color;
++ (NSColor *)subtitle_stroke_color;
 
 + (NSString *)overlay_format;
 + (BOOL)use_opengl;

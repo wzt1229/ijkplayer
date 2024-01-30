@@ -39,9 +39,9 @@
 @interface IJKSDLTextureString : NSObject
 
 // designated initializer
-- (id)initWithAttributedString:(NSAttributedString *)attributedString withBoxColor:(NSColor *)color withBorderColor:(NSColor *)color withBorderSize:(int)borderSize;
+- (id)initWithAttributedString:(NSAttributedString *)attributedString withStrokeColor:(NSColor *)color withStrokeSize:(int)borderSize;
 
-- (id)initWithString:(NSString *)aString withAttributes:(NSDictionary *)attribs withBoxColor:(NSColor *)box withBorderColor:(NSColor *)border withBorderSize:(int)borderSize;
+- (id)initWithString:(NSString *)aString withAttributes:(NSDictionary *)attribs withStrokeColor:(NSColor *)border withStrokeSize:(int)borderSize;
 
 // basic methods that pick up defaults
 - (id)initWithString:(NSString *)aString withAttributes:(NSDictionary *)attribs;
@@ -53,9 +53,9 @@
 @property (nonatomic, strong) NSColor *textColor;
 //background box color
 @property (nonatomic, strong) NSColor *boxColor;
-//border color,default is nil
-@property (nonatomic, strong) NSColor *borderColor;
-@property (nonatomic, assign) int borderSize;
+//stroke color,default is nil
+@property (nonatomic, strong) NSColor *strokeColor;
+@property (nonatomic, assign) int strokeSize;
 // set top,right,bottom,left margin
 @property (nonatomic, assign) NSEdgeInsets edgeInsets;
 @property(nonatomic, assign) float cRadius; // Corner radius, if 0 just a rectangle. Defaults to 3.0f
