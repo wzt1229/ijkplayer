@@ -14,19 +14,6 @@
 		C905CF1D2B550C7400D59730 /* MRStatisticalViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C905CF1B2B550C7400D59730 /* MRStatisticalViewController.xib */; };
 		C905CF212B55163C00D59730 /* MRRootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C905CF1F2B55163C00D59730 /* MRRootViewController.m */; };
 		C905CF222B55163C00D59730 /* MRRootViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C905CF202B55163C00D59730 /* MRRootViewController.xib */; };
-		C955003E27C75A580026AB17 /* Setting.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C955003D27C75A580026AB17 /* Setting.storyboard */; };
-		C955004227C75E740026AB17 /* LeftCategoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004127C75E740026AB17 /* LeftCategoryController.m */; };
-		C955004527C7634F0026AB17 /* SettingSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004427C7634F0026AB17 /* SettingSplitViewController.m */; };
-		C955004A27C768DD0026AB17 /* SubtitleSettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004827C768DD0026AB17 /* SubtitleSettingViewController.m */; };
-		C955004B27C768DD0026AB17 /* SubtitleSettingViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C955004927C768DD0026AB17 /* SubtitleSettingViewController.xib */; };
-		C955004F27C769050026AB17 /* GeneralSettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955004D27C769050026AB17 /* GeneralSettingViewController.m */; };
-		C955005027C769050026AB17 /* GeneralSettingViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C955004E27C769050026AB17 /* GeneralSettingViewController.xib */; };
-		C955005427C769770026AB17 /* SnapshotSettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955005227C769770026AB17 /* SnapshotSettingViewController.m */; };
-		C955005527C769770026AB17 /* SnapshotSettingViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C955005327C769770026AB17 /* SnapshotSettingViewController.xib */; };
-		C955005927C7698F0026AB17 /* DecoderSettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955005727C7698F0026AB17 /* DecoderSettingViewController.m */; };
-		C955005A27C7698F0026AB17 /* DecoderSettingViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C955005827C7698F0026AB17 /* DecoderSettingViewController.xib */; };
-		C955005E27C769D30026AB17 /* GraphicSettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C955005C27C769D30026AB17 /* GraphicSettingViewController.m */; };
-		C955005F27C769D30026AB17 /* GraphicSettingViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C955005D27C769D30026AB17 /* GraphicSettingViewController.xib */; };
 		C969BE4B27BDCD27008BC2AD /* MRGlobalNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = C969BE4927BDCD27008BC2AD /* MRGlobalNotification.m */; };
 		C969BE4E27BDD34E008BC2AD /* MRUtil+SystemPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = C969BE4C27BDD34E008BC2AD /* MRUtil+SystemPanel.m */; };
 		C96F5B9B291A052100C79E07 /* MRProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = C96F5B99291A052000C79E07 /* MRProgressIndicator.m */; };
@@ -88,27 +75,7 @@
 		C905CF1E2B55163C00D59730 /* MRRootViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRRootViewController.h; sourceTree = "<group>"; };
 		C905CF1F2B55163C00D59730 /* MRRootViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRRootViewController.m; sourceTree = "<group>"; };
 		C905CF202B55163C00D59730 /* MRRootViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MRRootViewController.xib; sourceTree = "<group>"; };
-		C955003D27C75A580026AB17 /* Setting.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Setting.storyboard; sourceTree = "<group>"; };
-		C955004027C75E740026AB17 /* LeftCategoryController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LeftCategoryController.h; sourceTree = "<group>"; };
-		C955004127C75E740026AB17 /* LeftCategoryController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LeftCategoryController.m; sourceTree = "<group>"; };
-		C955004327C7634F0026AB17 /* SettingSplitViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SettingSplitViewController.h; sourceTree = "<group>"; };
-		C955004427C7634F0026AB17 /* SettingSplitViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SettingSplitViewController.m; sourceTree = "<group>"; };
 		C955004627C765A30026AB17 /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefixHeader.pch; sourceTree = "<group>"; };
-		C955004727C768DD0026AB17 /* SubtitleSettingViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SubtitleSettingViewController.h; sourceTree = "<group>"; };
-		C955004827C768DD0026AB17 /* SubtitleSettingViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SubtitleSettingViewController.m; sourceTree = "<group>"; };
-		C955004927C768DD0026AB17 /* SubtitleSettingViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SubtitleSettingViewController.xib; sourceTree = "<group>"; };
-		C955004C27C769050026AB17 /* GeneralSettingViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneralSettingViewController.h; sourceTree = "<group>"; };
-		C955004D27C769050026AB17 /* GeneralSettingViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GeneralSettingViewController.m; sourceTree = "<group>"; };
-		C955004E27C769050026AB17 /* GeneralSettingViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GeneralSettingViewController.xib; sourceTree = "<group>"; };
-		C955005127C769770026AB17 /* SnapshotSettingViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SnapshotSettingViewController.h; sourceTree = "<group>"; };
-		C955005227C769770026AB17 /* SnapshotSettingViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SnapshotSettingViewController.m; sourceTree = "<group>"; };
-		C955005327C769770026AB17 /* SnapshotSettingViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SnapshotSettingViewController.xib; sourceTree = "<group>"; };
-		C955005627C7698F0026AB17 /* DecoderSettingViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DecoderSettingViewController.h; sourceTree = "<group>"; };
-		C955005727C7698F0026AB17 /* DecoderSettingViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DecoderSettingViewController.m; sourceTree = "<group>"; };
-		C955005827C7698F0026AB17 /* DecoderSettingViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = DecoderSettingViewController.xib; sourceTree = "<group>"; };
-		C955005B27C769D30026AB17 /* GraphicSettingViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GraphicSettingViewController.h; sourceTree = "<group>"; };
-		C955005C27C769D30026AB17 /* GraphicSettingViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GraphicSettingViewController.m; sourceTree = "<group>"; };
-		C955005D27C769D30026AB17 /* GraphicSettingViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GraphicSettingViewController.xib; sourceTree = "<group>"; };
 		C969BE4927BDCD27008BC2AD /* MRGlobalNotification.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MRGlobalNotification.m; sourceTree = "<group>"; };
 		C969BE4A27BDCD27008BC2AD /* MRGlobalNotification.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRGlobalNotification.h; sourceTree = "<group>"; };
 		C969BE4C27BDD34E008BC2AD /* MRUtil+SystemPanel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "MRUtil+SystemPanel.m"; sourceTree = "<group>"; };
@@ -216,33 +183,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		C955003F27C75DFC0026AB17 /* Settings */ = {
-			isa = PBXGroup;
-			children = (
-				C955003D27C75A580026AB17 /* Setting.storyboard */,
-				C955004327C7634F0026AB17 /* SettingSplitViewController.h */,
-				C955004427C7634F0026AB17 /* SettingSplitViewController.m */,
-				C955004027C75E740026AB17 /* LeftCategoryController.h */,
-				C955004127C75E740026AB17 /* LeftCategoryController.m */,
-				C955004727C768DD0026AB17 /* SubtitleSettingViewController.h */,
-				C955004827C768DD0026AB17 /* SubtitleSettingViewController.m */,
-				C955004927C768DD0026AB17 /* SubtitleSettingViewController.xib */,
-				C955004C27C769050026AB17 /* GeneralSettingViewController.h */,
-				C955004D27C769050026AB17 /* GeneralSettingViewController.m */,
-				C955004E27C769050026AB17 /* GeneralSettingViewController.xib */,
-				C955005127C769770026AB17 /* SnapshotSettingViewController.h */,
-				C955005227C769770026AB17 /* SnapshotSettingViewController.m */,
-				C955005327C769770026AB17 /* SnapshotSettingViewController.xib */,
-				C955005627C7698F0026AB17 /* DecoderSettingViewController.h */,
-				C955005727C7698F0026AB17 /* DecoderSettingViewController.m */,
-				C955005827C7698F0026AB17 /* DecoderSettingViewController.xib */,
-				C955005B27C769D30026AB17 /* GraphicSettingViewController.h */,
-				C955005C27C769D30026AB17 /* GraphicSettingViewController.m */,
-				C955005D27C769D30026AB17 /* GraphicSettingViewController.xib */,
-			);
-			path = Settings;
-			sourceTree = "<group>";
-		};
 		DD0443DB27E7749800CB946B /* MRActionKit */ = {
 			isa = PBXGroup;
 			children = (
@@ -307,7 +247,6 @@
 		DD9B138A22C23A79002D1D79 /* IJKMediaDemo */ = {
 			isa = PBXGroup;
 			children = (
-				C955003F27C75DFC0026AB17 /* Settings */,
 				DD9B138B22C23A79002D1D79 /* AppDelegate.h */,
 				DD9B138C22C23A79002D1D79 /* AppDelegate.m */,
 				DDB782792757266800382094 /* SHBaseView.h */,
@@ -460,19 +399,13 @@
 			files = (
 				C905CF172B54C8D300D59730 /* MRAutoTestViewController.xib in Resources */,
 				DD9B138F22C23A7A002D1D79 /* Assets.xcassets in Resources */,
-				C955005A27C7698F0026AB17 /* DecoderSettingViewController.xib in Resources */,
 				DD9B139222C23A7A002D1D79 /* MainMenu.xib in Resources */,
 				C905CF1D2B550C7400D59730 /* MRStatisticalViewController.xib in Resources */,
 				C97674EF2A1F333D00B7627E /* MRTextInfoViewController.xib in Resources */,
 				C9C7E2832B60F09100D5F2E0 /* MRPlayerSettingsViewController.xib in Resources */,
 				C905CF222B55163C00D59730 /* MRRootViewController.xib in Resources */,
-				C955005027C769050026AB17 /* GeneralSettingViewController.xib in Resources */,
 				C99B0F9329DE9D2500E88ECB /* MultiRenderSample.xib in Resources */,
-				C955004B27C768DD0026AB17 /* SubtitleSettingViewController.xib in Resources */,
-				C955003E27C75A580026AB17 /* Setting.storyboard in Resources */,
 				C9C7E27B2B60E37200D5F2E0 /* MRPlaylistViewController.xib in Resources */,
-				C955005527C769770026AB17 /* SnapshotSettingViewController.xib in Resources */,
-				C955005F27C769D30026AB17 /* GraphicSettingViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -527,17 +460,13 @@
 			files = (
 				C9C7E2822B60F09100D5F2E0 /* MRPlayerSettingsViewController.m in Sources */,
 				C99B0F1A29DE76B100E88ECB /* MRRenderViewAuxProxy.m in Sources */,
-				C955004F27C769050026AB17 /* GeneralSettingViewController.m in Sources */,
 				C905CF182B54C8D300D59730 /* MRAutoTestViewController.m in Sources */,
-				C955004A27C768DD0026AB17 /* SubtitleSettingViewController.m in Sources */,
 				DD0443E927E7749800CB946B /* MRActionItem.m in Sources */,
 				C969BE4B27BDCD27008BC2AD /* MRGlobalNotification.m in Sources */,
-				C955005E27C769D30026AB17 /* GraphicSettingViewController.m in Sources */,
 				DDB7827B2757266900382094 /* SHBaseView.m in Sources */,
 				DD0443E727E7749800CB946B /* MRActionProcessor.m in Sources */,
 				C97423CE2A3AE8BE001F6B54 /* NSString+Ex.m in Sources */,
 				DD9B139522C23A7A002D1D79 /* main.m in Sources */,
-				C955005427C769770026AB17 /* SnapshotSettingViewController.m in Sources */,
 				C97DCC0727C867EA0019874F /* MRBaseView.m in Sources */,
 				DD4EB00127310F1C00FBCD3A /* WindowController.m in Sources */,
 				C969BE4E27BDD34E008BC2AD /* MRUtil+SystemPanel.m in Sources */,
@@ -548,9 +477,6 @@
 				C9C7E27E2B60E54A00D5F2E0 /* MRPlaylistRowView.m in Sources */,
 				DDE9FC70273BD3CF00481560 /* NSFileManager+Sandbox.m in Sources */,
 				C905CF212B55163C00D59730 /* MRRootViewController.m in Sources */,
-				C955004227C75E740026AB17 /* LeftCategoryController.m in Sources */,
-				C955004527C7634F0026AB17 /* SettingSplitViewController.m in Sources */,
-				C955005927C7698F0026AB17 /* DecoderSettingViewController.m in Sources */,
 				C99B0F9229DE9D2500E88ECB /* MultiRenderSample.m in Sources */,
 				C9FFF21527C864C100284B46 /* MRProgressSlider.m in Sources */,
 				C97674EE2A1F333D00B7627E /* MRTextInfoViewController.m in Sources */,

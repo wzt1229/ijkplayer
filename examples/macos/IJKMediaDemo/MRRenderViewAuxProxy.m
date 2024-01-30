@@ -166,7 +166,7 @@
     
     for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
         [view setSubtitlePreference:subtitlePreference];
-    };
+    }
 }
 
 @end
