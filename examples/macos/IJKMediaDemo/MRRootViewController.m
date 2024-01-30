@@ -717,6 +717,8 @@ static BOOL hdrAnimationShown = 0;
     [self onVolumeChange:nil];
     [self applyDAR];
     [self applyRotate];
+    [self applyBSC];
+    [self applySubtitlePreference];
 }
 
 #pragma mark - ijkplayer
@@ -937,13 +939,7 @@ static BOOL hdrAnimationShown = 0;
     NSString *title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],videoName];
     [self.view.window setTitle:title];
     
-    [self onChangeBSC];
     self.playCtrlBtn.state = NSControlStateValueOn;
-    
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.bottomMargin = [MRCocoaBindingUserDefault subtitle_bottom_margin];
-    p.ratio = [MRCocoaBindingUserDefault subtitle_font_ratio];
-    self.player.view.subtitlePreference = p;
     
     int startTime = (int)([self readCurrentPlayRecord] * 1000);
     [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
@@ -1352,60 +1348,33 @@ static BOOL hdrAnimationShown = 0;
 
 #pragma mark 字幕设置
 
-- (IBAction)onChangeSubtitleColor:(NSPopUpButton *)sender
-{
-    NSMenuItem *item = [sender selectedItem];
-    int bgrValue = (int)item.tag;
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.color = bgrValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
-}
-
-- (IBAction)onChangeSubtitleSize:(NSStepper *)sender
-{
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.ratio = sender.floatValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
-}
-
-- (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
-{
-    if (sender.indexOfSelectedItem == 0) {
-        [self.player closeCurrentStream:k_IJKM_VAL_TYPE__SUBTITLE];
-    } else {
-        NSString *title = sender.selectedItem.title;
-        NSArray *items = [title componentsSeparatedByString:@"-"];
-        int idx = [[items lastObject] intValue];
-        NSLog(@"SelectSubtitleTrack:%d",idx);
-        [self.player exchangeSelectedStream:idx];
-    }
-}
-
 - (IBAction)onChangeSubtitleDelay:(NSStepper *)sender
 {
     float delay = sender.floatValue;
     [self.player updateSubtitleExtraDelay:delay];
 }
 
-- (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender
+- (void)applySubtitlePreference
 {
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.bottomMargin = sender.floatValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
+    p.color = color2int([MRCocoaBindingUserDefault subtitle_text_color]);
+    p.bgColor = color2int([MRCocoaBindingUserDefault subtitle_bg_color]);
+    p.borderColor = color2int([MRCocoaBindingUserDefault subtitle_border_color]);
+    p.borderSize = [MRCocoaBindingUserDefault subtitle_border_size];
+    p.bottomMargin = [MRCocoaBindingUserDefault subtitle_bottom_margin];
+    p.size = [MRCocoaBindingUserDefault subtitle_font_size];
+    NSString *name = [MRCocoaBindingUserDefault subtitle_font_name];
+    if (name) {
+        strcpy(p.name,[name UTF8String]);
+    } else {
+        bzero(p.name, sizeof(p.name));
     }
+    self.player.view.subtitlePreference = p;
 }
 
 #pragma mark 色彩调节
 
-- (void)onChangeBSC
+- (void)applyBSC
 {
     IJKSDLColorConversionPreference colorPreference = self.player.view.colorPreference;
     colorPreference.brightness = [MRCocoaBindingUserDefault color_adjust_brightness];
@@ -1470,17 +1439,17 @@ static BOOL hdrAnimationShown = 0;
     __weakSelf__
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__
-        [self onChangeBSC];
+        [self applyBSC];
     } forKey:@"color_adjust_brightness"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__
-        [self onChangeBSC];
+        [self applyBSC];
     } forKey:@"color_adjust_saturation"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__
-        [self onChangeBSC];
+        [self applyBSC];
     } forKey:@"color_adjust_contrast"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
@@ -1507,6 +1476,84 @@ static BOOL hdrAnimationShown = 0;
             [self.player.view setNeedsRefreshCurrentPic];
         }
     } forKey:@"picture_ratate_mode"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+        NSString *name = v;
+        if (name) {
+            strcpy(p.name,[name UTF8String]);
+        } else {
+            bzero(p.name, sizeof(p.name));
+        }
+        self.player.view.subtitlePreference = p;
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"subtitle_font_name"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+        p.bottomMargin = [v floatValue];
+        self.player.view.subtitlePreference = p;
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"subtitle_bottom_margin"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+        p.size = [v floatValue];
+        self.player.view.subtitlePreference = p;
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"subtitle_font_size"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
+        __strongSelf__
+        NSColor *color = v;
+        IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+        p.color = color2int(color);
+        self.player.view.subtitlePreference = p;
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"subtitle_text_color"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
+        __strongSelf__
+        NSColor *color = v;
+        IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+        p.bgColor = color2int(color);
+        self.player.view.subtitlePreference = p;
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"subtitle_bg_color"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
+        __strongSelf__
+        NSColor *color = v;
+        IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+        p.borderColor = color2int(color);
+        self.player.view.subtitlePreference = p;
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"subtitle_border_color"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
+        __strongSelf__
+        IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+        p.borderSize = [v intValue];
+        self.player.view.subtitlePreference = p;
+        if (!self.player.isPlaying) {
+            [self.player.view setNeedsRefreshCurrentPic];
+        }
+    } forKey:@"subtitle_border_size"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__

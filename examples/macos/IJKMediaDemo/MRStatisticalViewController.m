@@ -929,12 +929,6 @@ static BOOL hdrAnimationShown = 0;
     [self onReset:nil];
     self.playCtrlBtn.state = NSControlStateValueOn;
     
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.bottomMargin = self.subtitleMargin;
-    NSNumber *number = [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.subtitle_font_ratio"];
-    p.ratio = [number floatValue];
-    self.player.view.subtitlePreference = p;
-    
     [self.player prepareToPlay];
     
     if ([self.subtitles count] > 0) {
@@ -1359,7 +1353,7 @@ static BOOL hdrAnimationShown = 0;
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
 {
     IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.ratio = sender.floatValue;
+    p.size = sender.floatValue;
     self.player.view.subtitlePreference = p;
     if (!self.player.isPlaying) {
         [self.player.view setNeedsRefreshCurrentPic];

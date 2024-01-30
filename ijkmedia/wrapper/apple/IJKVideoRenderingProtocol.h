@@ -76,10 +76,56 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 
 typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
 struct _IJKSDLSubtitlePreference {
-    float ratio;//scale
-    int32_t color;
+    float size;
+    uint32_t color;//text color
+    uint32_t bgColor;//text bg color
+    uint32_t borderColor;//border color
+    int borderSize;//border size
     float bottomMargin;//[0.0,1.0]
+    char name[256];
 };
+
+static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,IJKSDLSubtitlePreference* p2)
+{
+    if (!p1 || !p2) {
+        return 0;
+    }
+    if (p1->size != p2->size ||
+        p1->color != p2->color ||
+        p1->bgColor != p2->bgColor ||
+        p1->borderColor != p2->borderColor ||
+        p1->borderSize != p2->borderSize ||
+        p1->bottomMargin != p2->bottomMargin ||
+        strcmp(p1->name, p2->name)
+        ) {
+        return 0;
+    }
+    return 1;
+}
+
+static inline uint32_t color2int(UIColor *color) {
+    if (@available(macOS 10.13, *)) {
+        if (color.type != NSColorTypeComponentBased) {
+            color = [color colorUsingType:NSColorTypeComponentBased];
+        }
+    }
+    CGFloat r,g,b,a;
+    [color getRed:&r green:&g blue:&b alpha:&a];
+    r *= 255;
+    g *= 255;
+    b *= 255;
+    a *= 255;
+    return (int)a + ((int)b << 8) + ((int)g << 16) + ((int)r << 24);
+}
+
+static inline UIColor * int2color(uint32_t abgr) {
+    CGFloat r,g,b,a;
+    a = ((float)(abgr & 0xFF)) / 255.0;
+    b = ((float)((abgr & 0xFF00) >> 8)) / 255.0;
+    g = (float)(((abgr & 0xFF0000) >> 16)) / 255.0;
+    r = ((float)((abgr & 0xFF000000) >> 24)) / 255.0;
+    return [UIColor colorWithRed:r green:g blue:b alpha:a];
+}
 
 typedef enum _IJKSDLRotateType {
     IJKSDLRotateNone,

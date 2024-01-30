@@ -9,6 +9,7 @@
 
 #import "MRCocoaBindingUserDefault.h"
 #import <AppKit/NSUserDefaultsController.h>
+#import <AppKit/NSColor.h>
 
 @interface MRCocoaBindingUserDefault()
 
@@ -37,44 +38,70 @@
     return self;
 }
 
++ (NSDictionary *)initValues 
+{
+    NSColor *text_color = [NSColor colorWithRed:0.3 green:0.2 blue:0.7 alpha:1.0];
+    NSData *text_color_data = [NSKeyedArchiver archivedDataWithRootObject:text_color];
+    
+    NSColor *subtitle_bg_color = [NSColor colorWithRed:0.7 green:0.1 blue:0.7 alpha:1.0];
+    NSData *subtitle_bg_color_data = [NSKeyedArchiver archivedDataWithRootObject:subtitle_bg_color];
+    
+    NSColor *subtitle_border_color = [NSColor colorWithRed:0.8 green:0.2 blue:0.4 alpha:1.0];
+    NSData *subtitle_border_color_data = [NSKeyedArchiver archivedDataWithRootObject:subtitle_border_color];
+    
+    NSDictionary *initValues = @{
+        @"volume" : @(0.4),
+        
+        @"log_level":@"info",
+        @"color_adjust_brightness" : @(1.0),
+        @"color_adjust_saturation" : @(1.0),
+        @"color_adjust_contrast" : @(1.0),
+        @"use_opengl" : @(0),
+        @"picture_fill_mode" : @(3),
+        @"picture_wh_ratio" : @(0),
+        @"picture_ratate_mode" : @(0),
+        @"picture_flip_mode" : @(0),
+        
+        @"use_hw" : @(1),
+        @"copy_hw_frame" : @(0),
+        @"de_interlace" : @(0),
+        @"open_hdr" : @(1),
+        @"overlay_format" : @"fcc-_es2",
+        
+        @"subtitle_font_name" : @"sans-serif",
+        @"subtitle_font_size" : @(30),
+        @"subtitle_font_bold" : @(0),
+        @"subtitle_font_italic" : @(0),
+        @"subtitle_bottom_margin":@(0.5),
+        @"subtitle_border_size" : @(2),
+        @"subtitle_text_color" : text_color_data,
+        @"subtitle_bg_color" : subtitle_bg_color_data,
+        @"subtitle_border_color" : subtitle_border_color_data,
+        
+        @"snapshot_type" : @(3),
+        @"accurate_seek" : @(1),
+        @"seek_step" : @(15),
+        @"open_gzip" : @(1),
+        @"use_dns_cache" : @(1),
+        @"dns_cache_period" : @(600),
+    };
+    return initValues;
+}
+
 + (void)initUserDefaults
 {
-    [[NSUserDefaultsController sharedUserDefaultsController] setInitialValues:@{
-        @"values.volume" : @(0.4),
-        
-        @"values.log_level":@"info",
-        @"values.color_adjust_brightness" : @(1.0),
-        @"values.color_adjust_saturation" : @(1.0),
-        @"values.color_adjust_contrast" : @(1.0),
-        @"values.use_opengl" : @(0),
-        @"values.picture_fill_mode" : @(3),
-        @"values.picture_wh_ratio" : @(0),
-        @"values.picture_ratate_mode" : @(0),
-        @"values.picture_flip_mode" : @(0),
-        
-        @"values.use_hw" : @(1),
-        @"values.copy_hw_frame" : @(0),
-        @"values.de_interlace" : @(0),
-        @"values.open_hdr" : @(1),
-        @"values.overlay_format" : @"fcc-_es2",
-        
-        @"values.subtitle_font_ratio":@(1.5),
-        @"values.subtitle_bottom_margin":@(1.5),
-        @"values.subtitle_border_size" : @(2),
-//        @"values.subtitle_border_color" : @(),
-        @"values.subtitle_font_size" : @(30),
-        @"values.subtitle_font_bold" : @(0),
-        @"values.subtitle_font_italic" : @(0),
-//        @"values.subtitle_bg_color" : @(),
-//        @"values.subtitle_text_color" : @(),
-//        @"values.subtitle_font_name" : @(),
-        @"values.snapshot_type" : @(3),
-        @"values.accurate_seek" : @(1),
-        @"values.seek_step" : @(15),
-        @"values.open_gzip" : @(1),
-        @"values.use_dns_cache" : @(1),
-        @"values.dns_cache_period" : @(600),
-    }];
+    NSDictionary * initValues = [self initValues];
+    [[NSUserDefaultsController sharedUserDefaultsController] setInitialValues:initValues];
+    [[[NSUserDefaultsController sharedUserDefaultsController] defaults] registerDefaults:initValues];
+}
+
++ (void)resetAll
+{
+    NSDictionary * initValues = [self initValues];
+    [[[NSUserDefaultsController sharedUserDefaultsController] defaults] setPersistentDomain:initValues forName:[[NSBundle mainBundle] bundleIdentifier]];
+    
+    //清理掉现有的值
+//    [[[NSUserDefaultsController sharedUserDefaultsController] defaults] removePersistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
 }
 
 + (NSString *)resolveKey:(NSString *)key
@@ -168,7 +195,10 @@
     NSMutableArray *removeArr = nil;
     for (int i = 0; i< array.count; i++) {
         void(^block)(id,BOOL*) = array[i];
-        BOOL remove;
+        BOOL remove = NO;
+        if ([value isKindOfClass:[NSData class]]) {
+            value = [NSKeyedUnarchiver unarchiveObjectWithData:value];
+        }
         block(value, &remove);
         if (remove) {
             if (removeArr == nil) {
@@ -242,14 +272,71 @@
     return [self boolForKey:@"use_hw"];
 }
 
-+ (float)subtitle_font_ratio
++ (NSString *)subtitle_font_name
 {
-    return [self floatForKey:@"subtitle_font_ratio"];
+    return [self stringForKey:@"subtitle_font_name"];
+}
+
++ (void)setSubtitle_font_name:(NSString *)font_name
+{
+    return [self setValue:font_name forKey:@"subtitle_font_name"];
+}
+
++ (float)subtitle_font_size
+{
+    return [self floatForKey:@"subtitle_font_size"];
+}
+
++ (void)setSubtitle_font_size:(float)font_size
+{
+    return [self setValue:@(font_size) forKey:@"subtitle_font_size"];
+}
+
++ (BOOL)subtitle_font_bold
+{
+    return [self boolForKey:@"subtitle_font_bold"];
+}
+
++ (BOOL)subtitle_font_italic
+{
+    return [self boolForKey:@"subtitle_font_italic"];
 }
 
 + (float)subtitle_bottom_margin
 {
     return [self floatForKey:@"subtitle_bottom_margin"];
+}
+
++ (float)subtitle_border_size
+{
+    return [self floatForKey:@"subtitle_border_size"];
+}
+
++ (NSColor *)subtitle_text_color
+{
+    NSData *data = [self anyForKey:@"subtitle_text_color"];
+    if (data) {
+        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    }
+    return nil;
+}
+
++ (NSColor *)subtitle_bg_color
+{
+    NSData *data = [self anyForKey:@"subtitle_bg_color"];
+    if (data) {
+        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    }
+    return nil;
+}
+
++ (NSColor *)subtitle_border_color
+{
+    NSData *data = [self anyForKey:@"subtitle_border_color"];
+    if (data) {
+        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    }
+    return nil;
 }
 
 + (float)volume

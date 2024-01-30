@@ -472,21 +472,31 @@ static bool _is_need_dispath_to_global(void)
     [self resetViewPort];
 }
 
-- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle
+- (CGSize)screenSize
+{
+    static CGSize screenSize;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+    #if TARGET_OS_OSX
+        screenSize = [[[NSScreen screens] firstObject]frame].size;
+    #else
+        screenSize = [[UIScreen mainScreen]bounds].size;
+    #endif
+    });
+    return screenSize;
+}
+
+- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle videoDegrees:(int)degrees
 {
     if (subtitle.length == 0) {
         return NULL;
     }
     
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
-        
-    float ratio = sp.ratio;
-    int32_t bgrValue = sp.color;
+
     //以800为标准，定义出字幕字体默认大小为30pt
     float scale = 1.0;
-    CGSize screenSize = [[[NSScreen screens] firstObject]frame].size;
-    
-    NSInteger degrees = self.videoDegrees;
+    CGSize screenSize = [self screenSize];
     if (degrees / 90 % 2 == 1) {
         scale = screenSize.height / 800.0;
     } else {
@@ -495,14 +505,18 @@ static bool _is_need_dispath_to_global(void)
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
     
-    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 60];
+    UIFont *subtitleFont = nil;
+    if (strlen(sp.name)) {
+        subtitleFont = [UIFont fontWithName:[[NSString alloc] initWithUTF8String:sp.name] size:scale * sp.size];
+    }
+    
+    if (!subtitleFont) {
+        subtitleFont = [UIFont systemFontOfSize:scale * sp.size];
+    }
     [attributes setObject:subtitleFont forKey:NSFontAttributeName];
+    [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
     
-    NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
-    
-    [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
-    
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes];
+    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withBoxColor:int2color(sp.bgColor) withBorderColor:int2color(sp.borderColor) withBorderSize:sp.borderSize];
     
     return [textureString createPixelBuffer];
 }
@@ -550,7 +564,7 @@ static bool _is_need_dispath_to_global(void)
     if (subTexture) {
         float ratio = 1.0;
         if (attach.sub.pixels) {
-            ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+            ratio = self.displayVideoScale * 1.5;
         }
         ratio *= self.displayScreenScale;
         
@@ -605,7 +619,7 @@ static bool _is_need_dispath_to_global(void)
     //update subtitle if need
     if (self.subtitlePreferenceChanged) {
         if (currentAttach.sub.text) {
-            CVPixelBufferRef subPicture = [self _generateSubtitlePixel:currentAttach.sub.text];
+            CVPixelBufferRef subPicture = [self _generateSubtitlePixel:currentAttach.sub.text videoDegrees:currentAttach.autoZRotate];
             currentAttach.subTexture = [_IJKSDLSubTexture generate:subPicture];
             CVPixelBufferRelease(subPicture);
         }
@@ -657,7 +671,7 @@ static bool _is_need_dispath_to_global(void)
     IJKSDLSubtitle *sub = attach.sub;
     CVPixelBufferRef subRef = NULL;
     if (sub.text.length > 0) {
-        subRef = [self _generateSubtitlePixel:sub.text];
+        subRef = [self _generateSubtitlePixel:sub.text videoDegrees:attach.autoZRotate];
     } else if (sub.pixels != NULL) {
         subRef = [self _generateSubtitlePixelFromPicture:sub];
     }
@@ -1052,9 +1066,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         if (IJK_GLES2_Renderer_isValid(_renderer)) {
             IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
         }
-    }
-    
-    if (_subtitlePreference.ratio != subtitlePreference.ratio || _subtitlePreference.color != subtitlePreference.color) {
+    } else if (!isIJKSDLSubtitlePreferenceEqual(&_subtitlePreference, &subtitlePreference)) {
         _subtitlePreference = subtitlePreference;
         self.subtitlePreferenceChanged = YES;
     }

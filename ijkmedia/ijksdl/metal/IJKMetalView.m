@@ -365,7 +365,7 @@ typedef CGRect NSRect;
     if (attach.subTexture) {
         float subScale = 1.0;
         if (attach.sub.pixels) {
-            subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+            subScale = self.displayVideoScale * 1.5;
         }
         //保证 Retina 屏幕显示的大小和非 Retina 屏幕上一样大
         /*
@@ -458,7 +458,7 @@ typedef CGRect NSRect;
             float subScale = 1.0;
             
             if (attach.sub.pixels) {
-                subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+                subScale = self.displayVideoScale * 1.5;
             }
             
             {
@@ -536,7 +536,7 @@ typedef CGRect NSRect;
         if (attach.subTexture) {
             float subScale = 1.0;
             if (attach.sub.pixels) {
-                subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
+                subScale = self.displayVideoScale * 1.5;
             }
             
             float subtitleExtScale = [self computeSubtitleExtSacle];
@@ -646,9 +646,7 @@ typedef CGRect NSRect;
     }
     
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
-    
-    float ratio = sp.ratio;
-    int32_t bgrValue = sp.color;
+
     //以800为标准，定义出字幕字体默认大小为30pt
     float scale = 1.0;
     CGSize screenSize = [self screenSize];
@@ -659,15 +657,19 @@ typedef CGRect NSRect;
     }
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
+
+    UIFont *subtitleFont = nil;
+    if (strlen(sp.name)) {
+        subtitleFont = [UIFont fontWithName:[[NSString alloc] initWithUTF8String:sp.name] size:scale * sp.size];
+    }
     
-    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 30];
+    if (!subtitleFont) {
+        subtitleFont = [UIFont systemFontOfSize:scale * sp.size];
+    }
     [attributes setObject:subtitleFont forKey:NSFontAttributeName];
+    [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
     
-    NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
-    
-    [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
-    
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes];
+    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withBoxColor:int2color(sp.bgColor) withBorderColor:int2color(sp.borderColor) withBorderSize:sp.borderSize];
     
     return [textureString createPixelBuffer];
 }
@@ -787,7 +789,6 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
     // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
     textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
-    
     // Set the pixel dimensions of the texture
     
     textureDescriptor.width  = CVPixelBufferGetWidth(pixelBuff);
@@ -904,9 +905,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 
 - (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
 {
-    if (_subtitlePreference.ratio != subtitlePreference.ratio ||
-        _subtitlePreference.color != subtitlePreference.color ||
-        _subtitlePreference.bottomMargin != subtitlePreference.bottomMargin) {
+    if (!isIJKSDLSubtitlePreferenceEqual(&_subtitlePreference, &subtitlePreference)) {
         _subtitlePreference = subtitlePreference;
         self.subtitlePreferenceChanged = YES;
     }

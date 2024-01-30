@@ -93,33 +93,34 @@
 #pragma mark Initializers
 
 // designated initializer
-- (id)initWithAttributedString:(NSAttributedString *)attributedString withBoxColor:(NSColor *)box withBorderColor:(NSColor *)border
+- (id)initWithAttributedString:(NSAttributedString *)attributedString withBoxColor:(NSColor *)box withBorderColor:(NSColor *)border withBorderSize:(int)borderSize
 {
     self = [super init];
     
     self.attributedString = attributedString;
-    
+    self.cRadius = 3;
     self.boxColor = box;
     self.borderColor = border;
+    self.borderSize = borderSize;
     self.antialias = YES;
     self.requiresUpdate = YES;
 	return self;
 }
 
-- (id)initWithString:(NSString *)aString withAttributes:(NSDictionary *)attribs withBoxColor:(NSColor *)box withBorderColor:(NSColor *)border
+- (id)initWithString:(NSString *)aString withAttributes:(NSDictionary *)attribs withBoxColor:(NSColor *)box withBorderColor:(NSColor *)border withBorderSize:(int)borderSize
 {
-	return [self initWithAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs] withBoxColor:box withBorderColor:border];
+	return [self initWithAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs] withBoxColor:box withBorderColor:border withBorderSize:borderSize];
 }
 
 // basic methods that pick up defaults
 - (id)initWithAttributedString:(NSAttributedString *)attributedString;
 {
-	return [self initWithAttributedString:attributedString withBoxColor:[NSColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.0f] withBorderColor:[NSColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.0f]];
+	return [self initWithAttributedString:attributedString withBoxColor:nil withBorderColor:nil withBorderSize:0];
 }
 
 - (id)initWithString:(NSString *)aString withAttributes:(NSDictionary *)attribs
 {
-	return [self initWithAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs] withBoxColor:[NSColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.0f] withBorderColor:[NSColor colorWithRed:1.0f green:1.0f blue:1.0f alpha:0.0f]];
+	return [self initWithAttributedString:[[NSAttributedString alloc] initWithString:aString attributes:attribs] withBoxColor:nil withBorderColor:nil withBorderSize:0];
 }
 
 #pragma mark -
@@ -247,11 +248,11 @@
         [path fill];
     }
     
-    if ([self.borderColor alphaComponent]) {
+    if (self.borderSize > 0 && [self.borderColor alphaComponent]) {
         [self.borderColor set];
         NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(NSMakeRect (0.0f, 0.0f, bgSize.width, bgSize.height), 0.5, 0.5)
                                                         cornerRadius:self.cRadius];
-        [path setLineWidth:2.0f];
+        [path setLineWidth:self.borderSize];
         if (transform) {
             [path transformUsingAffineTransform:transform];
         }
@@ -308,7 +309,7 @@
                              [NSNumber numberWithBool:YES], kCVPixelBufferMetalCompatibilityKey,
                              [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
                              [NSNumber numberWithBool:YES], kCVPixelBufferCGBitmapContextCompatibilityKey,
-                             [NSDictionary dictionary],kCVPixelBufferIOSurfacePropertiesKey,
+                             [NSDictionary dictionary], kCVPixelBufferIOSurfacePropertiesKey,
         nil];
     CVPixelBufferRef pxbuffer = NULL;
      
@@ -321,7 +322,8 @@
     if (height == 0 || height == 0) {
         return NULL;
     }
-    
+    //important!!
+    //pixelbuffer use 32BGRA store pixel,but the pixel is rgba really! so need convert later.
     CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, width,
             height, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options,
             &pxbuffer);
@@ -334,7 +336,7 @@
     CVPixelBufferLockBaseAddress(pxbuffer, 0);
     void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
     NSParameterAssert(pxdata != NULL);
-     
+
     CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
     size_t bpr = CVPixelBufferGetBytesPerRow(pxbuffer);//not use 4 * width
     CGContextRef context = CGBitmapContextCreate(pxdata, width, height, 8, bpr, rgbColorSpace, kCGImageAlphaPremultipliedLast);
@@ -397,7 +399,7 @@
         [self.borderColor set];
         
         UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:CGRectInset(CGRectMake (0.0f, 0.0f, picSize.width, picSize.height) , 0.5, 0.5) cornerRadius:self.cRadius];
-        [path setLineWidth:2.0f];
+        [path setLineWidth:self.borderSize];
         if (!CGAffineTransformIsIdentity(transform)) {
             [path applyTransform:transform];
         }

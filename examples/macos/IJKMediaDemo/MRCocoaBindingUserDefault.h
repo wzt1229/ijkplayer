@@ -9,10 +9,12 @@
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
-
+@class NSColor;
 @interface MRCocoaBindingUserDefault : NSObject
 
 + (void)initUserDefaults;
++ (void)resetAll;
+
 + (void)setValue:(id)value forKey:(NSString *)key;
 + (void)resetValueForKey:(NSString *)key;
 + (id)anyForKey:(NSString *)key;
@@ -49,8 +51,18 @@ NS_ASSUME_NONNULL_BEGIN
 + (int)use_dns_cache;
 + (int)dns_cache_period;
 
-+ (float)subtitle_font_ratio;
++ (NSString *)subtitle_font_name;
++ (void)setSubtitle_font_name:(NSString *)font_name;
++ (float)subtitle_font_size;
++ (void)setSubtitle_font_size:(float)font_size;
++ (BOOL)subtitle_font_bold;
++ (BOOL)subtitle_font_italic;
 + (float)subtitle_bottom_margin;
++ (float)subtitle_border_size;
++ (NSColor *)subtitle_text_color;
++ (NSColor *)subtitle_bg_color;
++ (NSColor *)subtitle_border_color;
+
 + (NSString *)overlay_format;
 + (BOOL)use_opengl;
 + (int)snapshot_type;

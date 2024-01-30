@@ -28,6 +28,8 @@
 @property (nonatomic, copy) MRPlayerSettingsExchangeStreamBlock exchangeSelectedStream;
 @property (nonatomic, copy) dispatch_block_t captureShot;
 
+@property (nonatomic, strong) NSFont *font;
+
 @end
 
 @implementation MRPlayerSettingsViewController
@@ -200,6 +202,28 @@
     }
 }
 
+- (IBAction)onSelectFont:(NSButton *)sender
+{
+    NSFontManager *fontManager = [NSFontManager sharedFontManager];
+    [fontManager setTarget:self];
+    NSFontPanel *panel = [fontManager fontPanel:YES];
+    NSFont *font = [NSFont fontWithName:[MRCocoaBindingUserDefault subtitle_font_name] size:[MRCocoaBindingUserDefault subtitle_font_size]];
+    if (!font) {
+        font = [NSFont systemFontOfSize:[MRCocoaBindingUserDefault subtitle_font_size]];
+    }
+    self.font = font;
+    [panel setPanelFont:self.font isMultiple:NO];
+    [[self.view window] makeFirstResponder:panel];
+    [panel orderFront:self];
+}
+
+- (void)changeFont:(NSFontManager *)sender
+{
+    self.font = [[NSFontPanel sharedFontPanel] panelConvertFont:self.font];
+    [MRCocoaBindingUserDefault setSubtitle_font_name:self.font.fontName];
+    [MRCocoaBindingUserDefault setSubtitle_font_size:self.font.pointSize];
+}
+
 - (void)onCaptureShot:(dispatch_block_t)block
 {
     self.captureShot = block;
@@ -210,6 +234,11 @@
     if (self.captureShot) {
         self.captureShot();
     }
+}
+
+- (IBAction)onRestAllSettings:(NSButton *)sender 
+{
+    [MRCocoaBindingUserDefault resetAll];
 }
 
 @end
