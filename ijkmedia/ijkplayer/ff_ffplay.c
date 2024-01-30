@@ -1403,6 +1403,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                 break;
             default:
                 ALOGE("unknow overly format:%.4s(0x%x)\n", (char*)&overlay_format, overlay_format);
+                return -1000;
                 break;
         }
         
