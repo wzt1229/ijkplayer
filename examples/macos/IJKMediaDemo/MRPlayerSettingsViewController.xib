@@ -321,8 +321,8 @@
                                             <font key="font" metaFont="smallSystem"/>
                                             <segments>
                                                 <segment label="拉伸填充" width="90" tag="2"/>
-                                                <segment label="等比填充" width="89" selected="YES" tag="1"/>
-                                                <segment label="等比适应" width="89"/>
+                                                <segment label="等比填充" width="89" tag="1"/>
+                                                <segment label="等比适应" width="89" selected="YES"/>
                                             </segments>
                                         </segmentedCell>
                                         <connections>
@@ -344,8 +344,8 @@
                                         <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="8B8-ou-QoU">
                                             <font key="font" metaFont="smallSystem"/>
                                             <segments>
-                                                <segment label="原始" width="82"/>
-                                                <segment label="4:3" width="80" selected="YES" tag="1"/>
+                                                <segment label="原始" width="82" selected="YES"/>
+                                                <segment label="4:3" width="80" tag="1"/>
                                                 <segment label="16:9" width="80" tag="2"/>
                                                 <segment label="1:1" tag="3"/>
                                             </segments>
@@ -369,8 +369,8 @@
                                         <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="JqF-bz-zoj">
                                             <font key="font" metaFont="smallSystem"/>
                                             <segments>
-                                                <segment label="0°" width="78"/>
-                                                <segment label="90°" width="76" selected="YES" tag="1"/>
+                                                <segment label="0°" width="78" selected="YES"/>
+                                                <segment label="90°" width="76" tag="1"/>
                                                 <segment label="180°" width="76" tag="2"/>
                                                 <segment label="270°" tag="3"/>
                                             </segments>
@@ -707,7 +707,6 @@
                                                 </colorWell>
                                             </subviews>
                                         </view>
-                                        <font key="titleFont" size="11" name=".PingFangSC-Regular"/>
                                     </box>
                                     <box title="位置" id="5q2-0b-Q0d" userLabel="位置">
                                         <rect key="frame" x="83" y="315" width="204" height="50"/>

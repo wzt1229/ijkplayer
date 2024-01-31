@@ -713,8 +713,8 @@ static BOOL hdrAnimationShown = 0;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerHdrAnimationStateChanged:) name:IJKMoviePlayerHDRAnimationStateChanged object:self.player.view];
     
     self.player.shouldAutoplay = YES;
-    [self.player setScalingMode:[MRCocoaBindingUserDefault picture_fill_mode]];
     [self onVolumeChange:nil];
+    [self applyScalingMode];
     [self applyDAR];
     [self applyRotate];
     [self applyBSC];
@@ -1387,7 +1387,12 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-#pragma mark 画面设置
+#pragma mark 播放器偏好设置
+
+- (void)applyScalingMode
+{
+    [self.player setScalingMode:[MRCocoaBindingUserDefault picture_fill_mode]];
+}
 
 - (void)applyDAR
 {

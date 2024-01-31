@@ -59,7 +59,7 @@
         @"color_adjust_saturation" : @(1.0),
         @"color_adjust_contrast" : @(1.0),
         @"use_opengl" : @(0),
-        @"picture_fill_mode" : @(3),
+        @"picture_fill_mode" : @(0),
         @"picture_wh_ratio" : @(0),
         @"picture_ratate_mode" : @(0),
         @"picture_flip_mode" : @(0),
