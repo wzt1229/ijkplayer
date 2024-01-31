@@ -2174,6 +2174,7 @@ static void update_sample_display(FFPlayer *ffp, uint8_t *samples, int samples_s
         return;
     }
     
+    //以下计算以 2 bytes（int16_t) 为单位
     int size, len;
     size = samples_size / sizeof(int16_t);
     while (size > 0) {
@@ -2188,23 +2189,22 @@ static void update_sample_display(FFPlayer *ffp, uint8_t *samples, int samples_s
         size -= len;
     }
 
+    //以下计算以 byte（int8_t) 为单位
     if (ffp->audio_samples_callback) {
-        float factor = FFMAX(is->audio_src.freq / 44100.0, 0.5);
-        int windowSize = FFMIN(factor * 1024 * is->audio_src.ch_layout.nb_channels, SAMPLE_ARRAY_SIZE / 2);
+        int windowSize = 2048;
         int i = 0;
-        for (; i < is->sample_array_index / windowSize; i++) {
+        for (; i < (is->sample_array_index * 2) / windowSize; i++) {
             ffp->audio_samples_callback(
                                         ffp->inject_opaque,
-                                        (int16_t*)is->sample_array + i * windowSize,
+                                        (int16_t*)((int8_t*)is->sample_array + i * windowSize),
                                         windowSize,
-                                        is->audio_src.freq,
+                                        is->audio_tgt.freq,
                                         is->audio_src.ch_layout.nb_channels
                                         );
         }
         if (i > 0) {
-            i--;
-            memcpy(is->sample_array, is->sample_array + windowSize * i, (is->sample_array_index - windowSize * i) * sizeof(int16_t));
-            is->sample_array_index -= windowSize * i;
+            memcpy(is->sample_array, (int8_t*)is->sample_array + windowSize * i, is->sample_array_index * 2 - windowSize * i);
+            is->sample_array_index -= (windowSize * i) / 2;
         }
     }
 }
