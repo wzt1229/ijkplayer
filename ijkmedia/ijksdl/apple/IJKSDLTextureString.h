@@ -58,9 +58,9 @@
 @property (nonatomic, assign) int strokeSize;
 // set top,right,bottom,left margin
 @property (nonatomic, assign) NSEdgeInsets edgeInsets;
-@property(nonatomic, assign) float cRadius; // Corner radius, if 0 just a rectangle. Defaults to 3.0f
-
+@property (nonatomic, assign) float cRadius; // Corner radius, if 0 just a rectangle. Defaults to 3.0f
 @property (nonatomic, assign) BOOL antialias;
+@property (nonatomic, assign) CGSize maxSize;
 
 - (void)setAttributedString:(NSAttributedString *)attributedString; // set string after initial creation
 - (void)setString:(NSString *)aString withAttributes:(NSDictionary *)attribs; // set string after initial creation

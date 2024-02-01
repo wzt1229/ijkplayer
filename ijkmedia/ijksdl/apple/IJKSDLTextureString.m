@@ -207,9 +207,14 @@
 
 - (CGSize)size
 {
-    //on retina screen auto return 2x size.
-    CGSize frameSize = [self.attributedString size]; // current string size
-    return CGSizeMake(ceilf(frameSize.width), ceilf(frameSize.height));
+    if (CGSizeEqualToSize(CGSizeZero, self.maxSize)) {
+        //retina screen return 1x size.
+        CGSize textSize = [self.attributedString size];
+        return CGSizeMake(ceilf(textSize.width), ceilf(textSize.height));
+    } else {
+        CGRect textRect = [self.attributedString boundingRectWithSize:self.maxSize options:NSStringDrawingUsesFontLeading|NSStringDrawingUsesLineFragmentOrigin context:nil];
+        return CGSizeMake(ceilf(textRect.size.width), ceilf(textRect.size.height));
+    }
 }
 
 - (void)setAttributedString:(NSAttributedString *)attributedString
@@ -218,9 +223,9 @@
         NSRange fullRange = NSMakeRange(0, [attributedString.string length]);
         if (![attributedString attribute:NSParagraphStyleAttributeName atIndex:0 effectiveRange:&fullRange]) {
             NSMutableParagraphStyle *pghStyle = [[NSMutableParagraphStyle alloc] init];
-            pghStyle.alignment = NSTextAlignmentCenter;
+            pghStyle.alignment = NSTextAlignmentLeft;
             pghStyle.lineSpacing = 10;
-            //pghStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+            pghStyle.lineBreakMode = NSLineBreakByWordWrapping;
             
             NSMutableAttributedString * myAttributedString = [[NSMutableAttributedString alloc] initWithAttributedString:attributedString];
             [myAttributedString addAttribute:NSParagraphStyleAttributeName value:pghStyle range:fullRange];

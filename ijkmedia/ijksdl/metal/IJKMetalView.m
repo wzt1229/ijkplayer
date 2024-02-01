@@ -45,6 +45,8 @@ typedef CGRect NSRect;
 @property(atomic) float displayVideoScale;
 //display window size / screen size
 @property(atomic) float subtitleExtScale;
+//view size
+@property(assign) CGSize viewSize;
 //window's backingScaleFactor
 @property(atomic) float backingScaleFactor;
 @property(assign) int hdrAnimationFrameCount;
@@ -71,16 +73,11 @@ typedef CGRect NSRect;
 
 - (CGSize)screenSize
 {
-    static CGSize screenSize;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-    #if TARGET_OS_OSX
-        screenSize = [[[NSScreen screens] firstObject]frame].size;
-    #else
-        screenSize = [[UIScreen mainScreen]bounds].size;
-    #endif
-    });
-    return screenSize;
+    if (self.window.screen) {
+        return self.window.screen.frame.size;
+    }
+    
+    return [[[NSScreen screens] firstObject] frame].size;
 }
 
 - (void)dealloc
@@ -465,7 +462,7 @@ typedef CGRect NSRect;
                 CGSize screenSize = [self screenSize];
                 CGSize viewSize = viewport;
                 //当前显示窗口相对屏幕的比例;实际上全屏时是1，非全屏小于1;
-                float subtitleExtScale =  FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
+                float subtitleExtScale = FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
                 subScale *= subtitleExtScale;
             }
             
@@ -574,6 +571,7 @@ typedef CGRect NSRect;
     CGSize screenSize = [self screenSize];
     CGSize viewSize = [self bounds].size;
     //当前显示窗口相对屏幕的比例;实际上全屏时是1，非全屏小于1;
+    self.viewSize = viewSize;
     return FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
 }
 
@@ -615,6 +613,7 @@ typedef CGRect NSRect;
     //call super is needed, otherwise some device [self bounds] is not right.
     [super resizeWithOldSuperviewSize:oldSize];
     [self refreshSubtitleExtSacle];
+    self.subtitlePreferenceChanged = YES;
     if (!self.window.inLiveResize) {
         [self setNeedsRefreshCurrentPic];
     }
@@ -644,17 +643,18 @@ typedef CGRect NSRect;
     if (subtitle.length == 0) {
         return NULL;
     }
-    
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
 
-    //以800为标准，定义出字幕字体默认大小为30pt
+    //以1200为标准，对字体放大
     float scale = 1.0;
     CGSize screenSize = [self screenSize];
     if (degrees / 90 % 2 == 1) {
-        scale = screenSize.height / 800.0;
+        scale = screenSize.height / 1200.0;
     } else {
-        scale = screenSize.width / 800.0;
+        scale = screenSize.width / 1200.0;
     }
+    scale = MAX(scale, 1.0);
+    
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
 
@@ -670,7 +670,9 @@ typedef CGRect NSRect;
     [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
     
     IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withStrokeColor:int2color(sp.strokeColor) withStrokeSize:sp.strokeSize];
-    
+    //渲染的时候，乘以了 subtitleExtScale 进行了缩放
+    textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width / self.subtitleExtScale, MAX(self.viewSize.height * 1.6, 2000));
+    textureString.edgeInsets = NSEdgeInsetsMake(5, 10, 5, 10);
     return [textureString createPixelBuffer];
 }
 

@@ -246,9 +246,11 @@ static bool _is_need_dispath_to_global(void)
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
 //display window size / screen
-@property(atomic) float displayScreenScale;
+@property(atomic) float subtitleExtScale;
 //display window size / video size
 @property(atomic) float displayVideoScale;
+//view size
+@property(assign) CGSize viewSize;
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
 @property(atomic) BOOL subtitlePreferenceChanged;
@@ -309,7 +311,7 @@ static bool _is_need_dispath_to_global(void)
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
-        _displayScreenScale = 1.0;
+        _subtitleExtScale   = 1.0;
         _displayVideoScale  = 1.0;
         _rendererGravity    = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
     }
@@ -452,12 +454,13 @@ static bool _is_need_dispath_to_global(void)
         self.backingWidth  = viewSizePixels.width;
         self.backingHeight = viewSizePixels.height;
         
-        CGSize screenSize = [[[NSScreen screens] firstObject]frame].size;
-        self.displayScreenScale = FFMIN(1.0 * viewSize.width / screenSize.width,1.0 * viewSize.height / screenSize.height);
+        CGSize screenSize = [self screenSize];
+        self.subtitleExtScale = FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
         if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
             self.displayVideoScale = FFMIN(1.0 * viewSize.width / self.videoNaturalSize.width,1.0 * viewSize.height / self.videoNaturalSize.height);
         }
         
+        self.viewSize = viewSize;
         if (IJK_GLES2_Renderer_isValid(_renderer)) {
             IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
         }
@@ -474,16 +477,11 @@ static bool _is_need_dispath_to_global(void)
 
 - (CGSize)screenSize
 {
-    static CGSize screenSize;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-    #if TARGET_OS_OSX
-        screenSize = [[[NSScreen screens] firstObject]frame].size;
-    #else
-        screenSize = [[UIScreen mainScreen]bounds].size;
-    #endif
-    });
-    return screenSize;
+    if (self.window.screen) {
+        return self.window.screen.frame.size;
+    }
+    
+    return [[[NSScreen screens] firstObject] frame].size;
 }
 
 - (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle videoDegrees:(int)degrees
@@ -494,17 +492,19 @@ static bool _is_need_dispath_to_global(void)
     
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
 
-    //以800为标准，定义出字幕字体默认大小为30pt
+    //以1200为标准，对字体放大
     float scale = 1.0;
     CGSize screenSize = [self screenSize];
     if (degrees / 90 % 2 == 1) {
-        scale = screenSize.height / 800.0;
+        scale = screenSize.height / 1200.0;
     } else {
-        scale = screenSize.width / 800.0;
+        scale = screenSize.width / 1200.0;
     }
+    scale = MAX(scale, 1.0);
+    
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
-    
+
     UIFont *subtitleFont = nil;
     if (strlen(sp.name)) {
         subtitleFont = [UIFont fontWithName:[[NSString alloc] initWithUTF8String:sp.name] size:scale * sp.size];
@@ -517,7 +517,9 @@ static bool _is_need_dispath_to_global(void)
     [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
     
     IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withStrokeColor:int2color(sp.strokeColor) withStrokeSize:sp.strokeSize];
-    
+    //渲染的时候，乘以了 subtitleExtScale 进行了缩放
+    textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width / self.subtitleExtScale, MAX(self.viewSize.height * 1.6, 2000));
+    textureString.edgeInsets = NSEdgeInsetsMake(5, 10, 5, 10);
     return [textureString createPixelBuffer];
 }
 
@@ -566,7 +568,7 @@ static bool _is_need_dispath_to_global(void)
         if (attach.sub.pixels) {
             ratio = self.displayVideoScale * 1.5;
         }
-        ratio *= self.displayScreenScale;
+        ratio *= self.subtitleExtScale;
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
