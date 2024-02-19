@@ -870,7 +870,7 @@ static BOOL hdrAnimationShown = 0;
             } else {
                 NSString *key = [[self.playingUrl absoluteString] md5Hash];
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-//                self.playingUrl = nil;
+                self.playingUrl = nil;
                 [self playNext:nil];
             }
         }
