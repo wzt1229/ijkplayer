@@ -828,6 +828,15 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     
     float width  = viewport.width;
     float height = viewport.height;
+    
+//    //aspect fit,prevent overflow
+//    if (swidth > width) {
+//        float wRatio = width / swidth;
+//        float hRatio = height / sheight;
+//        float ratio = FFMIN(wRatio, hRatio);
+//        swidth  *= ratio;
+//        sheight *= ratio;
+//    }
     //转化到 [-1,1] 的区间
     float y = bottomMargin * (height - sheight) / height * 2.0 - 1.0;
     
