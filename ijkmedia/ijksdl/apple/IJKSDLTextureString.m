@@ -103,6 +103,7 @@
     self.cRadius = 3;
     self.strokeColor = strokeColor;
     self.strokeSize = strokeSize;
+    //self.boxColor = [NSColor colorWithWhite:0.2 alpha:0.5];
     self.antialias = YES;
     self.requiresUpdate = YES;
 	return self;
