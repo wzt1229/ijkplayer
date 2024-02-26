@@ -88,7 +88,7 @@ typedef CGRect NSRect;
 
 - (BOOL)prepareMetal
 {
-    _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
+    _subtitlePreference = (IJKSDLSubtitlePreference){"", 60, 4294967295, 0, 255, 5, 0.025};
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
     _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     _darPreference      = (IJKSDLDARPreference){0.0};
@@ -672,7 +672,6 @@ typedef CGRect NSRect;
     IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withStrokeColor:int2color(sp.strokeColor) withStrokeSize:sp.strokeSize];
     //渲染的时候，乘以了 subtitleExtScale 进行了缩放
     textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width / self.subtitleExtScale, MAX(self.viewSize.height * 1.6, 2000));
-    textureString.edgeInsets = NSEdgeInsetsMake(5, 10, 5, 10);
     return [textureString createPixelBuffer];
 }
 

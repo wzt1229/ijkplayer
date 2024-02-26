@@ -76,13 +76,13 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 
 typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
 struct _IJKSDLSubtitlePreference {
-    float size;
+    char name[256];//font name
+    float size; //font size
     uint32_t color;//text color
     uint32_t bgColor;//text bg color
     uint32_t strokeColor;//border color
     int strokeSize;//stroke size
     float bottomMargin;//[0.0,1.0]
-    char name[256];
 };
 
 static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,IJKSDLSubtitlePreference* p2)

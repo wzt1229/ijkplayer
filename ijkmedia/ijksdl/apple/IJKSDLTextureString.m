@@ -208,14 +208,18 @@
 
 - (CGSize)size
 {
+    CGSize textSize;
     if (CGSizeEqualToSize(CGSizeZero, self.maxSize)) {
         //retina screen return 1x size.
-        CGSize textSize = [self.attributedString size];
-        return CGSizeMake(ceilf(textSize.width), ceilf(textSize.height));
+        textSize = [self.attributedString size];
     } else {
-        CGRect textRect = [self.attributedString boundingRectWithSize:self.maxSize options:NSStringDrawingUsesFontLeading|NSStringDrawingUsesLineFragmentOrigin context:nil];
-        return CGSizeMake(ceilf(textRect.size.width), ceilf(textRect.size.height));
+        CGSize contentSize = self.maxSize;
+        contentSize.width -= (self.edgeInsets.left + self.edgeInsets.right);
+        contentSize.height-= (self.edgeInsets.top + self.edgeInsets.bottom);
+        CGRect textRect = [self.attributedString boundingRectWithSize:contentSize options:NSStringDrawingUsesFontLeading|NSStringDrawingUsesLineFragmentOrigin context:nil];
+        textSize = textRect.size;
     }
+    return CGSizeMake(ceilf(textSize.width), ceilf(textSize.height));
 }
 
 - (void)setAttributedString:(NSAttributedString *)attributedString
