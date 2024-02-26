@@ -790,41 +790,27 @@ static BOOL hdrAnimationShown = 0;
 
 - (void)ijkPlayerNaturalSizeAvailable:(NSNotification *)notifi
 {
-//    if (self.player == notifi.object) {
-//        CGSize const videoSize = NSSizeFromString(notifi.userInfo[@"size"]);
-//        if (!CGSizeEqualToSize(self.view.window.aspectRatio, videoSize)) {
-//
-////            [self.view.window setAspectRatio:videoSize];
-//            CGRect rect = self.view.window.frame;
-//
-//            CGPoint center = CGPointMake(rect.origin.x + rect.size.width/2.0, rect.origin.y + rect.size.height/2.0);
-//            static float kMaxRatio = 1.0;
-//            if (videoSize.width < videoSize.height) {
-//                rect.size.width = rect.size.height / videoSize.height * videoSize.width;
-//                if (rect.size.width > [[[NSScreen screens] firstObject]frame].size.width * kMaxRatio) {
-//                    float ratio = [[[NSScreen screens] firstObject]frame].size.width * kMaxRatio / rect.size.width;
-//                    rect.size.width *= ratio;
-//                    rect.size.height *= ratio;
-//                }
-//            } else {
-//                rect.size.height = rect.size.width / videoSize.width * videoSize.height;
-//                if (rect.size.height > [[[NSScreen screens] firstObject]frame].size.height * kMaxRatio) {
-//                    float ratio = [[[NSScreen screens] firstObject]frame].size.height * kMaxRatio / rect.size.height;
-//                    rect.size.width *= ratio;
-//                    rect.size.height *= ratio;
-//                }
-//            }
-//            //keep center.
-//            rect.origin = CGPointMake(center.x - rect.size.width/2.0, center.y - rect.size.height/2.0);
-//            rect.size = CGSizeMake((int)rect.size.width, (int)rect.size.height);
-//            NSLog(@"窗口位置:%@;视频尺寸：%@",NSStringFromRect(rect),NSStringFromSize(videoSize));
-//            [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-//                [self.view.window.animator setFrame:rect display:YES];
-//                [self.view.window.animator center];
-//            }];
-//
-//        }
-//    }
+    if (self.player == notifi.object) {
+        const CGSize videoSize = NSSizeFromString(notifi.userInfo[@"size"]);
+        const CGRect screenVisibleFrame = self.view.window.screen.visibleFrame;
+        const CGSize screenSize = screenVisibleFrame.size;
+        CGSize targetSize = videoSize;
+        
+        if (videoSize.width > screenSize.width || videoSize.height > screenSize.height) {
+            float wRatio = screenSize.width / videoSize.width;
+            float hRatio = screenSize.height / videoSize.height;
+            float ratio  = MIN(wRatio, hRatio);
+            targetSize = CGSizeMake(floor(videoSize.width * ratio), floor(videoSize.height * ratio));
+        }
+        [self.view.window setAspectRatio:targetSize];
+        
+        CGRect targetRect = CGRectMake(screenVisibleFrame.origin.x + (screenSize.width - targetSize.width) / 2.0, screenVisibleFrame.origin.y + (screenSize.height - targetSize.height) / 2.0, targetSize.width, targetSize.height);
+        
+        NSLog(@"窗口位置:%@;视频尺寸：%@",NSStringFromRect(targetRect),NSStringFromSize(videoSize));
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+            [self.view.window.animator setFrame:targetRect display:YES];
+        }];
+    }
 }
 
 - (void)ijkPlayerDidFinish:(NSNotification *)notifi
