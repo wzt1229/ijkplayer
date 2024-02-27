@@ -245,8 +245,6 @@ static bool _is_need_dispath_to_global(void)
 
 @property(nonatomic) NSInteger videoDegrees;
 @property(nonatomic) CGSize videoNaturalSize;
-//display window size / screen
-@property(atomic) float subtitleExtScale;
 //display window size / video size
 @property(atomic) float displayVideoScale;
 //view size
@@ -311,7 +309,6 @@ static bool _is_need_dispath_to_global(void)
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
-        _subtitleExtScale   = 1.0;
         _displayVideoScale  = 1.0;
         _rendererGravity    = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
     }
@@ -445,6 +442,15 @@ static bool _is_need_dispath_to_global(void)
     [self resetViewPort];
 }
 
+- (void)viewDidChangeBackingProperties
+{
+    [super viewDidChangeBackingProperties];
+    //here need a delay,wait intenal right, otherwise display wrong picture size.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self resetViewPort];
+    });
+}
+
 - (void)resetViewPort
 {
     CGSize viewSize = [self bounds].size;
@@ -454,34 +460,26 @@ static bool _is_need_dispath_to_global(void)
         self.backingWidth  = viewSizePixels.width;
         self.backingHeight = viewSizePixels.height;
         
-        CGSize screenSize = [self screenSize];
-        self.subtitleExtScale = FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
         if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
             self.displayVideoScale = FFMIN(1.0 * viewSize.width / self.videoNaturalSize.width,1.0 * viewSize.height / self.videoNaturalSize.height);
         }
-        
         self.viewSize = viewSize;
-        if (IJK_GLES2_Renderer_isValid(_renderer)) {
-            IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
-        }
-        
         [self setNeedsRefreshCurrentPic];
     }
 }
 
-- (void)viewDidChangeBackingProperties
-{
-    [super viewDidChangeBackingProperties];
-    [self resetViewPort];
-}
-
 - (CGSize)screenSize
 {
-    if (self.window.screen) {
-        return self.window.screen.frame.size;
-    }
-    
-    return [[[NSScreen screens] firstObject] frame].size;
+    static CGSize _screenSize;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        for (NSScreen *sc in [NSScreen screens]) {
+            if (sc.frame.size.width > _screenSize.width && sc.frame.size.height > _screenSize.height) {
+                _screenSize = sc.frame.size;
+            }
+        }
+    });
+    return _screenSize;
 }
 
 - (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle videoDegrees:(int)degrees
@@ -492,15 +490,13 @@ static bool _is_need_dispath_to_global(void)
     
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
 
-    //以1200为标准，对字体放大
+    //以1920为标准，对字体缩放
     float scale = 1.0;
-    CGSize screenSize = [self screenSize];
     if (degrees / 90 % 2 == 1) {
-        scale = screenSize.height / 1200.0;
+        scale = [self screenSize].height / 1920.0;
     } else {
-        scale = screenSize.width / 1200.0;
+        scale = [self screenSize].width / 1920.0;
     }
-    scale = MAX(scale, 1.0);
     
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
@@ -517,8 +513,7 @@ static bool _is_need_dispath_to_global(void)
     [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
     
     IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withStrokeColor:int2color(sp.strokeColor) withStrokeSize:sp.strokeSize];
-    //渲染的时候，乘以了 subtitleExtScale 进行了缩放
-    textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width / self.subtitleExtScale, MAX(self.viewSize.height * 1.6, 2000));
+    textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height);
     return [textureString createPixelBuffer];
 }
 
@@ -559,19 +554,20 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-- (void)doUploadSubtitle:(IJKOverlayAttach *)attach
+- (void)doUploadSubtitle:(IJKOverlayAttach *)attach backingWidth:(float)backingWidth
 {
     _IJKSDLSubTexture * subTexture = attach.subTexture;
     if (subTexture) {
-        float ratio = 1.0;
+        float subScale = 1.0;
         if (attach.sub.pixels) {
-            ratio = self.displayVideoScale * 1.5;
+            subScale = self.displayVideoScale * 1.5;
         }
-        ratio *= self.subtitleExtScale;
+        //实现，窗口放大，字幕放大效果
+        subScale *= (backingWidth / [self screenSize].width);
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
-        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, ratio * subTexture.w, ratio * subTexture.h);
+        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, subScale * subTexture.w, subScale * subTexture.h);
         
         if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
             IJK_GLES2_Renderer_drawArrays();
@@ -645,11 +641,11 @@ static bool _is_need_dispath_to_global(void)
         glViewport(0, 0, self.backingWidth, self.backingHeight);
         glClear(GL_COLOR_BUFFER_BIT);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
         //for video
         [self doUploadVideoPicture:attach];
         //for subtitle
-        [self doUploadSubtitle:attach];
+        [self doUploadSubtitle:attach backingWidth:self.backingWidth];
     } else {
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
@@ -778,12 +774,7 @@ static bool _is_need_dispath_to_global(void)
         CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(attach.videoPicture) * videoSar, CVPixelBufferGetHeight(attach.videoPicture));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
         if (IJK_GLES2_Renderer_isZRotate90oddMultiple(_renderer)) {
-            float pic_width = picSize.width;
-            float pic_height = picSize.height;
-            float tmp = pic_width;
-            pic_width = pic_height;
-            pic_height = tmp;
-            picSize = CGSizeMake(pic_width, pic_height);
+            picSize = CGSizeMake(picSize.height, picSize.width);
         }
         
         //保持用户定义宽高比
@@ -808,7 +799,7 @@ static bool _is_need_dispath_to_global(void)
                 [self.fbo bind];
                 glViewport(0, 0, picSize.width, picSize.height);
                 glClear(GL_COLOR_BUFFER_BIT);
-                
+                IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, picSize.width, picSize.height);
                 if (!IJK_GLES2_Renderer_resetVao(_renderer))
                     ALOGE("[GL] Renderer_resetVao failed\n");
                 
@@ -819,7 +810,7 @@ static bool _is_need_dispath_to_global(void)
             }
             
             if (containSub) {
-                [self doUploadSubtitle:attach];
+                [self doUploadSubtitle:attach backingWidth:picSize.width];
             }
             img = [self _snapshotTheContextWithSize:picSize];
         } else {

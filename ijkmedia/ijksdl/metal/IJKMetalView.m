@@ -43,8 +43,6 @@ typedef CGRect NSRect;
 @property(atomic) BOOL subtitlePreferenceChanged;
 //display window size / video size
 @property(atomic) float displayVideoScale;
-//display window size / screen size
-@property(atomic) float subtitleExtScale;
 //view size
 @property(assign) CGSize viewSize;
 //window's backingScaleFactor
@@ -73,11 +71,16 @@ typedef CGRect NSRect;
 
 - (CGSize)screenSize
 {
-    if (self.window.screen) {
-        return self.window.screen.frame.size;
-    }
-    
-    return [[[NSScreen screens] firstObject] frame].size;
+    static CGSize _screenSize;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        for (NSScreen *sc in [NSScreen screens]) {
+            if (sc.frame.size.width > _screenSize.width && sc.frame.size.height > _screenSize.height) {
+                _screenSize = sc.frame.size;
+            }
+        }
+    });
+    return _screenSize;
 }
 
 - (void)dealloc
@@ -88,12 +91,11 @@ typedef CGRect NSRect;
 
 - (BOOL)prepareMetal
 {
-    _subtitlePreference = (IJKSDLSubtitlePreference){"", 60, 4294967295, 0, 255, 5, 0.025};
+    _subtitlePreference = (IJKSDLSubtitlePreference){"", 50, 4294967295, 0, 255, 5, 0.025};
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
     _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     _darPreference      = (IJKSDLDARPreference){0.0};
     _displayVideoScale  = 1.0;
-    _subtitleExtScale = 1.0;
     
     self.device = MTLCreateSystemDefaultDevice();
     if (!self.device) {
@@ -364,15 +366,8 @@ typedef CGRect NSRect;
         if (attach.sub.pixels) {
             subScale = self.displayVideoScale * 1.5;
         }
-        //保证 Retina 屏幕显示的大小和非 Retina 屏幕上一样大
-        /*
-         为何，截图时有的乘以 backingScaleFactor ，有的不乘？
-         当 viewport 是 retina 之后的像素值时，就需要乘，使得字幕也跟着变大；
-         反之，单倍屏上，直接显示就可以了。
-         */
-        subScale *= self.backingScaleFactor;
         //实现，窗口放大，字幕放大效果
-        subScale *= self.subtitleExtScale;
+        subScale *= (viewport.width / [self screenSize].width);
         CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale viewport:viewport];
         
         [self encodeSubtitle:renderEncoder
@@ -458,14 +453,8 @@ typedef CGRect NSRect;
                 subScale = self.displayVideoScale * 1.5;
             }
             
-            {
-                CGSize screenSize = [self screenSize];
-                CGSize viewSize = viewport;
-                //当前显示窗口相对屏幕的比例;实际上全屏时是1，非全屏小于1;
-                float subtitleExtScale = FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
-                subScale *= subtitleExtScale;
-            }
-            
+            //实现，窗口放大，字幕放大效果
+            subScale *= (viewport.width / [self screenSize].width);
             CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale viewport:viewport];
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
@@ -536,11 +525,8 @@ typedef CGRect NSRect;
                 subScale = self.displayVideoScale * 1.5;
             }
             
-            float subtitleExtScale = [self computeSubtitleExtSacle];
-            subScale *= subtitleExtScale;
-            
-            //viewport 取的是 retina 相关的，字幕需要等比例放大。
-            subScale *= self.backingScaleFactor;
+            //实现，窗口放大，字幕放大效果
+            subScale *= (viewport.width / [self screenSize].width);
             
             CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale viewport:viewport];
 
@@ -566,23 +552,14 @@ typedef CGRect NSRect;
     }
 }
 
-- (float)computeSubtitleExtSacle
-{
-    CGSize screenSize = [self screenSize];
-    CGSize viewSize = [self bounds].size;
-    //当前显示窗口相对屏幕的比例;实际上全屏时是1，非全屏小于1;
-    self.viewSize = viewSize;
-    return FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
-}
-
 - (void)refreshSubtitleExtSacle
 {
+    self.viewSize = [self bounds].size;
 #if TARGET_OS_IOS
     self.backingScaleFactor = self.backingScaleFactor;
 #else
     self.backingScaleFactor = self.window.backingScaleFactor;
 #endif
-    self.subtitleExtScale = [self computeSubtitleExtSacle];
 }
 
 #if TARGET_OS_IOS
@@ -645,16 +622,13 @@ typedef CGRect NSRect;
     }
     IJKSDLSubtitlePreference sp = self.subtitlePreference;
 
-    //以1200为标准，对字体放大
+    //以1920为标准，对字体缩放
     float scale = 1.0;
-    CGSize screenSize = [self screenSize];
     if (degrees / 90 % 2 == 1) {
-        scale = screenSize.height / 1200.0;
+        scale = [self screenSize].height / 1920.0;
     } else {
-        scale = screenSize.width / 1200.0;
+        scale = [self screenSize].width / 1920.0;
     }
-    scale = MAX(scale, 1.0);
-    
     //字幕默认配置
     NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
 
@@ -670,8 +644,7 @@ typedef CGRect NSRect;
     [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
     
     IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withStrokeColor:int2color(sp.strokeColor) withStrokeSize:sp.strokeSize];
-    //渲染的时候，乘以了 subtitleExtScale 进行了缩放
-    textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width / self.subtitleExtScale, MAX(self.viewSize.height * 1.6, 2000));
+    textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height);
     return [textureString createPixelBuffer];
 }
 
