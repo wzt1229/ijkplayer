@@ -1574,6 +1574,7 @@ static int configure_filtergraph(AVFilterGraph *graph, const char *filtergraph,
     AVFilterInOut *outputs = NULL, *inputs = NULL;
 
     if (filtergraph) {
+        av_log(NULL, AV_LOG_INFO, "Video filtergraph:%s", filtergraph);
         outputs = avfilter_inout_alloc();
         inputs  = avfilter_inout_alloc();
         if (!outputs || !inputs) {
@@ -2075,7 +2076,7 @@ static int ffplay_video_thread(void *arg)
             || last_vfilter_idx != is->vfilter_idx) {
             SDL_LockMutex(ffp->vf_mutex);
             ffp->vf_changed = 0;
-            av_log(NULL, AV_LOG_DEBUG,
+            av_log(NULL, AV_LOG_INFO,
                    "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s serial:%d\n",
                    last_w, last_h,
                    (const char *)av_x_if_null(av_get_pix_fmt_name(last_format), "none"), last_serial,
@@ -4418,6 +4419,7 @@ static void ffp_show_version_int(FFPlayer *ffp, const char *module, unsigned ver
            (unsigned int)IJKVERSION_GET_MICRO(version));
 }
 
+#if CONFIG_AVFILTER
 static void *grow_array(void *array, int elem_size, int *size, int new_size)
 {
     if (new_size >= INT_MAX / elem_size) {
@@ -4439,6 +4441,21 @@ static void *grow_array(void *array, int elem_size, int *size, int new_size)
 
 #define GROW_ARRAY(array, nb_elems)\
     array = grow_array(array, sizeof(*array), &nb_elems, nb_elems + 1)
+
+static void resetVideoFilter(FFPlayer *ffp, const char *filter) {
+    if (filter) {
+        av_freep(&ffp->vfilters_list);
+        VideoState *is = ffp->is;
+        is->vfilter_idx = 0;
+        GROW_ARRAY(ffp->vfilters_list, ffp->nb_vfilters);
+        if (ffp->vfilters_list == NULL) {
+            return;
+        }
+        ffp->vfilters_list[ffp->nb_vfilters - 1] = filter;
+        ffp->vf_changed = 1;
+    }
+}
+#endif
 
 int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
 {
@@ -4483,13 +4500,7 @@ int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
     }
 
 #if CONFIG_AVFILTER
-    if (ffp->vfilter0) {
-        GROW_ARRAY(ffp->vfilters_list, ffp->nb_vfilters);
-        if (ffp->vfilters_list == NULL) {
-            return EIJK_OUT_OF_MEMORY;
-        }
-        ffp->vfilters_list[ffp->nb_vfilters - 1] = ffp->vfilter0;
-    }
+    resetVideoFilter(ffp, ffp->vfilter0);
 #endif
 
     VideoState *is = stream_open(ffp, file_name, NULL);
@@ -5320,6 +5331,14 @@ float ffp_get_subtitle_extra_delay(FFPlayer *ffp)
 //add + active
 int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
 {
+#if CONFIG_AVFILTER
+    //use subtitles filter
+    char buffer[1024] = { 0 };
+    sprintf(buffer, "subtitles=%s", file_name);
+    resetVideoFilter(ffp, av_strdup(buffer));
+    return 1;
+#endif
+    
     VideoState *is = ffp->is;
     if (ff_exSub_check_file_added(file_name, is->ffSub) == 1) {
         return 1;
