@@ -71,7 +71,7 @@
         @"overlay_format" : @"fcc-_es2",
         
         @"subtitle_font_name" : @"STSongti-SC-Regular",
-        @"subtitle_font_size" : @(30),
+        @"subtitle_font_size" : @(50),
         @"subtitle_bottom_margin":@(0.5),
         @"subtitle_stroke_size" : @(5),
         @"subtitle_text_color" : text_color_data,

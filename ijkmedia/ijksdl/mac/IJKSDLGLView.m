@@ -53,7 +53,6 @@
 #import "ijksdl_timer.h"
 #import "ijksdl_gles2.h"
 #import "ijksdl_vout_overlay_ffmpeg_hw.h"
-#import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
 #import "../gles2/internal.h"
@@ -177,68 +176,6 @@ static bool _is_need_dispath_to_global(void)
 
 @end
 
-@interface _IJKSDLSubTexture : NSObject
-
-@property(nonatomic) GLuint texture;
-@property(nonatomic) int w;
-@property(nonatomic) int h;
-
-@end
-
-@implementation _IJKSDLSubTexture
-
-- (void)dealloc
-{
-    if (_texture) {
-        glDeleteTextures(1, &_texture);
-    }
-}
-
-- (GLuint)texture
-{
-    return _texture;
-}
-
-- (instancetype)initWithCVPixelBuffer:(CVPixelBufferRef)pixelBuff
-{
-    self = [super init];
-    if (self) {
-        
-        self.w = (int)CVPixelBufferGetWidth(pixelBuff);
-        self.h = (int)CVPixelBufferGetHeight(pixelBuff);
-        
-        // Create a texture object that you apply to the model.
-        glGenTextures(1, &_texture);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_RECTANGLE, _texture);
-        
-        int texutres[3] = {_texture,0,0};
-        ijk_upload_texture_with_cvpixelbuffer(pixelBuff, texutres);
-// glTexImage2D 不能处理字节对齐问题！会找成字幕倾斜显示，实际上有多余的padding填充，读取有误产生错行导致的
-//        // Set up filter and wrap modes for the texture object.
-//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//
-//        GLsizei width  = (GLsizei)CVPixelBufferGetWidth(pixelBuff);
-//        GLsizei height = (GLsizei)CVPixelBufferGetHeight(pixelBuff);
-//        CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-//        void *src = CVPixelBufferGetBaseAddress(pixelBuff);
-//        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, src);
-//        CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-        glBindTexture(GL_TEXTURE_RECTANGLE, 0);
-    }
-    return self;
-}
-
-+ (instancetype)generate:(CVPixelBufferRef)pixel
-{
-    return [[self alloc] initWithCVPixelBuffer:pixel];
-}
-
-@end
-
 @interface IJKSDLGLView()
 
 @property(atomic) IJKOverlayAttach *currentAttach;
@@ -305,7 +242,8 @@ static bool _is_need_dispath_to_global(void)
             [self.renderThread start];
         }
         [self setup];
-        _subtitlePreference = (IJKSDLSubtitlePreference){"", 60, 4294967295, 0, 255, 5, 0.025};
+
+        _subtitlePreference = ijk_subtitle_default_perference();
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
@@ -468,102 +406,16 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-- (CGSize)screenSize
-{
-    static CGSize _screenSize;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        for (NSScreen *sc in [NSScreen screens]) {
-            if (sc.frame.size.width > _screenSize.width && sc.frame.size.height > _screenSize.height) {
-                _screenSize = sc.frame.size;
-            }
-        }
-    });
-    return _screenSize;
-}
-
-- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle videoDegrees:(int)degrees
-{
-    if (subtitle.length == 0) {
-        return NULL;
-    }
-    
-    IJKSDLSubtitlePreference sp = self.subtitlePreference;
-
-    //以1920为标准，对字体缩放
-    float scale = 1.0;
-    if (degrees / 90 % 2 == 1) {
-        scale = [self screenSize].height / 1920.0;
-    } else {
-        scale = [self screenSize].width / 1920.0;
-    }
-    
-    //字幕默认配置
-    NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
-
-    UIFont *subtitleFont = nil;
-    if (strlen(sp.name)) {
-        subtitleFont = [UIFont fontWithName:[[NSString alloc] initWithUTF8String:sp.name] size:scale * sp.size];
-    }
-    
-    if (!subtitleFont) {
-        subtitleFont = [UIFont systemFontOfSize:scale * sp.size];
-    }
-    [attributes setObject:subtitleFont forKey:NSFontAttributeName];
-    [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
-    
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withStrokeColor:int2color(sp.strokeColor) withStrokeSize:sp.strokeSize];
-    textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height);
-    return [textureString createPixelBuffer];
-}
-
-- (CVPixelBufferRef)_generateSubtitlePixelFromPicture:(IJKSDLSubtitle*)pict
-{
-    CVPixelBufferRef pixelBuffer = NULL;
-    NSDictionary *options = @{
-        (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
-        (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
-    };
-    
-    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict.w, pict.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
-    
-    if (ret != kCVReturnSuccess || pixelBuffer == NULL) {
-        ALOGE("CVPixelBufferCreate subtitle failed:%d",ret);
-        return NULL;
-    }
-    
-    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
-    
-    uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
-    int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
-
-    uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
-    int dst_linesizes[4] = {linesize,0,0,0};
-
-    const uint8_t *src_data[4] = {pict.pixels,NULL,NULL,NULL};
-    const int src_linesizes[4] = {pict.w * 4,0,0,0};
-
-    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict.w, pict.h);
-    
-    CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
-    
-    if (kCVReturnSuccess == ret) {
-        return pixelBuffer;
-    } else {
-        return NULL;
-    }
-}
-
 - (void)doUploadSubtitle:(IJKOverlayAttach *)attach backingWidth:(float)backingWidth
 {
-    _IJKSDLSubTexture * subTexture = attach.subTexture;
+    id<IJKSDLSubtitleTextureProtocol>subTexture = attach.subTexture;
     if (subTexture) {
         float subScale = 1.0;
         if (attach.sub.pixels) {
             subScale = self.displayVideoScale * 1.5;
         }
         //实现，窗口放大，字幕放大效果
-        subScale *= (backingWidth / [self screenSize].width);
+        subScale *= (backingWidth / [attach.sub screenSize].width);
         
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
@@ -616,9 +468,7 @@ static bool _is_need_dispath_to_global(void)
     //update subtitle if need
     if (self.subtitlePreferenceChanged) {
         if (currentAttach.sub.text) {
-            CVPixelBufferRef subPicture = [self _generateSubtitlePixel:currentAttach.sub.text videoDegrees:currentAttach.autoZRotate];
-            currentAttach.subTexture = [_IJKSDLSubTexture generate:subPicture];
-            CVPixelBufferRelease(subPicture);
+            [self generateSubTexture:currentAttach];
         }
         self.subtitlePreferenceChanged = NO;
     }
@@ -665,18 +515,9 @@ static bool _is_need_dispath_to_global(void)
 
 - (void)generateSubTexture:(IJKOverlayAttach *)attach
 {
-    IJKSDLSubtitle *sub = attach.sub;
-    CVPixelBufferRef subRef = NULL;
-    if (sub.text.length > 0) {
-        subRef = [self _generateSubtitlePixel:sub.text videoDegrees:attach.autoZRotate];
-    } else if (sub.pixels != NULL) {
-        subRef = [self _generateSubtitlePixelFromPicture:sub];
-    }
+    CVPixelBufferRef subRef = [attach.sub generatePixelBuffer:attach.autoZRotate preference:&_subtitlePreference maxSize:CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height)];
     if (subRef) {
-        CGLLockContext([[self openGLContext] CGLContextObj]);
-        [[self openGLContext] makeCurrentContext];
-        attach.subTexture = [_IJKSDLSubTexture generate:subRef];
-        CGLUnlockContext([[self openGLContext] CGLContextObj]);
+        attach.subTexture = [[attach.sub class] uploadBGRATexture:subRef context:[self openGLContext]];
         CVPixelBufferRelease(subRef);
     }
 }
