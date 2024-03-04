@@ -35,12 +35,30 @@ typedef NSView UIView;
 #import <UIKit/UIKit.h>
 #endif
 
-
 typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeAspectFit,  // Uniform scale until one dimension fits
     IJKMPMovieScalingModeAspectFill, // Uniform scale until the movie fills the visible bounds. One dimension may have clipped contents
     IJKMPMovieScalingModeFill        // Non-uniform scale. Both render dimensions will exactly match the visible bounds
 };
+
+typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
+struct _IJKSDLSubtitlePreference {
+    char name[256];//font name
+    float size; //font size
+    uint32_t color;//text color
+    uint32_t bgColor;//text bg color
+    uint32_t strokeColor;//border color
+    int strokeSize;//stroke size
+    float bottomMargin;//[0.0,1.0]
+};
+
+@protocol IJKSDLSubtitleTextureProtocol <NSObject>
+
+@property(nonatomic) uint32_t texture;
+@property(nonatomic) int w;
+@property(nonatomic) int h;
+
+@end
 
 @interface IJKSDLSubtitle : NSObject
 
@@ -49,6 +67,15 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 @property(nonatomic) int w;
 @property(nonatomic) int h;
 @property(nonatomic) uint8_t *pixels; //pixels with length w * h, in BGRA pixel format
+
+- (CGSize)screenSize;
+- (CVPixelBufferRef)generatePixelBuffer:(int)rotate preference:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize)maxSize;
+//for metal,return <MTLTexture>
++ (id)uploadBGRATexture:(CVPixelBufferRef)pixelBuff
+                             device:(id)device;
+//for opengl,return <IJKSDLSubtitleTextureProtocol>
++ (id<IJKSDLSubtitleTextureProtocol>)uploadBGRATexture:(CVPixelBufferRef)pixelBuff
+                                               context:(id)glContext;
 
 @end
 
@@ -73,17 +100,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 @property(nonatomic) NSArray *videoTextures;
 @property(nonatomic) id subTexture;
 @end
-
-typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
-struct _IJKSDLSubtitlePreference {
-    char name[256];//font name
-    float size; //font size
-    uint32_t color;//text color
-    uint32_t bgColor;//text bg color
-    uint32_t strokeColor;//border color
-    int strokeSize;//stroke size
-    float bottomMargin;//[0.0,1.0]
-};
 
 static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,IJKSDLSubtitlePreference* p2)
 {
@@ -129,6 +145,11 @@ static inline UIColor * int2color(uint32_t abgr) {
     g = (float)(((abgr & 0xFF0000) >> 16)) / 255.0;
     r = ((float)((abgr & 0xFF000000) >> 24)) / 255.0;
     return [UIColor colorWithRed:r green:g blue:b alpha:a];
+}
+
+static inline IJKSDLSubtitlePreference ijk_subtitle_default_perference(void)
+{
+    return (IJKSDLSubtitlePreference){"", 50, 4294967295, 0, 255, 5, 0.025};
 }
 
 typedef enum _IJKSDLRotateType {

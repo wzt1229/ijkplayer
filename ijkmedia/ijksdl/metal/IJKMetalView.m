@@ -20,7 +20,6 @@
 #import "IJKMetalOffscreenRendering.h"
 
 #import "ijksdl_vout_ios_gles2.h"
-#import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 
 #if TARGET_OS_IPHONE
@@ -91,7 +90,7 @@ typedef CGRect NSRect;
 
 - (BOOL)prepareMetal
 {
-    _subtitlePreference = (IJKSDLSubtitlePreference){"", 50, 4294967295, 0, 255, 5, 0.025};
+    _subtitlePreference = ijk_subtitle_default_perference();
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
     _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     _darPreference      = (IJKSDLDARPreference){0.0};
@@ -615,89 +614,13 @@ typedef CGRect NSRect;
     [self draw];
 }
 
-- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle videoDegrees:(int)degrees
-{
-    if (subtitle.length == 0) {
-        return NULL;
-    }
-    IJKSDLSubtitlePreference sp = self.subtitlePreference;
-
-    //以1920为标准，对字体缩放
-    float scale = 1.0;
-    if (degrees / 90 % 2 == 1) {
-        scale = [self screenSize].height / 1920.0;
-    } else {
-        scale = [self screenSize].width / 1920.0;
-    }
-    //字幕默认配置
-    NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
-
-    UIFont *subtitleFont = nil;
-    if (strlen(sp.name)) {
-        subtitleFont = [UIFont fontWithName:[[NSString alloc] initWithUTF8String:sp.name] size:scale * sp.size];
-    }
-    
-    if (!subtitleFont) {
-        subtitleFont = [UIFont systemFontOfSize:scale * sp.size];
-    }
-    [attributes setObject:subtitleFont forKey:NSFontAttributeName];
-    [attributes setObject:int2color(sp.color) forKey:NSForegroundColorAttributeName];
-    
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes withStrokeColor:int2color(sp.strokeColor) withStrokeSize:sp.strokeSize];
-    textureString.maxSize = CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height);
-    return [textureString createPixelBuffer];
-}
-
-- (CVPixelBufferRef)_generateSubtitlePixelFromPicture:(IJKSDLSubtitle*)pict
-{
-    CVPixelBufferRef pixelBuffer = NULL;
-    NSDictionary *options = @{
-        (__bridge NSString*)kCVPixelBufferMetalCompatibilityKey : @YES,
-        (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
-    };
-    
-    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict.w, pict.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
-    
-    if (ret != kCVReturnSuccess || pixelBuffer == NULL) {
-        ALOGE("CVPixelBufferCreate subtitle failed:%d",ret);
-        return NULL;
-    }
-    
-    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
-    
-    uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
-    int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
-    
-    uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
-    int dst_linesizes[4] = {linesize,0,0,0};
-    
-    const uint8_t *src_data[4] = {pict.pixels,NULL,NULL,NULL};
-    const int src_linesizes[4] = {pict.w * 4,0,0,0};
-    
-    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict.w, pict.h);
-    
-    CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
-    
-    if (kCVReturnSuccess == ret) {
-        return pixelBuffer;
-    } else {
-        return NULL;
-    }
-}
-
 - (void)generateSubTexture:(IJKOverlayAttach *)attach
 {
-    CVPixelBufferRef subRef = NULL;
-    IJKSDLSubtitle *sub = attach.sub;
-    if (sub) {
-        if (sub.text.length > 0) {
-            subRef = [self _generateSubtitlePixel:sub.text videoDegrees:attach.autoZRotate];
-        } else if (sub.pixels != NULL) {
-            subRef = [self _generateSubtitlePixelFromPicture:sub];
-        }
+    CVPixelBufferRef subRef = [attach.sub generatePixelBuffer:attach.autoZRotate preference:&_subtitlePreference maxSize:CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height)];
+    if (subRef) {
+        attach.subTexture = [[attach.sub class] uploadBGRATexture:subRef device:self.device];
+        CVPixelBufferRelease(subRef);
     }
-    attach.subTexture = [[self class] doGenerateSubTexture:subRef device:self.device];
-    CVPixelBufferRelease(subRef);
 }
 
 mp_format * mp_get_metal_format(uint32_t cvpixfmt);
@@ -740,52 +663,6 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
     
     return result;
-}
-
-+ (id<MTLTexture>)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
-                                device:(id<MTLDevice>)device
-{
-    if (!pixelBuff) {
-        return nil;
-    }
-    
-    OSType type = CVPixelBufferGetPixelFormatType(pixelBuff);
-    if (type != kCVPixelFormatType_32BGRA) {
-        ALOGE("generate subtitle texture must use 32BGRA pixelBuff");
-        return nil;
-    }
-    
-    CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-    void *src = CVPixelBufferGetBaseAddress(pixelBuff);
-    
-    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
-
-    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
-    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
-    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
-    // Set the pixel dimensions of the texture
-    
-    textureDescriptor.width  = CVPixelBufferGetWidth(pixelBuff);
-    textureDescriptor.height = CVPixelBufferGetHeight(pixelBuff);
-    
-    // Create the texture from the device by using the descriptor
-    id<MTLTexture> subTexture = [device newTextureWithDescriptor:textureDescriptor];
-    
-    MTLRegion region = {
-        { 0, 0, 0 },                   // MTLOrigin
-        {CVPixelBufferGetWidth(pixelBuff), CVPixelBufferGetHeight(pixelBuff), 1} // MTLSize
-    };
-    
-    NSUInteger bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuff);
-    
-    [subTexture replaceRegion:region
-                   mipmapLevel:0
-                     withBytes:src
-                   bytesPerRow:bytesPerRow];
-    
-    CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-    
-    return subTexture;
 }
 
 - (CGRect)subTextureTargetRect:(id<MTLTexture>)subTexture
