@@ -580,7 +580,7 @@ typedef CGRect NSRect;
 - (void)refreshSubtitleExtSacle
 {
 #if TARGET_OS_IOS
-    self.backingScaleFactor = self.backingScaleFactor;
+    self.backingScaleFactor = self.window.contentScaleFactor;
 #else
     self.backingScaleFactor = self.window.backingScaleFactor;
 #endif
