@@ -406,26 +406,21 @@ static void free_picture(Frame *vp)
 // FFP_MERGE: upload_texture
 // FFP_MERGE: video_image_display
 
-static void update_subtitle_text(FFPlayer *ffp,const char *str)
+static void update_subtitle_buffer(FFPlayer *ffp, const FFSubtitleBuffer *sb)
 {
     //update subtitle,save into vout's opaque
     if (ffp->vout->update_subtitle) {
         SDL_LockMutex(ffp->vout->mutex);
-        ffp->vout->update_subtitle(ffp->vout, str);
+        ffp->vout->update_subtitle(ffp->vout, sb);
         SDL_UnlockMutex(ffp->vout->mutex);
     }
-    ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)str, (int)strlen(str) + 1);
-}
-
-static void update_subtitle_pict(FFPlayer *ffp, const AVSubtitleRect *bmp)
-{
-    //update subtitle by bitmap, save into vout's opaque
-    if (ffp->vout->update_subtitle_picture) {
-        SDL_LockMutex(ffp->vout->mutex);
-        ffp->vout->update_subtitle_picture(ffp->vout, bmp);
-        SDL_UnlockMutex(ffp->vout->mutex);
+#ifndef __APPLE__
+    if (sb) {
+        ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)sb->buffer, (int)strlen(sb->buffer) + 1);
+    } else {
+        ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, "", 1);
     }
-    ffp_notify_msg1(ffp, FFP_MSG_TIMED_TEXT);
+#endif
 }
 
 static void video_image_display2(FFPlayer *ffp)
@@ -434,19 +429,16 @@ static void video_image_display2(FFPlayer *ffp)
     Frame *vp = frame_queue_peek_last(&is->pictq);
     if (vp->bmp) {
         if (is->step_on_seeking) {
-            update_subtitle_text(ffp, "");
+            update_subtitle_buffer(ffp, NULL);
         } else if (is->ffSub) {
-            char *text = NULL;
-            AVSubtitleRect *bmp = NULL;
-            if (ff_sub_fetch_frame(is->ffSub, vp->pts, &text, &bmp) >= 0) {
-                if (text) {
-                    update_subtitle_text(ffp, text);
-                    av_free(text);
-                } else if (bmp) {
-                    update_subtitle_pict(ffp, bmp);
-                }
+            FFSubtitleBuffer *sb = NULL;
+            int r = ff_sub_fetch_frame(is->ffSub, vp->pts, &sb);
+            if (r > 0) {
+                update_subtitle_buffer(ffp, sb);
+            } else if (r < 0){
+                update_subtitle_buffer(ffp, NULL);
             } else {
-                update_subtitle_text(ffp, "");
+                //keep current
             }
         }
         
@@ -3091,14 +3083,24 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
             break;
         //maybe already has ex subtile
         if (0 == ff_sub_current_stream_type(is->ffSub, NULL)) {
-            ret = ff_sub_open_component(is->ffSub, stream_index, NULL, avctx);
-            if (ret == 0) {
-                ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
-                _ijkmeta_set_stream(ffp, avctx->codec_type, stream_index);
-                goto out;
-            } else {
-                //if failed, freed context internal.
-                goto out;
+            if (is->video_st) {
+                AVCodecParameters *codecpar = is->video_st->codecpar;
+                
+                int v_width = codecpar->width;
+                if (codecpar->sample_aspect_ratio.num > 0 && codecpar->sample_aspect_ratio.den > 0) {
+                    float ratio = 1.0 * codecpar->sample_aspect_ratio.num / codecpar->sample_aspect_ratio.den;
+                    v_width = (int)(v_width * ratio);
+                }
+                
+                ret = ff_inSub_open_component(is->ffSub, stream_index, ic, avctx, v_width, codecpar->height);
+                if (ret == 0) {
+                    ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
+                    _ijkmeta_set_stream(ffp, avctx->codec_type, stream_index);
+                    goto out;
+                } else {
+                    //if failed, freed context internal.
+                    goto out;
+                }
             }
         }
         break;
@@ -5029,7 +5031,7 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
         int idx = opened ? stream : -1;
         _ijkmeta_set_stream(ffp, AVMEDIA_TYPE_SUBTITLE, idx);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-        update_subtitle_text(ffp, "");
+        update_subtitle_buffer(ffp, NULL);
     }
     return 0;
 }

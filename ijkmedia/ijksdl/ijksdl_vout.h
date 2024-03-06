@@ -62,6 +62,8 @@ struct SDL_VoutOverlay {
 
 typedef struct SDL_Vout_Opaque SDL_Vout_Opaque;
 typedef struct SDL_Vout SDL_Vout;
+typedef struct FFSubtitleBuffer FFSubtitleBuffer;
+
 struct SDL_Vout {
     SDL_mutex *mutex;
     SDL_Class       *opaque_class;
@@ -73,8 +75,7 @@ struct SDL_Vout {
 #endif
     void (*free_l)(SDL_Vout *vout);
     int (*display_overlay)(SDL_Vout *vout, SDL_VoutOverlay *overlay);
-    void (*update_subtitle)(SDL_Vout *vout, const char *text);
-    void (*update_subtitle_picture)(SDL_Vout *vout, const AVSubtitleRect *rect);
+    void (*update_subtitle)(SDL_Vout *vout, const FFSubtitleBuffer *buffer);
     
     Uint32 overlay_format;
     int z_rotate_degrees;

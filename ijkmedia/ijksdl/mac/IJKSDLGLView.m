@@ -410,22 +410,31 @@ static bool _is_need_dispath_to_global(void)
 {
     id<IJKSDLSubtitleTextureProtocol>subTexture = attach.subTexture;
     if (subTexture) {
-        float subScale = 1.0;
-        if (attach.sub.pixels) {
-            subScale = self.displayVideoScale * 1.5;
-        }
-        //实现，窗口放大，字幕放大效果
-        subScale *= (backingWidth / [attach.sub screenSize].width);
-        
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
-        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, subScale * subTexture.w, subScale * subTexture.h);
-        
-        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
-            IJK_GLES2_Renderer_drawArrays();
+        if (attach.sub.isImg && attach.sub.usedAss) {
+            IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, self.backingWidth, self.backingHeight);
+            if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
+                IJK_GLES2_Renderer_drawArrays();
+            } else {
+                ALOGE("[GL] GLES2 Render Subtitle failed\n");
+            }
         } else {
-            ALOGE("[GL] GLES2 Render Subtitle failed\n");
+            float subScale = 1.0;
+            if (attach.sub.isImg) {
+                subScale = self.displayVideoScale * 1.5;
+            }
+            //实现，窗口放大，字幕放大效果
+            subScale *= (backingWidth / [attach.sub screenSize].width);
+            IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, subScale * subTexture.w, subScale * subTexture.h);
+            
+            if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
+                IJK_GLES2_Renderer_drawArrays();
+            } else {
+                ALOGE("[GL] GLES2 Render Subtitle failed\n");
+            }
         }
+        
         IJK_GLES2_Renderer_endDrawSubtitle(_renderer);
     }
 }
@@ -467,7 +476,7 @@ static bool _is_need_dispath_to_global(void)
     
     //update subtitle if need
     if (self.subtitlePreferenceChanged) {
-        if (currentAttach.sub.text) {
+        if (!currentAttach.sub.isImg) {
             [self generateSubTexture:currentAttach];
         }
         self.subtitlePreferenceChanged = NO;

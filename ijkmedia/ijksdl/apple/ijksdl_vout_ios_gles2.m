@@ -28,6 +28,8 @@
 #include "ijksdl/ijksdl_vout_internal.h"
 #include "ijksdl_vout_overlay_ffmpeg.h"
 #include "ijksdl_vout_overlay_ffmpeg_hw.h"
+#include "ijkplayer/ff_subtitle_def.h"
+
 #if TARGET_OS_IOS
 #include "../ios/IJKSDLGLView.h"
 #else
@@ -107,14 +109,14 @@
 
 - (void)dealloc
 {
-    if (_pixels) {
-        av_freep((void *)&_pixels);
+    if (_buffer) {
+        av_freep((void *)&_buffer);
     }
 }
 
 - (CVPixelBufferRef)_generateFromPixels
 {
-    if (self.w < 1 || self.h < 1 || self.pixels == NULL) {
+    if (NULL == self.buffer || !self.isImg || self.w < 1 || self.h < 1) {
         return NULL;
     }
     
@@ -139,7 +141,7 @@
     uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
     int dst_linesizes[4] = {linesize,0,0,0};
 
-    const uint8_t *src_data[4] = {self.pixels,NULL,NULL,NULL};
+    const uint8_t *src_data[4] = {self.buffer,NULL,NULL,NULL};
     const int src_linesizes[4] = {self.w * 4,0,0,0};
 
     av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, self.w, self.h);
@@ -155,10 +157,15 @@
 
 - (CVPixelBufferRef)_generateFormText:(int)rotate sp:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize)maxSize
 {
-    if (self.text.length == 0 || sp == NULL) {
+    if (NULL == self.buffer || self.isImg || strlen((const char *)self.buffer) == 0 || sp == NULL) {
         return NULL;
     }
 
+    NSString *text = [[NSString alloc] initWithUTF8String:(const char *)self.buffer];
+    if (!text) {
+        return NULL;
+    }
+    
     //以1920为标准，对字体缩放
     float scale = 1.0;
     if (rotate / 90 % 2 == 1) {
@@ -181,7 +188,7 @@
     [attributes setObject:subtitleFont forKey:NSFontAttributeName];
     [attributes setObject:int2color(sp->color) forKey:NSForegroundColorAttributeName];
     
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:self.text withAttributes:attributes withStrokeColor:int2color(sp->strokeColor) withStrokeSize:sp->strokeSize];
+    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:text withAttributes:attributes withStrokeColor:int2color(sp->strokeColor) withStrokeSize:sp->strokeSize];
     
     textureString.maxSize = maxSize;
     return [textureString createPixelBuffer];
@@ -190,10 +197,10 @@
 - (CVPixelBufferRef)generatePixelBuffer:(int)rotate preference:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize)maxSize
 {
     CVPixelBufferRef subRef = NULL;
-    if (self.text.length > 0) {
-        subRef = [self _generateFormText:rotate sp:sp maxSize:maxSize];
-    } else if (self.pixels != NULL) {
+    if (self.isImg) {
         subRef = [self _generateFromPixels];
+    } else {
+        subRef = [self _generateFormText:rotate sp:sp maxSize:maxSize];
     }
     return subRef;
 }
@@ -400,7 +407,7 @@ static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 }
 
-static void vout_update_subtitle(SDL_Vout *vout, const char *text)
+static void vout_update_subtitle(SDL_Vout *vout, const FFSubtitleBuffer *sb)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (!opaque) {
@@ -409,82 +416,19 @@ static void vout_update_subtitle(SDL_Vout *vout, const char *text)
     
     opaque->sub = nil;
     
-    if (!text || strlen(text) == 0) {
+    if (!sb) {
         return;
     }
     
     IJKSDLSubtitle *sub = [[IJKSDLSubtitle alloc]init];
-    sub.text = [[NSString alloc] initWithUTF8String:text];
+    sub.w = sb->width;
+    sub.h = sb->height;
+    sub.buffer = sb->buffer;
+    sub.isImg = sb->isImg;
+    sub.usedAss = sb->usedAss;
     opaque->sub = sub;
-}
-
-static uint8_t* copy_pal8_to_bgra(const AVSubtitleRect* rect)
-{
-    const int buff_size = rect->w * rect->h * 4; /* times 4 because 4 bytes per pixel */
-    uint32_t *buff = av_malloc((size_t)buff_size);
-    if (buff == NULL) {
-        ALOGE("Error allocating memory for subtitle bitmap.\n");
-        return NULL;
-    }
     
-    //AV_PIX_FMT_RGB32 is handled in an endian-specific manner. An RGBA color is put together as: (A << 24) | (R << 16) | (G << 8) | B
-    //This is stored as BGRA on little-endian CPU architectures and ARGB on big-endian CPUs.
-    
-    uint32_t colors[256];
-    
-    uint8_t *bgra = rect->data[1];
-    if (bgra) {
-        for (int i = 0; i < 256; ++i) {
-            /* Colour conversion. */
-            int idx = i * 4; /* again, 4 bytes per pixel */
-            uint8_t a = bgra[idx],
-            r = bgra[idx + 1],
-            g = bgra[idx + 2],
-            b = bgra[idx + 3];
-            colors[i] = (b << 24) | (g << 16) | (r << 8) | a;
-        }
-    } else {
-        bzero(colors, 256);
-    }
-    
-    for (int y = 0; y < rect->h; ++y) {
-        for (int x = 0; x < rect->w; ++x) {
-            /* 1 byte per pixel */
-            int coordinate = x + y * rect->linesize[0];
-            /* 32bpp color table */
-            int pos = rect->data[0][coordinate];
-            if (pos < 256) {
-                buff[x + (y * rect->w)] = colors[pos];
-            } else {
-                printf("%d\n",pos);
-            }
-        }
-    }
-    
-    return (uint8_t*)buff;
-}
-
-static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *bmp)
-{
-    SDL_Vout_Opaque *opaque = vout->opaque;
-    if (!opaque) {
-        return;
-    }
-    opaque->sub = nil;
-    
-    if (!bmp) {
-        return;
-    }
-    
-    IJKSDLSubtitle *sub = [[IJKSDLSubtitle alloc]init];
-    /// the graphic subtitles' bitmap with pixel format AV_PIX_FMT_PAL8,
-    /// https://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5
-    /// need to be converted to BGRA32 before use
-    /// PAL8 to BGRA32, bytes per line increased by multiplied 4
-    sub.w = bmp->w;
-    sub.h = bmp->h;
-    sub.pixels = copy_pal8_to_bgra(bmp);
-    opaque->sub = sub;
+    av_free((void *)sb);
 }
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(void)
@@ -500,7 +444,6 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2(void)
     vout->free_l = vout_free_l;
     vout->display_overlay = vout_display_overlay;
     vout->update_subtitle = vout_update_subtitle;
-    vout->update_subtitle_picture = vout_update_subtitle_picture;
     return vout;
 }
 

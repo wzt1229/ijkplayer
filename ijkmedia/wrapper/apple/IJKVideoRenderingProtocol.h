@@ -62,11 +62,11 @@ struct _IJKSDLSubtitlePreference {
 
 @interface IJKSDLSubtitle : NSObject
 
-@property(nonatomic, copy) NSString * text;
-//bitmap
 @property(nonatomic) int w;
 @property(nonatomic) int h;
-@property(nonatomic) uint8_t *pixels; //pixels with length w * h, in BGRA pixel format
+@property(nonatomic) uint8_t *buffer; //buffer with length w * h, in BGRA pixel format
+@property(nonatomic) BOOL isImg;
+@property(nonatomic) BOOL usedAss;
 
 - (CGSize)screenSize;
 - (CVPixelBufferRef)generatePixelBuffer:(int)rotate preference:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize)maxSize;

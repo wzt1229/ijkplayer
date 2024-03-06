@@ -37,6 +37,7 @@ TODO: Add long description of the pod here.
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ffmpeg/include',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/bluray/include',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/dvdread/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ass/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_USE_METAL_2=1',

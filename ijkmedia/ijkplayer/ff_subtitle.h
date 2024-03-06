@@ -8,7 +8,7 @@
 #ifndef ff_subtitle_h
 #define ff_subtitle_h
 
-#include <stdio.h>
+#include "ff_subtitle_def.h"
 
 typedef struct FFSubtitle FFSubtitle;
 typedef struct AVSubtitleRect AVSubtitleRect;
@@ -17,15 +17,16 @@ typedef struct AVCodecContext AVCodecContext;
 typedef struct AVPacket AVPacket;
 typedef struct IjkMediaMeta IjkMediaMeta;
 typedef struct AVFormatContext AVFormatContext;
+
 // lifecycle
 int ff_sub_init(FFSubtitle **subp);
 void ff_sub_abort(FFSubtitle *sub);
 int ff_sub_destroy(FFSubtitle **subp);
 //
-int ff_sub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx);
+int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, int video_w, int video_h);
 int ff_sub_close_current(FFSubtitle *sub);
 //return zero means out has content
-int ff_sub_fetch_frame(FFSubtitle *sub, float pts, char **text, AVSubtitleRect **bmp);
+int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer ** buffer);
 
 int ff_sub_frame_queue_size(FFSubtitle *sub);
 
@@ -41,7 +42,6 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float cp);
 float ff_sub_get_delay(FFSubtitle *sub);
 enum AVCodecID ff_sub_get_codec_id(FFSubtitle *sub);
 
-int ff_inSub_packet_queue_flush(FFSubtitle *sub);
 // return 0 means not internal,but not means is external;
 int ff_sub_isInternal_stream(FFSubtitle *sub, int stream);
 // return 0 means not external,but not means is internal;
@@ -50,8 +50,11 @@ int ff_sub_isExternal_stream(FFSubtitle *sub, int stream);
 int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx);
 
 //when video steam ic ready,call me.
-void ff_sub_stream_ic_ready(FFSubtitle *sub,AVFormatContext* ic);
+void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic);
+//use ass renderer
+void ff_sub_use_libass(FFSubtitle *sub, int use, AVFormatContext* ic, uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h);
 
+int ff_inSub_packet_queue_flush(FFSubtitle *sub);
 //for external subtitle.
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);

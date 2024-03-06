@@ -361,18 +361,27 @@ typedef CGRect NSRect;
           hdrPercentage:hdrPer];
     
     if (attach.subTexture) {
-        float subScale = 1.0;
-        if (attach.sub.pixels) {
-            subScale = self.displayVideoScale * 1.5;
+        if (attach.sub.isImg && attach.sub.usedAss) {
+            CGRect rect = CGRectMake(-1, -1, 2.0, 2.0);
+            [self encodeSubtitle:renderEncoder
+                        viewport:viewport
+                         texture:attach.subTexture
+                            rect:rect];
+        } else {
+            float subScale = 1.0;
+            if (attach.sub.isImg) {
+                subScale = self.displayVideoScale * 1.5;
+            }
+            //实现，窗口放大，字幕放大效果
+            subScale *= (viewport.width / [self screenSize].width);
+            CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale viewport:viewport];
+            
+            [self encodeSubtitle:renderEncoder
+                        viewport:viewport
+                         texture:attach.subTexture
+                            rect:rect];
         }
-        //实现，窗口放大，字幕放大效果
-        subScale *= (viewport.width / [self screenSize].width);
-        CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale viewport:viewport];
         
-        [self encodeSubtitle:renderEncoder
-                    viewport:viewport
-                     texture:attach.subTexture
-                        rect:rect];
     }
     [renderEncoder popDebugGroup];
     [renderEncoder endEncoding];
@@ -447,8 +456,7 @@ typedef CGRect NSRect;
         
         if (drawSub && attach.subTexture) {
             float subScale = 1.0;
-            
-            if (attach.sub.pixels) {
+            if (attach.sub.isImg && !attach.sub.usedAss) {
                 subScale = self.displayVideoScale * 1.5;
             }
             
@@ -520,7 +528,7 @@ typedef CGRect NSRect;
         
         if (attach.subTexture) {
             float subScale = 1.0;
-            if (attach.sub.pixels) {
+            if (attach.sub.isImg && !attach.sub.usedAss) {
                 subScale = self.displayVideoScale * 1.5;
             }
             

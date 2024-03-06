@@ -1834,7 +1834,7 @@ static int las_close(AVFormatContext* s) {
     return 0;
 }
 
-static int las_probe(AVProbeData* p) {
+static int las_probe(const AVProbeData* p) {
     if (p->filename && strstr(p->filename, ".las"))
         return AVPROBE_SCORE_MAX;
 
