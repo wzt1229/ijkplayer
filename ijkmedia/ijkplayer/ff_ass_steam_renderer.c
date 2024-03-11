@@ -61,59 +61,64 @@ static void ass_log(int ass_level, const char *fmt, va_list args, void *ctx)
     av_vlog(ctx, level, fmt, args);
 }
 
-static av_cold int init(FF_ASS_Context *ass)
+/* Init libass */
+
+static int init_libass(FF_ASS_Renderer *s)
 {
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass) {
+        return -1;
+    }
+    
     ass->library = ass_library_init();
     if (!ass->library) {
         av_log(ass, AV_LOG_ERROR, "Could not initialize libass.\n");
         return AVERROR(EINVAL);
     }
+    
     ass_set_message_cb(ass->library, ass_log, ass);
-
     ass_set_fonts_dir(ass->library, ass->fontsdir);
     ass_set_extract_fonts(ass->library, 1);
-
     ass->renderer = ass_renderer_init(ass->library);
+    
     if (!ass->renderer) {
         av_log(ass, AV_LOG_ERROR, "Could not initialize libass renderer.\n");
         return AVERROR(EINVAL);
     }
 
+    ass->track = ass_new_track(ass->library);
+    if (!ass->track) {
+        av_log(s, AV_LOG_ERROR, "Could not create a libass track\n");
+        return AVERROR(EINVAL);
+    }
+    
     return 0;
-}
-
-static av_cold void uninit(FF_ASS_Renderer *s)
-{
-    FF_ASS_Context *ass = s->priv_data;
-    if (ass->track)
-        ass_free_track(ass->track);
-    if (ass->renderer)
-        ass_renderer_done(ass->renderer);
-    if (ass->library)
-        ass_library_done(ass->library);
 }
 
 static void set_video_size(FF_ASS_Renderer *s, int w, int h)
 {
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass) {
+        return;
+    }
     //放大两倍，使得 retina 屏显示清楚
     w *= 2;
     h *= 2;
-    FF_ASS_Context *ass = s->priv_data;
-    ass_set_frame_size(ass->renderer, w, h);
-//    ass_set_pixel_aspect(ass->renderer, (double)w / h /
-//                         ((double)ass->original_w / ass->original_h));
-    ass_set_storage_size(ass->renderer, w, h);
-    ass_set_font_scale(ass->renderer, 1.0);
-    ass_set_cache_limits(ass->renderer, 1, 0);
-    
+
     ass->original_w = w;
     ass->original_h = h;
-
+    
+    ass_set_frame_size(ass->renderer, w, h);
+    ass_set_storage_size(ass->renderer, w, h);
+    ass_set_font_scale(ass->renderer, 1.0);
+    ass_set_cache_limits(ass->renderer, 3, 0);
+    
+//    ass_set_pixel_aspect(ass->renderer, (double)w / h /
+//                         ((double)ass->original_w / ass->original_h));
 //    if (ass->shaping != -1)
 //        ass_set_shaper(ass->renderer, ass->shaping);
     
     ass_set_shaper(ass->renderer, ASS_SHAPING_COMPLEX);
-    
 }
 
 static void blend_single(FFSubtitleBuffer * frame, ASS_Image *img)
@@ -160,10 +165,12 @@ static void blend(FFSubtitleBuffer * frame, ASS_Image *img)
     }
 }
 
-static void render_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **img)
+static int render_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **img)
 {
     FF_ASS_Context *ass = s->priv_data;
-    
+    if (!ass) {
+        return -1;
+    }
     ASS_Image *image = ass_render_frame(ass->renderer, ass->track, time_ms, NULL);
 
     if (image) {
@@ -173,11 +180,13 @@ static void render_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
         if (img) {
             *img = frame;
         }
+        return 0;
     } else {
         av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
         if (img) {
             *img = NULL;
         }
+        return -2;
     }
 }
 
@@ -207,46 +216,34 @@ static int attachment_is_font(AVStream * st)
     return 0;
 }
 
-static av_cold int init_subtitles(FF_ASS_Renderer *s, AVFormatContext *fmt, uint8_t *subtitle_header, int subtitle_header_size)
+static int set_stream(FF_ASS_Renderer *s, AVStream *st, uint8_t *subtitle_header, int subtitle_header_size)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass) {
         return AVERROR(EINVAL);
     }
-    /* Init libass */
-    int ret = init(ass);
-    if (ret < 0)
-        return ret;
-    ass->track = ass_new_track(ass->library);
-    if (!ass->track) {
-        av_log(s, AV_LOG_ERROR, "Could not create a libass track\n");
-        return AVERROR(EINVAL);
-    }
+    
     /* Load attached fonts */
-    for (int j = 0; j < fmt->nb_streams; j++) {
-        AVStream *st = fmt->streams[j];
-        if (st->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT &&
-            attachment_is_font(st)) {
-            const AVDictionaryEntry *tag = av_dict_get(st->metadata, "filename", NULL,
-                              AV_DICT_MATCH_CASE);
+    if (st->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT &&
+        attachment_is_font(st)) {
+        const AVDictionaryEntry *tag = av_dict_get(st->metadata, "filename", NULL,
+                          AV_DICT_MATCH_CASE);
 
-            if (tag) {
-                av_log(s, AV_LOG_DEBUG, "Loading attached font: %s\n",
-                       tag->value);
-                ass_add_font(ass->library, tag->value,
-                             (char *)st->codecpar->extradata,
-                             st->codecpar->extradata_size);
-            } else {
-                av_log(s, AV_LOG_WARNING,
-                       "Font attachment has no filename, ignored.\n");
-            }
+        if (tag) {
+            av_log(s, AV_LOG_DEBUG, "Loading attached font: %s\n",
+                   tag->value);
+            ass_add_font(ass->library, tag->value,
+                         (char *)st->codecpar->extradata,
+                         st->codecpar->extradata_size);
+        } else {
+            av_log(s, AV_LOG_WARNING,
+                   "Font attachment has no filename, ignored.\n");
         }
     }
 
-    /* Initialize fonts */
-//    ass_set_fonts(ass->renderer, NULL, NULL, 1, NULL, 1);
     ass_set_fonts(ass->renderer, NULL, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
-
+    
+    int ret = 0;
     if (ass->force_style) {
         char **list = NULL;
         char *temp = NULL;
@@ -288,6 +285,20 @@ static void process_chunk(FF_ASS_Renderer *s, char *ass_line, long long start_ti
     ass_process_chunk(ass->track, ass_line, (int)strlen(ass_line), start_time, duration);
 }
 
+static void uninit(FF_ASS_Renderer *s)
+{
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass) {
+        return;
+    }
+    if (ass->track)
+        ass_free_track(ass->track);
+    if (ass->renderer)
+        ass_renderer_done(ass->renderer);
+    if (ass->library)
+        ass_library_done(ass->library);
+}
+
 static void *ass_context_child_next(void *obj, void *prev)
 {
     return NULL;
@@ -304,14 +315,15 @@ static const AVClass subtitles_class = {
 FF_ASS_Renderer_Format ff_ass_default_format = {
     .priv_class     = &subtitles_class,
     .priv_data_size = sizeof(FF_ASS_Context),
-    .init           = init_subtitles,
-    .uninit         = uninit,
+    .init           = init_libass,
+    .set_stream     = set_stream,
     .set_video_size = set_video_size,
     .process_chunk  = process_chunk,
     .render_frame   = render_frame,
+    .uninit         = uninit,
 };
 
-static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format,AVFormatContext *fmt,uint8_t *subtitle_header,int subtitle_header_size, int video_w, int video_h, AVDictionary *opts)
+static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format, AVDictionary *opts)
 {
     FF_ASS_Renderer *r = av_mallocz(sizeof(FF_ASS_Renderer));
     r->priv_data = av_mallocz(format->priv_data_size);
@@ -328,15 +340,23 @@ static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format,
     if (opts) {
         av_opt_set_dict(r->priv_data, &opts);
     }
-    format->init(r, fmt, subtitle_header, subtitle_header_size);
-    format->set_video_size(r, video_w, video_h);
+    
+    if (format->init(r)) {
+        ffAss_destroy(&r);
+        return NULL;
+    }
     return r;
 }
 
-FF_ASS_Renderer *ffAss_create_default(AVFormatContext *fmt,uint8_t *subtitle_header,int subtitle_header_size, int video_w, int video_h, AVDictionary *opts)
+FF_ASS_Renderer *ffAss_create_default(AVStream *st, uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h, AVDictionary *opts)
 {
     FF_ASS_Renderer_Format* format = &ff_ass_default_format;
-    return ffAss_create_with_format(format, fmt, subtitle_header, subtitle_header_size, video_w, video_h, opts);
+    FF_ASS_Renderer* r = ffAss_create_with_format(format, opts);
+    if (r) {
+        r->iformat->set_stream(r, st, subtitle_header, subtitle_header_size);
+        r->iformat->set_video_size(r, video_w, video_h);
+    }
+    return r;
 }
 
 void ffAss_destroy(FF_ASS_Renderer **sp)

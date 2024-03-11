@@ -3084,15 +3084,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         //maybe already has ex subtile
         if (0 == ff_sub_current_stream_type(is->ffSub, NULL)) {
             if (is->video_st) {
-                AVCodecParameters *codecpar = is->video_st->codecpar;
-                
-                int v_width = codecpar->width;
-                if (codecpar->sample_aspect_ratio.num > 0 && codecpar->sample_aspect_ratio.den > 0) {
-                    float ratio = 1.0 * codecpar->sample_aspect_ratio.num / codecpar->sample_aspect_ratio.den;
-                    v_width = (int)(v_width * ratio);
-                }
-                
-                ret = ff_inSub_open_component(is->ffSub, stream_index, ic, avctx, v_width, codecpar->height);
+                ret = ff_inSub_open_component(is->ffSub, stream_index, st, avctx);
                 if (ret == 0) {
                     ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
                     _ijkmeta_set_stream(ffp, avctx->codec_type, stream_index);
@@ -3416,11 +3408,35 @@ static int read_thread(void *arg)
     }
     if (is->show_mode == SHOW_MODE_NONE)
         is->show_mode = ret >= 0 ? SHOW_MODE_VIDEO : SHOW_MODE_RDFT;
+    
     //tell subtitle stream is ready.
-    ff_sub_stream_ic_ready(is->ffSub, ic);
+    if (is->video_st) {
+        AVCodecParameters *codecpar = is->video_st->codecpar;
+                        
+        int v_width = codecpar->width;
+        if (codecpar->sample_aspect_ratio.num > 0 && codecpar->sample_aspect_ratio.den > 0) {
+            float ratio = 1.0 * codecpar->sample_aspect_ratio.num / codecpar->sample_aspect_ratio.den;
+            v_width = (int)(v_width * ratio);
+        }
+        ff_sub_stream_ic_ready(is->ffSub, ic, v_width, codecpar->height);
+    }
     
     if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
         stream_component_open(ffp, st_index[AVMEDIA_TYPE_SUBTITLE]);
+    } else {
+        //open external subtitle if need
+        int current = ff_sub_get_opened_stream_idx(is->ffSub);
+        if (current == -1) {
+            int ex_stream = ijkmeta_find_last_subtitle_stream_l(ffp->meta);
+            if (ex_stream != -1) {
+                if (ff_exSub_open_stream(is->ffSub, ex_stream) == 0) {
+                    _ijkmeta_set_stream(ffp, AVMEDIA_TYPE_SUBTITLE, ex_stream);
+                    ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+                } else {
+                    av_log(NULL, AV_LOG_ERROR, "ex sub stream open failed:%d",ex_stream);
+                }
+            }
+        }
     }
     
     ffp_notify_msg1(ffp, FFP_MSG_COMPONENT_OPEN);
@@ -5342,23 +5358,29 @@ int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
 #endif
     
     VideoState *is = ffp->is;
-    if (ff_exSub_check_file_added(file_name, is->ffSub) == 1) {
-        return 1;
-    } else {
-        ff_sub_close_current(is->ffSub);
-        int ret = ff_exSub_add_active_subtitle(is->ffSub, file_name, ffp->meta);
-        if (ret == 0) {
-            //seek the extra subtitle
-            float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
-            float delay = ff_sub_get_delay(is->ffSub);
-            ff_sub_seek_to(is->ffSub, delay, sec);
-            ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-            enum AVCodecID cid = ff_sub_get_codec_id(is->ffSub);
-            if (cid != AV_CODEC_ID_NONE) {
-                ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(cid));
+    
+    if (is->video_st) {
+        if (ff_exSub_check_file_added(file_name, is->ffSub) == 1) {
+            return 1;
+        } else {
+            ff_sub_close_current(is->ffSub);
+            int ret = ff_exSub_add_active_subtitle(is->ffSub, file_name, ffp->meta);
+            if (ret == 0) {
+                //seek the extra subtitle
+                float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
+                float delay = ff_sub_get_delay(is->ffSub);
+                ff_sub_seek_to(is->ffSub, delay, sec);
+                ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+                
+                enum AVCodecID cid = ff_sub_get_codec_id(is->ffSub);
+                if (cid != AV_CODEC_ID_NONE) {
+                    ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(cid));
+                }
             }
+            return ret;
         }
-        return ret;
+    } else {
+        return ffp_addOnly_external_subtitle(ffp, file_name);
     }
 }
 

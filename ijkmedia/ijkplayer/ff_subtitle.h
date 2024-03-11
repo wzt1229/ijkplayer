@@ -23,9 +23,9 @@ int ff_sub_init(FFSubtitle **subp);
 void ff_sub_abort(FFSubtitle *sub);
 int ff_sub_destroy(FFSubtitle **subp);
 //
-int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, int video_w, int video_h);
+int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx);
 int ff_sub_close_current(FFSubtitle *sub);
-//return zero means out has content
+//less than zero means err, equal zero means keep, greater than zero means need show
 int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer ** buffer);
 
 int ff_sub_frame_queue_size(FFSubtitle *sub);
@@ -50,9 +50,9 @@ int ff_sub_isExternal_stream(FFSubtitle *sub, int stream);
 int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx);
 
 //when video steam ic ready,call me.
-void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic);
+void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, int video_h);
 //use ass renderer
-void ff_sub_use_libass(FFSubtitle *sub, int use, AVFormatContext* ic, uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h);
+void ff_sub_use_libass(FFSubtitle *sub, int use, AVStream* st, uint8_t *subtitle_header, int subtitle_header_size);
 
 int ff_inSub_packet_queue_flush(FFSubtitle *sub);
 //for external subtitle.

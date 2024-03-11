@@ -212,7 +212,7 @@ typedef struct Frame {
     int height;
     int format;
     AVRational sar;
-    int uploaded;
+    int shown;
 } Frame;
 
 typedef struct FrameQueue {

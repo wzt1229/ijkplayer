@@ -97,5 +97,6 @@ int64_t       ijkmeta_get_int64_l(IjkMediaMeta *meta, const char *name, int64_t 
 size_t        ijkmeta_get_children_count_l(IjkMediaMeta *meta);
 // do not free
 IjkMediaMeta *ijkmeta_get_child_l(IjkMediaMeta *meta, size_t index);
+int ijkmeta_find_last_subtitle_stream_l(IjkMediaMeta *meta);
 
 #endif//IJKPLAYER__IJKMETA_H

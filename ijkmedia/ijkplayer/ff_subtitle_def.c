@@ -17,9 +17,9 @@ FFSubtitleBuffer *ff_gen_subtitle_image(int width, int height, int bpc)
     img->width = width;
     img->height = height;
     img->stride = width * bpc;
-    img->buffer = calloc(1, height * img->stride);
-    memset(img->buffer, 0, img->stride * img->height);
-    
+    size_t size = height * img->stride;
+    img->buffer = calloc(1, size);
+    memset(img->buffer, 0, height * img->stride);
     return img;
 }
 

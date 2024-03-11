@@ -356,3 +356,28 @@ IjkMediaMeta *ijkmeta_get_child_l(IjkMediaMeta *meta, size_t index)
 
     return meta->children[index];
 }
+
+int ijkmeta_find_last_subtitle_stream_l(IjkMediaMeta *meta)
+{
+    if (!meta)
+        return -1;
+
+    if (meta->children_count == 0)
+        return -1;
+
+    int stream_idx = -1;
+    for (int i = (int)meta->children_count-1; i >= 0 ; i--) {
+        IjkMediaMeta *child = meta->children[i];
+        if (child) {
+            const char *type = ijkmeta_get_string_l(child, IJKM_KEY_TYPE);
+            if (type && !strcmp(IJKM_VAL_TYPE__TIMEDTEXT, type)) {
+                int idx = (int)ijkmeta_get_int64_l(child, IJKM_KEY_STREAM_IDX, -1);
+                if (idx != -1) {
+                    stream_idx = idx;
+                    break;
+                }
+            }
+        }
+    }
+    return stream_idx;
+}

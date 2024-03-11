@@ -466,3 +466,17 @@ int exSub_get_serial(IJKEXSubtitle *sub)
 {
     return sub ? subComponent_get_serial(sub->component) : -1;
 }
+
+AVStream *exSub_get_stream(IJKEXSubtitle *sub)
+{
+    AVFormatContext* ic = sub->ic;
+    if (!ic) {
+        return NULL;
+    }
+    int idx = subComponent_get_stream(sub->component);
+    if (idx < ic->nb_streams) {
+        return ic->streams[idx];
+    }
+    return NULL;
+}
+

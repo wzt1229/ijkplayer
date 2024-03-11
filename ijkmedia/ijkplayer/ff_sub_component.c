@@ -180,7 +180,7 @@ static int subtitle_thread(void *arg)
                 sp->serial = serial;
                 sp->width  = sub->decoder.avctx->width;
                 sp->height = sub->decoder.avctx->height;
-                sp->uploaded = 0;
+                sp->shown = 0;
                 /* now we can update the picture count */
                 frame_queue_push(sub->frameq);
             } else {

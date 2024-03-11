@@ -23,6 +23,7 @@ typedef struct FFSubtitle {
     FFSubComponent* inSub;
     IJKEXSubtitle* exSub;
     int streamStartTime;//ic start_time (s)
+    int video_w, video_h;
     int use_ass_renderer;
     FF_ASS_Renderer * assRenderer;
 }FFSubtitle;
@@ -189,6 +190,41 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
     return frame;
 }
 
+static int generate_picture(Frame * sp, FF_ASS_Renderer * assRenderer, FFSubtitleBuffer **buffer, float begin, float end)
+{
+    sp->shown = 1;
+    
+    int r = 0;
+    if (sp->sub.num_rects > 0) {
+        if (sp->sub.rects[0]->text) {
+            *buffer = ff_gen_subtitle_text(sp->sub.rects[0]->text);
+        } else if (sp->sub.rects[0]->ass) {
+            //ass -> image
+            if (assRenderer) {
+                for (int i = 0; i < sp->sub.num_rects; i++) {
+                    char *ass_line = sp->sub.rects[i]->ass;
+                    if (!ass_line)
+                        break;
+                    assRenderer->iformat->process_chunk(assRenderer, ass_line, begin * 1000, end);
+                }
+                int err = assRenderer->iformat->render_frame(assRenderer, begin * 1000 + 5, buffer);
+                if (err) {
+                    r = -1;
+                    sp->shown = 0;
+                }
+            } else {
+                *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
+            }
+        } else if (sp->sub.rects[0]->type == SUBTITLE_BITMAP
+                   && sp->sub.rects[0]->data[0]
+                   && sp->sub.rects[0]->linesize[0]) {
+            *buffer = convert_pal8_to_bgra(sp->sub.rects[0]);
+        } else {
+            av_log(NULL, AV_LOG_ERROR, "unknown subtitle");
+        }
+    }
+    return r;
+}
 
 int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
 {
@@ -215,7 +251,7 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
         return -2;
     }
     
-    int r = 1;
+    int r = -3;
     int rem = 0;
     int dropped = 0;
     while ((rem = frame_queue_nb_remaining(&sub->frameq)) > 0) {
@@ -238,42 +274,16 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
         float end = get_frame_end_pts(sub, sp);
         
         if (pts > begin && pts < end) {
-            if (!sp->uploaded) {
-                if (sp->sub.num_rects > 0) {
-                    if (sp->sub.rects[0]->text) {
-                        *buffer = ff_gen_subtitle_text(sp->sub.rects[0]->text);
-                    } else if (sp->sub.rects[0]->ass) {
-                        //ass -> image
-                        if (sub->use_ass_renderer) {
-                            for (int i = 0; i < sp->sub.num_rects; i++) {
-                                char *ass_line = sp->sub.rects[i]->ass;
-                                if (!ass_line)
-                                    break;
-                                sub->assRenderer->iformat->process_chunk(sub->assRenderer, ass_line, begin * 1000, sp->sub.end_display_time);
-                                
-                                sub->assRenderer->iformat->render_frame(sub->assRenderer, begin * 1000 + 500, buffer);
-                            }
-                        } else {
-                            *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
-                        }
-                    } else if (sp->sub.rects[0]->type == SUBTITLE_BITMAP
-                               && sp->sub.rects[0]->data[0]
-                               && sp->sub.rects[0]->linesize[0]) {
-                        *buffer = convert_pal8_to_bgra(sp->sub.rects[0]);
-                    } else {
-                        assert(0);
-                    }
-                }
-                r = 1;
-                sp->uploaded = 1;
+            if (!sp->shown) {
+                //end ?? sp->sub.end_display_time
+                int err = generate_picture(sp, sub->use_ass_renderer ? sub->assRenderer : NULL, buffer, begin, end);
+                r = err ? -4 : 1;
             } else {
                 r = 0;
             }
-            //av_log(NULL, AV_LOG_ERROR, "sub fetch frame :%0.2f,%0.2f,%0.2f;dropped:%d\n",pts,sub->current_pts,(sub ? sub->delay : 0.0),dropped);
         } else {
-            //av_log(NULL, AV_LOG_ERROR, "sub fetch frame failed:%0.2f,%0.2f,%0.2f;dropped:%d\n",pts,sub->current_pts,(sub ? sub->delay : 0.0),dropped);
-            if (sp->uploaded) {
-                sp->uploaded = 0;
+            if (sp->shown) {
+                sp->shown = 0;
             }
             //clean current display sub
             r = -3;
@@ -421,13 +431,18 @@ int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx)
     return type;
 }
 
-void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic)
+void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, int video_h)
 {
+    if (!sub) {
+        return;
+    }
+    sub->video_w = video_w;
+    sub->video_h = video_h;
     sub->streamStartTime = (int)fftime_to_seconds(ic->start_time);
     sub->maxInternalStream = ic->nb_streams;
 }
 
-void ff_sub_use_libass(FFSubtitle *sub, int use, AVFormatContext* ic, uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h)
+void ff_sub_use_libass(FFSubtitle *sub, int use, AVStream* st, uint8_t *subtitle_header, int subtitle_header_size)
 {
     if (use != 0) {
         use = 1;
@@ -439,17 +454,20 @@ void ff_sub_use_libass(FFSubtitle *sub, int use, AVFormatContext* ic, uint8_t *s
         if (sub->assRenderer) {
             ffAss_destroy(&sub->assRenderer);
         }
-        sub->assRenderer = ffAss_create_default(ic, subtitle_header, subtitle_header_size, video_w, video_h, NULL);
+        if (sub->video_w > 0 && sub->video_h > 0) {
+            sub->assRenderer = ffAss_create_default(st, subtitle_header, subtitle_header_size, sub->video_w, sub->video_h, NULL);
+        }
     }
 }
 
-int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, int video_w, int video_h)
+int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx)
 {
     if (sub->inSub || sub->exSub) {
         packet_queue_flush(&sub->packetq);
         ff_sub_clean_frame_queue(sub);
     }
-    ff_sub_use_libass(sub, 1, ic, avctx->subtitle_header, avctx->subtitle_header_size, video_w, video_h);
+    
+    ff_sub_use_libass(sub, 1, st, avctx->subtitle_header, avctx->subtitle_header_size);
     return subComponent_open(&sub->inSub, stream_index, NULL, avctx, &sub->packetq, &sub->frameq, NULL, NULL);
 }
 
@@ -513,7 +531,13 @@ int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMedi
     }
     packet_queue_flush(&sub->packetq);
     ff_sub_clean_frame_queue(sub);
-    return exSub_add_active_subtitle(sub->exSub, file_name, meta);
+    int err = exSub_add_active_subtitle(sub->exSub, file_name, meta);
+    if (!err) {
+        AVCodecContext * avctx = exSub_get_avctx(sub->exSub);
+        AVStream *st = exSub_get_stream(sub->exSub);
+        ff_sub_use_libass(sub, 1, st, avctx->subtitle_header, avctx->subtitle_header_size);
+    }
+    return err;
 }
 
 int ff_exSub_open_stream(FFSubtitle *sub, int stream)
@@ -524,7 +548,13 @@ int ff_exSub_open_stream(FFSubtitle *sub, int stream)
     packet_queue_flush(&sub->packetq);
     ff_sub_clean_frame_queue(sub);
     
-    return exSub_open_file_idx(sub->exSub, stream);
+    int err = exSub_open_file_idx(sub->exSub, stream);
+    if (!err) {
+        AVCodecContext * avctx = exSub_get_avctx(sub->exSub);
+        AVStream *st = exSub_get_stream(sub->exSub);
+        ff_sub_use_libass(sub, 1, st, avctx->subtitle_header, avctx->subtitle_header_size);
+    }
+    return err;
 }
 
 int ff_exSub_check_file_added(const char *file_name, FFSubtitle *sub)
