@@ -58,7 +58,10 @@ static void ass_log(int ass_level, const char *fmt, va_list args, void *ctx)
     const int ass_level_clip = av_clip(ass_level, 0,
         FF_ARRAY_ELEMS(ass_libavfilter_log_level_map) - 1);
     int level = ass_libavfilter_log_level_map[ass_level_clip];
-    av_vlog(ctx, level, fmt, args);
+    //level = AV_LOG_ERROR;
+    const char *prefix = "[ass] ";
+    char *tmp = av_asprintf("%s%s", prefix, fmt);
+    av_vlog(ctx, level, tmp, args);
 }
 
 /* Init libass */
@@ -239,6 +242,7 @@ static int set_stream(FF_ASS_Renderer *s, AVStream *st, uint8_t *subtitle_header
     ass_set_fonts(ass->renderer, NULL, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
     
     int ret = 0;
+    //ass->force_style = "MarginV=50";
     if (ass->force_style) {
         char **list = NULL;
         char *temp = NULL;
@@ -280,6 +284,15 @@ static void process_chunk(FF_ASS_Renderer *s, char *ass_line, long long start_ti
     ass_process_chunk(ass->track, ass_line, (int)strlen(ass_line), start_time, duration);
 }
 
+static void update_margin(FF_ASS_Renderer *s, int t, int b, int l, int r)
+{
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass || !ass->renderer) {
+        return;
+    }
+    ass_set_margins(ass->renderer, t, b, l, r);
+}
+
 static void uninit(FF_ASS_Renderer *s)
 {
     FF_ASS_Context *ass = s->priv_data;
@@ -315,6 +328,7 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .set_video_size = set_video_size,
     .process_chunk  = process_chunk,
     .render_frame   = render_frame,
+    .update_margin  = update_margin,
     .uninit         = uninit,
 };
 

@@ -324,6 +324,8 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
     }
     
     if (assRenderer && ass_begin >= 0) {
+        //TODO, there just a demo value
+        ff_sub_update_margin_ass(sub, 30, 100, 0, 0);
         FFSubtitleBuffer *sb = ass_render_image(assRenderer, ass_begin);
         if (sb) {
             *buffer = sb;
@@ -482,6 +484,13 @@ void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, i
     sub->video_h = video_h;
     sub->streamStartTime = (int)fftime_to_seconds(ic->start_time);
     sub->maxInternalStream = ic->nb_streams;
+}
+
+void ff_sub_update_margin_ass(FFSubtitle *sub, int t, int b, int l, int r)
+{
+    if (sub->assRenderer) {
+        sub->assRenderer->iformat->update_margin(sub->assRenderer, t, b, l, r);
+    }
 }
 
 void ff_sub_use_libass(FFSubtitle *sub, int use, AVStream* st, uint8_t *subtitle_header, int subtitle_header_size)

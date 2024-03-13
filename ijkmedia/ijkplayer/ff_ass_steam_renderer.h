@@ -24,6 +24,7 @@ typedef struct FF_ASS_Renderer_Format {
     void (*set_video_size)(struct FF_ASS_Renderer *s, int w, int h);
     void (*process_chunk)(struct FF_ASS_Renderer *, char *ass_line, int64_t start, int64_t duration);
     FFSubtitleBuffer* (*render_frame)(struct FF_ASS_Renderer *, double time_ms);
+    void (*update_margin)(FF_ASS_Renderer *s, int t, int b, int l, int r);
     void (*uninit)(struct FF_ASS_Renderer *);
 } FF_ASS_Renderer_Format;
 
