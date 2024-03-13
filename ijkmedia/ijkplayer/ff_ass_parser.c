@@ -121,17 +121,21 @@ static char * remove_ass_line_effect(const char *ass)
 }
 
 //need free!
-FFSubtitleBuffer * parse_ass_subtitle(const char *ass)
+void parse_ass_subtitle(const char *ass,FFSubtitleBuffer **sb)
 {
+    if (!sb) {
+        return;
+    }
     const char *text = remove_ass_line_header(ass);
     if (text && strlen(text) > 0) {
         char *buffer = remove_ass_line_effect(text);
         replace_N_to_n(buffer);
         remove_last_rn(buffer);
         remove_last_n(buffer);
-        FFSubtitleBuffer *sb = ff_gen_subtitle_text(buffer);
+        if (!*sb) {
+            *sb = ff_gen_subtitle_text(NULL);
+        }
+        ff_subtitlebuffer_append_text(*sb, buffer);
         av_free(buffer);
-        return sb;
     }
-    return NULL;
 }

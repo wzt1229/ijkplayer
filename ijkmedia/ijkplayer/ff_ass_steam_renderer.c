@@ -165,28 +165,23 @@ static void blend(FFSubtitleBuffer * frame, ASS_Image *img)
     }
 }
 
-static int render_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **img)
+static FFSubtitleBuffer* render_frame(FF_ASS_Renderer *s, double time_ms)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass) {
-        return -1;
+        return NULL;
     }
-    ASS_Image *image = ass_render_frame(ass->renderer, ass->track, time_ms, NULL);
+    
+    ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, NULL);
 
-    if (image) {
-        FFSubtitleBuffer *frame = ff_gen_subtitle_image(ass->original_w, ass->original_h, 4);
-        frame->usedAss = 1;
-        blend(frame, image);
-        if (img) {
-            *img = frame;
-        }
-        return 0;
+    if (imgs) {
+        FFSubtitleBuffer* buff = ff_gen_subtitle_image(ass->original_w, ass->original_h, 4);
+        buff->usedAss = 1;
+        blend(buff, imgs);
+        return buff;
     } else {
         av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
-        if (img) {
-            *img = NULL;
-        }
-        return -2;
+        return NULL;
     }
 }
 

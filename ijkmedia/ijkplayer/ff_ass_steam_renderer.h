@@ -23,7 +23,7 @@ typedef struct FF_ASS_Renderer_Format {
     int (*set_stream)(struct FF_ASS_Renderer *s, struct AVStream *st, uint8_t *subtitle_header, int subtitle_header_size);
     void (*set_video_size)(struct FF_ASS_Renderer *s, int w, int h);
     void (*process_chunk)(struct FF_ASS_Renderer *, char *ass_line, int64_t start, int64_t duration);
-    int (*render_frame)(struct FF_ASS_Renderer *, double time_ms, FFSubtitleBuffer **img);
+    FFSubtitleBuffer* (*render_frame)(struct FF_ASS_Renderer *, double time_ms);
     void (*uninit)(struct FF_ASS_Renderer *);
 } FF_ASS_Renderer_Format;
 

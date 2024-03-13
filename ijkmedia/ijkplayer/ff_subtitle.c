@@ -183,21 +183,24 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
             if (pos < 256) {
                 buff[x + (y * rect->w)] = colors[pos];
             } else {
-                printf("%d\n",pos);
+                printf("wtf? pal8 pos:%d\n",pos);
             }
         }
     }
     return frame;
 }
 
-static int generate_picture(Frame * sp, FF_ASS_Renderer * assRenderer, FFSubtitleBuffer **buffer, float begin, float end)
+static int process_rects(Frame * sp, FF_ASS_Renderer * assRenderer, FFSubtitleBuffer **buffer, float begin, float end)
 {
     sp->shown = 1;
     
     int r = 0;
     if (sp->sub.num_rects > 0) {
         if (sp->sub.rects[0]->text) {
-            *buffer = ff_gen_subtitle_text(sp->sub.rects[0]->text);
+            if (!*buffer) {
+                *buffer = ff_gen_subtitle_text(NULL);
+            }
+            ff_subtitlebuffer_append_text(*buffer, sp->sub.rects[0]->text);
         } else if (sp->sub.rects[0]->ass) {
             //ass -> image
             if (assRenderer) {
@@ -207,23 +210,24 @@ static int generate_picture(Frame * sp, FF_ASS_Renderer * assRenderer, FFSubtitl
                         break;
                     assRenderer->iformat->process_chunk(assRenderer, ass_line, begin * 1000, end);
                 }
-                int err = assRenderer->iformat->render_frame(assRenderer, begin * 1000 + 5, buffer);
-                if (err) {
-                    r = -1;
-                    sp->shown = 0;
-                }
             } else {
-                *buffer = parse_ass_subtitle(sp->sub.rects[0]->ass);
+                parse_ass_subtitle(sp->sub.rects[0]->ass, buffer);
             }
         } else if (sp->sub.rects[0]->type == SUBTITLE_BITMAP
                    && sp->sub.rects[0]->data[0]
                    && sp->sub.rects[0]->linesize[0]) {
+            //todo here,maybe need blend pal8 image. I haven't met one yet
             *buffer = convert_pal8_to_bgra(sp->sub.rects[0]);
         } else {
             av_log(NULL, AV_LOG_ERROR, "unknown subtitle");
         }
     }
     return r;
+}
+
+static FFSubtitleBuffer * ass_render_image(FF_ASS_Renderer * assRenderer, float begin)
+{
+    return assRenderer->iformat->render_frame(assRenderer, begin * 1000 + 1);
 }
 
 int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
@@ -251,44 +255,82 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
         return -2;
     }
     
+    
     int r = -3;
-    int rem = 0;
-    int dropped = 0;
-    while ((rem = frame_queue_nb_remaining(&sub->frameq)) > 0) {
-        if (rem > 1) {
-            Frame *sp2 = frame_queue_peek_next(&sub->frameq);
-            if (pts > get_frame_begin_pts(sub, sp2)) {
-                dropped++;
-                frame_queue_next(&sub->frameq);
-                continue;
-            }
+    Frame *sp = NULL;
+    Frame *sp_next = NULL;
+    
+    FF_ASS_Renderer * assRenderer = sub->use_ass_renderer ? sub->assRenderer : NULL;
+    float ass_begin = -1;
+    
+    while (frame_queue_nb_remaining(&sub->frameq) > 0) {
+        if (!sp) {
+            sp = frame_queue_peek(&sub->frameq);
         }
-        Frame * sp = frame_queue_peek(&sub->frameq);
+        
+        //drop old serial subs
         if (sp->serial != serial) {
-            dropped++;
             frame_queue_next(&sub->frameq);
             continue;
         }
-        sub->current_pts = get_frame_real_begin_pts(sub, sp);
-        float begin = sub->current_pts + (sub ? sub->delay : 0.0);
-        float end = get_frame_end_pts(sub, sp);
         
-        if (pts > begin && pts < end) {
-            if (!sp->shown) {
-                //end ?? sp->sub.end_display_time
-                int err = generate_picture(sp, sub->use_ass_renderer ? sub->assRenderer : NULL, buffer, begin, end);
-                r = err ? -4 : 1;
-            } else {
-                r = 0;
-            }
+        const float end = get_frame_end_pts(sub, sp);
+        
+        //字幕显示时间已经结束了
+        if (pts > end) {
+            frame_queue_next(&sub->frameq);
+            sp = frame_queue_peek(&sub->frameq);
+            sp_next = NULL;
+            continue;
         } else {
-            if (sp->shown) {
-                sp->shown = 0;
+            sub->current_pts = get_frame_real_begin_pts(sub, sp);
+            //字幕可以显示了
+            const float begin = sub->current_pts + (sub ? sub->delay : 0.0);
+            if (pts > begin) {
+                if (!sp->shown) {
+                    //end ?? sp->sub.end_display_time
+                    if (ass_begin < 0) {
+                        ass_begin = begin;
+                    }
+                    int err = process_rects(sp, assRenderer, buffer, begin, end);
+                    r = err ? -4 : 1;
+                    //探测下一个字幕是否也需要显示
+                    if (sp_next) {
+                        //如果刚才探测的就是下一个字幕了，那么需要把当前字幕drop，继续往后探测
+                        frame_queue_next(&sub->frameq);
+                    }
+                    sp = sp_next = frame_queue_peek_next(&sub->frameq);
+                    //maybe has overlap range subtitle need show
+                    continue;
+                } else {
+                    //keep current
+                    r = 0;
+                }
+            } else {
+                //字幕还没到开始时间
+                if (sp->shown) {
+                    sp->shown = 0;
+                }
+                //探测的是下个字幕
+                if (sp_next) {
+                    break;
+                } else {
+                    //clean current display sub
+                    r = -3;
+                }
             }
-            //clean current display sub
-            r = -3;
         }
         break;
+    }
+    
+    if (assRenderer && ass_begin >= 0) {
+        FFSubtitleBuffer *sb = ass_render_image(assRenderer, ass_begin);
+        if (sb) {
+            *buffer = sb;
+        } else {
+            r = -1;
+            sp->shown = 0;
+        }
     }
     return r;
 }

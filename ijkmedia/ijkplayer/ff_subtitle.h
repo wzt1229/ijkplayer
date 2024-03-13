@@ -51,9 +51,6 @@ int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx);
 
 //when video steam ic ready,call me.
 void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, int video_h);
-//use ass renderer
-void ff_sub_use_libass(FFSubtitle *sub, int use, AVStream* st, uint8_t *subtitle_header, int subtitle_header_size);
-
 int ff_inSub_packet_queue_flush(FFSubtitle *sub);
 //for external subtitle.
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
