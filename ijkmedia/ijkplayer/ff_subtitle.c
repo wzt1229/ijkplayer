@@ -531,11 +531,13 @@ void ff_sub_use_libass(FFSubtitle *sub, int use, AVStream* st, uint8_t *subtitle
     if (sub->use_ass_renderer != use) {
         sub->use_ass_renderer = use;
     }
+    
+    if (sub->assRenderer) {
+        ffAss_destroy(&sub->assRenderer);
+    }
+    
     if (use) {
-        if (sub->assRenderer) {
-            ffAss_destroy(&sub->assRenderer);
-        }
-        if (sub->video_w > 0 && sub->video_h > 0) {
+        if (sub->video_w > 0 && sub->video_h > 0 && st->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE && st->codecpar->codec_id == AV_CODEC_ID_ASS) {
             sub->assRenderer = ffAss_create_default(st, subtitle_header, subtitle_header_size, sub->video_w, sub->video_h, NULL);
         }
     }
