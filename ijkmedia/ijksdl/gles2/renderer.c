@@ -897,7 +897,8 @@ GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer,
 void IJK_GLES2_Renderer_updateSubtitleVertex(IJK_GLES2_Renderer *renderer, float width, float height)
 {
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //ass字幕已经做了预乘，所以这里选择 GL_ONE，而不是 GL_SRC_ALPHA
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     
     //字幕图片在纹理坐标系上的尺寸
     float ratioW = 1.0 * width / renderer->layer_width;
