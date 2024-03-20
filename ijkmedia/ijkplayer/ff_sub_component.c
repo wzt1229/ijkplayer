@@ -123,7 +123,7 @@ static int decode_a_frame(FFSubComponent *sub, Decoder *d, AVSubtitle *pkt)
 
         int got_frame = 0;
         
-        //av_log(NULL, AV_LOG_DEBUG, "sub stream decoder pkt serial:%d\n",d->pkt_serial);
+        //av_log(NULL, AV_LOG_ERROR, "sub stream decoder pkt serial:%d,pts:%lld\n",d->pkt_serial,pkt->pts/1000);
         ret = avcodec_decode_subtitle2(d->avctx, pkt, &got_frame, d->pkt);
         if (ret >= 0) {
             if (got_frame && !d->pkt->data) {
@@ -174,7 +174,7 @@ static int subtitle_thread(void *arg)
             if (sp->sub.pts != AV_NOPTS_VALUE)
                 pts = sp->sub.pts / (double)AV_TIME_BASE;
             sp->pts = pts;
-            //av_log(NULL, AV_LOG_DEBUG,"sub received frame:%f\n",pts);
+            //av_log(NULL, AV_LOG_ERROR,"sub received frame:%f\n",pts);
             int serial = sub->decoder.pkt_serial;
             if (sub->packetq->serial == serial) {
                 sp->serial = serial;
@@ -228,7 +228,7 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
         return ret;
     }
     sub->st_idx = stream_index;
-    av_log(NULL, AV_LOG_DEBUG, "sub stream opened:%d,serial:%d\n", stream_index, packetq->serial);
+    av_log(NULL, AV_LOG_INFO, "sub stream opened:%d,serial:%d\n", stream_index, packetq->serial);
     *subp = sub;
     return 0;
 }
