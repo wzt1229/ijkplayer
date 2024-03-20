@@ -113,9 +113,19 @@
         [self reSetLoglevel];
     } forKey:@"log_level"];
     
+    static NSDateFormatter *df;
+    if (!df) {
+        df = [[NSDateFormatter alloc]init];
+#if DEBUG
+        df.dateFormat = @"HH:mm:ss SSS";
+#else
+        df.dateFormat = @"yyyy-MM-dd HH:mm:ss S";
+#endif
+    }
+
     [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
-        NSLog(@"[%@] [%d] %@",tag,level,msg);
-//        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
+        NSString *dateStr = [df stringFromDate:[NSDate date]];
+        NSLog(@"[%@] [%@] %@", dateStr, tag, msg);
     }];
     
     [self reSetLoglevel];
