@@ -124,37 +124,68 @@ static void set_video_size(FF_ASS_Renderer *s, int w, int h)
     ass_set_shaper(ass->renderer, ASS_SHAPING_COMPLEX);
 }
 
-static void blend_single(FFSubtitleBuffer * frame, ASS_Image *img)
+static void draw_ass_rgba(unsigned char *src, int src_w, int src_h,
+                          int src_stride, unsigned char *dst, size_t dst_stride,
+                          int dst_x, int dst_y, uint32_t color)
 {
-    const int bpc = 4;
-    uint8_t *src = img->bitmap;
-    uint8_t *dst = frame->buffer + img->dst_y * frame->stride + img->dst_x * bpc;
-    
-    const uint32_t color = img->color;
-    const uint8_t r_src = (color & 0xff000000) >> 24;
-    const uint8_t g_src = (color & 0x00ff0000) >> 16;
-    const uint8_t b_src = (color & 0x0000ff00) >> 8;
-    //const uint8_t a_src = 0xff - (color & 0x000000ff);
-    
-    for (int y = 0; y < img->h; y++)
-    {
-        for (int x = 0; x < img->w; x++)
-        {
-            uint8_t *pixel = dst + x * 4;
-            double alpha = (255 - src[x]) / 255.0;
-            
-            uint8_t r_dst = pixel[0];
-            uint8_t g_dst = pixel[1];
-            uint8_t b_dst = pixel[2];
-            uint8_t a_dst = pixel[3];
+    const unsigned int sr = (color >> 24) & 0xff;
+    const unsigned int sg = (color >> 16) & 0xff;
+    const unsigned int sb = (color >>  8) & 0xff;
+    const unsigned int _sa = 0xff - (color & 0xff);
 
-            pixel[0] = (1 - alpha) * r_src + alpha * r_dst;
-            pixel[1] = (1 - alpha) * g_src + alpha * g_dst;
-            pixel[2] = (1 - alpha) * b_src + alpha * b_dst;
-            pixel[3] = (1 - alpha) * src[x] + alpha * a_dst;
+    #define COLOR_BLEND(_sa,_sc,_dc) ((_sc * _sa + _dc * (65025 - _sa)) >> 16 & 0xFF)
+    
+    for (int y = 0; y < src_h; y++) {
+        uint32_t *dstrow = (uint32_t *) dst;
+        for (int x = 0; x < src_w; x++) {
+            const uint32_t sa = _sa * src[x];
+            
+            uint32_t dstpix = dstrow[x];
+            uint32_t dstr =  dstpix        & 0xFF;
+            uint32_t dstg = (dstpix >>  8) & 0xFF;
+            uint32_t dstb = (dstpix >> 16) & 0xFF;
+            uint32_t dsta = (dstpix >> 24) & 0xFF;
+            
+            dstr = COLOR_BLEND(sa, sr, dstr);
+            dstg = COLOR_BLEND(sa, sg, dstg);
+            dstb = COLOR_BLEND(sa, sb, dstb);
+            dsta = COLOR_BLEND(sa, 255, dsta);
+            
+            dstrow[x] = dstr | (dstg << 8) | (dstb << 16) | (dsta << 24);
+            
         }
-        src += img->stride;
-        dst += frame->stride;
+        dst += dst_stride;
+        src += src_stride;
+    }
+    #undef COLOR_BLEND
+}
+
+static void blend_single(FFSubtitleBuffer * frame, ASS_Image *img, int layer)
+{
+    if (img->w == 0 || img->h == 0)
+        return;
+    //printf("blend %d rect:{%d,%d}{%d,%d}\n", layer, img->dst_x, img->dst_y, img->w, img->h);
+    unsigned char *dst = frame->buffer;
+    dst += img->dst_y * frame->stride + img->dst_x * 4;
+    draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->stride, img->dst_x, img->dst_y, img->color);
+}
+
+static void peek_alpha(unsigned char *src, int src_w, int src_h, int src_stride)
+{
+    uint32_t *dstrow = (uint32_t *) src;
+    printf("-------------alpha-------------\n");
+    for (int y = 0; y < src_h; y++) {
+        for (int x = 0; x < src_w/4; x++) {
+            
+            uint32_t dstpix = dstrow[x];
+            uint32_t dsta = (dstpix >> 24) & 0xFF;
+            
+            if (dsta != 255 && dsta != 0) {
+                printf("%d,",dsta);
+            }
+        }
+        printf("\n");
+        dstrow += src_stride/4;
     }
 }
 
@@ -162,10 +193,11 @@ static void blend(FFSubtitleBuffer * frame, ASS_Image *img)
 {
     int cnt = 0;
     while (img) {
-        blend_single(frame, img);
         ++cnt;
+        blend_single(frame, img, cnt);
         img = img->next;
     }
+    //peek_alpha(frame->buffer, frame->width, frame->height, frame->stride);
 }
 
 static FFSubtitleBuffer* render_frame(FF_ASS_Renderer *s, double time_ms, int changed_only)
