@@ -95,6 +95,7 @@ static int init_libass(FF_ASS_Renderer *s)
         return AVERROR(EINVAL);
     }
     
+    ass->track->track_type = TRACK_TYPE_ASS;
     return 0;
 }
 
@@ -115,7 +116,7 @@ static void set_video_size(FF_ASS_Renderer *s, int w, int h)
     ass_set_storage_size(ass->renderer, w, h);
     ass_set_font_scale(ass->renderer, 1.0);
     ass_set_cache_limits(ass->renderer, 3, 0);
-    
+    ass_set_line_spacing( ass->renderer, 0.0);
 //    ass_set_pixel_aspect(ass->renderer, (double)w / h /
 //                         ((double)ass->original_w / ass->original_h));
 //    if (ass->shaping != -1)
@@ -275,7 +276,11 @@ static int set_stream(FF_ASS_Renderer *s, AVStream *st, uint8_t *subtitle_header
         }
     }
 
-    ass_set_fonts(ass->renderer, NULL, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
+    //"sans-serif"
+    ass_set_fonts(ass->renderer, NULL, "Helvetica Neue", ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
+    /* Anything else than NONE will break smooth img updating.
+          TODO: List and force ASS_HINTING_LIGHT for known problematic fonts */
+    ass_set_hinting( ass->renderer, ASS_HINTING_NONE );
     
     int ret = 0;
     //ass->force_style = "MarginV=50";
@@ -316,7 +321,7 @@ static void process_chunk(FF_ASS_Renderer *s, char *ass_line, long long start_ti
     if (!ass) {
         return;
     }
-    printf("ass_process_chunk:%s\n", ass_line);
+    //printf("ass_process_chunk:%lld-%lld,%s\n", start_time, duration, ass_line);
     ass_process_chunk(ass->track, ass_line, (int)strlen(ass_line), start_time, duration);
 }
 
@@ -327,6 +332,7 @@ static void update_margin(FF_ASS_Renderer *s, int t, int b, int l, int r)
         return;
     }
     ass_set_margins(ass->renderer, t, b, l, r);
+    ass_set_use_margins(ass->renderer, 1);
 }
 
 static void uninit(FF_ASS_Renderer *s)
