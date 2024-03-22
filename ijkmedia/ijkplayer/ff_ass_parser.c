@@ -121,7 +121,7 @@ static char * remove_ass_line_effect(const char *ass)
 }
 
 //need free!
-void parse_ass_subtitle(const char *ass,FFSubtitleBuffer **sb)
+void parse_ass_subtitle(const char *ass, FFSubtitleBuffer **sb)
 {
     if (!sb) {
         return;
@@ -133,9 +133,9 @@ void parse_ass_subtitle(const char *ass,FFSubtitleBuffer **sb)
         remove_last_rn(buffer);
         remove_last_n(buffer);
         if (!*sb) {
-            *sb = ff_gen_subtitle_text(NULL);
+            *sb = ff_subtitle_buffer_alloc_text(NULL);
         }
-        ff_subtitlebuffer_append_text(*sb, buffer);
+        ff_subtitle_buffer_append_text(*sb, buffer);
         av_free(buffer);
     }
 }

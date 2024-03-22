@@ -56,6 +56,7 @@
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
 #import "../gles2/internal.h"
+#import "ijksdl_vout_ios_gles2.h"
 
 #define kHDRAnimationMaxCount 90
 
@@ -412,7 +413,7 @@ static bool _is_need_dispath_to_global(void)
     if (subTexture) {
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
-        if (attach.sub.isImg && attach.sub.usedAss) {
+        if (attach.sub->isImg && attach.sub->usedAss) {
             IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, self.backingWidth, self.backingHeight);
             if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
                 IJK_GLES2_Renderer_drawArrays();
@@ -421,11 +422,11 @@ static bool _is_need_dispath_to_global(void)
             }
         } else {
             float subScale = 1.0;
-            if (attach.sub.isImg) {
+            if (attach.sub->isImg) {
                 subScale = self.displayVideoScale * 1.5;
             }
             //实现，窗口放大，字幕放大效果
-            subScale *= (backingWidth / [attach.sub screenSize].width);
+            subScale *= (backingWidth / screenSize().width);
             IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, subScale * subTexture.w, subScale * subTexture.h);
             
             if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
@@ -476,7 +477,7 @@ static bool _is_need_dispath_to_global(void)
     
     //update subtitle if need
     if (self.subtitlePreferenceChanged) {
-        if (!currentAttach.sub.isImg) {
+        if (!currentAttach.sub->isImg) {
             [self generateSubTexture:currentAttach];
         }
         self.subtitlePreferenceChanged = NO;
@@ -524,11 +525,7 @@ static bool _is_need_dispath_to_global(void)
 
 - (void)generateSubTexture:(IJKOverlayAttach *)attach
 {
-    CVPixelBufferRef subRef = [attach.sub generatePixelBuffer:attach.autoZRotate preference:&_subtitlePreference maxSize:CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height)];
-    if (subRef) {
-        attach.subTexture = [[attach.sub class] uploadBGRATexture:subRef context:[self openGLContext]];
-        CVPixelBufferRelease(subRef);
-    }
+    [attach generateSubTexture:&_subtitlePreference maxSize:CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height) context:[self openGLContext]];
 }
 
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach

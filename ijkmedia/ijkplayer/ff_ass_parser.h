@@ -10,6 +10,6 @@
 
 #include "ff_subtitle_def.h"
 //need free the return value! see av_free();
-void parse_ass_subtitle(const char *ass,FFSubtitleBuffer **sb);
+void parse_ass_subtitle(const char *ass, FFSubtitleBuffer **sb);
 
 #endif /* ff_ass_parser_h */

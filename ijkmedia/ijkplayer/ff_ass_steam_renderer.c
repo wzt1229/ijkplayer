@@ -153,7 +153,6 @@ static void draw_ass_rgba(unsigned char *src, int src_w, int src_h,
             dsta = COLOR_BLEND(sa, 255, dsta);
             
             dstrow[x] = dstr | (dstg << 8) | (dstb << 16) | (dsta << 24);
-            
         }
         dst += dst_stride;
         src += src_stride;
@@ -166,7 +165,7 @@ static void blend_single(FFSubtitleBuffer * frame, ASS_Image *img, int layer)
     if (img->w == 0 || img->h == 0)
         return;
     //printf("blend %d rect:{%d,%d}{%d,%d}\n", layer, img->dst_x, img->dst_y, img->w, img->h);
-    unsigned char *dst = frame->buffer;
+    unsigned char *dst = frame->data;
     dst += img->dst_y * frame->stride + img->dst_x * 4;
     draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->stride, img->dst_x, img->dst_y, img->color);
 }
@@ -215,7 +214,7 @@ static FFSubtitleBuffer* render_frame(FF_ASS_Renderer *s, double time_ms, int ch
     }
     
     if (imgs) {
-        FFSubtitleBuffer* buff = ff_gen_subtitle_image(ass->original_w, ass->original_h, 4);
+        FFSubtitleBuffer* buff = ff_subtitle_buffer_alloc_image(ass->original_w, ass->original_h, 4);
         buff->usedAss = 1;
         blend(buff, imgs);
         return buff;

@@ -12,14 +12,17 @@
 
 typedef struct FFSubtitleBuffer {
     int width, height, stride;
-    unsigned char *buffer;
-    int isImg;//
+    unsigned char *data;
+    int isImg;
     int usedAss;
+    int refCount;
 } FFSubtitleBuffer;
 
-FFSubtitleBuffer *ff_gen_subtitle_image(int width, int height, int bpc);
-FFSubtitleBuffer *ff_gen_subtitle_text(const char *text);
+FFSubtitleBuffer *ff_subtitle_buffer_alloc_image(int width, int height, int bpc);
+FFSubtitleBuffer *ff_subtitle_buffer_alloc_text(const char *text);
 
-void ff_subtitlebuffer_append_text(FFSubtitleBuffer* sb, const char *text);
+void ff_subtitle_buffer_append_text(FFSubtitleBuffer* sb, const char *text);
+FFSubtitleBuffer * ff_subtitle_buffer_retain(FFSubtitleBuffer *);
+void ff_subtitle_buffer_release(FFSubtitleBuffer **);
 
 #endif /* ff_subtitle_def_h */

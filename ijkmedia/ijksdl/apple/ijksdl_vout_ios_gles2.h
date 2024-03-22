@@ -28,3 +28,4 @@
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view);
+CGSize screenSize(void);

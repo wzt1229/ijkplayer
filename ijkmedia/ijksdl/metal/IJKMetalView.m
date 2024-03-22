@@ -361,7 +361,7 @@ typedef CGRect NSRect;
           hdrPercentage:hdrPer];
     
     if (attach.subTexture) {
-        if (attach.sub.isImg && attach.sub.usedAss) {
+        if (attach.sub->isImg && attach.sub->usedAss) {
             CGRect rect = CGRectMake(-1, -1, 2.0, 2.0);
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
@@ -369,7 +369,7 @@ typedef CGRect NSRect;
                             rect:rect];
         } else {
             float subScale = 1.0;
-            if (attach.sub.isImg) {
+            if (attach.sub->isImg) {
                 subScale = self.displayVideoScale * 1.5;
             }
             //实现，窗口放大，字幕放大效果
@@ -456,7 +456,7 @@ typedef CGRect NSRect;
         
         if (drawSub && attach.subTexture) {
             float subScale = 1.0;
-            if (attach.sub.isImg && !attach.sub.usedAss) {
+            if (attach.sub->isImg && !attach.sub->usedAss) {
                 subScale = self.displayVideoScale * 1.5;
             }
             
@@ -528,7 +528,7 @@ typedef CGRect NSRect;
         
         if (attach.subTexture) {
             float subScale = 1.0;
-            if (attach.sub.isImg && !attach.sub.usedAss) {
+            if (attach.sub->isImg && !attach.sub->usedAss) {
                 subScale = self.displayVideoScale * 1.5;
             }
             
@@ -624,11 +624,7 @@ typedef CGRect NSRect;
 
 - (void)generateSubTexture:(IJKOverlayAttach *)attach
 {
-    CVPixelBufferRef subRef = [attach.sub generatePixelBuffer:attach.autoZRotate preference:&_subtitlePreference maxSize:CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height)];
-    if (subRef) {
-        attach.subTexture = [[attach.sub class] uploadBGRATexture:subRef device:self.device];
-        CVPixelBufferRelease(subRef);
-    }
+    [attach generateSubTexture:&_subtitlePreference maxSize:CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height) context:self.device];
 }
 
 mp_format * mp_get_metal_format(uint32_t cvpixfmt);

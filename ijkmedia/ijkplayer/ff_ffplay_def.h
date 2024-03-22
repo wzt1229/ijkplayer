@@ -66,6 +66,7 @@
 #include "ff_ffpipenode.h"
 #include "ijkmeta.h"
 #include "ijkavformat/ijklas.h"
+#include "ff_subtitle_def.h"
 
 #define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (256 * 1024)
 #define SALTATION_RETURN_VALUE 1000
@@ -198,6 +199,7 @@ typedef struct Clock {
 typedef struct Frame {
     AVFrame *frame;
     AVSubtitle sub;
+    FFSubtitleBuffer *sb;
     int serial;
     double pts;           /* presentation timestamp for the frame */
     double duration;      /* estimated duration of the frame */

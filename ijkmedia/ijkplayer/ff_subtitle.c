@@ -149,7 +149,7 @@ static void ff_sub_clean_frame_queue(FFSubtitle *sub)
 /// PAL8 to BGRA32, bytes per line increased by multiplied 4
 static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
 {
-    FFSubtitleBuffer *frame = ff_gen_subtitle_image(rect->w, rect->h, 4);
+    FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_image(rect->w, rect->h, 4);
     if (!frame) {
         return NULL;
     }
@@ -173,7 +173,7 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
     } else {
         bzero(colors, 256);
     }
-    uint32_t *buff = (uint32_t *)frame->buffer;
+    uint32_t *buff = (uint32_t *)frame->data;
     for (int y = 0; y < rect->h; ++y) {
         for (int x = 0; x < rect->w; ++x) {
             /* 1 byte per pixel */
@@ -195,9 +195,9 @@ static int process_rects(Frame * sp, FF_ASS_Renderer * assRenderer, FFSubtitleBu
     if (sp->sub.num_rects > 0) {
         if (sp->sub.rects[0]->text) {
             if (!*buffer) {
-                *buffer = ff_gen_subtitle_text(NULL);
+                *buffer = ff_subtitle_buffer_alloc_text(NULL);
             }
-            ff_subtitlebuffer_append_text(*buffer, sp->sub.rects[0]->text);
+            ff_subtitle_buffer_append_text(*buffer, sp->sub.rects[0]->text);
         } else if (sp->sub.rects[0]->ass) {
             //ass -> image
             if (assRenderer) {

@@ -105,18 +105,37 @@
 #warning TODO iOS
 #endif
 
-@implementation IJKSDLSubtitle
-
-- (void)dealloc
+#if TARGET_OS_OSX
+CGSize screenSize(void)
 {
-    if (_buffer) {
-        av_freep((void *)&_buffer);
-    }
+    static CGSize _screenSize;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        for (NSScreen *sc in [NSScreen screens]) {
+            if (sc.frame.size.width > _screenSize.width && sc.frame.size.height > _screenSize.height) {
+                _screenSize = sc.frame.size;
+            }
+        }
+    });
+    return _screenSize;
 }
 
-- (CVPixelBufferRef)_generateFromPixels
+static id uploadBGRATexture(CVPixelBufferRef pixelBuff, NSOpenGLContext *openGLContext)
 {
-    if (NULL == self.buffer || !self.isImg || self.w < 1 || self.h < 1) {
+    CGLLockContext([openGLContext CGLContextObj]);
+    [openGLContext makeCurrentContext];
+    
+    id subTexture = [_IJKSDLSubTexture generate:pixelBuff];
+    CGLUnlockContext([openGLContext CGLContextObj]);
+    return subTexture;
+}
+#else
+#warning TODO iOS
+#endif
+
+static CVPixelBufferRef _generateFromPixels(FFSubtitleBuffer *buffer)
+{
+    if (NULL == buffer || !buffer->isImg || buffer->width < 1 || buffer->height < 1) {
         return NULL;
     }
     
@@ -126,10 +145,9 @@
         (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
     };
     
-    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, self.w, self.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
+    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, buffer->width, buffer->height, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
     
     if (ret != kCVReturnSuccess || pixelBuffer == NULL) {
-        ALOGE("CVPixelBufferCreate subtitle failed:%d",ret);
         return NULL;
     }
     
@@ -141,10 +159,10 @@
     uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
     int dst_linesizes[4] = {linesize,0,0,0};
 
-    const uint8_t *src_data[4] = {self.buffer,NULL,NULL,NULL};
-    const int src_linesizes[4] = {self.w * 4,0,0,0};
+    const uint8_t *src_data[4] = {buffer->data,NULL,NULL,NULL};
+    const int src_linesizes[4] = {buffer->width * 4,0,0,0};
 
-    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, self.w, self.h);
+    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, buffer->width, buffer->height);
     
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
     
@@ -155,13 +173,13 @@
     }
 }
 
-- (CVPixelBufferRef)_generateFormText:(int)rotate sp:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize)maxSize
+static CVPixelBufferRef _generateFormText(FFSubtitleBuffer *buffer, int rotate, IJKSDLSubtitlePreference *sp, CGSize maxSize)
 {
-    if (NULL == self.buffer || self.isImg || strlen((const char *)self.buffer) == 0 || sp == NULL) {
+    if (NULL == buffer || buffer->isImg || strlen((const char *)buffer->data) == 0 || sp == NULL) {
         return NULL;
     }
 
-    NSString *text = [[NSString alloc] initWithUTF8String:(const char *)self.buffer];
+    NSString *text = [[NSString alloc] initWithUTF8String:(const char *)buffer];
     if (!text) {
         return NULL;
     }
@@ -169,9 +187,9 @@
     //以1920为标准，对字体缩放
     float scale = 1.0;
     if (rotate / 90 % 2 == 1) {
-        scale = [self screenSize].height / 1920.0;
+        scale = screenSize().height / 1920.0;
     } else {
-        scale = [self screenSize].width / 1920.0;
+        scale = screenSize().width / 1920.0;
     }
     
     //字幕默认配置
@@ -194,19 +212,22 @@
     return [textureString createPixelBuffer];
 }
 
-- (CVPixelBufferRef)generatePixelBuffer:(int)rotate preference:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize)maxSize
+static CVPixelBufferRef generatePixelBuffer(FFSubtitleBuffer *buffer, int rotate, IJKSDLSubtitlePreference *sp, CGSize maxSize)
 {
+    if (!buffer) {
+        return NULL;
+    }
+    
     CVPixelBufferRef subRef = NULL;
-    if (self.isImg) {
-        subRef = [self _generateFromPixels];
+    if (buffer->isImg) {
+        subRef = _generateFromPixels(buffer);
     } else {
-        subRef = [self _generateFormText:rotate sp:sp maxSize:maxSize];
+        subRef = _generateFormText(buffer, rotate, sp, maxSize);
     }
     return subRef;
 }
 
-+ (id<MTLTexture>)uploadBGRATexture:(CVPixelBufferRef)pixelBuff
-                             device:(id<MTLDevice>)device
+static id<MTLTexture> uploadBGRAMetalTexture(CVPixelBufferRef pixelBuff, id<MTLDevice>device)
 {
     if (!pixelBuff) {
         return nil;
@@ -214,7 +235,6 @@
     
     OSType type = CVPixelBufferGetPixelFormatType(pixelBuff);
     if (type != kCVPixelFormatType_32BGRA) {
-        ALOGE("generate subtitle texture must use 32BGRA pixelBuff");
         return nil;
     }
     
@@ -251,35 +271,6 @@
     return subTexture;
 }
 
-#if TARGET_OS_OSX
-- (CGSize)screenSize
-{
-    static CGSize _screenSize;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        for (NSScreen *sc in [NSScreen screens]) {
-            if (sc.frame.size.width > _screenSize.width && sc.frame.size.height > _screenSize.height) {
-                _screenSize = sc.frame.size;
-            }
-        }
-    });
-    return _screenSize;
-}
-
-+ (id)uploadBGRATexture:(CVPixelBufferRef)pixelBuff context:(NSOpenGLContext *)openGLContext
-{
-    CGLLockContext([openGLContext CGLContextObj]);
-    [openGLContext makeCurrentContext];
-    id subTexture = [_IJKSDLSubTexture generate:pixelBuff];
-    CGLUnlockContext([openGLContext CGLContextObj]);
-    return subTexture;
-}
-#else
-#warning TODO iOS
-#endif
-
-@end
-
 @implementation IJKOverlayAttach
 
 - (void)dealloc
@@ -289,6 +280,27 @@
         self.videoPicture = NULL;
     }
     self.subTexture = nil;
+    if (self.sub) {
+        ff_subtitle_buffer_release(&self->_sub);
+    }
+}
+
+- (BOOL)generateSubTexture:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize) maxSize context:(id)context
+{
+    if (!self.sub) {
+        return NO;
+    }
+    
+    CVPixelBufferRef subRef = generatePixelBuffer(self.sub, self.autoZRotate, sp, maxSize);
+    if (subRef) {
+        if ([context isKindOfClass:[NSOpenGLContext class]]) {
+            self.subTexture = uploadBGRATexture(subRef, context);
+        } else {
+            self.subTexture = uploadBGRAMetalTexture(subRef, context);
+        }
+        CVPixelBufferRelease(subRef);
+    }
+    return self.subTexture != nil;
 }
 
 @end
@@ -297,7 +309,7 @@ struct SDL_Vout_Opaque {
     void *cvPixelBufferPool;
     int cv_format;
     __strong UIView<IJKVideoRenderingProtocol> *gl_view;
-    IJKSDLSubtitle *sub;
+    FFSubtitleBuffer *sub;
 };
 
 static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout)
@@ -326,7 +338,9 @@ static void vout_free_l(SDL_Vout *vout)
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (opaque) {
         opaque->gl_view = nil;
-        opaque->sub = nil;
+        if (opaque->sub) {
+            ff_subtitle_buffer_release(&opaque->sub);
+        }
         if (opaque->cvPixelBufferPool) {
             CVPixelBufferPoolRelease(opaque->cvPixelBufferPool);
             opaque->cvPixelBufferPool = NULL;
@@ -388,7 +402,7 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         attach.autoZRotate = overlay->auto_z_rotate_degrees;
         //attach.bufferW = overlay->pitches[0];
         attach.videoPicture = CVPixelBufferRetain(videoPic);
-        attach.sub = opaque->sub;
+        attach.sub = ff_subtitle_buffer_retain(opaque->sub);
         
         return [gl_view displayAttach:attach];
     } else {
@@ -407,28 +421,17 @@ static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 }
 
-static void vout_update_subtitle(SDL_Vout *vout, const FFSubtitleBuffer *sb)
+static void vout_update_subtitle(SDL_Vout *vout, void *sb)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (!opaque) {
         return;
     }
     
-    opaque->sub = nil;
-    
-    if (!sb) {
-        return;
+    if (opaque->sub) {
+        ff_subtitle_buffer_release(&opaque->sub);
     }
-    
-    IJKSDLSubtitle *sub = [[IJKSDLSubtitle alloc]init];
-    sub.w = sb->width;
-    sub.h = sb->height;
-    sub.buffer = sb->buffer;
-    sub.isImg = sb->isImg;
-    sub.usedAss = sb->usedAss;
-    opaque->sub = sub;
-    
-    av_free((void *)sb);
+    opaque->sub = ff_subtitle_buffer_retain(sb);
 }
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(void)

@@ -34,6 +34,7 @@ typedef NSView UIView;
 #else
 #import <UIKit/UIKit.h>
 #endif
+#import "ff_subtitle_def.h"
 
 typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeAspectFit,  // Uniform scale until one dimension fits
@@ -60,25 +61,6 @@ struct _IJKSDLSubtitlePreference {
 
 @end
 
-@interface IJKSDLSubtitle : NSObject
-
-@property(nonatomic) int w;
-@property(nonatomic) int h;
-@property(nonatomic) uint8_t *buffer; //buffer with length w * h, in BGRA pixel format
-@property(nonatomic) BOOL isImg;
-@property(nonatomic) BOOL usedAss;
-
-- (CGSize)screenSize;
-- (CVPixelBufferRef)generatePixelBuffer:(int)rotate preference:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize)maxSize;
-//for metal,return <MTLTexture>
-+ (id)uploadBGRATexture:(CVPixelBufferRef)pixelBuff
-                             device:(id)device;
-//for opengl,return <IJKSDLSubtitleTextureProtocol>
-+ (id<IJKSDLSubtitleTextureProtocol>)uploadBGRATexture:(CVPixelBufferRef)pixelBuff
-                                               context:(id)glContext;
-
-@end
-
 @interface IJKOverlayAttach : NSObject
 
 //video frame normal size not alignmetn,maybe not equal to currentVideoPic's size.
@@ -96,9 +78,13 @@ struct _IJKSDLSubtitlePreference {
 //degrees
 @property(nonatomic) int autoZRotate;
 @property(nonatomic) CVPixelBufferRef videoPicture;
-@property(nonatomic) IJKSDLSubtitle *sub;
 @property(nonatomic) NSArray *videoTextures;
+
+@property(nonatomic) FFSubtitleBuffer *sub;
 @property(nonatomic) id subTexture;
+
+- (BOOL)generateSubTexture:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize) maxSize context:(id)context;
+
 @end
 
 static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,IJKSDLSubtitlePreference* p2)

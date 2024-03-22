@@ -406,7 +406,7 @@ static void free_picture(Frame *vp)
 // FFP_MERGE: upload_texture
 // FFP_MERGE: video_image_display
 
-static void update_subtitle_buffer(FFPlayer *ffp, const FFSubtitleBuffer *sb)
+static void update_subtitle_buffer(FFPlayer *ffp, FFSubtitleBuffer *sb)
 {
     //update subtitle,save into vout's opaque
     if (ffp->vout->update_subtitle) {
@@ -435,11 +435,12 @@ static void video_image_display2(FFPlayer *ffp)
             int r = ff_sub_fetch_frame(is->ffSub, vp->pts, &sb);
             if (r > 0) {
                 update_subtitle_buffer(ffp, sb);
-            } else if (r < 0){
+            } else if (r < 0) {
                 update_subtitle_buffer(ffp, NULL);
             } else {
                 //keep current
             }
+            ff_subtitle_buffer_release(&sb);
         }
         
         if (ffp->render_wait_start && !ffp->start_on_prepared && is->pause_req) {
@@ -3413,12 +3414,12 @@ static int read_thread(void *arg)
     if (is->video_st) {
         AVCodecParameters *codecpar = is->video_st->codecpar;
                         
-        int v_width = codecpar->width;
-        if (codecpar->sample_aspect_ratio.num > 0 && codecpar->sample_aspect_ratio.den > 0) {
-            float ratio = 1.0 * codecpar->sample_aspect_ratio.num / codecpar->sample_aspect_ratio.den;
-            v_width = (int)(v_width * ratio);
-        }
-        ff_sub_stream_ic_ready(is->ffSub, ic, v_width, codecpar->height);
+//        int v_width = codecpar->width;
+//        if (codecpar->sample_aspect_ratio.num > 0 && codecpar->sample_aspect_ratio.den > 0) {
+//            float ratio = 1.0 * codecpar->sample_aspect_ratio.num / codecpar->sample_aspect_ratio.den;
+//            v_width = (int)(v_width * ratio);
+//        }
+        ff_sub_stream_ic_ready(is->ffSub, ic, codecpar->width, codecpar->height);
     }
     
     if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
