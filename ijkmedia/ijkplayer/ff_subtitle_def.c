@@ -62,7 +62,7 @@ void ff_subtitle_buffer_append_text(FFSubtitleBuffer* sb, const char *text)
 FFSubtitleBuffer * ff_subtitle_buffer_retain(FFSubtitleBuffer *sb)
 {
     if (sb) {
-        sb->refCount++;
+        __atomic_add_fetch(&sb->refCount, 1, __ATOMIC_RELEASE);
     }
     return sb;
 }
@@ -72,8 +72,7 @@ void ff_subtitle_buffer_release(FFSubtitleBuffer **sbp)
     if (sbp) {
         FFSubtitleBuffer *sb = *sbp;
         if (sb) {
-            sb->refCount--;
-            if (sb->refCount <= 0) {
+            if (__atomic_add_fetch(&sb->refCount, -1, __ATOMIC_RELEASE) <= 0) {
                 free(sb->data);
                 free(sb);
                 *sbp = NULL;
