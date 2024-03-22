@@ -586,14 +586,6 @@ static bool _is_need_dispath_to_global(void)
     [self initGL];
 }
 
-- (void)windowWillClose:(NSNotification*)notification
-{
-    // Stop the display link when the window is closing because default
-    // OpenGL render buffers will be destroyed.  If display link continues to
-    // fire without renderbuffers, OpenGL draw calls will set errors.
-    // todo
-}
-
 #pragma mark - for snapshot
 
 - (void)_snapshotEffectOriginWithSubtitle:(NSDictionary *)params
