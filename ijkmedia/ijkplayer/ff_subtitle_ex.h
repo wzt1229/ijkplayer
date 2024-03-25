@@ -17,12 +17,13 @@ typedef struct FrameQueue FrameQueue;
 typedef struct PacketQueue PacketQueue;
 typedef struct AVCodecContext AVCodecContext;
 typedef struct AVStream AVStream;
+typedef struct FFSubtitleBuffer FFSubtitleBuffer;
 
-int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq);
+int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq, int vw, int vh);
 int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub);
 int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
-int exSub_open_file_idx(IJKEXSubtitle *sub, int idx);
+int exSub_open_file_idx(IJKEXSubtitle *sub, int idx, int vw, int vh);
 int exSub_close_current(IJKEXSubtitle *sub);
 void exSub_subtitle_destroy(IJKEXSubtitle **sub);
 
@@ -34,5 +35,7 @@ int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx);
 AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub);
 int exSub_get_serial(IJKEXSubtitle *sub);
 AVStream *exSub_get_stream(IJKEXSubtitle *sub);
+int exSub_fetch_frame(IJKEXSubtitle *sub, float pts, FFSubtitleBuffer **buffer);
+void exSub_update_margin(IJKEXSubtitle *sub, int t, int b, int l, int r);
 
 #endif /* ff_subtitle_ex_h */

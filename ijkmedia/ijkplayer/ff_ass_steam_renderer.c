@@ -22,8 +22,6 @@ typedef struct FF_ASS_Context {
     char *fontsdir;
     char *charenc;
     char *force_style;
-    int stream_index;
-    int alpha;
     int original_w, original_h;
     int shaping;
 } FF_ASS_Context;
@@ -33,10 +31,7 @@ typedef struct FF_ASS_Context {
     
 const AVOption ff_ass_options[] = {
     {"fontsdir",       "set the directory containing the fonts to read",           OFFSET(fontsdir),   AV_OPT_TYPE_STRING,     {.str = NULL},  0, 0, FLAGS },
-    {"alpha",          "enable processing of alpha channel",                       OFFSET(alpha),      AV_OPT_TYPE_BOOL,       {.i64 = 0   },         0,        1, FLAGS },
     {"charenc",      "set input character encoding", OFFSET(charenc),      AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, FLAGS},
-    {"stream_index", "set stream index",             OFFSET(stream_index), AV_OPT_TYPE_INT,    { .i64 = -1 }, -1,       INT_MAX,  FLAGS},
-    {"si",           "set stream index",             OFFSET(stream_index), AV_OPT_TYPE_INT,    { .i64 = -1 }, -1,       INT_MAX,  FLAGS},
     {"force_style",  "force subtitle style",         OFFSET(force_style),  AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, FLAGS},
     {NULL},
 };
@@ -200,27 +195,28 @@ static void blend(FFSubtitleBuffer * frame, ASS_Image *img)
     //peek_alpha(frame->buffer, frame->width, frame->height, frame->stride);
 }
 
-static FFSubtitleBuffer* render_frame(FF_ASS_Renderer *s, double time_ms, int changed_only)
+static int render_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer ** buffer)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass) {
-        return NULL;
+        return -1;
     }
     int changed;
     ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
-    
-    if (changed_only && changed == 0) {
-        return NULL;
+
+    if (changed == 0) {
+        return 0;
     }
     
     if (imgs) {
-        FFSubtitleBuffer* buff = ff_subtitle_buffer_alloc_image(ass->original_w, ass->original_h, 4);
-        buff->usedAss = 1;
-        blend(buff, imgs);
-        return buff;
+        FFSubtitleBuffer* sb = ff_subtitle_buffer_alloc_image(ass->original_w, ass->original_h, 4);
+        sb->usedAss = 1;
+        blend(sb, imgs);
+        *buffer = sb;
+        return 1;
     } else {
         av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
-        return NULL;
+        return -2;
     }
 }
 
@@ -250,19 +246,17 @@ static int attachment_is_font(AVStream * st)
     return 0;
 }
 
-static int set_stream(FF_ASS_Renderer *s, AVStream *st, uint8_t *subtitle_header, int subtitle_header_size)
+static void set_attach_font(FF_ASS_Renderer *s, AVStream *st)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass) {
-        return AVERROR(EINVAL);
+        return;
     }
     
     /* Load attached fonts */
     if (st->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT &&
         attachment_is_font(st)) {
-        const AVDictionaryEntry *tag = av_dict_get(st->metadata, "filename", NULL,
-                          AV_DICT_MATCH_CASE);
-
+        const AVDictionaryEntry *tag = av_dict_get(st->metadata, "filename", NULL, AV_DICT_MATCH_CASE);
         if (tag) {
             av_log(s, AV_LOG_DEBUG, "Loading attached font: %s\n",
                    tag->value);
@@ -274,7 +268,15 @@ static int set_stream(FF_ASS_Renderer *s, AVStream *st, uint8_t *subtitle_header
                    "Font attachment has no filename, ignored.\n");
         }
     }
+}
 
+static int set_subtitle_header(FF_ASS_Renderer *s, uint8_t *subtitle_header, int subtitle_header_size)
+{
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass) {
+        return AVERROR(EINVAL);
+    }
+    
     //"sans-serif"
     ass_set_fonts(ass->renderer, NULL, "Helvetica Neue", ASS_FONTPROVIDER_AUTODETECT, NULL, 1);
     /* Anything else than NONE will break smooth img updating.
@@ -362,15 +364,16 @@ static const AVClass subtitles_class = {
 };
 
 FF_ASS_Renderer_Format ff_ass_default_format = {
-    .priv_class     = &subtitles_class,
-    .priv_data_size = sizeof(FF_ASS_Context),
-    .init           = init_libass,
-    .set_stream     = set_stream,
-    .set_video_size = set_video_size,
-    .process_chunk  = process_chunk,
-    .render_frame   = render_frame,
-    .update_margin  = update_margin,
-    .uninit         = uninit,
+    .priv_class         = &subtitles_class,
+    .priv_data_size     = sizeof(FF_ASS_Context),
+    .init               = init_libass,
+    .set_subtitle_header= set_subtitle_header,
+    .set_attach_font    = set_attach_font,
+    .set_video_size     = set_video_size,
+    .process_chunk      = process_chunk,
+    .render_frame       = render_frame,
+    .update_margin      = update_margin,
+    .uninit             = uninit,
 };
 
 static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format, AVDictionary *opts)
@@ -392,24 +395,25 @@ static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format,
     }
     
     if (format->init(r)) {
-        ffAss_destroy(&r);
+        ff_ass_render_release(&r);
         return NULL;
     }
+    r->refCount = 1;
     return r;
 }
 
-FF_ASS_Renderer *ffAss_create_default(AVStream *st, uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h, AVDictionary *opts)
+FF_ASS_Renderer *ff_ass_render_create_default(uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h, AVDictionary *opts)
 {
     FF_ASS_Renderer_Format* format = &ff_ass_default_format;
     FF_ASS_Renderer* r = ffAss_create_with_format(format, opts);
     if (r) {
-        r->iformat->set_stream(r, st, subtitle_header, subtitle_header_size);
+        r->iformat->set_subtitle_header(r, subtitle_header, subtitle_header_size);
         r->iformat->set_video_size(r, video_w, video_h);
     }
     return r;
 }
 
-void ffAss_destroy(FF_ASS_Renderer **sp)
+static void _destroy(FF_ASS_Renderer **sp)
 {
     if (!sp) return;
     FF_ASS_Renderer *s = *sp;
@@ -423,3 +427,42 @@ void ffAss_destroy(FF_ASS_Renderer **sp)
     av_freep(&s->priv_data);
     av_freep(sp);
 }
+
+FF_ASS_Renderer * ff_ass_render_retain(FF_ASS_Renderer *ar)
+{
+    if (ar) {
+        __atomic_add_fetch(&ar->refCount, 1, __ATOMIC_RELEASE);
+    }
+    return ar;
+}
+
+void ff_ass_render_release(FF_ASS_Renderer **arp)
+{
+    if (arp) {
+        FF_ASS_Renderer *sb = *arp;
+        if (sb) {
+            if (__atomic_add_fetch(&sb->refCount, -1, __ATOMIC_RELEASE) <= 0) {
+                _destroy(arp);
+            }
+        }
+    }
+}
+
+
+/*
+ changed : >0
+ keep : =0
+ clean : <0
+ */
+int ff_ass_render_image(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer ** buffer)
+{
+    return assRenderer->iformat->render_frame(assRenderer, begin * 1000, buffer);
+}
+
+void ff_ass_process_chunk(FF_ASS_Renderer * assRenderer, const char *ass_line, float begin, float end)
+{
+    assRenderer->iformat->process_chunk(assRenderer, (char *)ass_line, begin, end);
+}
+
+
+

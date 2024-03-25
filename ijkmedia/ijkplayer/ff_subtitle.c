@@ -8,11 +8,9 @@
 #include "ff_subtitle.h"
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
-#include "ff_ass_parser.h"
 #include "ff_subtitle_ex.h"
 #include "ff_sub_component.h"
 #include "ff_ffplay_debug.h"
-#include "ff_ass_steam_renderer.h"
 
 typedef struct FFSubtitle {
     PacketQueue packetq;
@@ -24,35 +22,7 @@ typedef struct FFSubtitle {
     IJKEXSubtitle* exSub;
     int streamStartTime;//ic start_time (s)
     int video_w, video_h;
-    int use_ass_renderer;
-    FF_ASS_Renderer * assRenderer;
 }FFSubtitle;
-
-//---------------------------Private Functions--------------------------------------------------//
-
-static double get_frame_real_begin_pts(Frame *sp)
-{
-    return sp->pts + (float)sp->sub.start_display_time / 1000.0;
-}
-
-static double get_frame_begin_pts(FFSubtitle *sub, Frame *sp)
-{
-    return sp->pts + (float)sp->sub.start_display_time / 1000.0 + (sub ? sub->delay : 0.0);
-}
-
-static double get_frame_end_pts(FFSubtitle *sub, Frame *sp)
-{
-    if (sp->sub.end_display_time != 4294967295) {
-        return sp->pts + (float)(sp->sub.end_display_time - sp->sub.start_display_time) / 1000.0 + (sub ? sub->delay : 0.0);
-    } else {
-        return sp->pts + 5 + (sub ? sub->delay : 0.0);
-    }
-}
-
-static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
-{
-    return queue->abort_request || queue->nb_packets > min_frames;
-}
 
 //---------------------------Public Common Functions--------------------------------------------------//
 
@@ -111,9 +81,6 @@ int ff_sub_destroy(FFSubtitle **subp)
     packet_queue_destroy(&sub->packetq);
     frame_queue_destory(&sub->frameq);
     
-    if (sub->assRenderer) {
-        ffAss_destroy(&sub->assRenderer);
-    }
     sub->delay = 0.0f;
     sub->current_pts = 0.0f;
     sub->maxInternalStream = -1;
@@ -143,227 +110,29 @@ static void ff_sub_clean_frame_queue(FFSubtitle *sub)
     }
 }
 
-/// the graphic subtitles' bitmap with pixel format AV_PIX_FMT_PAL8,
-/// https://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5
-/// need to be converted to BGRA32 before use
-/// PAL8 to BGRA32, bytes per line increased by multiplied 4
-static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
-{
-    FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_image(rect->w, rect->h, 4);
-    if (!frame) {
-        return NULL;
-    }
-    frame->usedAss = 0;
-    //AV_PIX_FMT_RGB32 is handled in an endian-specific manner. An RGBA color is put together as: (A << 24) | (R << 16) | (G << 8) | B
-    //This is stored as BGRA on little-endian CPU architectures and ARGB on big-endian CPUs.
-    
-    uint32_t colors[256];
-    
-    uint8_t *bgra = rect->data[1];
-    if (bgra) {
-        for (int i = 0; i < 256; ++i) {
-            /* Colour conversion. */
-            int idx = i * 4; /* again, 4 bytes per pixel */
-            uint8_t a = bgra[idx],
-            r = bgra[idx + 1],
-            g = bgra[idx + 2],
-            b = bgra[idx + 3];
-            colors[i] = (b << 24) | (g << 16) | (r << 8) | a;
-        }
-    } else {
-        bzero(colors, 256);
-    }
-    uint32_t *buff = (uint32_t *)frame->data;
-    for (int y = 0; y < rect->h; ++y) {
-        for (int x = 0; x < rect->w; ++x) {
-            /* 1 byte per pixel */
-            int coordinate = x + y * rect->linesize[0];
-            /* 32bpp color table */
-            int pos = rect->data[0][coordinate];
-            if (pos < 256) {
-                buff[x + (y * rect->w)] = colors[pos];
-            } else {
-                printf("wtf? pal8 pos:%d\n",pos);
-            }
-        }
-    }
-    return frame;
-}
-
-static int process_rects(Frame * sp, FF_ASS_Renderer * assRenderer, FFSubtitleBuffer **buffer, float begin, float end)
-{
-    if (sp->sub.num_rects > 0) {
-        if (sp->sub.rects[0]->text) {
-            if (!*buffer) {
-                *buffer = ff_subtitle_buffer_alloc_text(NULL);
-            }
-            ff_subtitle_buffer_append_text(*buffer, sp->sub.rects[0]->text);
-        } else if (sp->sub.rects[0]->ass) {
-            //ass -> image
-            if (assRenderer) {
-                if (!sp->shown) {
-                    for (int i = 0; i < sp->sub.num_rects; i++) {
-                        char *ass_line = sp->sub.rects[i]->ass;
-                        if (!ass_line)
-                            break;
-                        assRenderer->iformat->process_chunk(assRenderer, ass_line, begin, end);
-                    }
-                }
-            } else {
-                parse_ass_subtitle(sp->sub.rects[0]->ass, buffer);
-            }
-        } else if (sp->sub.rects[0]->type == SUBTITLE_BITMAP
-                   && sp->sub.rects[0]->data[0]
-                   && sp->sub.rects[0]->linesize[0]) {
-            //todo here,maybe need blend pal8 image. I haven't met one yet
-            *buffer = convert_pal8_to_bgra(sp->sub.rects[0]);
-        } else {
-            av_log(NULL, AV_LOG_ERROR, "unknown subtitle");
-            return -1;
-        }
-    }
-    sp->shown = 1;
-    return 0;
-}
-
-static FFSubtitleBuffer * ass_render_image(FF_ASS_Renderer * assRenderer, float begin, int changed_only)
-{
-    return assRenderer->iformat->render_frame(assRenderer, begin * 1000, changed_only);
-}
-
 int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
 {
     if (!sub || !buffer) {
         return -1;
     }
     
-    int serial = -1;
+    sub->current_pts = pts;
+    pts += (sub ? sub->delay : 0.0);
     
     if (sub->inSub) {
         if (subComponent_get_stream(sub->inSub) != -1) {
-            serial = subComponent_get_serial(sub->inSub);
+            return subComponent_fetch_frame(sub->inSub, pts, buffer);
         }
     }
     
-    if (serial == -1 && sub->exSub) {
+    if (sub->exSub) {
         if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
-            serial = exSub_get_serial(sub->exSub);
             pts -= sub->streamStartTime;
+            return exSub_fetch_frame(sub->exSub, pts, buffer);
         }
     }
     
-    if (serial == -1) {
-        return -2;
-    }
-    
-    
-    int r = -3;
-    Frame *sp = NULL;
-    Frame *sp_next = NULL;
-    
-    FF_ASS_Renderer * assRenderer = sub->use_ass_renderer ? sub->assRenderer : NULL;
-    float ass_begin = -1;
-    float current_pts = -1;
-    
-    while (frame_queue_nb_remaining(&sub->frameq) > 0) {
-        if (!sp) {
-            sp = frame_queue_peek(&sub->frameq);
-        }
-        
-        //drop old serial subs
-        if (sp->serial != serial) {
-            
-            //av_log(NULL, AV_LOG_INFO,"fetch sub frame drop:%0.2f,serial:%d,want serial:%d\n",sp->pts,sp->serial,serial);
-            
-            frame_queue_next(&sub->frameq);
-            sp = sp_next = NULL;
-            ass_begin = -1;
-            current_pts = -1;
-            r= -3;
-            continue;
-        }
-        
-        const float end = get_frame_end_pts(sub, sp);
-        
-        //字幕显示时间已经结束了
-        if (pts > end) {
-            frame_queue_next(&sub->frameq);
-            sp = sp_next = NULL;
-            ass_begin = -1;
-            current_pts = -1;
-            r= -3;
-            continue;
-        } else {
-            const float real_begin_pts = get_frame_real_begin_pts(sp);
-            //字幕可以显示了
-            const float begin = real_begin_pts + (sub ? sub->delay : 0.0);
-            if (pts > begin) {
-                //使用ass时每次都要获取
-                if (!sp->shown || assRenderer) {
-                    //end ?? sp->sub.end_display_time
-                    if (ass_begin < 0) {
-                        ass_begin = pts;
-                        current_pts = real_begin_pts;
-                    }
-                    
-                    int err = process_rects(sp, assRenderer, buffer, begin * 1000, sp->sub.end_display_time - sp->sub.start_display_time);
-                    
-                    if (!assRenderer) {
-                        r = err ? -4 : 1;
-                    }
-                    //探测下一个字幕是否也需要显示
-                    if (sp_next) {
-                        //如果刚才探测的就是下一个字幕了，那么需要把当前字幕drop，继续往后探测
-                        frame_queue_next(&sub->frameq);
-                    }
-                    
-                    //maybe has overlap range subtitle need show
-                    if (frame_queue_nb_remaining(&sub->frameq) > 1) {
-                        sp = sp_next = frame_queue_peek_next(&sub->frameq);
-                        continue;
-                    }
-                } else {
-                    //keep current
-                    r = 0;
-                }
-            } else {
-                //字幕还没到开始时间
-                if (sp->shown) {
-                    sp->shown = 0;
-                }
-                //探测的是下个字幕
-                if (sp_next) {
-                    sp = frame_queue_peek(&sub->frameq);
-                    break;
-                } else {
-                    //clean current display sub
-                    r = -3;
-                }
-            }
-        }
-        break;
-    }
-    
-    if (assRenderer && ass_begin >= 0) {
-        //TODO, there just a demo value
-        ff_sub_update_margin_ass(sub, 30, 100, 0, 0);
-        FFSubtitleBuffer *sb = ass_render_image(assRenderer, ass_begin, 1);
-        if (sb) {
-            *buffer = sb;
-            sub->current_pts = current_pts;
-            sp->shown = 1;
-            r = 1;
-        } else if (sp->shown) {
-            //no change,keep current
-            r = 0;
-        } else {
-            r = -1;
-            sp->shown = 0;
-        }
-    } else {
-        sub->current_pts = current_pts;
-    }
-    return r;
+    return -3;
 }
 
 int ff_sub_frame_queue_size(FFSubtitle *sub)
@@ -377,7 +146,7 @@ int ff_sub_frame_queue_size(FFSubtitle *sub)
 int ff_sub_has_enough_packets(FFSubtitle *sub, int min_frames)
 {
     if (sub) {
-        return stream_has_enough_packets(&sub->packetq, min_frames);
+        return sub->packetq.abort_request || sub->packetq.nb_packets > min_frames;
     }
     return 1;
 }
@@ -516,29 +285,20 @@ void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, i
     sub->maxInternalStream = ic->nb_streams;
 }
 
+//update ass renderer margin
 void ff_sub_update_margin_ass(FFSubtitle *sub, int t, int b, int l, int r)
 {
-    if (sub->assRenderer) {
-        sub->assRenderer->iformat->update_margin(sub->assRenderer, t, b, l, r);
+    int idx = -1;
+    if (sub->inSub) {
+        idx = subComponent_get_stream(sub->inSub);
+        if (idx != -1) {
+            subComponent_update_margin(sub->inSub, t, b, l, r);
+        }
     }
-}
-
-void ff_sub_use_libass(FFSubtitle *sub, int use, AVStream* st, uint8_t *subtitle_header, int subtitle_header_size)
-{
-    if (use != 0) {
-        use = 1;
-    }
-    if (sub->use_ass_renderer != use) {
-        sub->use_ass_renderer = use;
-    }
-    
-    if (sub->assRenderer) {
-        ffAss_destroy(&sub->assRenderer);
-    }
-    
-    if (use) {
-        if (sub->video_w > 0 && sub->video_h > 0 && st->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE && st->codecpar->codec_id == AV_CODEC_ID_ASS) {
-            sub->assRenderer = ffAss_create_default(st, subtitle_header, subtitle_header_size, sub->video_w, sub->video_h, NULL);
+    if (idx == -1 && sub->exSub) {
+        idx = exSub_get_opened_stream_idx(sub->exSub);
+        if (idx != -1) {
+            exSub_update_margin(sub->exSub, t, b, l, r);
         }
     }
 }
@@ -550,8 +310,7 @@ int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVC
         ff_sub_clean_frame_queue(sub);
     }
     
-    ff_sub_use_libass(sub, 1, st, avctx->subtitle_header, avctx->subtitle_header_size);
-    return subComponent_open(&sub->inSub, stream_index, NULL, avctx, &sub->packetq, &sub->frameq, NULL, NULL);
+    return subComponent_open(&sub->inSub, stream_index, NULL, avctx, &sub->packetq, &sub->frameq, NULL, NULL, sub->video_w, sub->video_h);
 }
 
 enum AVCodecID ff_sub_get_codec_id(FFSubtitle *sub)
@@ -597,30 +356,23 @@ int ff_inSub_packet_queue_flush(FFSubtitle *sub)
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta)
 {
     if (!sub->exSub) {
-        if (exSub_create(&sub->exSub, &sub->frameq, &sub->packetq) != 0) {
+        if (exSub_create(&sub->exSub, &sub->frameq, &sub->packetq, sub->video_w, sub->video_h) != 0) {
             return -1;
         }
     }
-    
     return exSub_addOnly_subtitle(sub->exSub, file_name, meta);
 }
 
 int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta)
 {
     if (!sub->exSub) {
-        if (exSub_create(&sub->exSub, &sub->frameq, &sub->packetq) != 0) {
+        if (exSub_create(&sub->exSub, &sub->frameq, &sub->packetq, sub->video_w, sub->video_h) != 0) {
             return -1;
         }
     }
     packet_queue_flush(&sub->packetq);
     ff_sub_clean_frame_queue(sub);
-    int err = exSub_add_active_subtitle(sub->exSub, file_name, meta);
-    if (!err) {
-        AVCodecContext * avctx = exSub_get_avctx(sub->exSub);
-        AVStream *st = exSub_get_stream(sub->exSub);
-        ff_sub_use_libass(sub, 1, st, avctx->subtitle_header, avctx->subtitle_header_size);
-    }
-    return err;
+    return exSub_add_active_subtitle(sub->exSub, file_name, meta);
 }
 
 int ff_exSub_open_stream(FFSubtitle *sub, int stream)
@@ -630,14 +382,7 @@ int ff_exSub_open_stream(FFSubtitle *sub, int stream)
     }
     packet_queue_flush(&sub->packetq);
     ff_sub_clean_frame_queue(sub);
-    
-    int err = exSub_open_file_idx(sub->exSub, stream);
-    if (!err) {
-        AVCodecContext * avctx = exSub_get_avctx(sub->exSub);
-        AVStream *st = exSub_get_stream(sub->exSub);
-        ff_sub_use_libass(sub, 1, st, avctx->subtitle_header, avctx->subtitle_header_size);
-    }
-    return err;
+    return exSub_open_file_idx(sub->exSub, stream, sub->video_w, sub->video_h);
 }
 
 int ff_exSub_check_file_added(const char *file_name, FFSubtitle *sub)

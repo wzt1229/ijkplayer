@@ -3414,12 +3414,12 @@ static int read_thread(void *arg)
     if (is->video_st) {
         AVCodecParameters *codecpar = is->video_st->codecpar;
                         
-//        int v_width = codecpar->width;
-//        if (codecpar->sample_aspect_ratio.num > 0 && codecpar->sample_aspect_ratio.den > 0) {
-//            float ratio = 1.0 * codecpar->sample_aspect_ratio.num / codecpar->sample_aspect_ratio.den;
-//            v_width = (int)(v_width * ratio);
-//        }
-        ff_sub_stream_ic_ready(is->ffSub, ic, codecpar->width, codecpar->height);
+        int v_width = codecpar->width;
+        if (codecpar->sample_aspect_ratio.num > 0 && codecpar->sample_aspect_ratio.den > 0) {
+            float ratio = 1.0 * codecpar->sample_aspect_ratio.num / codecpar->sample_aspect_ratio.den;
+            v_width = (int)(v_width * ratio);
+        }
+        ff_sub_stream_ic_ready(is->ffSub, ic, v_width, codecpar->height);
     }
     
     if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {

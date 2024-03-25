@@ -25,7 +25,7 @@ int ff_sub_destroy(FFSubtitle **subp);
 //
 int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx);
 int ff_sub_close_current(FFSubtitle *sub);
-//less than zero means err, equal zero means keep, greater than zero means need show
+//less than zero means err, equal zero means keep, greater than zero means need show,buff need release
 int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer ** buffer);
 
 int ff_sub_frame_queue_size(FFSubtitle *sub);
@@ -53,6 +53,7 @@ int ff_sub_current_stream_type(FFSubtitle *sub, int *outIdx);
 void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, int video_h);
 //update ass renderer margin
 void ff_sub_update_margin_ass(FFSubtitle *sub, int t, int b, int l, int r);
+
 int ff_inSub_packet_queue_flush(FFSubtitle *sub);
 //for external subtitle.
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);

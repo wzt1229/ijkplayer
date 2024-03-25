@@ -17,12 +17,16 @@ typedef struct PacketQueue PacketQueue;
 typedef struct FrameQueue FrameQueue;
 typedef struct AVFormatContext AVFormatContext;
 typedef void (*subComponent_retry_callback)(void *opaque);
+typedef struct FFSubtitleBuffer FFSubtitleBuffer;
 
 //when hasn't ic, not support seek;
-int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq, subComponent_retry_callback callback, void *opaque);
+int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq, subComponent_retry_callback callback, void *opaque, int vw, int vh);
 int subComponent_close(FFSubComponent **subp);
 int subComponent_get_stream(FFSubComponent *sub);
 int subComponent_seek_to(FFSubComponent *sub, int sec);
 AVCodecContext * subComponent_get_avctx(FFSubComponent *sub);
 int subComponent_get_serial(FFSubComponent *sub);
+//buff need release
+int subComponent_fetch_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **buffer);
+void subComponent_update_margin(FFSubComponent *com, int t, int b, int l, int r);
 #endif /* ff_sub_component_h */

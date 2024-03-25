@@ -33,9 +33,10 @@ typedef struct IJKEXSubtitle {
     //当前使用的哪个备选字符
     int backup_charenc_idx;
     SDL_Thread tmp_retry_thread;
+    int video_w, video_h;
 }IJKEXSubtitle;
 
-int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq)
+int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq, int vw, int vh)
 {
     if (!subp) {
         return -1;
@@ -55,6 +56,8 @@ int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq)
     sub->frameq = frameq;
     sub->pktq = pktq;
     sub->st_offset_idx = -1;
+    sub->video_w = vw;
+    sub->video_h = vh;
     *subp = sub;
     return 0;
 }
@@ -152,7 +155,7 @@ static int do_retry_next_charenc(void *opaque)
         goto fail;
     }
 
-    if (subComponent_open(&sub->component, stream_idx, sub->ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub) != 0) {
+    if (subComponent_open(&sub->component, stream_idx, sub->ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub, sub->video_w, sub->video_h) != 0) {
         goto fail;
     }
     subComponent_seek_to(sub->component, 0);
@@ -234,7 +237,7 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
         goto fail;
     }
     
-    if (subComponent_open(&sub->component, stream_id, ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub) != 0) {
+    if (subComponent_open(&sub->component, stream_id, ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub, sub->video_w, sub->video_h) != 0) {
         ret = -8;
         goto fail;
     }
@@ -254,7 +257,7 @@ fail:
     return ret;
 }
 
-int exSub_open_file_idx(IJKEXSubtitle *sub, int idx)
+int exSub_open_file_idx(IJKEXSubtitle *sub, int idx, int vw, int vh)
 {
     if (!sub) {
         return -1;
@@ -276,6 +279,8 @@ int exSub_open_file_idx(IJKEXSubtitle *sub, int idx)
         return -4;
     }
     
+    sub->video_w = vw;
+    sub->video_h = vh;
     if (exSub_open_filepath(sub, file_name, idx) != 0) {
         return -5;
     }
@@ -292,6 +297,7 @@ int exSub_close_current(IJKEXSubtitle *sub)
     int r = subComponent_close(&sub->component);
     if (sub->ic)
         avformat_close_input(&sub->ic);
+    av_log(NULL, AV_LOG_INFO, "exsub stream closed:%d\n", sub->st_offset_idx);
     SDL_UnlockMutex(sub->mutex);
     return r;
 }
@@ -480,3 +486,12 @@ AVStream *exSub_get_stream(IJKEXSubtitle *sub)
     return NULL;
 }
 
+int exSub_fetch_frame(IJKEXSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
+{
+    return subComponent_fetch_frame(sub->component, pts, buffer);
+}
+
+void exSub_update_margin(IJKEXSubtitle *sub, int t, int b, int l, int r)
+{
+    subComponent_update_margin(sub->component, t, b, l, r);
+}
