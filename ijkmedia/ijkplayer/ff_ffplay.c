@@ -3082,18 +3082,15 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     case AVMEDIA_TYPE_SUBTITLE:
         if (!ffp->subtitle)
             break;
-        //maybe already has ex subtile
-        if (0 == ff_sub_current_stream_type(is->ffSub, NULL)) {
-            if (is->video_st) {
-                ret = ff_inSub_open_component(is->ffSub, stream_index, st, avctx);
-                if (ret == 0) {
-                    ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
-                    _ijkmeta_set_stream(ffp, avctx->codec_type, stream_index);
-                    goto out;
-                } else {
-                    //if failed, freed context internal.
-                    goto out;
-                }
+        if (is->video_st) {
+            ret = ff_inSub_open_component(is->ffSub, stream_index, st, avctx);
+            if (ret == 0) {
+                ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
+                _ijkmeta_set_stream(ffp, avctx->codec_type, stream_index);
+                goto out;
+            } else {
+                //if failed, freed context internal.
+                goto out;
             }
         }
         break;
@@ -3423,7 +3420,10 @@ static int read_thread(void *arg)
     }
     
     if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
-        stream_component_open(ffp, st_index[AVMEDIA_TYPE_SUBTITLE]);
+        //maybe already has ex subtile
+        if (0 == ff_sub_current_stream_type(is->ffSub, NULL)) {
+            stream_component_open(ffp, st_index[AVMEDIA_TYPE_SUBTITLE]);
+        }
     } else {
         //open external subtitle if need
         int current = ff_sub_get_opened_stream_idx(is->ffSub);
