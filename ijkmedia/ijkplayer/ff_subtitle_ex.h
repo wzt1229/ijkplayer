@@ -20,6 +20,7 @@ typedef struct AVStream AVStream;
 typedef struct FFSubtitleBuffer FFSubtitleBuffer;
 
 int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq, int vw, int vh);
+void exSub_reset_video_size(IJKEXSubtitle *sub, int vw, int vh);
 int exSub_check_file_added(const char *file_name, IJKEXSubtitle *sub);
 int exSub_addOnly_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int exSub_add_active_subtitle(IJKEXSubtitle *sub, const char *file_name, IjkMediaMeta *meta);

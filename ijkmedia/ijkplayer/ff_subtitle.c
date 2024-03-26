@@ -283,6 +283,7 @@ void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, i
     sub->video_h = video_h;
     sub->streamStartTime = (int)fftime_to_seconds(ic->start_time);
     sub->maxInternalStream = ic->nb_streams;
+    exSub_reset_video_size(sub->exSub, video_w, video_h);
 }
 
 //update ass renderer margin
@@ -356,6 +357,7 @@ int ff_inSub_packet_queue_flush(FFSubtitle *sub)
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta)
 {
     if (!sub->exSub) {
+        //maybe video_w and vieo_h is zero now.
         if (exSub_create(&sub->exSub, &sub->frameq, &sub->packetq, sub->video_w, sub->video_h) != 0) {
             return -1;
         }
@@ -366,6 +368,7 @@ int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMe
 int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta)
 {
     if (!sub->exSub) {
+        //maybe video_w and vieo_h is zero now.
         if (exSub_create(&sub->exSub, &sub->frameq, &sub->packetq, sub->video_w, sub->video_h) != 0) {
             return -1;
         }

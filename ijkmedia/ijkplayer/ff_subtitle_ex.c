@@ -62,6 +62,14 @@ int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq, 
     return 0;
 }
 
+void exSub_reset_video_size(IJKEXSubtitle *sub, int vw, int vh)
+{
+    if (sub) {
+        sub->video_w = vw;
+        sub->video_h = vh;
+    }
+}
+
 int exSub_get_opened_stream_idx(IJKEXSubtitle *sub)
 {
     if (sub && sub->component) {
