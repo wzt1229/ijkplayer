@@ -1105,19 +1105,10 @@ static void alloc_picture(FFPlayer *ffp, int src_format)
 #ifdef FFP_MERGE
     video_open(is, vp);
 #endif
-
-#ifdef __APPLE__
-    vp->bmp = SDL_Vout_CreateOverlay_Apple(vp->width,
-                                           vp->height,
-                                           src_format,
-                                           ffp->cvpixelbufferpool,
-                                           ffp->vout);
-#else
     vp->bmp = SDL_Vout_CreateOverlay(vp->width,
                                      vp->height,
                                      src_format,
                                    ffp->vout);
-#endif
 #ifdef FFP_MERGE
     if (vp->format == AV_PIX_FMT_YUV420P)
         sdl_format = SDL_PIXELFORMAT_YV12;
@@ -2051,8 +2042,6 @@ static int ffplay_video_thread(void *arg)
         return AVERROR(ENOMEM);
     }
 
-    SDL_VoutSetOverlayFormat(ffp->vout, ffp->overlay_format);
-    
     for (;;) {
         ret = get_video_frame(ffp, frame);
         if (ret < 0)
@@ -4338,7 +4327,6 @@ void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque)
     return prev_weak_thiz;
 }
 
-            
 void ffp_set_option(FFPlayer *ffp, int opt_category, const char *name, const char *value)
 {
     if (!ffp)
@@ -4364,26 +4352,6 @@ void ffp_set_option_intptr(FFPlayer *ffp, int opt_category, const char *name, ui
 
     AVDictionary **dict = ffp_get_opt_dict(ffp, opt_category);
     av_dict_set_intptr(dict, name, value, 0);
-}
-            
-void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
-{
-#warning TODO REVIEW
-    switch (chroma_fourcc) {
-        case SDL_FCC__GLES2:
-        case SDL_FCC_I420:
-        case SDL_FCC_J420:
-        case SDL_FCC_YV12:
-        case SDL_FCC_BGRA:
-        case SDL_FCC_BGR0:
-        case SDL_FCC_ARGB:
-        case SDL_FCC_0RGB:
-            ffp->overlay_format = chroma_fourcc;
-            break;
-        default:
-            av_log(ffp, AV_LOG_ERROR, "ffp_set_overlay_format: unknown chroma fourcc: %d\n", chroma_fourcc);
-            break;
-    }
 }
 
 int ffp_get_video_codec_info(FFPlayer *ffp, char **codec_info)
@@ -4517,7 +4485,9 @@ int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
         if (!ffp->aout)
             return -1;
     }
-
+    
+    ffp->vout->cvpixelbufferpool = ffp->cvpixelbufferpool;
+    ffp->vout->overlay_format    = ffp->overlay_format;
 #if CONFIG_AVFILTER
     resetVideoFilter(ffp, ffp->vfilter0);
 #endif

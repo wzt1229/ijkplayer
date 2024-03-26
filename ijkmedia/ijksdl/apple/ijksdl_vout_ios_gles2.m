@@ -312,20 +312,20 @@ struct SDL_Vout_Opaque {
     FFSubtitleBuffer *sub;
 };
 
-static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout)
+static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_format, SDL_Vout *vout)
 {
     switch (src_format) {
         case AV_PIX_FMT_VIDEOTOOLBOX:
             return SDL_VoutFFmpeg_HW_CreateOverlay(width, height, vout);
         default:
-            return SDL_VoutFFmpeg_CreateOverlay(width, height, src_format, cvpixelbufferpool, vout);
+            return SDL_VoutFFmpeg_CreateOverlay(width, height, src_format, vout);
     }
 }
 
-static SDL_VoutOverlay *vout_create_overlay_apple(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout)
+static SDL_VoutOverlay *vout_create_overlay(int width, int height, int src_format, SDL_Vout *vout)
 {
     SDL_LockMutex(vout->mutex);
-    SDL_VoutOverlay *overlay = vout_create_overlay_l(width, height, src_format, cvpixelbufferpool, vout);
+    SDL_VoutOverlay *overlay = vout_create_overlay_l(width, height, src_format, vout);
     SDL_UnlockMutex(vout->mutex);
     return overlay;
 }
@@ -442,8 +442,7 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2(void)
 
     SDL_Vout_Opaque *opaque = vout->opaque;
     opaque->cv_format = -1;
-    
-    vout->create_overlay_apple = vout_create_overlay_apple;
+    vout->create_overlay = vout_create_overlay;
     vout->free_l = vout_free_l;
     vout->display_overlay = vout_display_overlay;
     vout->update_subtitle = vout_update_subtitle;
