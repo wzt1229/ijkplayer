@@ -713,7 +713,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     
     if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub) {
         [self generateSubTexture:attach];
-    } else if (self.currentAttach.sub) {
+    } else if (self.currentAttach.subTexture) {
         //reuse the expensive texture.
         attach.subTexture = self.currentAttach.subTexture;
     }

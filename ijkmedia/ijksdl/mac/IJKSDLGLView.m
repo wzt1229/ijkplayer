@@ -539,7 +539,7 @@ static bool _is_need_dispath_to_global(void)
     //generate current subtitle.
     if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub) {
         [self generateSubTexture:attach];
-    } else if (self.currentAttach.sub) {
+    } else if (self.currentAttach.subTexture) {
         //reuse the expensive texture.
         attach.subTexture = self.currentAttach.subTexture;
     }
