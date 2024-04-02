@@ -337,10 +337,6 @@ void ff_sub_update_margin_ass(FFSubtitle *sub, int t, int b, int l, int r)
 
 int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx)
 {
-    if (sub->inSub || sub->exSub) {
-        packet_queue_flush(&sub->packetq);
-    }
-    
     return subComponent_open(&sub->inSub, stream_index, NULL, avctx, &sub->packetq, &sub->frameq, NULL, NULL, sub->video_w, sub->video_h);
 }
 
@@ -401,7 +397,6 @@ int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMedi
             return -1;
         }
     }
-    packet_queue_flush(&sub->packetq);
     return exSub_add_active_subtitle(sub->exSub, file_name, meta);
 }
 
@@ -410,7 +405,6 @@ int ff_exSub_open_stream(FFSubtitle *sub, int stream)
     if (!sub->exSub) {
         return -1;
     }
-    packet_queue_flush(&sub->packetq);
     return exSub_open_file_idx(sub->exSub, stream, sub->video_w, sub->video_h);
 }
 
