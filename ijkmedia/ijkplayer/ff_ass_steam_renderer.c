@@ -12,6 +12,9 @@
 #include "libavutil/imgutils.h"
 #include "libavutil/opt.h"
 #include "libavutil/parseutils.h"
+#include "ff_subtitle_def.h"
+#include "ijksdl/ijksdl_texture.h"
+#include "ff_subtitle_def_internal.h"
 
 typedef struct FF_ASS_Context {
     const AVClass *priv_class;
@@ -101,8 +104,8 @@ static void set_video_size(FF_ASS_Renderer *s, int w, int h)
         return;
     }
     //放大两倍，使得 retina 屏显示清楚
-    w *= 2;
-    h *= 2;
+//    w *= 2;
+//    h *= 2;
 
     ass->original_w = w;
     ass->original_h = h;
@@ -122,7 +125,7 @@ static void set_video_size(FF_ASS_Renderer *s, int w, int h)
 
 static void draw_ass_rgba(unsigned char *src, int src_w, int src_h,
                           int src_stride, unsigned char *dst, size_t dst_stride,
-                          int dst_x, int dst_y, uint32_t color)
+                          uint32_t color)
 {
     const unsigned int sr = (color >> 24) & 0xff;
     const unsigned int sg = (color >> 16) & 0xff;
@@ -162,7 +165,7 @@ static void blend_single(FFSubtitleBuffer * frame, ASS_Image *img, int layer)
     //printf("blend %d rect:{%d,%d}{%d,%d}\n", layer, img->dst_x, img->dst_y, img->w, img->h);
     unsigned char *dst = frame->data;
     dst += img->dst_y * frame->stride + img->dst_x * 4;
-    draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->stride, img->dst_x, img->dst_y, img->color);
+    draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->stride, img->color);
 }
 
 static void peek_alpha(unsigned char *src, int src_w, int src_h, int src_stride)
@@ -195,7 +198,7 @@ static void blend(FFSubtitleBuffer * frame, ASS_Image *img)
     //peek_alpha(frame->buffer, frame->width, frame->height, frame->stride);
 }
 
-static int render_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer ** buffer)
+static int blend_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer ** buffer)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass) {
@@ -209,13 +212,65 @@ static int render_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer ** 
     }
     
     if (imgs) {
-        FFSubtitleBuffer* sb = ff_subtitle_buffer_alloc_image(ass->original_w, ass->original_h, 4);
+        SDL_Rectangle rect = (SDL_Rectangle){0, 0, ass->original_w, ass->original_h};
+        FFSubtitleBuffer* sb = ff_subtitle_buffer_alloc_image(rect, 4);
         sb->usedAss = 1;
         blend(sb, imgs);
         *buffer = sb;
         return 1;
     } else {
         av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
+        return -2;
+    }
+}
+
+static void draw_single_inset(FFSubtitleBuffer * frame, ASS_Image *img, int layer, int insetx, int insety)
+{
+    if (img->w == 0 || img->h == 0)
+        return;
+    unsigned char *dst = frame->data;
+    dst += (img->dst_y - insety) * frame->stride + (img->dst_x - insetx) * 4;
+    draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->stride, img->color);
+}
+
+static int upload_frame(struct FF_ASS_Renderer *s, double time_ms, SDL_TextureOverlay * overlay)
+{
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass) {
+        return -1;
+    }
+    int changed;
+    ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
+
+    if (changed == 0) {
+        return 0;
+    }
+    
+    if (imgs) {
+        overlay->clearDirtyRect(overlay);
+        {
+            ASS_Image *header = imgs;
+            SDL_Rectangle dirtyRect = {0};
+            while (header) {
+                SDL_Rectangle t = {header->dst_x, header->dst_y, header->w, header->h};
+                dirtyRect = SDL_union_rectangle(dirtyRect, t);
+                header = header->next;
+            }
+            overlay->dirtyRect = dirtyRect;
+        }
+        
+        FFSubtitleBuffer* frame = ff_subtitle_buffer_alloc_image(overlay->dirtyRect, 4);
+        int cnt = 0;
+        while (imgs) {
+            ++cnt;
+            draw_single_inset(frame, imgs, cnt, overlay->dirtyRect.x, overlay->dirtyRect.y);
+            imgs = imgs->next;
+        }
+        overlay->replaceRegion(overlay->opaque, overlay->dirtyRect, frame->data);
+        ff_subtitle_buffer_release(&frame);
+        return 1;
+    } else {
+        av_log(NULL, AV_LOG_DEBUG, "ass_render_frame NULL at time ms:%f\n", time_ms);
         return -2;
     }
 }
@@ -371,7 +426,8 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .set_attach_font    = set_attach_font,
     .set_video_size     = set_video_size,
     .process_chunk      = process_chunk,
-    .render_frame       = render_frame,
+    .blend_frame        = blend_frame,
+    .upload_frame       = upload_frame,
     .update_margin      = update_margin,
     .uninit             = uninit,
 };
@@ -441,7 +497,7 @@ void ff_ass_render_release(FF_ASS_Renderer **arp)
     if (arp) {
         FF_ASS_Renderer *sb = *arp;
         if (sb) {
-            if (__atomic_add_fetch(&sb->refCount, -1, __ATOMIC_RELEASE) <= 0) {
+            if (__atomic_add_fetch(&sb->refCount, -1, __ATOMIC_RELEASE) == 0) {
                 _destroy(arp);
             }
         }
@@ -454,9 +510,14 @@ void ff_ass_render_release(FF_ASS_Renderer **arp)
  keep : =0
  clean : <0
  */
-int ff_ass_render_image(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer ** buffer)
+int ff_ass_blend_frame(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer ** buffer)
 {
-    return assRenderer->iformat->render_frame(assRenderer, begin * 1000, buffer);
+    return assRenderer->iformat->blend_frame(assRenderer, begin * 1000, buffer);
+}
+
+int ff_ass_upload_frame(FF_ASS_Renderer * assRenderer, float begin, SDL_TextureOverlay * overlay)
+{
+    return assRenderer->iformat->upload_frame(assRenderer, begin * 1000, overlay);
 }
 
 void ff_ass_process_chunk(FF_ASS_Renderer * assRenderer, const char *ass_line, float begin, float end)

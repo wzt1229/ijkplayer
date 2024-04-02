@@ -18,6 +18,8 @@ typedef struct PacketQueue PacketQueue;
 typedef struct AVCodecContext AVCodecContext;
 typedef struct AVStream AVStream;
 typedef struct FFSubtitleBuffer FFSubtitleBuffer;
+typedef struct SDL_TextureOverlay SDL_TextureOverlay;
+typedef struct SDL_GPU SDL_GPU;
 
 int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq, int vw, int vh);
 void exSub_reset_video_size(IJKEXSubtitle *sub, int vw, int vh);
@@ -36,7 +38,8 @@ int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx);
 AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub);
 int exSub_get_serial(IJKEXSubtitle *sub);
 AVStream *exSub_get_stream(IJKEXSubtitle *sub);
-int exSub_fetch_frame(IJKEXSubtitle *sub, float pts, FFSubtitleBuffer **buffer);
+int exSub_blend_frame(IJKEXSubtitle *sub, float pts, FFSubtitleBuffer **buffer);
+int exSub_upload_frame(IJKEXSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay);
 void exSub_update_margin(IJKEXSubtitle *sub, int t, int b, int l, int r);
 
 #endif /* ff_subtitle_ex_h */

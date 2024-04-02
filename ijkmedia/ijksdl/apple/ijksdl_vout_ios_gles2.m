@@ -61,6 +61,17 @@
     return _texture;
 }
 
+- (instancetype)initWith:(uint32_t)texture w:(int)w h:(int)h
+{
+    self = [super init];
+    if (self) {
+        self.w = w;
+        self.h = h;
+        self.texture = texture;
+    }
+    return self;
+}
+
 - (instancetype)initWithCVPixelBuffer:(CVPixelBufferRef)pixelBuff
 {
     self = [super init];
@@ -135,7 +146,7 @@ static id uploadBGRATexture(CVPixelBufferRef pixelBuff, NSOpenGLContext *openGLC
 
 static CVPixelBufferRef _generateFromPixels(FFSubtitleBuffer *buffer)
 {
-    if (NULL == buffer || !buffer->isImg || buffer->width < 1 || buffer->height < 1) {
+    if (NULL == buffer || !buffer->isImg || buffer->rect.w < 1 || buffer->rect.h < 1) {
         return NULL;
     }
     
@@ -145,7 +156,7 @@ static CVPixelBufferRef _generateFromPixels(FFSubtitleBuffer *buffer)
         (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
     };
     
-    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, buffer->width, buffer->height, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
+    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, buffer->rect.w, buffer->rect.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
     
     if (ret != kCVReturnSuccess || pixelBuffer == NULL) {
         return NULL;
@@ -160,9 +171,9 @@ static CVPixelBufferRef _generateFromPixels(FFSubtitleBuffer *buffer)
     int dst_linesizes[4] = {linesize,0,0,0};
 
     const uint8_t *src_data[4] = {buffer->data,NULL,NULL,NULL};
-    const int src_linesizes[4] = {buffer->width * 4,0,0,0};
+    const int src_linesizes[4] = {buffer->rect.w * 4,0,0,0};
 
-    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, buffer->width, buffer->height);
+    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, buffer->rect.w, buffer->rect.h);
     
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
     
@@ -262,9 +273,9 @@ static id<MTLTexture> uploadBGRAMetalTexture(CVPixelBufferRef pixelBuff, id<MTLD
     NSUInteger bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuff);
     
     [subTexture replaceRegion:region
-                   mipmapLevel:0
-                     withBytes:src
-                   bytesPerRow:bytesPerRow];
+                  mipmapLevel:0
+                    withBytes:src
+                  bytesPerRow:bytesPerRow];
     
     CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
     
@@ -287,6 +298,11 @@ static id<MTLTexture> uploadBGRAMetalTexture(CVPixelBufferRef pixelBuff, id<MTLD
 
 - (BOOL)generateSubTexture:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize) maxSize context:(id)context
 {
+    if (self.overlay) {
+        self.subTexture = (__bridge _IJKSDLSubTexture *)self.overlay->getTexture(self.overlay->opaque);
+        return YES;
+    }
+    
     if (!self.sub) {
         return NO;
     }
@@ -310,6 +326,7 @@ struct SDL_Vout_Opaque {
     int cv_format;
     __strong UIView<IJKVideoRenderingProtocol> *gl_view;
     FFSubtitleBuffer *sub;
+    SDL_TextureOverlay *overlay;
 };
 
 static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_format, SDL_Vout *vout)
@@ -344,6 +361,9 @@ static void vout_free_l(SDL_Vout *vout)
         if (opaque->cvPixelBufferPool) {
             CVPixelBufferPoolRelease(opaque->cvPixelBufferPool);
             opaque->cvPixelBufferPool = NULL;
+        }
+        if (opaque->overlay) {
+            SDL_TextureOverlayFreeP(&opaque->overlay);
         }
     }
 
@@ -403,7 +423,7 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         //attach.bufferW = overlay->pitches[0];
         attach.videoPicture = CVPixelBufferRetain(videoPic);
         attach.sub = ff_subtitle_buffer_retain(opaque->sub);
-        
+        attach.overlay = opaque->overlay;
         return [gl_view displayAttach:attach];
     } else {
         ALOGE("vout_display_overlay_l: no video picture.\n");
@@ -421,13 +441,14 @@ static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 }
 
-static void vout_update_subtitle(SDL_Vout *vout, void *sb)
+static void vout_update_subtitle(SDL_Vout *vout, void *sb, void *overlay)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (!opaque) {
         return;
     }
     
+    opaque->overlay = overlay;
     if (opaque->sub) {
         ff_subtitle_buffer_release(&opaque->sub);
     }
@@ -463,3 +484,240 @@ void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* vi
     SDL_VoutIos_SetGLView_l(vout, view);
     SDL_UnlockMutex(vout->mutex);
 }
+
+typedef struct SDL_GPU_Opaque {
+    id<MTLDevice>device;
+    NSOpenGLContext *glContext;
+} SDL_GPU_Opaque;
+
+typedef struct SDL_TextureOverlay_Opaque {
+    id<MTLTexture>texture_metal;
+    _IJKSDLSubTexture* texture_gl;
+    NSOpenGLContext *glContext;
+} SDL_TextureOverlay_Opaque;
+
+static void* getTexture(SDL_TextureOverlay_Opaque *opaque)
+{
+    if (opaque) {
+        if (opaque->texture_gl) {
+            return (__bridge void *)opaque->texture_gl;
+        } else if (opaque->texture_metal) {
+            return (__bridge void *)opaque->texture_metal;
+        }
+    }
+    return NULL;
+}
+
+static void replaceMetalRegion(SDL_TextureOverlay_Opaque *opaque, SDL_Rectangle rect, void *pixels)
+{
+    if (opaque && opaque->texture_metal) {
+        
+        if (rect.x + rect.w > opaque->texture_metal.width) {
+            rect.x = 0;
+            rect.w = (int)opaque->texture_metal.width;
+        }
+        
+        if (rect.y + rect.h > opaque->texture_metal.height) {
+            rect.y = 0;
+            rect.h = (int)opaque->texture_metal.height;
+        }
+        
+        int bpr = rect.w * 4;
+        MTLRegion region = {
+            {rect.x, rect.y, 0}, // MTLOrigin
+            {rect.w, rect.h, 1} // MTLSize
+        };
+        
+        [opaque->texture_metal replaceRegion:region
+                                 mipmapLevel:0
+                                   withBytes:pixels
+                                 bytesPerRow:bpr];
+    }
+}
+
+static void clearMetalRegion(SDL_TextureOverlay *overlay)
+{
+    if (!overlay) {
+        return;
+    }
+    SDL_TextureOverlay_Opaque *opaque = overlay->opaque;
+    if (isZeroRectangle(overlay->dirtyRect)) {
+        return;
+    }
+    void *pixels = av_mallocz(overlay->dirtyRect.w * overlay->dirtyRect.h * 4);
+    replaceMetalRegion(opaque, overlay->dirtyRect, pixels);
+    av_free(pixels);
+}
+
+static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h)
+{
+    SDL_TextureOverlay *overlay = (SDL_TextureOverlay*) calloc(1, sizeof(SDL_TextureOverlay));
+    if (!overlay)
+        return NULL;
+    
+    SDL_TextureOverlay_Opaque *opaque = (SDL_TextureOverlay_Opaque*) calloc(1, sizeof(SDL_TextureOverlay_Opaque));
+    if (!opaque) {
+        free(overlay);
+        return NULL;
+    }
+    
+    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+
+    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
+    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
+    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    // Set the pixel dimensions of the texture
+    
+    textureDescriptor.width  = w;
+    textureDescriptor.height = h;
+    
+    // Create the texture from the device by using the descriptor
+    id<MTLTexture> subTexture = [device newTextureWithDescriptor:textureDescriptor];
+    
+    opaque->texture_metal = subTexture;
+    overlay->opaque = opaque;
+    overlay->w = w;
+    overlay->h = h;
+    overlay->replaceRegion = replaceMetalRegion;
+    overlay->getTexture = getTexture;
+    overlay->clearDirtyRect = clearMetalRegion;
+    return overlay;
+}
+
+static void replaceOpenGlRegion(SDL_TextureOverlay_Opaque *opaque, SDL_Rectangle r, void *pixels)
+{
+    if (opaque && opaque->texture_gl) {
+        _IJKSDLSubTexture *t = opaque->texture_gl;
+        CGLLockContext([opaque->glContext CGLContextObj]);
+        [opaque->glContext makeCurrentContext];
+        glBindTexture(GL_TEXTURE_RECTANGLE, t.texture);
+        IJK_GLES2_checkError("bind texture subtitle");
+        
+        if (r.x + r.w > t.w) {
+            r.x = 0;
+            r.w = t.w;
+        }
+        
+        if (r.y + r.h > t.h) {
+            r.y = 0;
+            r.h = t.h;
+        }
+        
+        glTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, r.x, r.y, (GLsizei)r.w, (GLsizei)r.h, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid *)pixels);
+        IJK_GLES2_checkError("replaceOpenGlRegion");
+        glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+        CGLUnlockContext([opaque->glContext CGLContextObj]);
+    }
+}
+
+static void clearOpenGLRegion(SDL_TextureOverlay *overlay)
+{
+    if (!overlay) {
+        return;
+    }
+    SDL_TextureOverlay_Opaque *opaque = overlay->opaque;
+    if (opaque && opaque->texture_gl) {
+        if (isZeroRectangle(overlay->dirtyRect)) {
+            return;
+        }
+        int h = overlay->dirtyRect.h;
+        int bpr = overlay->dirtyRect.w * 4;
+        void *pixels = av_mallocz(h * bpr);
+        //memset(pixels, 100, h*bpr);
+        replaceOpenGlRegion(opaque, overlay->dirtyRect, pixels);
+        av_free(pixels);
+    }
+}
+
+static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, int h)
+{
+    SDL_TextureOverlay *overlay = (SDL_TextureOverlay*) calloc(1, sizeof(SDL_TextureOverlay));
+    if (!overlay)
+        return NULL;
+    
+    SDL_TextureOverlay_Opaque *opaque = (SDL_TextureOverlay_Opaque*) calloc(1, sizeof(SDL_TextureOverlay_Opaque));
+    if (!opaque) {
+        free(overlay);
+        return NULL;
+    }
+
+    CGLLockContext([context CGLContextObj]);
+    [context makeCurrentContext];
+    uint32_t texture;
+    // Create a texture object that you apply to the model.
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_RECTANGLE, texture);
+    glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+    
+    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   
+    glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+    CGLUnlockContext([context CGLContextObj]);
+    opaque->glContext = context;
+    opaque->texture_gl = [[_IJKSDLSubTexture alloc] initWith:texture w:w h:h];;
+    overlay->opaque = opaque;
+    overlay->w = w;
+    overlay->h = h;
+    overlay->replaceRegion = replaceOpenGlRegion;
+    overlay->getTexture = getTexture;
+    overlay->clearDirtyRect = clearOpenGLRegion;
+    return overlay;
+}
+
+void SDL_TextureOverlayFreeP(SDL_TextureOverlay **poverlay)
+{
+    if (poverlay) {
+        (*poverlay)->opaque->texture_gl = NULL;
+        (*poverlay)->opaque->glContext = NULL;
+        (*poverlay)->opaque->texture_metal = NULL;
+        free((*poverlay)->opaque);
+        free(*poverlay);
+        *poverlay = NULL;
+    }
+}
+
+static SDL_TextureOverlay *createTexture(SDL_GPU_Opaque *opaque, int w, int h)
+{
+    if (opaque->device) {
+        return createMetalTexture(opaque->device, w, h);
+    } else {
+        return createOpenGLTexture(opaque->glContext, w, h);
+    }
+}
+
+SDL_GPU *SDL_CreateGPU_WithContext(id context)
+{
+    SDL_GPU *gl = (SDL_GPU*) calloc(1, sizeof(SDL_GPU));
+    if (!gl)
+        return NULL;
+    int opaque_size = sizeof(SDL_GPU_Opaque);
+    gl->opaque = calloc(1, opaque_size);
+    if (!gl->opaque) {
+        free(gl);
+        return NULL;
+    }
+    bzero((void *)gl->opaque, opaque_size);
+    SDL_GPU_Opaque *opaque = gl->opaque;
+    if ([context isKindOfClass:[NSOpenGLContext class]]) {
+        opaque->glContext = context;
+    } else {
+        opaque->device = context;
+    }
+    gl->createTexture = createTexture;
+    return gl;
+}
+
+void SDL_GPUFreeP(SDL_GPU **pgpu)
+{
+    if (pgpu) {
+        (*pgpu)->opaque->glContext = NULL;
+        (*pgpu)->opaque->device = NULL;
+        free((*pgpu)->opaque);
+        free(*pgpu);
+        *pgpu = NULL;
+    }
+}
+

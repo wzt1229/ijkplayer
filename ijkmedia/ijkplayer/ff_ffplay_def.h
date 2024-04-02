@@ -198,7 +198,7 @@ typedef struct Clock {
 /* Common struct for handling all types of decoded data and allocated render buffers. */
 typedef struct Frame {
     AVFrame *frame;
-    AVSubtitle sub;
+    //AVSubtitle sub;
     FFSubtitleBuffer *sb;
     int serial;
     double pts;           /* presentation timestamp for the frame */
@@ -626,6 +626,7 @@ typedef struct FFPlayer {
     /* extra fields */
     SDL_Aout *aout;
     SDL_Vout *vout;
+    struct SDL_GPU  *gpu;
     struct IJKFF_Pipeline *pipeline;
     struct IJKFF_Pipenode *node_vdec;
 
@@ -637,6 +638,7 @@ typedef struct FFPlayer {
     char *subtitle_codec_info;
     Uint32 overlay_format;
 
+    int reuse_sub_texture;
     int prepared;
     int auto_resume;
     int error;
@@ -787,6 +789,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
 #else
     ffp->overlay_format         = SDL_FCC_RV32;
 #endif
+    ffp->reuse_sub_texture      = 1;
     ffp->prepared               = 0;
     ffp->auto_resume            = 0;
     ffp->error                  = 0;

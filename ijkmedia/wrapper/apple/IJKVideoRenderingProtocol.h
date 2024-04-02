@@ -61,6 +61,7 @@ struct _IJKSDLSubtitlePreference {
 
 @end
 
+typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 @interface IJKOverlayAttach : NSObject
 
 //video frame normal size not alignmetn,maybe not equal to currentVideoPic's size.
@@ -81,6 +82,7 @@ struct _IJKSDLSubtitlePreference {
 @property(nonatomic) NSArray *videoTextures;
 
 @property(nonatomic) FFSubtitleBuffer *sub;
+@property(nonatomic) SDL_TextureOverlay *overlay;
 @property(nonatomic) id subTexture;
 
 - (BOOL)generateSubTexture:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize) maxSize context:(id)context;
@@ -121,7 +123,7 @@ static inline uint32_t color2int(UIColor *color) {
     g *= 255;
     b *= 255;
     a *= 255;
-    return (int)a + ((int)b << 8) + ((int)g << 16) + ((int)r << 24);
+    return (uint32_t)a + ((uint32_t)b << 8) + ((uint32_t)g << 16) + ((uint32_t)r << 24);
 }
 
 static inline UIColor * int2color(uint32_t abgr) {
@@ -213,6 +215,7 @@ typedef enum : NSUInteger {
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b;
 //when palyer paused,close subtile stream will call this method.
 - (void)cleanSubtitle;
+- (id)context;
 
 @end
 

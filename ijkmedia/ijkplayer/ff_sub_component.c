@@ -10,6 +10,12 @@
 #include "ff_packet_list.h"
 #include "ff_ass_steam_renderer.h"
 #include "ff_ass_parser.h"
+#include "ijksdl/ijksdl_texture.h"
+#include "ff_subtitle_def_internal.h"
+
+#define SUB_REF_MAX_LEN 16
+#define SUB_MAX_KEEP_DU 3.0
+#define SUB_MIN_KEEP_DU 0.5
 
 typedef struct FFSubComponent{
     int st_idx;
@@ -23,7 +29,9 @@ typedef struct FFSubComponent{
     subComponent_retry_callback retry_callback;
     void *retry_opaque;
     FF_ASS_Renderer *assRenderer;
-    int video_w, video_h;
+    int width, height;
+    SDL_TextureOverlay *overlay;
+    FFSubtitleBuffer* pre_list [SUB_REF_MAX_LEN];
 }FFSubComponent;
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -177,7 +185,8 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
     memcpy(pal, rect->data[1], rect->nb_colors * 4);
     convert_pal(pal, rect->nb_colors, 0);
     
-    FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_image(rect->w, rect->h, 4);
+    SDL_Rectangle r = (SDL_Rectangle){rect->x, rect->y, rect->w, rect->h};
+    FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_image(r, 4);
     if (!frame) {
         return NULL;
     }
@@ -200,8 +209,8 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
     enum AVMediaType codec_type = com->decoder.avctx->codec_type;
     enum AVCodecID   codec_id = com->decoder.avctx->codec_id;
     
-    if (com->video_w > 0 && com->video_h > 0 && codec_type == AVMEDIA_TYPE_SUBTITLE && (codec_id == AV_CODEC_ID_ASS || codec_id == AV_CODEC_ID_SUBRIP)) {
-        FF_ASS_Renderer *assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->video_w, com->video_h, NULL);
+    if (com->width > 0 && com->height > 0 && codec_type == AVMEDIA_TYPE_SUBTITLE && (codec_id == AV_CODEC_ID_ASS || codec_id == AV_CODEC_ID_SUBRIP)) {
+        FF_ASS_Renderer *assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->width, com->height, NULL);
         if (assRenderer && com->ic) {
             for (int i = 0; i < com->ic->nb_streams; i++) {
                 AVStream *st = com->ic->streams[com->st_idx];
@@ -213,22 +222,50 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
     return NULL == com->assRenderer;
 }
 
+static void free_pre_list(FFSubtitleBuffer *sbp [])
+{
+    if (sbp) {
+        int count = 0;
+        while (count < SUB_REF_MAX_LEN) {
+            FFSubtitleBuffer *h = sbp[count];
+            if (!h) {
+                break;
+            }
+            ff_subtitle_buffer_release(&h);
+            count++;
+        }
+    }
+}
+
+static int diff_list(FFSubtitleBuffer *sbp1 [], FFSubtitleBuffer *sbp2 [])
+{
+    for (int i = 0; i < SUB_REF_MAX_LEN; i++) {
+        FFSubtitleBuffer *h1 = sbp1[i];
+        FFSubtitleBuffer *h2 = sbp2[i];
+        if (h1 != h2) {
+            return 1;
+        } else if (h1 == NULL) {
+            return 0;
+        } else {
+            continue;
+        }
+    }
+    return 0;
+}
+
 static int subtitle_thread(void *arg)
 {
-    FFSubComponent *sub = arg;
-    Frame *sp;
+    FFSubComponent *com = arg;
     int got_subtitle;
-    double pts;
     
-    for (;sub->packetq->abort_request == 0;) {
-        if (!(sp = frame_queue_peek_writable(sub->frameq)))
-            return 0;
-        
-        got_subtitle = decode_a_frame(sub, &sub->decoder, &sp->sub);
+    double pre_pts = 0;
+    for (;com->packetq->abort_request == 0;) {
+        AVSubtitle sub;
+        got_subtitle = decode_a_frame(com, &com->decoder, &sub);
         
         if (got_subtitle == -1000) {
-            if (sub->retry_callback) {
-                sub->retry_callback(sub->retry_opaque);
+            if (com->retry_callback) {
+                com->retry_callback(com->retry_opaque);
                 return -1;
             }
             break;
@@ -237,75 +274,89 @@ static int subtitle_thread(void *arg)
         if (got_subtitle < 0)
             break;
         
-        pts = 0;
         if (got_subtitle) {
-            if (sp->sub.pts != AV_NOPTS_VALUE)
-                pts = sp->sub.pts / (double)AV_TIME_BASE;
-            sp->pts = pts;
+            double pts = 0;
+            if (sub.pts != AV_NOPTS_VALUE)
+                pts = sub.pts / (double)AV_TIME_BASE;
+            
             //av_log(NULL, AV_LOG_ERROR,"sub received frame:%f\n",pts);
-            int serial = sub->decoder.pkt_serial;
-            if (sub->packetq->serial == serial) {
-                sp->serial = serial;
-                sp->width  = sub->decoder.avctx->width;
-                sp->height = sub->decoder.avctx->height;
-                sp->shown = 0;
-                
-                /* now we can update the picture count */
-                if (sub->decoder.avctx->codec_id == AV_CODEC_ID_HDMV_PGS_SUBTITLE || sub->decoder.avctx->codec_id == AV_CODEC_ID_FIRST_SUBTITLE) {
-                    if (sp->sub.num_rects > 0 && sp->sub.rects[0]->type == SUBTITLE_BITMAP
-                               && sp->sub.rects[0]->data[0]
-                               && sp->sub.rects[0]->linesize[0]) {
-                        //todo here,maybe need blend pal8 image. I haven't met one yet
-                        sp->sb = convert_pal8_to_bgra(sp->sub.rects[0]);
-                        frame_queue_push(sub->frameq);
-                    }
-                } else {
-                    for (int i = 0; i < sp->sub.num_rects; i++) {
-                        char *ass_line = sp->sub.rects[i]->ass;
-                        if (!ass_line)
+            int serial = com->decoder.pkt_serial;
+            if (com->packetq->serial == serial) {
+                if (com->decoder.avctx->codec_id == AV_CODEC_ID_HDMV_PGS_SUBTITLE || com->decoder.avctx->codec_id == AV_CODEC_ID_FIRST_SUBTITLE) {
+                    if (sub.num_rects > 0 && sub.rects[0]->type == SUBTITLE_BITMAP
+                               && sub.rects[0]->data[0]
+                               && sub.rects[0]->linesize[0]) {
+                        FFSubtitleBuffer* sb = convert_pal8_to_bgra(sub.rects[0]);
+                        if (sb) {
+                            Frame *sp = frame_queue_peek_writable(com->frameq);
+                            if (com->packetq->abort_request || !sp) {
+                                pre_pts = 0;
+                                avsubtitle_free(&sub);
+                                break;
+                            }
+                            sp->pts = pts + (float)sub.start_display_time / 1000.0;
+                            if (sub.end_display_time != 4294967295) {
+                                sp->duration = (float)(sub.end_display_time - sub.start_display_time) / 1000.0;
+                            } else if (pre_pts){
+                                Frame *pre = frame_queue_peek_pre_writable(com->frameq);
+                                if (pre) {
+                                    float t = sp->pts - pre_pts - 0.1;
+                                    t = t < SUB_MAX_KEEP_DU ? t : SUB_MAX_KEEP_DU;
+                                    t = t < SUB_MIN_KEEP_DU ? 1.5 : t;
+                                    pre->duration = t;
+                                }
+                            } else {
+                                sp->duration = SUB_MAX_KEEP_DU;
+                            }
+                            sp->serial = serial;
+                            sp->width  = com->decoder.avctx->width;
+                            sp->height = com->decoder.avctx->height;
+                            sp->shown = 0;
+                            sp->sb = sb;
+                            frame_queue_push(com->frameq);
+                            pre_pts = sp->pts;
+                            avsubtitle_free(&sub);
+                        } else {
+                            avsubtitle_free(&sub);
                             break;
-                        if (!create_ass_renderer_if_need(sub)) {
-                            const float begin = sp->pts + (float)sp->sub.start_display_time / 1000.0;
-                            float end = sp->sub.end_display_time - sp->sub.start_display_time;
-                            ff_ass_process_chunk(sub->assRenderer, ass_line, begin * 1000, end);
                         }
                     }
+                } else {
+                    for (int i = 0; i < sub.num_rects; i++) {
+                        char *ass_line = sub.rects[i]->ass;
+                        if (!ass_line)
+                            break;
+                        if (!create_ass_renderer_if_need(com)) {
+                            const float begin = pts + (float)sub.start_display_time / 1000.0;
+                            float end = sub.end_display_time - sub.start_display_time;
+                            ff_ass_process_chunk(com->assRenderer, ass_line, begin * 1000, end);
+                        }
+                    }
+                    avsubtitle_free(&sub);
                 }
             } else {
+                pre_pts = 0;
                 av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
             }
         }
     }
     
-    ff_ass_render_release(&sub->assRenderer);
-    sub->retry_callback = NULL;
-    sub->retry_opaque = NULL;
-    av_packet_free(&sub->pkt);
+    ff_ass_render_release(&com->assRenderer);
+    com->retry_callback = NULL;
+    com->retry_opaque = NULL;
+    av_packet_free(&com->pkt);
+    free_pre_list(com->pre_list);
     return 0;
 }
 
-static double get_frame_begin_pts(Frame *sp)
-{
-    return sp->pts + (float)sp->sub.start_display_time / 1000.0;
-}
-
-static double get_frame_end_pts(Frame *sp)
-{
-    if (sp->sub.end_display_time != 4294967295) {
-        return sp->pts + (float)(sp->sub.end_display_time - sp->sub.start_display_time) / 1000.0;
-    } else {
-        return sp->pts + 5;
-    }
-}
-
-int subComponent_fetch_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **buffer)
+int subComponent_blend_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **buffer)
 {
     if (!buffer || com->packetq->abort_request) {
         return -1;
     }
     if (com->assRenderer) {
         FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-        int r = ff_ass_render_image(assRenderer, pts, buffer);
+        int r = ff_ass_blend_frame(assRenderer, pts, buffer);
         ff_ass_render_release(&assRenderer);
         return r;
     } else {
@@ -316,24 +367,21 @@ int subComponent_fetch_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **
         
         int r = -1;
         int rem = 0;
-        int dropped = 0;
         while ((rem = frame_queue_nb_remaining(com->frameq)) > 0) {
             if (rem > 1) {
                 Frame *sp2 = frame_queue_peek_next(com->frameq);
-                if (pts > get_frame_begin_pts(sp2)) {
-                    dropped++;
+                if (pts > sp2->pts) {
                     frame_queue_next(com->frameq);
                     continue;
                 }
             }
             Frame * sp = frame_queue_peek(com->frameq);
             if (sp->serial != serial) {
-                dropped++;
                 frame_queue_next(com->frameq);
                 continue;
             }
-            float begin = get_frame_begin_pts(sp);
-            float end = get_frame_end_pts(sp);
+            float begin = sp->pts;
+            float end = begin + sp->duration;
             
             if (pts > begin && pts < end) {
                 if (!sp->shown) {
@@ -341,7 +389,6 @@ int subComponent_fetch_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **
                     r = 1;
                     sp->shown = 1;
                 } else {
-                    *buffer = ff_subtitle_buffer_retain(sp->sb);
                     r = 0;
                 }
             } else {
@@ -354,6 +401,111 @@ int subComponent_fetch_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **
             break;
         }
         return r;
+    }
+}
+
+static void replace_bitmap(SDL_TextureOverlay *overlay, FFSubtitleBuffer *frame)
+{
+    if (overlay && frame) {
+        overlay->replaceRegion(overlay->opaque, frame->rect, frame->data);
+    }
+}
+
+static void clean_dirty_texture(SDL_TextureOverlay *overlay)
+{
+    if (overlay) {
+        overlay->clearDirtyRect(overlay);
+    }
+}
+
+static void set_dirtyRect(SDL_TextureOverlay *overlay, SDL_Rectangle rect)
+{
+    if (overlay) {
+        overlay->dirtyRect = rect;
+    }
+}
+
+int subComponent_upload_frame(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay)
+{
+    if (!overlay || com->packetq->abort_request) {
+        return -1;
+    }
+    
+    if (com->overlay && (com->overlay->w != com->width || com->overlay->h != com->height)) {
+        SDL_TextureOverlayFreeP(&com->overlay);
+    }
+    if (!com->overlay) {
+        com->overlay = gpu->createTexture(gpu->opaque, com->width, com->height);
+    }
+    *overlay = com->overlay;
+    
+    if (com->assRenderer) {
+        FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
+        int r = ff_ass_upload_frame(assRenderer, pts, *overlay);
+        ff_ass_render_release(&assRenderer);
+        return r;
+    } else {
+        int serial = subComponent_get_serial(com);
+        if (serial == -1) {
+            return -2;
+        }
+        
+        int total = 0;
+        while ((total = frame_queue_nb_remaining(com->frameq)) > 0) {
+            Frame *sp = frame_queue_peek(com->frameq);
+            //drop old serial subs
+            if (sp->serial != serial) {
+                frame_queue_next(com->frameq);
+                continue;
+            }
+            
+            float end = sp->pts + sp->duration;
+            //字幕显示时间已经结束了
+            if (pts > end) {
+                frame_queue_next(com->frameq);
+                continue;
+            }
+            break;
+        }
+        
+        FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
+        int idx = 0;
+        for (int i = 0; i < total && idx < SUB_REF_MAX_LEN; i ++) {
+            Frame *sp = frame_queue_peek_offset(com->frameq, i);
+            if (sp && sp->sb && pts > sp->pts) {
+                buffers[idx++] = ff_subtitle_buffer_retain(sp->sb);
+                continue;
+            } else {
+                break;
+            }
+        }
+        int count = idx;
+        if (diff_list(com->pre_list, buffers)) {
+            free_pre_list(com->pre_list);
+            if (count > 0) {
+                memcpy(com->pre_list, buffers, sizeof(buffers));
+            } else {
+                bzero(com->pre_list, sizeof(com->pre_list));
+            }
+            
+            clean_dirty_texture(*overlay);
+            if (count > 0) {
+                SDL_Rectangle dirty_rect = {0};
+                for (int i = 0; i < count; i++) {
+                    FFSubtitleBuffer *sb = buffers[i];
+                    replace_bitmap(*overlay, sb);
+                    dirty_rect = SDL_union_rectangle(dirty_rect, sb->rect);
+                }
+                if (!isZeroRectangle(dirty_rect)) {
+                    set_dirtyRect(*overlay, dirty_rect);
+                }
+                return 1;
+            }
+        } else {
+            free_pre_list(buffers);
+            return 0;
+        }
+        return -3;
     }
 }
 
@@ -386,8 +538,8 @@ int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* 
     sub->eof = 0;
     sub->retry_callback = callback;
     sub->retry_opaque = opaque;
-    sub->video_w = vw;
-    sub->video_h = vh;
+    sub->width = vw;
+    sub->height = vh;
     
     int ret = decoder_init(&sub->decoder, avctx, sub->packetq, NULL);
     

@@ -11,6 +11,8 @@
 #include "ff_subtitle_ex.h"
 #include "ff_sub_component.h"
 #include "ff_ffplay_debug.h"
+#include "ijksdl_texture.h"
+#include "ijksdl/ijksdl_texture.h"
 
 typedef struct FFSubtitle {
     PacketQueue packetq;
@@ -99,18 +101,25 @@ int ff_sub_close_current(FFSubtitle *sub)
     return -1;
 }
 
-static void ff_sub_clean_frame_queue(FFSubtitle *sub)
+int ff_sub_drop_old_frames(FFSubtitle *sub)
 {
-    if (!sub) {
-        return;
+    int count = 0;
+    int serial = sub->packetq.serial;
+    while (frame_queue_nb_remaining(&sub->frameq) > 0) {
+        Frame *sp = frame_queue_peek(&sub->frameq);
+        if (sp->serial != serial) {
+            frame_queue_next(&sub->frameq);
+            count++;
+            continue;
+        } else {
+            break;
+        }
     }
-    FrameQueue *subpq = &sub->frameq;
-    while (frame_queue_nb_remaining(subpq) > 0) {
-        frame_queue_next(subpq);
-    }
+    return count;
 }
 
-int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
+
+int ff_sub_blend_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
 {
     if (!sub || !buffer) {
         return -1;
@@ -121,14 +130,39 @@ int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
     
     if (sub->inSub) {
         if (subComponent_get_stream(sub->inSub) != -1) {
-            return subComponent_fetch_frame(sub->inSub, pts, buffer);
+            return subComponent_blend_frame(sub->inSub, pts, buffer);
         }
     }
     
     if (sub->exSub) {
         if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
             pts -= sub->streamStartTime;
-            return exSub_fetch_frame(sub->exSub, pts, buffer);
+            return exSub_blend_frame(sub->exSub, pts, buffer);
+        }
+    }
+    
+    return -3;
+}
+
+int ff_sub_upload_frame(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay_out)
+{
+    if (!sub || !overlay_out) {
+        return -1;
+    }
+    
+    sub->current_pts = pts;
+    pts += (sub ? sub->delay : 0.0);
+    
+    if (sub->inSub) {
+        if (subComponent_get_stream(sub->inSub) != -1) {
+            return subComponent_upload_frame(sub->inSub, pts, gpu, overlay_out);
+        }
+    }
+    
+    if (sub->exSub) {
+        if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
+            pts -= sub->streamStartTime;
+            return exSub_upload_frame(sub->exSub, pts, gpu, overlay_out);
         }
     }
     
@@ -184,7 +218,6 @@ int ff_sub_get_opened_stream_idx(FFSubtitle *sub)
 
 void ff_sub_seek_to(FFSubtitle *sub, float delay, float v_pts)
 {
-    ff_sub_clean_frame_queue(sub);
     if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
         v_pts -= sub->streamStartTime;
     }
@@ -211,13 +244,11 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
         if (sub->inSub) {
             //after seek maybe can display want sub,but can't seek every dealy change,so when diff greater than 2s do seek.
             if (diff > 2) {
-                ff_sub_clean_frame_queue(sub);
                 //return 1 means need seek.
                 return 1;
             }
             return -2;
         } else if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
-            ff_sub_clean_frame_queue(sub);
             exSub_seek_to(sub->exSub, wantDisplay-2);
             return 0;
         } else {
@@ -308,7 +339,6 @@ int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVC
 {
     if (sub->inSub || sub->exSub) {
         packet_queue_flush(&sub->packetq);
-        ff_sub_clean_frame_queue(sub);
     }
     
     return subComponent_open(&sub->inSub, stream_index, NULL, avctx, &sub->packetq, &sub->frameq, NULL, NULL, sub->video_w, sub->video_h);
@@ -337,12 +367,10 @@ enum AVCodecID ff_sub_get_codec_id(FFSubtitle *sub)
     return avctx ? avctx->codec_id : AV_CODEC_ID_NONE;
 }
 
-int ff_inSub_packet_queue_flush(FFSubtitle *sub)
+int ff_sub_packet_queue_flush(FFSubtitle *sub)
 {
     if (sub) {
-        if (sub->inSub) {
-            packet_queue_flush(&sub->packetq);
-        }
+        packet_queue_flush(&sub->packetq);
         return 0;
     }
     return -1;
@@ -374,7 +402,6 @@ int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMedi
         }
     }
     packet_queue_flush(&sub->packetq);
-    ff_sub_clean_frame_queue(sub);
     return exSub_add_active_subtitle(sub->exSub, file_name, meta);
 }
 
@@ -384,7 +411,6 @@ int ff_exSub_open_stream(FFSubtitle *sub, int stream)
         return -1;
     }
     packet_queue_flush(&sub->packetq);
-    ff_sub_clean_frame_queue(sub);
     return exSub_open_file_idx(sub->exSub, stream, sub->video_w, sub->video_h);
 }
 

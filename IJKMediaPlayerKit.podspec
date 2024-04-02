@@ -92,7 +92,8 @@ TODO: Add long description of the pod here.
     'ijkmedia/wrapper/apple/IJKVideoRenderingProtocol.h',
     'ijkmedia/wrapper/apple/IJKMediaPlayerKit.h',
     'ijkmedia/wrapper/apple/IJKInternalRenderView.h',
-    'ijkmedia/ijkplayer/ff_subtitle_def.h'
+    'ijkmedia/ijkplayer/ff_subtitle_def.h',
+    'ijkmedia/ijksdl/ijksdl_rectangle.h'
     
   s.exclude_files = 
     'ijkmedia/ijksdl/ijksdl_extra_log.c',

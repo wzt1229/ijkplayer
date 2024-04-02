@@ -11,7 +11,6 @@ void frame_queue_unref_item(Frame *vp)
 {
     av_frame_unref(vp->frame);
     SDL_VoutUnrefYUVOverlay(vp->bmp);
-    avsubtitle_free(&vp->sub);
     ff_subtitle_buffer_release(&vp->sb);
 }
 
@@ -69,6 +68,14 @@ Frame *frame_queue_peek_next(FrameQueue *f)
     return &f->queue[(f->rindex + f->rindex_shown + 1) % f->max_size];
 }
 
+Frame *frame_queue_peek_offset(FrameQueue *f, int offset)
+{
+    if (offset >= f->size) {
+        return NULL;
+    }
+    return &f->queue[(f->rindex + f->rindex_shown + offset) % f->max_size];
+}
+
 Frame *frame_queue_peek_last(FrameQueue *f)
 {
     return &f->queue[f->rindex];
@@ -88,6 +95,20 @@ Frame *frame_queue_peek_writable(FrameQueue *f)
         return NULL;
 
     return &f->queue[f->windex];
+}
+
+Frame *frame_queue_peek_pre_writable(FrameQueue *f)
+{
+    if (f->pktq->abort_request)
+        return NULL;
+    if (f->size < 2) {
+        return NULL;
+    }
+    int idx = f->windex - 1;
+    if (idx < 0) {
+        idx = f->max_size - 1;
+    }
+    return &f->queue[idx];
 }
 
 Frame *frame_queue_peek_readable(FrameQueue *f)

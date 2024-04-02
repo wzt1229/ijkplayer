@@ -75,6 +75,7 @@
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
 #include "ff_subtitle.h"
+#include "ijksdl/ijksdl_texture.h"
 #include <stdatomic.h>
 #if defined(__ANDROID__)
 #include "ijksoundtouch/ijksoundtouch_wrap.h"
@@ -411,7 +412,7 @@ static void update_subtitle_buffer(FFPlayer *ffp, FFSubtitleBuffer *sb)
     //update subtitle,save into vout's opaque
     if (ffp->vout->update_subtitle) {
         SDL_LockMutex(ffp->vout->mutex);
-        ffp->vout->update_subtitle(ffp->vout, sb);
+        ffp->vout->update_subtitle(ffp->vout, sb, NULL);
         SDL_UnlockMutex(ffp->vout->mutex);
     }
 #ifndef __APPLE__
@@ -423,6 +424,16 @@ static void update_subtitle_buffer(FFPlayer *ffp, FFSubtitleBuffer *sb)
 #endif
 }
 
+static void update_subtitle_texture(FFPlayer *ffp, SDL_TextureOverlay *overlay)
+{
+    //update subtitle,save into vout's opaque
+    if (ffp->vout->update_subtitle) {
+        SDL_LockMutex(ffp->vout->mutex);
+        ffp->vout->update_subtitle(ffp->vout, NULL, overlay);
+        SDL_UnlockMutex(ffp->vout->mutex);
+    }
+}
+
 static void video_image_display2(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
@@ -431,16 +442,29 @@ static void video_image_display2(FFPlayer *ffp)
         if (is->step_on_seeking) {
             update_subtitle_buffer(ffp, NULL);
         } else if (is->ffSub) {
-            FFSubtitleBuffer *sb = NULL;
-            int r = ff_sub_fetch_frame(is->ffSub, vp->pts, &sb);
-            if (r > 0) {
-                update_subtitle_buffer(ffp, sb);
-            } else if (r < 0) {
-                update_subtitle_buffer(ffp, NULL);
+            int use_texture = ffp->reuse_sub_texture;
+            if (use_texture) {
+                SDL_TextureOverlay *overlay;
+                int r = ff_sub_upload_frame(is->ffSub, vp->pts, ffp->gpu, &overlay);
+                if (r > 0) {
+                    update_subtitle_texture(ffp, overlay);
+                } else if (r < 0) {
+                    update_subtitle_texture(ffp, NULL);
+                } else {
+                    //keep current
+                }
             } else {
-                //keep current
+                FFSubtitleBuffer *sb = NULL;
+                int r = ff_sub_blend_frame(is->ffSub, vp->pts, &sb);
+                if (r > 0) {
+                    update_subtitle_buffer(ffp, sb);
+                } else if (r < 0) {
+                    update_subtitle_buffer(ffp, NULL);
+                } else {
+                    //keep current
+                }
+                ff_subtitle_buffer_release(&sb);
             }
-            ff_subtitle_buffer_release(&sb);
         }
         
         if (ffp->render_wait_start && !ffp->start_on_prepared && is->pause_req) {
@@ -898,6 +922,7 @@ static void video_refresh(FFPlayer *opaque, double *remaining_time)
     
     if (ffp->audio_disable && ffp->display_disable) {
         frame_queue_next(&is->pictq);
+        ff_sub_drop_old_frames(is->ffSub);
         return;
     }
     
@@ -937,6 +962,7 @@ retry:
             //when fast seek,we want update video frame,no drop frame. but we can't identify seek is continuously.
             if (vp->serial != is->videoq.serial) {
                 frame_queue_next(&is->pictq);
+                ff_sub_drop_old_frames(is->ffSub);
                 goto retry;
             }
 
@@ -998,6 +1024,7 @@ retry:
                 duration = vp_duration(is, vp, nextvp);
                 if(!is->step && (ffp->framedrop > 0 || (ffp->framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER)) && time > is->frame_timer + duration) {
                     frame_queue_next(&is->pictq);
+                    ff_sub_drop_old_frames(is->ffSub);
                     goto retry;
                 }
             }
@@ -3555,7 +3582,7 @@ static int read_thread(void *arg)
                     }
                     packet_queue_flush(&is->videoq);
                 }
-                ff_inSub_packet_queue_flush(is->ffSub);
+                ff_sub_packet_queue_flush(is->ffSub);
                 if (is->seek_flags & AVSEEK_FLAG_BYTE) {
                    set_clock(&is->extclk, NAN, 0);
                 } else {
@@ -4211,6 +4238,7 @@ void ffp_destroy(FFPlayer *ffp)
 
     SDL_VoutFreeP(&ffp->vout);
     SDL_AoutFreeP(&ffp->aout);
+    SDL_GPUFreeP(&ffp->gpu);
     ffpipenode_free_p(&ffp->node_vdec);
     ffpipeline_free_p(&ffp->pipeline);
     ijkmeta_destroy_p(&ffp->meta);

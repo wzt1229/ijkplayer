@@ -23,9 +23,12 @@
 
 #include "ijksdl/ijksdl_stdinc.h"
 #include "ijksdl/ijksdl_vout.h"
+#include "ijksdl_texture.h"
 
 #import "IJKVideoRenderingProtocol.h"
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view);
 CGSize screenSize(void);
+SDL_GPU *SDL_CreateGPU_WithContext(id context);
+

@@ -17,6 +17,8 @@ typedef struct AVCodecContext AVCodecContext;
 typedef struct AVPacket AVPacket;
 typedef struct IjkMediaMeta IjkMediaMeta;
 typedef struct AVFormatContext AVFormatContext;
+typedef struct SDL_TextureOverlay SDL_TextureOverlay;
+typedef struct SDL_GPU SDL_GPU;
 
 // lifecycle
 int ff_sub_init(FFSubtitle **subp);
@@ -26,8 +28,9 @@ int ff_sub_destroy(FFSubtitle **subp);
 int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx);
 int ff_sub_close_current(FFSubtitle *sub);
 //less than zero means err, equal zero means keep, greater than zero means need show,buff need release
-int ff_sub_fetch_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer ** buffer);
-
+int ff_sub_blend_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer ** buffer);
+int ff_sub_upload_frame(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay_out);
+int ff_sub_drop_old_frames(FFSubtitle *sub);
 int ff_sub_frame_queue_size(FFSubtitle *sub);
 
 int ff_sub_has_enough_packets(FFSubtitle *sub, int min_frames);
@@ -54,7 +57,7 @@ void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, i
 //update ass renderer margin
 void ff_sub_update_margin_ass(FFSubtitle *sub, int t, int b, int l, int r);
 
-int ff_inSub_packet_queue_flush(FFSubtitle *sub);
+int ff_sub_packet_queue_flush(FFSubtitle *sub);
 //for external subtitle.
 int ff_exSub_addOnly_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);
 int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMediaMeta *meta);

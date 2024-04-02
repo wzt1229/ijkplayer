@@ -7,6 +7,7 @@
 
 #include "ff_ass_parser.h"
 #include <libavutil/mem.h>
+#include "ff_subtitle_def_internal.h"
 
 static const char * remove_ass_line_header(const char *ass)
 {

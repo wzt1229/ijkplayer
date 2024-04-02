@@ -70,7 +70,7 @@ struct SDL_Vout {
     SDL_VoutOverlay *(*create_overlay)(int width, int height, int frame_format, SDL_Vout *vout);
     void (*free_l)(SDL_Vout *vout);
     int (*display_overlay)(SDL_Vout *vout, SDL_VoutOverlay *overlay);
-    void (*update_subtitle)(SDL_Vout *vout,void *buffer);
+    void (*update_subtitle)(SDL_Vout *vout, void *buffer, void *overlay);
     
     Uint32 overlay_format;
     int z_rotate_degrees;

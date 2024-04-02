@@ -361,7 +361,7 @@ typedef CGRect NSRect;
           hdrPercentage:hdrPer];
     
     if (attach.subTexture) {
-        if (attach.sub->isImg && attach.sub->usedAss) {
+        if (attach.overlay || (attach.sub->isImg && attach.sub->usedAss)) {
             CGRect rect = CGRectMake(-1, -1, 2.0, 2.0);
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
@@ -711,10 +711,10 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
         return NO;
     }
     
-    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub) {
+    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub || attach.overlay) {
         [self generateSubTexture:attach];
-    } else if (self.currentAttach.subTexture) {
-        //reuse the expensive texture.
+    } else if (self.currentAttach.subTexture && attach.sub) {
+        //reuse the expensive texture for sub.
         attach.subTexture = self.currentAttach.subTexture;
     }
     
@@ -779,6 +779,11 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 {
     self.clearColor = (MTLClearColor){r/255.0, g/255.0, b/255.0, 1.0f};
     //renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0f);
+}
+
+- (id)context
+{
+    return self.device;
 }
 
 - (NSString *)name

@@ -162,8 +162,12 @@ static int do_retry_next_charenc(void *opaque)
     if (avcodec_open2(avctx, codec, NULL) < 0) {
         goto fail;
     }
-
-    if (subComponent_open(&sub->component, stream_idx, sub->ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub, sub->video_w, sub->video_h) != 0) {
+    int w = avctx->width,h = avctx->height;
+    if (!w && !h) {
+        w = sub->video_w;
+        h = sub->video_h;
+    }
+    if (subComponent_open(&sub->component, stream_idx, sub->ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub, w, h) != 0) {
         goto fail;
     }
     subComponent_seek_to(sub->component, 0);
@@ -244,8 +248,12 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
         ret = -7;
         goto fail;
     }
-    
-    if (subComponent_open(&sub->component, stream_id, ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub, sub->video_w, sub->video_h) != 0) {
+    int w = avctx->width,h = avctx->height;
+    if (!w && !h) {
+        w = sub->video_w;
+        h = sub->video_h;
+    }
+    if (subComponent_open(&sub->component, stream_id, ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub, w, h) != 0) {
         ret = -8;
         goto fail;
     }
@@ -494,9 +502,14 @@ AVStream *exSub_get_stream(IJKEXSubtitle *sub)
     return NULL;
 }
 
-int exSub_fetch_frame(IJKEXSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
+int exSub_blend_frame(IJKEXSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
 {
-    return subComponent_fetch_frame(sub->component, pts, buffer);
+    return subComponent_blend_frame(sub->component, pts, buffer);
+}
+
+int exSub_upload_frame(IJKEXSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay)
+{
+    return subComponent_upload_frame(sub->component, pts, gpu, overlay);
 }
 
 void exSub_update_margin(IJKEXSubtitle *sub, int t, int b, int l, int r)

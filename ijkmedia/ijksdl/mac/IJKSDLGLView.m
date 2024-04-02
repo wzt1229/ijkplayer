@@ -413,7 +413,7 @@ static bool _is_need_dispath_to_global(void)
     if (subTexture) {
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
-        if (attach.sub->isImg && attach.sub->usedAss) {
+        if (attach.overlay || (attach.sub->isImg && attach.sub->usedAss)) {
             IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, self.backingWidth, self.backingHeight);
             if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
                 IJK_GLES2_Renderer_drawArrays();
@@ -536,11 +536,10 @@ static bool _is_need_dispath_to_global(void)
     }
     //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
     
-    //generate current subtitle.
-    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub) {
+    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub || attach.overlay) {
         [self generateSubTexture:attach];
-    } else if (self.currentAttach.subTexture) {
-        //reuse the expensive texture.
+    } else if (self.currentAttach.subTexture && attach.sub) {
+        //reuse the expensive texture for sub.
         attach.subTexture = self.currentAttach.subTexture;
     }
     
@@ -907,6 +906,11 @@ static CGImageRef _FlipCGImage(CGImageRef src)
 {
     [[self openGLContext] makeCurrentContext];
     glClearColor(r/255.0, g/255.0, b/255.0, 1.0f);
+}
+
+- (id)context
+{
+    return self.openGLContext;
 }
 
 - (NSString *)name

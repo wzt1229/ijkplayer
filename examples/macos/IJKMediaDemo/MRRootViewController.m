@@ -627,6 +627,7 @@ static BOOL hdrAnimationShown = 0;
 //    [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
 //    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
     
+    //[options setPlayerOptionIntValue:1 forKey:@"subtitle-texture-reuse"];
     [options setPlayerOptionValue:[MRCocoaBindingUserDefault overlay_format] forKey:@"overlay-format"];
     [options setPlayerOptionIntValue:hwaccel forKey:@"videotoolbox_hwaccel"];
     [options setPlayerOptionIntValue:[MRCocoaBindingUserDefault accurate_seek] forKey:@"enable-accurate-seek"];
