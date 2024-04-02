@@ -248,12 +248,8 @@ static int exSub_open_filepath(IJKEXSubtitle *sub, const char *file_name, int id
         ret = -7;
         goto fail;
     }
-    int w = avctx->width,h = avctx->height;
-    if (!w && !h) {
-        w = sub->video_w;
-        h = sub->video_h;
-    }
-    if (subComponent_open(&sub->component, stream_id, ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub, w, h) != 0) {
+    
+    if (subComponent_open(&sub->component, stream_id, ic, avctx, sub->pktq, sub->frameq, &retry_callback, (void *)sub, sub->video_w, sub->video_h) != 0) {
         ret = -8;
         goto fail;
     }

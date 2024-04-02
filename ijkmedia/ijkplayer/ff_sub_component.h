@@ -22,12 +22,12 @@ typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 typedef struct SDL_GPU SDL_GPU;
 
 //when hasn't ic, not support seek;
-int subComponent_open(FFSubComponent **subp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq, subComponent_retry_callback callback, void *opaque, int vw, int vh);
-int subComponent_close(FFSubComponent **subp);
-int subComponent_get_stream(FFSubComponent *sub);
-int subComponent_seek_to(FFSubComponent *sub, int sec);
-AVCodecContext * subComponent_get_avctx(FFSubComponent *sub);
-int subComponent_get_serial(FFSubComponent *sub);
+int subComponent_open(FFSubComponent **cp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq, subComponent_retry_callback callback, void *opaque, int vw, int vh);
+int subComponent_close(FFSubComponent **cp);
+int subComponent_get_stream(FFSubComponent *com);
+int subComponent_seek_to(FFSubComponent *com, int sec);
+AVCodecContext * subComponent_get_avctx(FFSubComponent *com);
+int subComponent_get_serial(FFSubComponent *com);
 //buff need release
 int subComponent_blend_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **buffer);
 int subComponent_upload_frame(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay);

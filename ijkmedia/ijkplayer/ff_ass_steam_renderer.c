@@ -103,10 +103,7 @@ static void set_video_size(FF_ASS_Renderer *s, int w, int h)
     if (!ass) {
         return;
     }
-    //放大两倍，使得 retina 屏显示清楚
-//    w *= 2;
-//    h *= 2;
-
+    
     ass->original_w = w;
     ass->original_h = h;
     
@@ -168,25 +165,6 @@ static void blend_single(FFSubtitleBuffer * frame, ASS_Image *img, int layer)
     draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->stride, img->color);
 }
 
-static void peek_alpha(unsigned char *src, int src_w, int src_h, int src_stride)
-{
-    uint32_t *dstrow = (uint32_t *) src;
-    printf("-------------alpha-------------\n");
-    for (int y = 0; y < src_h; y++) {
-        for (int x = 0; x < src_w/4; x++) {
-            
-            uint32_t dstpix = dstrow[x];
-            uint32_t dsta = (dstpix >> 24) & 0xFF;
-            
-            if (dsta != 255 && dsta != 0) {
-                printf("%d,",dsta);
-            }
-        }
-        printf("\n");
-        dstrow += src_stride/4;
-    }
-}
-
 static void blend(FFSubtitleBuffer * frame, ASS_Image *img)
 {
     int cnt = 0;
@@ -195,7 +173,6 @@ static void blend(FFSubtitleBuffer * frame, ASS_Image *img)
         blend_single(frame, img, cnt);
         img = img->next;
     }
-    //peek_alpha(frame->buffer, frame->width, frame->height, frame->stride);
 }
 
 static int blend_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer ** buffer)
