@@ -34,5 +34,6 @@ int subComponent_get_serial(FFSubComponent *com);
 int subComponent_blend_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **buffer);
 int subComponent_upload_frame(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay);
 void subComponent_update_preference(FFSubComponent *com, IJKSDLSubtitlePreference* sp);
+int subComponent_eof_and_pkt_empty(FFSubComponent *com);
 
 #endif /* ff_sub_component_h */

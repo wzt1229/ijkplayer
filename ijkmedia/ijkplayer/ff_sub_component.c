@@ -650,3 +650,12 @@ void subComponent_update_preference(FFSubComponent *com, IJKSDLSubtitlePreferenc
     com->sp_changed = 1;
     apply_preference(com);
 }
+
+int subComponent_eof_and_pkt_empty(FFSubComponent *sc)
+{
+    if (!sc) {
+        return -1;
+    }
+    
+    return sc->eof && sc->decoder.finished == sc->packetq->serial && frame_queue_nb_remaining(sc->frameq) == 0;
+}
