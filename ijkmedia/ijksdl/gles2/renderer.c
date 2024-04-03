@@ -491,11 +491,6 @@ void IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int d
     }
 }
 
-void IJK_GLES2_Renderer_updateSubtitleBottomMargin(IJK_GLES2_Renderer *renderer,float value)
-{
-    renderer->subtitle_bottom_margin = value;
-}
-
 void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degrees)
 {
     if (renderer->auto_z_rotate_degrees != degrees) {
@@ -906,11 +901,7 @@ void IJK_GLES2_Renderer_updateSubtitleVertex(IJK_GLES2_Renderer *renderer, float
     
     float leftX  = 0 - ratioW;
     float rightX = 0 + ratioW;
-    //距离底部0.1，实际是 (0.1 * layer_height)px; [-1,1]
-    float margin = (renderer->subtitle_bottom_margin - 1) * 2 + 1;
-    margin = FFMAX(margin, -1.0);
-    margin = FFMIN(margin, 1.0 - 2 * ratioH);
-    float bottomY = margin;
+    float bottomY = -1;
     float topY = bottomY + 2 * ratioH;
     
     //左下

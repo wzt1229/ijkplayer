@@ -42,17 +42,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeFill        // Non-uniform scale. Both render dimensions will exactly match the visible bounds
 };
 
-typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
-struct _IJKSDLSubtitlePreference {
-    char name[256];//font name
-    float size; //font size
-    uint32_t color;//text color
-    uint32_t bgColor;//text bg color
-    uint32_t strokeColor;//border color
-    int strokeSize;//stroke size
-    float bottomMargin;//[0.0,1.0]
-};
-
 @protocol IJKSDLSubtitleTextureProtocol <NSObject>
 
 @property(nonatomic) uint32_t texture;
@@ -81,31 +70,12 @@ typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 @property(nonatomic) CVPixelBufferRef videoPicture;
 @property(nonatomic) NSArray *videoTextures;
 
-@property(nonatomic) FFSubtitleBuffer *sub;
 @property(nonatomic) SDL_TextureOverlay *overlay;
 @property(nonatomic) id subTexture;
 
-- (BOOL)generateSubTexture:(IJKSDLSubtitlePreference *)sp maxSize:(CGSize) maxSize context:(id)context;
+- (BOOL)generateSubTexture;
 
 @end
-
-static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,IJKSDLSubtitlePreference* p2)
-{
-    if (!p1 || !p2) {
-        return 0;
-    }
-    if (p1->size != p2->size ||
-        p1->color != p2->color ||
-        p1->bgColor != p2->bgColor ||
-        p1->strokeColor != p2->strokeColor ||
-        p1->strokeSize != p2->strokeSize ||
-        p1->bottomMargin != p2->bottomMargin ||
-        strcmp(p1->name, p2->name)
-        ) {
-        return 0;
-    }
-    return 1;
-}
 
 static inline uint32_t color2int(UIColor *color) {
     if (@available(macOS 10.13, *)) {
@@ -133,11 +103,6 @@ static inline UIColor * int2color(uint32_t abgr) {
     g = (float)(((abgr & 0xFF0000) >> 16)) / 255.0;
     r = ((float)((abgr & 0xFF000000) >> 24)) / 255.0;
     return [UIColor colorWithRed:r green:g blue:b alpha:a];
-}
-
-static inline IJKSDLSubtitlePreference ijk_subtitle_default_perference(void)
-{
-    return (IJKSDLSubtitlePreference){"", 50, 4294967295, 0, 255, 5, 0.025};
 }
 
 typedef enum _IJKSDLRotateType {
@@ -183,11 +148,9 @@ typedef enum : NSUInteger {
  if you update these preference blow, when player paused,
  you can call -[setNeedsRefreshCurrentPic] method let current picture refresh right now.
  */
-// subtitle preference
-@property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
 // rotate preference
 @property(nonatomic) IJKSDLRotatePreference rotatePreference;
-// color conversion perference
+// color conversion preference
 @property(nonatomic) IJKSDLColorConversionPreference colorPreference;
 // user defined display aspect ratio
 @property(nonatomic) IJKSDLDARPreference darPreference;

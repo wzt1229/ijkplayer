@@ -407,29 +407,12 @@ static void free_picture(Frame *vp)
 // FFP_MERGE: upload_texture
 // FFP_MERGE: video_image_display
 
-static void update_subtitle_buffer(FFPlayer *ffp, FFSubtitleBuffer *sb)
-{
-    //update subtitle,save into vout's opaque
-    if (ffp->vout->update_subtitle) {
-        SDL_LockMutex(ffp->vout->mutex);
-        ffp->vout->update_subtitle(ffp->vout, sb, NULL);
-        SDL_UnlockMutex(ffp->vout->mutex);
-    }
-#ifndef __APPLE__
-    if (sb) {
-        ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, (void *)sb->buffer, (int)strlen(sb->buffer) + 1);
-    } else {
-        ffp_notify_msg4(ffp, FFP_MSG_TIMED_TEXT, 0, 0, "", 1);
-    }
-#endif
-}
-
 static void update_subtitle_texture(FFPlayer *ffp, SDL_TextureOverlay *overlay)
 {
     //update subtitle,save into vout's opaque
     if (ffp->vout->update_subtitle) {
         SDL_LockMutex(ffp->vout->mutex);
-        ffp->vout->update_subtitle(ffp->vout, NULL, overlay);
+        ffp->vout->update_subtitle(ffp->vout, overlay);
         SDL_UnlockMutex(ffp->vout->mutex);
     }
 }
@@ -440,30 +423,16 @@ static void video_image_display2(FFPlayer *ffp)
     Frame *vp = frame_queue_peek_last(&is->pictq);
     if (vp->bmp) {
         if (is->step_on_seeking) {
-            update_subtitle_buffer(ffp, NULL);
+            update_subtitle_texture(ffp, NULL);
         } else if (is->ffSub) {
-            int use_texture = ffp->reuse_sub_texture;
-            if (use_texture) {
-                SDL_TextureOverlay *overlay;
-                int r = ff_sub_upload_frame(is->ffSub, vp->pts, ffp->gpu, &overlay);
-                if (r > 0) {
-                    update_subtitle_texture(ffp, overlay);
-                } else if (r < 0) {
-                    update_subtitle_texture(ffp, NULL);
-                } else {
-                    //keep current
-                }
+            SDL_TextureOverlay *overlay;
+            int r = ff_sub_upload_frame(is->ffSub, vp->pts, ffp->gpu, &overlay);
+            if (r > 0) {
+                update_subtitle_texture(ffp, overlay);
+            } else if (r < 0) {
+                update_subtitle_texture(ffp, NULL);
             } else {
-                FFSubtitleBuffer *sb = NULL;
-                int r = ff_sub_blend_frame(is->ffSub, vp->pts, &sb);
-                if (r > 0) {
-                    update_subtitle_buffer(ffp, sb);
-                } else if (r < 0) {
-                    update_subtitle_buffer(ffp, NULL);
-                } else {
-                    //keep current
-                }
-                ff_subtitle_buffer_release(&sb);
+                //keep current
             }
         }
         
@@ -3175,6 +3144,7 @@ static AVDictionary **setup_find_stream_info_opts(AVFormatContext *s,
    return opts;
 }
 
+void ffp_apply_subtitle_preference(FFPlayer *ffp);
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
 {
@@ -3432,6 +3402,7 @@ static int read_thread(void *arg)
             float ratio = 1.0 * codecpar->sample_aspect_ratio.num / codecpar->sample_aspect_ratio.den;
             v_width = (int)(v_width * ratio);
         }
+        ffp_apply_subtitle_preference(ffp);
         ff_sub_stream_ic_ready(is->ffSub, ic, v_width, codecpar->height);
     }
     
@@ -5046,7 +5017,7 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
         int idx = opened ? stream : -1;
         _ijkmeta_set_stream(ffp, AVMEDIA_TYPE_SUBTITLE, idx);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-        update_subtitle_buffer(ffp, NULL);
+        update_subtitle_texture(ffp, NULL);
     }
     return 0;
 }
@@ -5442,7 +5413,7 @@ void ffp_set_audio_sample_observer(FFPlayer *ffp, ijk_audio_samples_callback cb)
     ffp->audio_samples_callback = cb;
 }
 
-void ffp_set_enable_accurate_seek(FFPlayer *ffp,int open)
+void ffp_set_enable_accurate_seek(FFPlayer *ffp, int open)
 {
     if (!ffp || !ffp->is) {
         return;
@@ -5452,4 +5423,23 @@ void ffp_set_enable_accurate_seek(FFPlayer *ffp,int open)
         ffp->enable_accurate_seek = open;
     }
     SDL_UnlockMutex(ffp->is->accurate_seek_mutex);
+}
+
+void ffp_apply_subtitle_preference(FFPlayer *ffp)
+{
+    if (!ffp || !ffp->is) {
+        return;
+    }
+    SDL_LockMutex(ffp->is->play_mutex);
+    ff_sub_update_preference(ffp->is->ffSub, &ffp->sp);
+    SDL_UnlockMutex(ffp->is->play_mutex);
+}
+
+void ffp_set_subtitle_preference(FFPlayer *ffp, IJKSDLSubtitlePreference* sp)
+{
+    if (!ffp || !sp) {
+        return;
+    }
+    ffp->sp = *sp;
+    ffp_apply_subtitle_preference(ffp);
 }

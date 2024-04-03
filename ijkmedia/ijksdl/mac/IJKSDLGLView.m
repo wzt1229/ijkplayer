@@ -182,14 +182,10 @@ static bool _is_need_dispath_to_global(void)
 @property(atomic) IJKOverlayAttach *currentAttach;
 
 @property(nonatomic) NSInteger videoDegrees;
-@property(nonatomic) CGSize videoNaturalSize;
-//display window size / video size
-@property(atomic) float displayVideoScale;
 //view size
 @property(assign) CGSize viewSize;
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
-@property(atomic) BOOL subtitlePreferenceChanged;
 @property(atomic) _IJKSDLFBO * fbo;
 @property(atomic) IJKSDLThread *renderThread;
 @property(assign) int hdrAnimationFrameCount;
@@ -203,11 +199,9 @@ static bool _is_need_dispath_to_global(void)
 }
 
 @synthesize scalingMode = _scalingMode;
-// subtitle preference
-@synthesize subtitlePreference = _subtitlePreference;
 // rotate preference
 @synthesize rotatePreference = _rotatePreference;
-// color conversion perference
+// color conversion preference
 @synthesize colorPreference = _colorPreference;
 // user defined display aspect ratio
 @synthesize darPreference = _darPreference;
@@ -244,11 +238,9 @@ static bool _is_need_dispath_to_global(void)
         }
         [self setup];
 
-        _subtitlePreference = ijk_subtitle_default_perference();
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
-        _displayVideoScale  = 1.0;
         _rendererGravity    = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
     }
     return self;
@@ -313,19 +305,9 @@ static bool _is_need_dispath_to_global(void)
     self.videoDegrees = degrees;
 }
 
-- (void)videoNaturalSizeChanged:(CGSize)size
-{
-    self.videoNaturalSize = size;
-    CGRect viewBounds = [self bounds];
-    if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
-        self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width, 1.0 * viewBounds.size.height / self.videoNaturalSize.height);
-    }
-}
-
 - (void)cleanSubtitle
 {
-    if (self.currentAttach.sub) {
-        self.currentAttach.sub = nil;
+    if (self.currentAttach.subTexture) {
         self.currentAttach.subTexture = nil;
         [self setNeedsRefreshCurrentPic];
     }
@@ -360,8 +342,6 @@ static bool _is_need_dispath_to_global(void)
         IJK_GLES2_Renderer_updateRotate(_renderer, _rotatePreference.type, _rotatePreference.degrees);
         
         IJK_GLES2_Renderer_updateAutoZRotate(_renderer, attach.autoZRotate);
-        
-        IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
         
         IJK_GLES2_Renderer_updateColorConversion(_renderer, _colorPreference.brightness, _colorPreference.saturation,_colorPreference.contrast);
         
@@ -398,10 +378,6 @@ static bool _is_need_dispath_to_global(void)
     if (self.backingWidth != viewSizePixels.width || self.backingHeight != viewSizePixels.height) {
         self.backingWidth  = viewSizePixels.width;
         self.backingHeight = viewSizePixels.height;
-        
-        if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
-            self.displayVideoScale = FFMIN(1.0 * viewSize.width / self.videoNaturalSize.width,1.0 * viewSize.height / self.videoNaturalSize.height);
-        }
         self.viewSize = viewSize;
         [self setNeedsRefreshCurrentPic];
     }
@@ -413,29 +389,12 @@ static bool _is_need_dispath_to_global(void)
     if (subTexture) {
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
-        if (attach.overlay || (attach.sub->isImg && attach.sub->usedAss)) {
-            IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, self.backingWidth, self.backingHeight);
-            if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
-                IJK_GLES2_Renderer_drawArrays();
-            } else {
-                ALOGE("[GL] GLES2 Render Subtitle failed\n");
-            }
+        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, self.backingWidth, self.backingHeight);
+        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture, subTexture.w, subTexture.h)) {
+            IJK_GLES2_Renderer_drawArrays();
         } else {
-            float subScale = 1.0;
-            if (attach.sub->isImg) {
-                subScale = self.displayVideoScale * 1.5;
-            }
-            //实现，窗口放大，字幕放大效果
-            subScale *= (backingWidth / screenSize().width);
-            IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, subScale * subTexture.w, subScale * subTexture.h);
-            
-            if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
-                IJK_GLES2_Renderer_drawArrays();
-            } else {
-                ALOGE("[GL] GLES2 Render Subtitle failed\n");
-            }
+            ALOGE("[GL] GLES2 Render Subtitle failed\n");
         }
-        
         IJK_GLES2_Renderer_endDrawSubtitle(_renderer);
     }
 }
@@ -474,15 +433,9 @@ static bool _is_need_dispath_to_global(void)
     if (!currentAttach) {
         return;
     }
-    
+#warning TODO here
     //update subtitle if need
-    if (self.subtitlePreferenceChanged) {
-        if (!currentAttach.sub->isImg) {
-            [self generateSubTexture:currentAttach];
-        }
-        self.subtitlePreferenceChanged = NO;
-    }
-    
+    [self generateSubTexture:currentAttach];
     [self doDisplayVideoPicAndSubtitle:currentAttach];
 }
 
@@ -525,7 +478,7 @@ static bool _is_need_dispath_to_global(void)
 
 - (void)generateSubTexture:(IJKOverlayAttach *)attach
 {
-    [attach generateSubTexture:&_subtitlePreference maxSize:CGSizeMake(0.8 * self.viewSize.width, self.viewSize.height) context:[self openGLContext]];
+    
 }
 
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach
@@ -536,16 +489,8 @@ static bool _is_need_dispath_to_global(void)
     }
     //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
     
-    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub || attach.overlay) {
-        [self generateSubTexture:attach];
-    } else if (self.currentAttach.subTexture && attach.sub) {
-        //reuse the expensive texture for sub.
-        attach.subTexture = self.currentAttach.subTexture;
-    }
+    [attach generateSubTexture];
     
-    if (self.subtitlePreferenceChanged) {
-        self.subtitlePreferenceChanged = NO;
-    }
     //hold the attach as current.
     self.currentAttach = attach;
     
@@ -886,19 +831,6 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         if (IJK_GLES2_Renderer_isValid(_renderer)) {
             IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, _darPreference.ratio);
         }
-    }
-}
-
-- (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
-{
-    if (_subtitlePreference.bottomMargin != subtitlePreference.bottomMargin) {
-        _subtitlePreference = subtitlePreference;
-        if (IJK_GLES2_Renderer_isValid(_renderer)) {
-            IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
-        }
-    } else if (!isIJKSDLSubtitlePreferenceEqual(&_subtitlePreference, &subtitlePreference)) {
-        _subtitlePreference = subtitlePreference;
-        self.subtitlePreferenceChanged = YES;
     }
 }
 

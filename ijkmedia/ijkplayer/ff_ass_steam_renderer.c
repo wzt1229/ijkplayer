@@ -354,7 +354,6 @@ static void process_chunk(FF_ASS_Renderer *s, char *ass_line, long long start_ti
     if (!ass) {
         return;
     }
-    //printf("ass_process_chunk:%lld-%lld,%s\n", start_time, duration, ass_line);
     ass_process_chunk(ass->track, ass_line, (int)strlen(ass_line), start_time, duration);
 }
 
@@ -365,7 +364,6 @@ static void update_margin(FF_ASS_Renderer *s, int t, int b, int l, int r)
         return;
     }
     ass_set_margins(ass->renderer, t, b, l, r);
-    ass_set_use_margins(ass->renderer, 1);
 }
 
 static void uninit(FF_ASS_Renderer *s)
@@ -501,6 +499,3 @@ void ff_ass_process_chunk(FF_ASS_Renderer * assRenderer, const char *ass_line, f
 {
     assRenderer->iformat->process_chunk(assRenderer, (char *)ass_line, begin, end);
 }
-
-
-

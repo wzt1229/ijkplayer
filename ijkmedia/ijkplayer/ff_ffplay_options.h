@@ -84,8 +84,6 @@ static const AVOption ffp_context_options[] = {
         OPTION_OFFSET(seek_at_start),       OPTION_INT64(0, 0, INT_MAX) },
     { "subtitle",                       "decode subtitle stream",
         OPTION_OFFSET(subtitle),        OPTION_INT(1, 0, 1) },
-    { "subtitle-texture-reuse",    "reuse a texture(partial replace pixels) instead of upload full image to new texture",
-        OPTION_OFFSET(reuse_sub_texture),  OPTION_INT(1, 0, 1)},
     // FFP_MERGE: window_title
 #if CONFIG_AVFILTER
     { "af",                             "audio filters",

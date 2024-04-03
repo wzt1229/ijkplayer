@@ -112,6 +112,8 @@ typedef enum IJKLogLevel {
 @property(nonatomic) BOOL shouldShowHudView;
 //when sampleSize is -1,means needs reset and refresh ui.
 @property(nonatomic, copy) void (^audioSamplesCallback)(int16_t *samples, int sampleSize, int sampleRate, int channels);
+//subtitle preference
+@property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
 
 - (NSDictionary *)allHudItem;
 

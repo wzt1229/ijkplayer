@@ -28,8 +28,6 @@
 
 @synthesize scalingMode = _scalingMode;
 
-@synthesize subtitlePreference = _subtitlePreference;
-
 @synthesize showHdrAnimation = _showHdrAnimation;
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -153,19 +151,6 @@
     
     for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
         [view setScalingMode:scalingMode];
-    }
-}
-
-- (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
-{
-    _subtitlePreference = subtitlePreference;
-    
-    [self.lock lock];
-    NSArray *renderViewArr = [self.renderViewArr copy];
-    [self.lock unlock];
-    
-    for (NSView<IJKVideoRenderingProtocol> *view in renderViewArr) {
-        [view setSubtitlePreference:subtitlePreference];
     }
 }
 

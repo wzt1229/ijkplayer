@@ -638,7 +638,6 @@ typedef struct FFPlayer {
     char *subtitle_codec_info;
     Uint32 overlay_format;
 
-    int reuse_sub_texture;
     int prepared;
     int auto_resume;
     int error;
@@ -714,6 +713,8 @@ typedef struct FFPlayer {
     LasPlayerStatistic las_player_statistic;
 
     ijk_audio_samples_callback audio_samples_callback;
+    
+    IJKSDLSubtitlePreference sp;
 } FFPlayer;
 
 #define fftime_to_seconds(ts)      (av_rescale(ts, 1, AV_TIME_BASE))
@@ -789,7 +790,6 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
 #else
     ffp->overlay_format         = SDL_FCC_RV32;
 #endif
-    ffp->reuse_sub_texture      = 1;
     ffp->prepared               = 0;
     ffp->auto_resume            = 0;
     ffp->error                  = 0;

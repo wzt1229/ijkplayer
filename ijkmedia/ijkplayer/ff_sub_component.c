@@ -9,7 +9,6 @@
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
 #include "ff_ass_steam_renderer.h"
-#include "ff_ass_parser.h"
 #include "ijksdl/ijksdl_texture.h"
 #include "ff_subtitle_def_internal.h"
 
@@ -32,6 +31,8 @@ typedef struct FFSubComponent{
     int width, height;
     SDL_TextureOverlay *overlay;
     FFSubtitleBuffer* pre_list [SUB_REF_MAX_LEN];
+    IJKSDLSubtitlePreference sp;
+    int sp_changed;
 }FFSubComponent;
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -201,6 +202,16 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
     return frame;
 }
 
+static void apply_preference(FFSubComponent *com)
+{
+    int b = com->sp.bottomMargin * com->height;
+    
+    if (com->assRenderer) {
+        com->assRenderer->iformat->update_margin(com->assRenderer, 0, b, 0, 0);
+        com->sp_changed = 0;
+    }
+}
+
 static int create_ass_renderer_if_need(FFSubComponent *com)
 {
     if (com->assRenderer) {
@@ -218,6 +229,7 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
             }
         }
         com->assRenderer = assRenderer;
+        apply_preference(com);
     }
     return NULL == com->assRenderer;
 }
@@ -405,10 +417,18 @@ int subComponent_blend_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **
     }
 }
 
-static void replace_bitmap(SDL_TextureOverlay *overlay, FFSubtitleBuffer *frame)
+static SDL_Rectangle replace_bitmap(SDL_TextureOverlay *overlay, FFSubtitleBuffer *frame, int bottom_offset)
 {
+    SDL_Rectangle rect = frame->rect;
+    rect.y -= bottom_offset;
+    if (rect.y < 0) {
+        rect.y = 0;
+    }
     if (overlay && frame) {
-        overlay->replaceRegion(overlay->opaque, frame->rect, frame->data);
+        overlay->replaceRegion(overlay->opaque, rect, frame->data);
+        return rect;
+    } else {
+        return SDL_Zero_Rectangle;
     }
 }
 
@@ -481,21 +501,22 @@ int subComponent_upload_frame(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_
             }
         }
         int count = idx;
-        if (diff_list(com->pre_list, buffers)) {
+        if (com->sp_changed || diff_list(com->pre_list, buffers)) {
             free_pre_list(com->pre_list);
             if (count > 0) {
                 memcpy(com->pre_list, buffers, sizeof(buffers));
             } else {
                 bzero(com->pre_list, sizeof(com->pre_list));
             }
-            
+            com->sp_changed = 0;
             clean_dirty_texture(*overlay);
             if (count > 0) {
+                int bottom_offset = com->sp.bottomMargin * com->height;
                 SDL_Rectangle dirty_rect = {0};
                 for (int i = 0; i < count; i++) {
                     FFSubtitleBuffer *sb = buffers[i];
-                    replace_bitmap(*overlay, sb);
-                    dirty_rect = SDL_union_rectangle(dirty_rect, sb->rect);
+                    SDL_Rectangle rect = replace_bitmap(*overlay, sb,bottom_offset);
+                    dirty_rect = SDL_union_rectangle(dirty_rect, rect);
                 }
                 if (!isZeroRectangle(dirty_rect)) {
                     set_dirtyRect(*overlay, dirty_rect);
@@ -507,13 +528,6 @@ int subComponent_upload_frame(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_
             return 0;
         }
         return -3;
-    }
-}
-
-void subComponent_update_margin(FFSubComponent *com, int t, int b, int l, int r)
-{
-    if (com->assRenderer) {
-        com->assRenderer->iformat->update_margin(com->assRenderer, t, b, l, r);
     }
 }
 
@@ -625,4 +639,14 @@ AVCodecContext * subComponent_get_avctx(FFSubComponent *com)
 int subComponent_get_serial(FFSubComponent *com)
 {
     return com ? com->packetq->serial : -1;
+}
+
+void subComponent_update_preference(FFSubComponent *com, IJKSDLSubtitlePreference* sp)
+{
+    if (!com) {
+        return;
+    }
+    com->sp = *sp;
+    com->sp_changed = 1;
+    apply_preference(com);
 }

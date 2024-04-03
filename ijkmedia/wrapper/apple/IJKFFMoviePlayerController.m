@@ -215,14 +215,15 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     //httpproxy
     ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray,dvd,rtmp,rtsp,rtp,srtp,udp");
     
+    _subtitlePreference = ijk_subtitle_default_preference();
     // init hud
     _hudCtrl = [IJKSDLHudControl new];
 
     self.shouldShowHudView = options.showHudView;
-
+    
     [options applyTo:_mediaPlayer];
+    
     _pauseInBackground = NO;
-
     // init extra
     _keepScreenOnWhilePlaying = YES;
     [self setScreenOn:YES];
@@ -1115,13 +1116,13 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         _enableAccurateSeek = open ? 1 : 2;
     } else {
         _enableAccurateSeek = 0;
-        ijk_set_enable_accurate_seek(_mediaPlayer, open);
+        ijkmp_set_enable_accurate_seek(_mediaPlayer, open);
     }
 }
 
 - (void)stepToNextFrame
 {
-    ijk_step_to_next_frame(_mediaPlayer);
+    ijkmp_step_to_next_frame(_mediaPlayer);
 }
 
 - (BOOL)shouldShowHudView
@@ -1585,7 +1586,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         case FFP_MSG_AFTER_SEEK_FIRST_FRAME: {
             int du = avmsg->arg1;
             if (_enableAccurateSeek > 0) {
-                ijk_set_enable_accurate_seek(_mediaPlayer, _enableAccurateSeek == 1);
+                ijkmp_set_enable_accurate_seek(_mediaPlayer, _enableAccurateSeek == 1);
                 _enableAccurateSeek = 0;
             }
             [[NSNotificationCenter defaultCenter]
@@ -2122,6 +2123,14 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
 - (float)currentSubtitleExtraDelay
 {
     return ijkmp_get_subtitle_extra_delay(_mediaPlayer);
+}
+
+- (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
+{
+    if (!isIJKSDLSubtitlePreferenceEqual(&_subtitlePreference, &subtitlePreference)) {
+        _subtitlePreference = subtitlePreference;
+        ijkmp_set_subtitle_preference(_mediaPlayer, &subtitlePreference);
+    }
 }
 
 @end

@@ -11,8 +11,8 @@
 #include "ff_ffplay_def.h"
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
-#include "ff_ass_parser.h"
 #include "ff_sub_component.h"
+#include "ff_subtitle_def.h"
 
 #define IJK_EX_SUBTITLE_STREAM_MAX_COUNT    100
 #define IJK_EX_SUBTITLE_STREAM_MIN_OFFSET   1000
@@ -508,7 +508,7 @@ int exSub_upload_frame(IJKEXSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureO
     return subComponent_upload_frame(sub->component, pts, gpu, overlay);
 }
 
-void exSub_update_margin(IJKEXSubtitle *sub, int t, int b, int l, int r)
+void exSub_update_preference(IJKEXSubtitle *sub, IJKSDLSubtitlePreference* sp)
 {
-    subComponent_update_margin(sub->component, t, b, l, r);
+    subComponent_update_preference(sub->component, sp);
 }

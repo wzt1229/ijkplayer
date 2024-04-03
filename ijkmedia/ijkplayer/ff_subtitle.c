@@ -24,6 +24,7 @@ typedef struct FFSubtitle {
     IJKEXSubtitle* exSub;
     int streamStartTime;//ic start_time (s)
     int video_w, video_h;
+    IJKSDLSubtitlePreference sp;
 }FFSubtitle;
 
 //---------------------------Public Common Functions--------------------------------------------------//
@@ -317,27 +318,13 @@ void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, i
     exSub_reset_video_size(sub->exSub, video_w, video_h);
 }
 
-//update ass renderer margin
-void ff_sub_update_margin_ass(FFSubtitle *sub, int t, int b, int l, int r)
-{
-    int idx = -1;
-    if (sub->inSub) {
-        idx = subComponent_get_stream(sub->inSub);
-        if (idx != -1) {
-            subComponent_update_margin(sub->inSub, t, b, l, r);
-        }
-    }
-    if (idx == -1 && sub->exSub) {
-        idx = exSub_get_opened_stream_idx(sub->exSub);
-        if (idx != -1) {
-            exSub_update_margin(sub->exSub, t, b, l, r);
-        }
-    }
-}
-
 int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx)
 {
-    return subComponent_open(&sub->inSub, stream_index, NULL, avctx, &sub->packetq, &sub->frameq, NULL, NULL, sub->video_w, sub->video_h);
+    int r = subComponent_open(&sub->inSub, stream_index, NULL, avctx, &sub->packetq, &sub->frameq, NULL, NULL, sub->video_w, sub->video_h);
+    if (!r) {
+        subComponent_update_preference(sub->inSub, &sub->sp);
+    }
+    return r;
 }
 
 enum AVCodecID ff_sub_get_codec_id(FFSubtitle *sub)
@@ -372,6 +359,27 @@ int ff_sub_packet_queue_flush(FFSubtitle *sub)
     return -1;
 }
 
+void ff_sub_update_preference(FFSubtitle *sub, IJKSDLSubtitlePreference* sp)
+{
+    if (sub) {
+        sub->sp = *sp;
+        
+        int idx = -1;
+        if (sub->inSub) {
+            idx = subComponent_get_stream(sub->inSub);
+            if (idx != -1) {
+                subComponent_update_preference(sub->inSub, sp);
+            }
+        }
+        if (idx == -1 && sub->exSub) {
+            idx = exSub_get_opened_stream_idx(sub->exSub);
+            if (idx != -1) {
+                exSub_update_preference(sub->exSub, sp);
+            }
+        }
+    }
+}
+
 //---------------------------Internal Subtitle Functions--------------------------------------------------//
 
 //
@@ -397,7 +405,11 @@ int ff_exSub_add_active_subtitle(FFSubtitle *sub, const char *file_name, IjkMedi
             return -1;
         }
     }
-    return exSub_add_active_subtitle(sub->exSub, file_name, meta);
+    int err = exSub_add_active_subtitle(sub->exSub, file_name, meta);
+    if (!err) {
+        exSub_update_preference(sub->exSub, &sub->sp);
+    }
+    return err;
 }
 
 int ff_exSub_open_stream(FFSubtitle *sub, int stream)
@@ -405,7 +417,11 @@ int ff_exSub_open_stream(FFSubtitle *sub, int stream)
     if (!sub->exSub) {
         return -1;
     }
-    return exSub_open_file_idx(sub->exSub, stream, sub->video_w, sub->video_h);
+    int err = exSub_open_file_idx(sub->exSub, stream, sub->video_w, sub->video_h);
+    if (!err) {
+        exSub_update_preference(sub->exSub, &sub->sp);
+    }
+    return err;
 }
 
 int ff_exSub_check_file_added(const char *file_name, FFSubtitle *sub)

@@ -1342,22 +1342,16 @@ static BOOL hdrAnimationShown = 0;
 {
     NSMenuItem *item = [sender selectedItem];
     int bgrValue = (int)item.tag;
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    IJKSDLSubtitlePreference p = self.player.subtitlePreference;
     p.color = bgrValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+    self.player.subtitlePreference = p;
 }
 
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
 {
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    IJKSDLSubtitlePreference p = self.player.subtitlePreference;
     p.size = sender.floatValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+    self.player.subtitlePreference = p;
 }
 
 - (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
@@ -1381,12 +1375,9 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender
 {
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    IJKSDLSubtitlePreference p = self.player.subtitlePreference;
     p.bottomMargin = sender.floatValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+    self.player.subtitlePreference = p;
 }
 
 #pragma mark 画面设置

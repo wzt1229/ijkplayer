@@ -101,7 +101,6 @@ void IJK_GLES2_Renderer_endDrawSubtitle(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravity, GLsizei view_width, GLsizei view_height);
 
 void      IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer, int type, int degrees);
-void      IJK_GLES2_Renderer_updateSubtitleBottomMargin(IJK_GLES2_Renderer *renderer, float value);
 void      IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer, int degrees);
 void      IJK_GLES2_Renderer_updateUserDefinedDAR(IJK_GLES2_Renderer *renderer, float ratio);
 int       IJK_GLES2_Renderer_isZRotate90oddMultiple(IJK_GLES2_Renderer *renderer);

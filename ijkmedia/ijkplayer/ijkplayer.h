@@ -232,8 +232,10 @@ int             ijkmp_get_audio_frame_cache_remaining(IjkMediaPlayer *mp);
 /* register audio samples observer*/
 void            ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callback cb);
 /* toggle accurate seek */
-void ijk_set_enable_accurate_seek(IjkMediaPlayer *mp,int open);
+void ijkmp_set_enable_accurate_seek(IjkMediaPlayer *mp, int open);
 /* step to next frame */
-void ijk_step_to_next_frame(IjkMediaPlayer *mp);
+void ijkmp_step_to_next_frame(IjkMediaPlayer *mp);
 
+typedef struct IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
+void ijkmp_set_subtitle_preference(IjkMediaPlayer *mp, IJKSDLSubtitlePreference* sp);
 #endif
