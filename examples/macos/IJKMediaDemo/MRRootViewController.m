@@ -1349,7 +1349,7 @@ static BOOL hdrAnimationShown = 0;
     p.strokeColor = color2int([MRCocoaBindingUserDefault subtitle_stroke_color]);
     p.strokeSize = [MRCocoaBindingUserDefault subtitle_stroke_size];
     p.bottomMargin = [MRCocoaBindingUserDefault subtitle_bottom_margin];
-    p.size = [MRCocoaBindingUserDefault subtitle_font_size];
+    p.scale = [MRCocoaBindingUserDefault subtitle_font_size] / 50;
     NSString *name = [MRCocoaBindingUserDefault subtitle_font_name];
     if (name) {
         strcpy(p.name,[name UTF8String]);
@@ -1491,7 +1491,7 @@ static BOOL hdrAnimationShown = 0;
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__
         IJKSDLSubtitlePreference p = self.player.subtitlePreference;
-        p.size = [v floatValue];
+        p.scale = [v floatValue] / 50;
         self.player.subtitlePreference = p;
     } forKey:@"subtitle_font_size"];
     

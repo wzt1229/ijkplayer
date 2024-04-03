@@ -20,15 +20,16 @@ typedef struct FFSubtitleBuffer FFSubtitleBuffer;
 typedef struct FF_ASS_Renderer_Format {
     const AVClass *priv_class;
     int priv_data_size;
-    int (*init)(struct FF_ASS_Renderer *);
-    int (*set_subtitle_header)(struct FF_ASS_Renderer *s, uint8_t *subtitle_header, int subtitle_header_size);
+    int (*init)(FF_ASS_Renderer *);
+    int (*set_subtitle_header)(FF_ASS_Renderer *s, uint8_t *subtitle_header, int subtitle_header_size);
     void (*set_attach_font)(FF_ASS_Renderer *s, AVStream *st);
-    void (*set_video_size)(struct FF_ASS_Renderer *s, int w, int h);
-    void (*process_chunk)(struct FF_ASS_Renderer *, char *ass_line, int64_t start, int64_t duration);
-    int  (*blend_frame)(struct FF_ASS_Renderer *, double time_ms, FFSubtitleBuffer ** buffer);
-    int  (*upload_frame)(struct FF_ASS_Renderer *, double time_ms, SDL_TextureOverlay * overlay);
+    void (*set_video_size)(FF_ASS_Renderer *s, int w, int h);
+    void (*process_chunk)(FF_ASS_Renderer *, char *ass_line, int64_t start, int64_t duration);
+    int  (*blend_frame)(FF_ASS_Renderer *, double time_ms, FFSubtitleBuffer ** buffer);
+    int  (*upload_frame)(FF_ASS_Renderer *, double time_ms, SDL_TextureOverlay * overlay);
     void (*update_margin)(FF_ASS_Renderer *s, int t, int b, int l, int r);
-    void (*uninit)(struct FF_ASS_Renderer *);
+    void (*set_font_scale)(FF_ASS_Renderer *, double scale);
+    void (*uninit)(FF_ASS_Renderer *);
 } FF_ASS_Renderer_Format;
 
 typedef struct FF_ASS_Renderer {

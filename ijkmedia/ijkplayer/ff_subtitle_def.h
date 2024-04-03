@@ -25,7 +25,7 @@ void ff_subtitle_buffer_release(FFSubtitleBuffer **);
 
 typedef struct IJKSDLSubtitlePreference {
     char name[256];//font name
-    float size; //font size
+    float scale; //font scale,default 1.0
     uint32_t color;//text color
     uint32_t bgColor;//text bg color
     uint32_t strokeColor;//border color
@@ -35,7 +35,7 @@ typedef struct IJKSDLSubtitlePreference {
 
 static inline IJKSDLSubtitlePreference ijk_subtitle_default_preference(void)
 {
-    return (IJKSDLSubtitlePreference){"", 50, 4294967295, 0, 255, 5, 0.025};
+    return (IJKSDLSubtitlePreference){"", 1.0, 4294967295, 0, 255, 5, 0.025};
 }
 
 static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,IJKSDLSubtitlePreference* p2)
@@ -43,7 +43,7 @@ static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,I
     if (!p1 || !p2) {
         return 0;
     }
-    if (p1->size != p2->size ||
+    if (p1->scale != p2->scale ||
         p1->color != p2->color ||
         p1->bgColor != p2->bgColor ||
         p1->strokeColor != p2->strokeColor ||

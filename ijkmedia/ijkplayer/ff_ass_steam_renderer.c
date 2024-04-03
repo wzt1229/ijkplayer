@@ -366,6 +366,15 @@ static void update_margin(FF_ASS_Renderer *s, int t, int b, int l, int r)
     ass_set_margins(ass->renderer, t, b, l, r);
 }
 
+static void set_font_scale(FF_ASS_Renderer *s, double scale)
+{
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass || !ass->renderer) {
+        return;
+    }
+    ass_set_font_scale(ass->renderer, scale);
+}
+
 static void uninit(FF_ASS_Renderer *s)
 {
     FF_ASS_Context *ass = s->priv_data;
@@ -404,6 +413,7 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .blend_frame        = blend_frame,
     .upload_frame       = upload_frame,
     .update_margin      = update_margin,
+    .set_font_scale     = set_font_scale,
     .uninit             = uninit,
 };
 

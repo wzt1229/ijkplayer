@@ -1350,7 +1350,7 @@ static BOOL hdrAnimationShown = 0;
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
 {
     IJKSDLSubtitlePreference p = self.player.subtitlePreference;
-    p.size = sender.floatValue;
+    p.scale = sender.floatValue / 50;
     self.player.subtitlePreference = p;
 }
 
