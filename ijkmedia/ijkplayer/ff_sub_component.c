@@ -12,7 +12,7 @@
 #include "ijksdl/ijksdl_texture.h"
 #include "ff_subtitle_def_internal.h"
 
-#define SUB_REF_MAX_LEN 16
+#define SUB_REF_MAX_LEN SUBPICTURE_QUEUE_SIZE
 #define SUB_MAX_KEEP_DU 3.0
 #define SUB_MIN_KEEP_DU 0.5
 
