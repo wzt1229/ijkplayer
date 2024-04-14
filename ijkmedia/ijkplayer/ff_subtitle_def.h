@@ -13,7 +13,6 @@
 #include "ijksdl_rectangle.h"
 
 typedef struct FFSubtitleBuffer {
-    int stride;
     SDL_Rectangle rect;
     unsigned char *data;
     int usedAss;

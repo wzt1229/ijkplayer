@@ -12,9 +12,7 @@
 #include "ijksdl/ijksdl_texture.h"
 #include "ff_subtitle_def_internal.h"
 
-#define SUB_REF_MAX_LEN SUBPICTURE_QUEUE_SIZE
 #define SUB_MAX_KEEP_DU 3.0
-#define SUB_MIN_KEEP_DU 0.5
 
 typedef struct FFSubComponent{
     int st_idx;
@@ -29,7 +27,8 @@ typedef struct FFSubComponent{
     void *retry_opaque;
     FF_ASS_Renderer *assRenderer;
     int width, height;
-    SDL_TextureOverlay *overlay;
+    SDL_TextureOverlay *texture;
+    SDL_FBOOverlay *fbo;
     FFSubtitleBuffer* pre_list [SUB_REF_MAX_LEN];
     IJKSDLSubtitlePreference sp;
     int sp_changed;
@@ -186,8 +185,8 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
     memcpy(pal, rect->data[1], rect->nb_colors * 4);
     convert_pal(pal, rect->nb_colors, 0);
     
-    SDL_Rectangle r = (SDL_Rectangle){rect->x, rect->y, rect->w, rect->h};
-    FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_image(r, 4);
+    SDL_Rectangle r = (SDL_Rectangle){rect->x, rect->y, rect->w, rect->h, rect->linesize[0]};
+    FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_rgba32(r);
     if (!frame) {
         return NULL;
     }
@@ -195,7 +194,7 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
     
     for (int y = 0; y < rect->h; y++) {
         uint8_t *in = rect->data[0] + y * rect->linesize[0];
-        uint32_t *out = (uint32_t *)(frame->data + y * frame->stride);
+        uint32_t *out = (uint32_t *)(frame->data + y * frame->rect.stride);
         for (int x = 0; x < rect->w; x++)
             *out++ = pal[*in++];
     }
@@ -296,44 +295,61 @@ static int subtitle_thread(void *arg)
             int serial = com->decoder.pkt_serial;
             if (com->packetq->serial == serial) {
                 if (com->decoder.avctx->codec_id == AV_CODEC_ID_HDMV_PGS_SUBTITLE || com->decoder.avctx->codec_id == AV_CODEC_ID_FIRST_SUBTITLE) {
-                    if (sub.num_rects > 0 && sub.rects[0]->type == SUBTITLE_BITMAP
-                               && sub.rects[0]->data[0]
-                               && sub.rects[0]->linesize[0]) {
-                        FFSubtitleBuffer* sb = convert_pal8_to_bgra(sub.rects[0]);
-                        if (sb) {
-                            Frame *sp = frame_queue_peek_writable(com->frameq);
-                            if (com->packetq->abort_request || !sp) {
-                                pre_pts = 0;
-                                avsubtitle_free(&sub);
+                    
+                    FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
+                    int count = 0;
+                    for (int i = 0; i < sub.num_rects; i++) {
+                        AVSubtitleRect *rect = sub.rects[i];
+                        if (rect->w <= 0 || rect->h <= 0) {
+                            continue;
+                        }
+                        if (rect->type == SUBTITLE_BITMAP) {
+                            FFSubtitleBuffer* sb = convert_pal8_to_bgra(rect);
+                            if (sb) {
+                                buffers[count++] = sb;
+                            } else {
                                 break;
                             }
-                            sp->pts = pts + (float)sub.start_display_time / 1000.0;
-                            if (sub.end_display_time != 4294967295) {
-                                sp->duration = (float)(sub.end_display_time - sub.start_display_time) / 1000.0;
-                            } else if (pre_pts){
-                                Frame *pre = frame_queue_peek_pre_writable(com->frameq);
-                                if (pre) {
-                                    float t = sp->pts - pre_pts - 0.1;
-                                    t = t < SUB_MAX_KEEP_DU ? t : SUB_MAX_KEEP_DU;
-                                    t = t < SUB_MIN_KEEP_DU ? 1.5 : t;
-                                    pre->duration = t;
-                                }
-                            } else {
-                                sp->duration = SUB_MAX_KEEP_DU;
-                            }
-                            sp->serial = serial;
-                            sp->width  = com->decoder.avctx->width;
-                            sp->height = com->decoder.avctx->height;
-                            sp->shown = 0;
-                            sp->sb = sb;
-                            frame_queue_push(com->frameq);
-                            pre_pts = sp->pts;
-                            avsubtitle_free(&sub);
-                        } else {
-                            avsubtitle_free(&sub);
-                            break;
                         }
                     }
+                    
+                    if (count == 0) {
+                        avsubtitle_free(&sub);
+                        continue;
+                    }
+                    
+                    Frame *sp = frame_queue_peek_writable(com->frameq);
+                    if (com->packetq->abort_request || !sp) {
+                        pre_pts = 0;
+                        avsubtitle_free(&sub);
+                        break;
+                    }
+                    sp->pts = pts + (float)sub.start_display_time / 1000.0;
+                    if (sub.end_display_time != 4294967295) {
+                        sp->duration = (float)(sub.end_display_time - sub.start_display_time) / 1000.0;
+                    } else if (pre_pts){
+                        Frame *pre = frame_queue_peek_pre_writable(com->frameq);
+                        if (pre) {
+                            float t = sp->pts - pre_pts;
+                            pre->duration = t;
+                        }
+                    } else {
+                        sp->duration = SUB_MAX_KEEP_DU;
+                    }
+                    sp->serial = serial;
+                    sp->width  = com->decoder.avctx->width;
+                    sp->height = com->decoder.avctx->height;
+                    sp->shown = 0;
+                    
+                    if (count > 0) {
+                        memcpy(sp->sub_list, buffers, count * sizeof(buffers[0]));
+                    } else {
+                        bzero(sp->sub_list, sizeof(sp->sub_list));
+                    }
+                    frame_queue_push(com->frameq);
+                    pre_pts = sp->pts;
+                    
+                    avsubtitle_free(&sub);
                 } else {
                     for (int i = 0; i < sub.num_rects; i++) {
                         char *ass_line = sub.rects[i]->ass;
@@ -360,62 +376,9 @@ static int subtitle_thread(void *arg)
     com->st_idx = -1;
     av_packet_free(&com->pkt);
     free_pre_list(com->pre_list);
+    SDL_FBOOverlayFreeP(&com->fbo);
+    SDL_TextureOverlay_Release(&com->texture);
     return 0;
-}
-
-int subComponent_blend_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **buffer)
-{
-    if (!buffer || com->packetq->abort_request) {
-        return -1;
-    }
-    if (com->assRenderer) {
-        FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-        int r = ff_ass_blend_frame(assRenderer, pts, buffer);
-        ff_ass_render_release(&assRenderer);
-        return r;
-    } else {
-        int serial = subComponent_get_serial(com);
-        if (serial == -1) {
-            return -2;
-        }
-        
-        int r = -1;
-        int rem = 0;
-        while ((rem = frame_queue_nb_remaining(com->frameq)) > 0) {
-            if (rem > 1) {
-                Frame *sp2 = frame_queue_peek_next(com->frameq);
-                if (pts > sp2->pts) {
-                    frame_queue_next(com->frameq);
-                    continue;
-                }
-            }
-            Frame * sp = frame_queue_peek(com->frameq);
-            if (sp->serial != serial) {
-                frame_queue_next(com->frameq);
-                continue;
-            }
-            float begin = sp->pts;
-            float end = begin + sp->duration;
-            
-            if (pts > begin && pts < end) {
-                if (!sp->shown) {
-                    *buffer = ff_subtitle_buffer_retain(sp->sb);
-                    r = 1;
-                    sp->shown = 1;
-                } else {
-                    r = 0;
-                }
-            } else {
-                if (sp->shown) {
-                    sp->shown = 0;
-                }
-                //clean current display sub
-                r = -3;
-            }
-            break;
-        }
-        return r;
-    }
 }
 
 static SDL_Rectangle replace_bitmap(SDL_TextureOverlay *overlay, FFSubtitleBuffer *frame, int bottom_offset)
@@ -447,88 +410,119 @@ static void set_dirtyRect(SDL_TextureOverlay *overlay, SDL_Rectangle rect)
     }
 }
 
-int subComponent_upload_frame(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay)
+static int subComponent_upload_fbo(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_FBOOverlay *fbo)
 {
-    if (!overlay || com->packetq->abort_request) {
+    int serial = subComponent_get_serial(com);
+    if (serial == -1) {
+        return -2;
+    }
+    
+    int total = 0;
+    while ((total = frame_queue_nb_remaining(com->frameq)) > 0) {
+        Frame *sp = frame_queue_peek(com->frameq);
+        //drop old serial subs
+        if (sp->serial != serial) {
+            frame_queue_next(com->frameq);
+            continue;
+        }
+        
+        float end = sp->pts + sp->duration;
+        //字幕显示时间已经结束了
+        if (pts > end) {
+            frame_queue_next(com->frameq);
+            continue;
+        }
+        break;
+    }
+    
+    FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
+    int idx = 0;
+    for (int i = 0; i < total && idx < SUB_REF_MAX_LEN; i ++) {
+        Frame *sp = frame_queue_peek_offset(com->frameq, i);
+        if (sp && sp->sub_list[0] && pts > sp->pts) {
+            for (int j = 0; j < sizeof(sp->sub_list)/sizeof(sp->sub_list[0]); j++) {
+                FFSubtitleBuffer *sb = sp->sub_list[j];
+                if (sb) {
+                    buffers[idx++] = ff_subtitle_buffer_retain(sb);
+                } else {
+                    break;
+                }
+            }
+            continue;
+        } else {
+            break;
+        }
+    }
+    int count = idx;
+    
+    if (com->sp_changed || diff_list(com->pre_list, buffers)) {
+        free_pre_list(com->pre_list);
+        bzero(com->pre_list, sizeof(com->pre_list));
+        
+        if (count > 0) {
+            memcpy(com->pre_list, buffers, count * sizeof(buffers[0]));
+        }
+        com->sp_changed = 0;
+        fbo->clear(fbo);
+        if (count > 0) {
+            int bottom_offset = com->sp.bottomMargin * com->height;
+            float scale = com->sp.scale;
+
+            fbo->beginDraw(gpu->opaque, fbo, 0);
+            
+            for (int i = 0; i < count; i++) {
+                FFSubtitleBuffer *sb = buffers[i];
+                SDL_TextureOverlay *texture = gpu->createTexture(gpu->opaque, sb->rect.w, sb->rect.h, SDL_TEXTURE_FMT_BRGA);
+                texture->frame = replace_bitmap(texture, sb, bottom_offset);
+                texture->scale = scale;
+                fbo->drawTexture(gpu->opaque, fbo, texture);
+                SDL_TextureOverlay_Release(&texture);
+            }
+            
+            fbo->endDraw(gpu->opaque, fbo);
+            return 1;
+        }
+    } else {
+        free_pre_list(buffers);
+        return 0;
+    }
+    return -3;
+}
+
+int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
+{
+    if (!com || com->packetq->abort_request || !gpu || !texture) {
         return -1;
     }
     
-    if (com->overlay && (com->overlay->w != com->width || com->overlay->h != com->height)) {
-        SDL_TextureOverlayFreeP(&com->overlay);
-    }
-    if (!com->overlay) {
-        com->overlay = gpu->createTexture(gpu->opaque, com->width, com->height);
-    }
-    *overlay = com->overlay;
-    
     if (com->assRenderer) {
+        if (com->texture && (com->texture->w != com->width || com->texture->h != com->height)) {
+            SDL_TextureOverlay_Release(&com->texture);
+        }
+        if (!com->texture) {
+            com->texture = gpu->createTexture(gpu->opaque, com->width, com->height, SDL_TEXTURE_FMT_BRGA);
+        }
+        
         FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-        int r = ff_ass_upload_frame(assRenderer, pts, *overlay);
+        int r = ff_ass_upload_texture(assRenderer, pts, com->texture);
         ff_ass_render_release(&assRenderer);
+        if (r > 0) {
+            *texture = SDL_TextureOverlay_Retain(com->texture);
+        }
         return r;
     } else {
-        int serial = subComponent_get_serial(com);
-        if (serial == -1) {
-            return -2;
+        if (com->fbo && (com->fbo->w != com->width || com->fbo->h != com->height)) {
+            SDL_FBOOverlayFreeP(&com->fbo);
         }
-        
-        int total = 0;
-        while ((total = frame_queue_nb_remaining(com->frameq)) > 0) {
-            Frame *sp = frame_queue_peek(com->frameq);
-            //drop old serial subs
-            if (sp->serial != serial) {
-                frame_queue_next(com->frameq);
-                continue;
-            }
-            
-            float end = sp->pts + sp->duration;
-            //字幕显示时间已经结束了
-            if (pts > end) {
-                frame_queue_next(com->frameq);
-                continue;
-            }
-            break;
+        if (!com->fbo) {
+            com->fbo = gpu->createFBO(gpu->opaque, com->width, com->height);
         }
-        
-        FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
-        int idx = 0;
-        for (int i = 0; i < total && idx < SUB_REF_MAX_LEN; i ++) {
-            Frame *sp = frame_queue_peek_offset(com->frameq, i);
-            if (sp && sp->sb && pts > sp->pts) {
-                buffers[idx++] = ff_subtitle_buffer_retain(sp->sb);
-                continue;
-            } else {
-                break;
-            }
+
+        int r = subComponent_upload_fbo(com, pts, gpu, com->fbo);
+        if (r > 0) {
+            *texture = com->fbo->getTexture(com->fbo);
         }
-        int count = idx;
-        if (com->sp_changed || diff_list(com->pre_list, buffers)) {
-            free_pre_list(com->pre_list);
-            if (count > 0) {
-                memcpy(com->pre_list, buffers, sizeof(buffers));
-            } else {
-                bzero(com->pre_list, sizeof(com->pre_list));
-            }
-            com->sp_changed = 0;
-            clean_dirty_texture(*overlay);
-            if (count > 0) {
-                int bottom_offset = com->sp.bottomMargin * com->height;
-                SDL_Rectangle dirty_rect = {0};
-                for (int i = 0; i < count; i++) {
-                    FFSubtitleBuffer *sb = buffers[i];
-                    SDL_Rectangle rect = replace_bitmap(*overlay, sb,bottom_offset);
-                    dirty_rect = SDL_union_rectangle(dirty_rect, rect);
-                }
-                if (!isZeroRectangle(dirty_rect)) {
-                    set_dirtyRect(*overlay, dirty_rect);
-                }
-                return 1;
-            }
-        } else {
-            free_pre_list(buffers);
-            return 0;
-        }
-        return -3;
+        return r;
     }
 }
 

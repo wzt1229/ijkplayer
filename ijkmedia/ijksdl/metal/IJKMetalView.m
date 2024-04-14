@@ -274,16 +274,29 @@ typedef CGRect NSRect;
 
 - (void)encodeSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder
               viewport:(CGSize)viewport
-               texture:(id)subTexture
+               texture:(id<MTLTexture>)subTexture
 {
     [self.subPipeline lock];
     // Set the region of the drawable to draw into.
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
     //upload textures
-    CGRect subRect = CGRectMake(-1, -1, 2.0, 2.0);
+    
+    float wRatio = viewport.width / subTexture.width;
+    float hRatio = viewport.height / subTexture.height;
+    
+    CGRect subRect;
+    //aspect fill
+    if (wRatio > hRatio) {
+        float nH = (subTexture.height * wRatio / viewport.height);
+        subRect = CGRectMake(-1, -nH, 2.0, 2.0 * nH);
+    } else {
+        float nW = (subTexture.width * hRatio / viewport.width);
+        subRect = CGRectMake(-nW, -1, 2.0 * nW, 2.0);
+    }
+
+    [self.subPipeline updateSubtitleVertexIfNeed:subRect];
     [self.subPipeline uploadTextureWithEncoder:renderEncoder
-                                       texture:subTexture
-                                          rect:subRect];
+                                       texture:subTexture];
     [self.subPipeline unlock];
 }
 
@@ -548,11 +561,6 @@ typedef CGRect NSRect;
     [self draw];
 }
 
-- (void)generateSubTexture:(IJKOverlayAttach *)attach
-{
-    [attach generateSubTexture];
-}
-
 mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 
 + (NSArray<id<MTLTexture>> *)doGenerateTexture:(CVPixelBufferRef)pixelBuffer
@@ -601,17 +609,16 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
         ALOGW("IJKMetalView: overlay is nil\n");
         return NO;
     }
-    
-    [self generateSubTexture:attach];
+    [attach generateSubTexture];
     
     //hold the attach as current.
     self.currentAttach = attach;
     
+    attach.videoTextures = [[self class] doGenerateTexture:attach.videoPicture textureCache:_pictureTextureCache];
+    
     if (self.preventDisplay) {
         return YES;
     }
-    
-    attach.videoTextures = [[self class] doGenerateTexture:attach.videoPicture textureCache:_pictureTextureCache];
     
     //not dispatch to main thread, use current sub thread (ff_vout) draw
     [self draw];

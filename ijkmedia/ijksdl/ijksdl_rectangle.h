@@ -14,6 +14,7 @@
 typedef struct SDL_Rectangle{
     int x, y; // 左上角坐标
     int w, h; //
+    int stride;
 } SDL_Rectangle;
 
 int isZeroRectangle(SDL_Rectangle rect);

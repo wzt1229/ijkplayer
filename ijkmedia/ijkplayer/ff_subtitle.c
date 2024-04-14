@@ -119,10 +119,9 @@ int ff_sub_drop_old_frames(FFSubtitle *sub)
     return count;
 }
 
-
-int ff_sub_blend_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
+int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
 {
-    if (!sub || !buffer) {
+    if (!sub || !texture) {
         return -1;
     }
     
@@ -131,39 +130,14 @@ int ff_sub_blend_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
     
     if (sub->inSub) {
         if (subComponent_get_stream(sub->inSub) != -1) {
-            return subComponent_blend_frame(sub->inSub, pts, buffer);
+            return subComponent_upload_texture(sub->inSub, pts, gpu, texture);
         }
     }
     
     if (sub->exSub) {
         if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
             pts -= sub->streamStartTime;
-            return exSub_blend_frame(sub->exSub, pts, buffer);
-        }
-    }
-    
-    return -3;
-}
-
-int ff_sub_upload_frame(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay_out)
-{
-    if (!sub || !overlay_out) {
-        return -1;
-    }
-    
-    sub->current_pts = pts;
-    pts += (sub ? sub->delay : 0.0);
-    
-    if (sub->inSub) {
-        if (subComponent_get_stream(sub->inSub) != -1) {
-            return subComponent_upload_frame(sub->inSub, pts, gpu, overlay_out);
-        }
-    }
-    
-    if (sub->exSub) {
-        if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
-            pts -= sub->streamStartTime;
-            return exSub_upload_frame(sub->exSub, pts, gpu, overlay_out);
+            return exSub_upload_texture(sub->exSub, pts, gpu, texture);
         }
     }
     

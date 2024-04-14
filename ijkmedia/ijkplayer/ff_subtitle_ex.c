@@ -498,14 +498,9 @@ AVStream *exSub_get_stream(IJKEXSubtitle *sub)
     return NULL;
 }
 
-int exSub_blend_frame(IJKEXSubtitle *sub, float pts, FFSubtitleBuffer **buffer)
+int exSub_upload_texture(IJKEXSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
 {
-    return subComponent_blend_frame(sub->component, pts, buffer);
-}
-
-int exSub_upload_frame(IJKEXSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay)
-{
-    return subComponent_upload_frame(sub->component, pts, gpu, overlay);
+    return subComponent_upload_texture(sub->component, pts, gpu, texture);
 }
 
 void exSub_update_preference(IJKEXSubtitle *sub, IJKSDLSubtitlePreference* sp)

@@ -133,11 +133,9 @@
 
 - (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
                          texture:(id)subTexture
-                            rect:(CGRect)subRect
 {
     [encoder setFragmentTexture:subTexture atIndex:IJKFragmentTextureIndexTextureY];
 
-    [self updateSubtitleVertexIfNeed:subRect];
     // Pass in the parameter data.
     [encoder setVertexBuffer:self.vertices
                       offset:0

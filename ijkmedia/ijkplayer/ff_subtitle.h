@@ -27,9 +27,7 @@ int ff_sub_destroy(FFSubtitle **subp);
 //
 int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx);
 int ff_sub_close_current(FFSubtitle *sub);
-//less than zero means err, equal zero means keep, greater than zero means need show,buff need release
-int ff_sub_blend_frame(FFSubtitle *sub, float pts, FFSubtitleBuffer ** buffer);
-int ff_sub_upload_frame(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay_out);
+int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture);
 int ff_sub_drop_old_frames(FFSubtitle *sub);
 int ff_sub_frame_queue_size(FFSubtitle *sub);
 

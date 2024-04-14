@@ -30,9 +30,7 @@ int subComponent_get_stream(FFSubComponent *com);
 int subComponent_seek_to(FFSubComponent *com, int sec);
 AVCodecContext * subComponent_get_avctx(FFSubComponent *com);
 int subComponent_get_serial(FFSubComponent *com);
-//buff need release
-int subComponent_blend_frame(FFSubComponent *com, float pts, FFSubtitleBuffer **buffer);
-int subComponent_upload_frame(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_TextureOverlay **overlay);
+int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture);
 void subComponent_update_preference(FFSubComponent *com, IJKSDLSubtitlePreference* sp);
 int subComponent_eof_and_pkt_empty(FFSubComponent *com);
 

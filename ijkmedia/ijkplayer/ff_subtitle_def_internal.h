@@ -10,6 +10,6 @@
 
 #include "ff_subtitle_def.h"
 
-FFSubtitleBuffer *ff_subtitle_buffer_alloc_image(SDL_Rectangle rect, int bpc);
+FFSubtitleBuffer *ff_subtitle_buffer_alloc_rgba32(SDL_Rectangle rect);
 
 #endif /* ff_subtitle_def_internal_hpp */

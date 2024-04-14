@@ -155,62 +155,16 @@ static void draw_ass_rgba(unsigned char *src, int src_w, int src_h,
     #undef COLOR_BLEND
 }
 
-static void blend_single(FFSubtitleBuffer * frame, ASS_Image *img, int layer)
-{
-    if (img->w == 0 || img->h == 0)
-        return;
-    //printf("blend %d rect:{%d,%d}{%d,%d}\n", layer, img->dst_x, img->dst_y, img->w, img->h);
-    unsigned char *dst = frame->data;
-    dst += img->dst_y * frame->stride + img->dst_x * 4;
-    draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->stride, img->color);
-}
-
-static void blend(FFSubtitleBuffer * frame, ASS_Image *img)
-{
-    int cnt = 0;
-    while (img) {
-        ++cnt;
-        blend_single(frame, img, cnt);
-        img = img->next;
-    }
-}
-
-static int blend_frame(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer ** buffer)
-{
-    FF_ASS_Context *ass = s->priv_data;
-    if (!ass) {
-        return -1;
-    }
-    int changed;
-    ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
-
-    if (changed == 0) {
-        return 0;
-    }
-    
-    if (imgs) {
-        SDL_Rectangle rect = (SDL_Rectangle){0, 0, ass->original_w, ass->original_h};
-        FFSubtitleBuffer* sb = ff_subtitle_buffer_alloc_image(rect, 4);
-        sb->usedAss = 1;
-        blend(sb, imgs);
-        *buffer = sb;
-        return 1;
-    } else {
-        av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
-        return -2;
-    }
-}
-
 static void draw_single_inset(FFSubtitleBuffer * frame, ASS_Image *img, int layer, int insetx, int insety)
 {
     if (img->w == 0 || img->h == 0)
         return;
     unsigned char *dst = frame->data;
-    dst += (img->dst_y - insety) * frame->stride + (img->dst_x - insetx) * 4;
-    draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->stride, img->color);
+    dst += (img->dst_y - insety) * frame->rect.stride + (img->dst_x - insetx) * 4;
+    draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->rect.stride, img->color);
 }
 
-static int upload_frame(struct FF_ASS_Renderer *s, double time_ms, SDL_TextureOverlay * overlay)
+static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_TextureOverlay *texture)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass) {
@@ -224,30 +178,33 @@ static int upload_frame(struct FF_ASS_Renderer *s, double time_ms, SDL_TextureOv
     }
     
     if (imgs) {
-        overlay->clearDirtyRect(overlay);
+        texture->clearDirtyRect(texture);
         {
-            ASS_Image *header = imgs;
+            ASS_Image *img = imgs;
             SDL_Rectangle dirtyRect = {0};
-            while (header) {
-                SDL_Rectangle t = {header->dst_x, header->dst_y, header->w, header->h};
+            while (img) {
+                SDL_Rectangle t = {img->dst_x, img->dst_y, img->w, img->h};
                 dirtyRect = SDL_union_rectangle(dirtyRect, t);
-                header = header->next;
+                img = img->next;
             }
-            overlay->dirtyRect = dirtyRect;
+            texture->dirtyRect = dirtyRect;
         }
         
-        FFSubtitleBuffer* frame = ff_subtitle_buffer_alloc_image(overlay->dirtyRect, 4);
+        FFSubtitleBuffer* frame = ff_subtitle_buffer_alloc_rgba32(texture->dirtyRect);
+        texture->dirtyRect.stride = frame->rect.stride;
+        
         int cnt = 0;
         while (imgs) {
             ++cnt;
-            draw_single_inset(frame, imgs, cnt, overlay->dirtyRect.x, overlay->dirtyRect.y);
+            draw_single_inset(frame, imgs, cnt, texture->dirtyRect.x, texture->dirtyRect.y);
             imgs = imgs->next;
         }
-        overlay->replaceRegion(overlay->opaque, overlay->dirtyRect, frame->data);
+        
+        texture->replaceRegion(texture->opaque, frame->rect, frame->data);
         ff_subtitle_buffer_release(&frame);
         return 1;
     } else {
-        av_log(NULL, AV_LOG_DEBUG, "ass_render_frame NULL at time ms:%f\n", time_ms);
+        av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
         return -2;
     }
 }
@@ -410,8 +367,7 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .set_attach_font    = set_attach_font,
     .set_video_size     = set_video_size,
     .process_chunk      = process_chunk,
-    .blend_frame        = blend_frame,
-    .upload_frame       = upload_frame,
+    .upload_texture     = upload_texture,
     .update_margin      = update_margin,
     .set_font_scale     = set_font_scale,
     .uninit             = uninit,
@@ -489,20 +445,9 @@ void ff_ass_render_release(FF_ASS_Renderer **arp)
     }
 }
 
-
-/*
- changed : >0
- keep : =0
- clean : <0
- */
-int ff_ass_blend_frame(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer ** buffer)
+int ff_ass_upload_texture(FF_ASS_Renderer * assRenderer, float begin, SDL_TextureOverlay * texture)
 {
-    return assRenderer->iformat->blend_frame(assRenderer, begin * 1000, buffer);
-}
-
-int ff_ass_upload_frame(FF_ASS_Renderer * assRenderer, float begin, SDL_TextureOverlay * overlay)
-{
-    return assRenderer->iformat->upload_frame(assRenderer, begin * 1000, overlay);
+    return assRenderer->iformat->upload_texture(assRenderer, begin * 1000, texture);
 }
 
 void ff_ass_process_chunk(FF_ASS_Renderer * assRenderer, const char *ass_line, float begin, float end)

@@ -9,15 +9,20 @@
 #include <memory.h>
 #include <stdlib.h>
 
-FFSubtitleBuffer *ff_subtitle_buffer_alloc_image(SDL_Rectangle rect, int bpc)
+FFSubtitleBuffer *ff_subtitle_buffer_alloc_rgba32(SDL_Rectangle rect)
 {
+    if (rect.stride == 0) {
+        rect.stride = rect.w * 4;
+    } else {
+        rect.stride *= 4;
+    }
+    
     FFSubtitleBuffer *img = malloc(sizeof(FFSubtitleBuffer));
     bzero(img, sizeof(FFSubtitleBuffer));
     img->rect = rect;
-    img->stride = rect.w * bpc;
-    size_t size = rect.h * img->stride;
+    size_t size = rect.h * rect.stride;
     img->data = calloc(1, size);
-    memset(img->data, 0, rect.h * img->stride);
+    memset(img->data, 0, size);
     img->refCount = 1;
     return img;
 }
