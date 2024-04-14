@@ -57,6 +57,7 @@
 #import "IJKSDLThread.h"
 #import "../gles2/internal.h"
 #import "ijksdl_vout_ios_gles2.h"
+#import "IJKSDLOpenGLFBO.h"
 
 #define kHDRAnimationMaxCount 90
 
@@ -94,89 +95,6 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-//for snapshot.
-
-@interface _IJKSDLFBO : NSObject
-
-@property(nonatomic) CGSize textureSize;
-@property(nonatomic) GLuint fbo;
-@property(nonatomic) GLuint colorTexture;
-
-@end
-
-@implementation _IJKSDLFBO
-
-- (void)dealloc
-{
-    if (_fbo) {
-        glDeleteFramebuffers(1, &_fbo);
-    }
-    
-    if (_colorTexture) {
-        glDeleteTextures(1, &_colorTexture);
-    }
-    
-    _textureSize = CGSizeZero;
-}
-
-// Create texture and framebuffer objects to render and snapshot.
-- (BOOL)canReuse:(CGSize)size
-{
-    if (CGSizeEqualToSize(CGSizeZero, size)) {
-        return NO;
-    }
-    
-    if (CGSizeEqualToSize(_textureSize, size) && _fbo && _colorTexture) {
-        return YES;
-    } else {
-        return NO;
-    }
-}
-
-- (instancetype)initWithSize:(CGSize)size
-{
-    self = [super init];
-    if (self) {
-        // Create a texture object that you apply to the model.
-        glGenTextures(1, &_colorTexture);
-        glBindTexture(GL_TEXTURE_2D, _colorTexture);
-
-        // Set up filter and wrap modes for the texture object.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-        // Allocate a texture image to which you can render to. Pass `NULL` for the data parameter
-        // becuase you don't need to load image data. You generate the image by rendering to the texture.
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.width, size.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-        glGenFramebuffers(1, &_fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _colorTexture, 0);
-
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
-            _textureSize = size;
-            return self;
-        } else {
-        #if DEBUG
-            NSAssert(NO, @"Failed to make complete framebuffer object %x.",  glCheckFramebufferStatus(GL_FRAMEBUFFER));
-        #endif
-            _textureSize = CGSizeZero;
-            return nil;
-        }
-    }
-    return nil;
-}
-
-- (void)bind
-{
-    // Bind the snapshot FBO and render the scene.
-    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-}
-
-@end
-
 @interface IJKSDLGLView()
 
 @property(atomic) IJKOverlayAttach *currentAttach;
@@ -186,7 +104,7 @@ static bool _is_need_dispath_to_global(void)
 @property(assign) CGSize viewSize;
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
-@property(atomic) _IJKSDLFBO * fbo;
+@property(atomic) IJKSDLOpenGLFBO * fbo;
 @property(atomic) IJKSDLThread *renderThread;
 @property(assign) int hdrAnimationFrameCount;
 
@@ -574,7 +492,7 @@ static bool _is_need_dispath_to_global(void)
         }
         
         if (![self.fbo canReuse:picSize]) {
-            self.fbo = [[_IJKSDLFBO alloc] initWithSize:picSize];
+            self.fbo = [[IJKSDLOpenGLFBO alloc] initWithSize:picSize];
         }
         
         if (self.fbo) {

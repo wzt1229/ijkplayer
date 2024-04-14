@@ -9,7 +9,7 @@
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
 #include "ff_ass_steam_renderer.h"
-#include "ijksdl/ijksdl_texture.h"
+#include "ijksdl/ijksdl_gpu.h"
 #include "ff_subtitle_def_internal.h"
 
 #define SUB_MAX_KEEP_DU 3.0
@@ -389,17 +389,10 @@ static SDL_Rectangle replace_bitmap(SDL_TextureOverlay *overlay, FFSubtitleBuffe
         rect.y = 0;
     }
     if (overlay && frame) {
-        overlay->replaceRegion(overlay->opaque, rect, frame->data);
+        overlay->replaceRegion(overlay, rect, frame->data);
         return rect;
     } else {
         return SDL_Zero_Rectangle;
-    }
-}
-
-static void clean_dirty_texture(SDL_TextureOverlay *overlay)
-{
-    if (overlay) {
-        overlay->clearDirtyRect(overlay);
     }
 }
 
@@ -468,18 +461,18 @@ static int subComponent_upload_fbo(FFSubComponent *com, float pts, SDL_GPU *gpu,
             int bottom_offset = com->sp.bottomMargin * com->height;
             float scale = com->sp.scale;
 
-            fbo->beginDraw(gpu->opaque, fbo, 0);
+            fbo->beginDraw(gpu, fbo, 0);
             
             for (int i = 0; i < count; i++) {
                 FFSubtitleBuffer *sb = buffers[i];
-                SDL_TextureOverlay *texture = gpu->createTexture(gpu->opaque, sb->rect.w, sb->rect.h, SDL_TEXTURE_FMT_BRGA);
+                SDL_TextureOverlay *texture = gpu->createTexture(gpu, sb->rect.w, sb->rect.h, SDL_TEXTURE_FMT_BRGA);
                 texture->frame = replace_bitmap(texture, sb, bottom_offset);
                 texture->scale = scale;
-                fbo->drawTexture(gpu->opaque, fbo, texture);
+                fbo->drawTexture(gpu, fbo, texture);
                 SDL_TextureOverlay_Release(&texture);
             }
             
-            fbo->endDraw(gpu->opaque, fbo);
+            fbo->endDraw(gpu, fbo);
             return 1;
         }
     } else {
@@ -500,7 +493,7 @@ int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SD
             SDL_TextureOverlay_Release(&com->texture);
         }
         if (!com->texture) {
-            com->texture = gpu->createTexture(gpu->opaque, com->width, com->height, SDL_TEXTURE_FMT_BRGA);
+            com->texture = gpu->createTexture(gpu, com->width, com->height, SDL_TEXTURE_FMT_BRGA);
         }
         
         FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
@@ -515,7 +508,7 @@ int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SD
             SDL_FBOOverlayFreeP(&com->fbo);
         }
         if (!com->fbo) {
-            com->fbo = gpu->createFBO(gpu->opaque, com->width, com->height);
+            com->fbo = gpu->createFBO(gpu, com->width, com->height);
         }
 
         int r = subComponent_upload_fbo(com, pts, gpu, com->fbo);

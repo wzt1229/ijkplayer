@@ -23,9 +23,17 @@
 
 #include "ijksdl/ijksdl_stdinc.h"
 #include "ijksdl/ijksdl_vout.h"
-#include "ijksdl_texture.h"
+#include "../ijksdl_gpu.h"
 
 #import "IJKVideoRenderingProtocol.h"
+
+@protocol IJKSDLSubtitleTextureProtocol <NSObject>
+
+@property(nonatomic) uint32_t texture;
+@property(nonatomic) int w;
+@property(nonatomic) int h;
+
+@end
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view);

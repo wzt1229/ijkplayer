@@ -13,7 +13,7 @@
 #include "libavutil/opt.h"
 #include "libavutil/parseutils.h"
 #include "ff_subtitle_def.h"
-#include "ijksdl/ijksdl_texture.h"
+#include "ijksdl/ijksdl_gpu.h"
 #include "ff_subtitle_def_internal.h"
 
 typedef struct FF_ASS_Context {
@@ -200,7 +200,7 @@ static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_Texture
             imgs = imgs->next;
         }
         
-        texture->replaceRegion(texture->opaque, frame->rect, frame->data);
+        texture->replaceRegion(texture, frame->rect, frame->data);
         ff_subtitle_buffer_release(&frame);
         return 1;
     } else {

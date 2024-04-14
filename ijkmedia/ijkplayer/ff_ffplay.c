@@ -75,7 +75,7 @@
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
 #include "ff_subtitle.h"
-#include "ijksdl/ijksdl_texture.h"
+#include "ijksdl/ijksdl_gpu.h"
 #include <stdatomic.h>
 #if defined(__ANDROID__)
 #include "ijksoundtouch/ijksoundtouch_wrap.h"

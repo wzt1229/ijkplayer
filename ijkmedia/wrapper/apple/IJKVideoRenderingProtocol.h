@@ -42,14 +42,6 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeFill        // Non-uniform scale. Both render dimensions will exactly match the visible bounds
 };
 
-@protocol IJKSDLSubtitleTextureProtocol <NSObject>
-
-@property(nonatomic) uint32_t texture;
-@property(nonatomic) int w;
-@property(nonatomic) int h;
-
-@end
-
 typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 @interface IJKOverlayAttach : NSObject
 

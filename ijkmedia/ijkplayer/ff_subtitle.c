@@ -11,8 +11,8 @@
 #include "ff_subtitle_ex.h"
 #include "ff_sub_component.h"
 #include "ff_ffplay_debug.h"
-#include "ijksdl_texture.h"
-#include "ijksdl/ijksdl_texture.h"
+#include "ijksdl_gpu.h"
+#include "ijksdl/ijksdl_gpu.h"
 
 typedef struct FFSubtitle {
     PacketQueue packetq;
