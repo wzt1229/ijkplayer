@@ -52,12 +52,13 @@ typedef struct SDL_GPU_Opaque_GL {
 } SDL_GPU_Opaque_GL;
 
 typedef struct SDL_TextureOverlay_Opaque_GL {
-    _IJKSDLSubTexture* texture_gl;
+    _IJKSDLSubTexture* texture;
     NSOpenGLContext *glContext;
 } SDL_TextureOverlay_Opaque_GL;
 
 typedef struct SDL_FBOOverlay_Opaque_GL {
-    SDL_TextureOverlay *texture;
+    NSOpenGLContext *glContext;
+    SDL_TextureOverlay *toverlay;
     IJKSDLOpenGLFBO *fbo;
 } SDL_FBOOverlay_Opaque_GL;
 
@@ -69,7 +70,7 @@ static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void 
 {
     if (overlay && overlay->opaque) {
         SDL_TextureOverlay_Opaque_GL *op = overlay->opaque;
-        _IJKSDLSubTexture *t = op->texture_gl;
+        _IJKSDLSubTexture *t = op->texture;
         CGLLockContext([op->glContext CGLContextObj]);
         [op->glContext makeCurrentContext];
         glBindTexture(GL_TEXTURE_RECTANGLE, t.texture);
@@ -112,14 +113,14 @@ static void dealloc_texture(SDL_TextureOverlay *overlay)
         SDL_TextureOverlay_Opaque_GL *opaque = overlay->opaque;
         if (opaque) {
             opaque->glContext = nil;
-            opaque->texture_gl = nil;
+            opaque->texture = nil;
             free(opaque);
         }
         overlay->opaque = NULL;
     }
 }
 
-static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, int h, SDL_TEXTURE_FMT fmt)
+static SDL_TextureOverlay * create_textureOverlay_with_glTexture(NSOpenGLContext *context, _IJKSDLSubTexture * subTexture)
 {
     SDL_TextureOverlay *overlay = (SDL_TextureOverlay*) calloc(1, sizeof(SDL_TextureOverlay));
     if (!overlay)
@@ -131,6 +132,23 @@ static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, 
         return NULL;
     }
 
+    opaque->glContext = context;
+    opaque->texture = subTexture;
+    overlay->opaque = opaque;
+    overlay->w = subTexture.w;
+    overlay->h = subTexture.h;
+    overlay->refCount = 1;
+    
+    overlay->replaceRegion = replaceRegion;
+    overlay->getTexture = getTexture;
+    overlay->clearDirtyRect = clearOpenGLRegion;
+    overlay->dealloc = dealloc_texture;
+    
+    return overlay;
+}
+
+static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, int h, SDL_TEXTURE_FMT fmt)
+{
     CGLLockContext([context CGLContextObj]);
     [context makeCurrentContext];
     uint32_t texture;
@@ -146,24 +164,15 @@ static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, 
    
     glBindTexture(GL_TEXTURE_RECTANGLE, 0);
     CGLUnlockContext([context CGLContextObj]);
-    opaque->glContext = context;
-    opaque->texture_gl = [[_IJKSDLSubTexture alloc] initWith:texture w:w h:h];
-    overlay->opaque = opaque;
-    overlay->w = w;
-    overlay->h = h;
-    overlay->replaceRegion = replaceRegion;
-    overlay->getTexture = getTexture;
-    overlay->clearDirtyRect = clearOpenGLRegion;
-    overlay->dealloc = dealloc_texture;
-    overlay->refCount = 1;
-    return overlay;
+    
+    return create_textureOverlay_with_glTexture(context, [[_IJKSDLSubTexture alloc] initWith:texture w:w h:h]);
 }
 
 static void* getTexture(SDL_TextureOverlay *overlay)
 {
     if (overlay && overlay->opaque) {
         SDL_TextureOverlay_Opaque_GL *opaque = overlay->opaque;
-        return (__bridge void *)opaque->texture_gl;
+        return (__bridge void *)opaque->texture;
     }
     return NULL;
 }
@@ -200,8 +209,12 @@ static SDL_FBOOverlay *createOpenGLFBO(NSOpenGLContext *glContext, int w, int h)
         }
     }
     if (!opaque->fbo) {
+        CGLLockContext([glContext CGLContextObj]);
+        [glContext makeCurrentContext];
         opaque->fbo = [[IJKSDLOpenGLFBO alloc] initWithSize:size];
+        CGLUnlockContext([glContext CGLContextObj]);
     }
+    opaque->glContext = glContext;
     overlay->opaque = opaque;
     return overlay;
 }
@@ -242,9 +255,9 @@ static void dealloc_fbo(SDL_FBOOverlay *overlay)
     }
     
     SDL_FBOOverlay_Opaque_GL *fop = overlay->opaque;
-    
-    SDL_TextureOverlay_Release(&fop->texture);
+    SDL_TextureOverlay_Release(&fop->toverlay);
     fop->fbo = nil;
+    fop->glContext = nil;
     free(fop);
 }
 
@@ -255,33 +268,14 @@ static SDL_TextureOverlay * getTexture_fbo(SDL_FBOOverlay *foverlay)
     }
     
     SDL_FBOOverlay_Opaque_GL *fop = foverlay->opaque;
-    if (fop->texture) {
-        return SDL_TextureOverlay_Retain(fop->texture);
-    }
-    
-    SDL_TextureOverlay *texture = (SDL_TextureOverlay*) calloc(1, sizeof(SDL_TextureOverlay));
-    if (!texture)
-        return NULL;
-    
-    SDL_TextureOverlay_Opaque_GL *opaque = (SDL_TextureOverlay_Opaque_GL*) calloc(1, sizeof(SDL_TextureOverlay_Opaque_GL));
-    if (!opaque) {
-        free(texture);
-        return NULL;
+    if (fop->toverlay) {
+        return SDL_TextureOverlay_Retain(fop->toverlay);
     }
     
     uint32_t t = [fop->fbo texture];
     CGSize size = [fop->fbo size];
-    texture->opaque = opaque;
-    texture->w = (int)size.width;
-    texture->h = (int)size.height;
-    opaque->texture_gl = [[_IJKSDLSubTexture alloc] initWith:t w:texture->w h:texture->h];
-    texture->replaceRegion = replaceRegion;
-    texture->getTexture = getTexture;
-    texture->clearDirtyRect = clearOpenGLRegion;
-    texture->refCount = 1;
-    texture->dealloc = dealloc_texture;
-    fop->texture = texture;
-    return texture;
+    _IJKSDLSubTexture *subTexture = [[_IJKSDLSubTexture alloc] initWith:t w:(int)size.width h:(int)size.height];
+    return create_textureOverlay_with_glTexture(fop->glContext, subTexture);
 }
 
 static SDL_FBOOverlay *createFBO(SDL_GPU *gpu, int w, int h)
@@ -336,4 +330,3 @@ SDL_GPU *SDL_CreateGPU_WithGLContext(NSOpenGLContext * context)
     gl->dealloc = dealloc_gpu;
     return gl;
 }
-

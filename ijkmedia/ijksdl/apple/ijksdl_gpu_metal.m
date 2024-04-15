@@ -90,8 +90,12 @@ static void dealloc_texture(SDL_TextureOverlay *overlay)
     }
 }
 
-static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h, SDL_TEXTURE_FMT fmt)
+static SDL_TextureOverlay * create_textureOverlay_with_mtlTexture(id<MTLTexture> subTexture)
 {
+    if (!subTexture) {
+        return NULL;
+    }
+    
     SDL_TextureOverlay *texture = (SDL_TextureOverlay*) calloc(1, sizeof(SDL_TextureOverlay));
     if (!texture)
         return NULL;
@@ -102,6 +106,22 @@ static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h,
         return NULL;
     }
     
+    opaque->texture = subTexture;
+    texture->opaque = opaque;
+    texture->w = (int)subTexture.width;
+    texture->h = (int)subTexture.height;
+    texture->refCount = 1;
+    
+    texture->replaceRegion = replaceRegion;
+    texture->getTexture = getTexture;
+    texture->clearDirtyRect = clearMetalRegion;
+    texture->dealloc = dealloc_texture;
+    
+    return texture;
+}
+
+static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h, SDL_TEXTURE_FMT fmt)
+{
     MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 
     // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
@@ -116,16 +136,7 @@ static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h,
     // Create the texture from the device by using the descriptor
     id<MTLTexture> subTexture = [device newTextureWithDescriptor:textureDescriptor];
     
-    opaque->texture = subTexture;
-    texture->opaque = opaque;
-    texture->w = w;
-    texture->h = h;
-    texture->replaceRegion = replaceRegion;
-    texture->getTexture = getTexture;
-    texture->clearDirtyRect = clearMetalRegion;
-    texture->dealloc = dealloc_texture;
-    texture->refCount = 1;
-    return texture;
+    return create_textureOverlay_with_mtlTexture(subTexture);
 }
 
 #pragma mark - Texture
@@ -324,28 +335,8 @@ static SDL_TextureOverlay * getTexture_fbo(SDL_FBOOverlay *foverlay)
         return SDL_TextureOverlay_Retain(fop->texture);
     }
     
-    SDL_TextureOverlay *texture = (SDL_TextureOverlay*) calloc(1, sizeof(SDL_TextureOverlay));
-    if (!texture)
-        return NULL;
-    
-    SDL_TextureOverlay_Opaque_Metal *opaque = (SDL_TextureOverlay_Opaque_Metal*) calloc(1, sizeof(SDL_TextureOverlay_Opaque_Metal));
-    if (!opaque) {
-        free(texture);
-        return NULL;
-    }
-    
     id<MTLTexture> subTexture = [fop->fbo texture];
-    CGSize size = [fop->fbo size];
-    
-    opaque->texture = subTexture;
-    texture->opaque = opaque;
-    texture->w = (int)size.width;
-    texture->h = (int)size.height;
-    texture->replaceRegion = replaceRegion;
-    texture->getTexture = getTexture;
-    texture->clearDirtyRect = clearMetalRegion;
-    texture->refCount = 1;
-    texture->dealloc = dealloc_texture;
+    SDL_TextureOverlay *texture = create_textureOverlay_with_mtlTexture(subTexture);
     fop->texture = texture;
     return texture;
 }
