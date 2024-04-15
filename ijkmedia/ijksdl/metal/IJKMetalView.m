@@ -211,7 +211,7 @@ typedef CGRect NSRect;
 - (BOOL)setupSubPipelineIfNeed
 {
     if (!self.subPipeline) {
-        self.subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
+        self.subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:self.device outFormat:IJKMetalSubtitleOutFormatDIRECT];
     }
     
     if ([self.subPipeline createRenderPipelineIfNeed]) {

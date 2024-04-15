@@ -157,7 +157,7 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
     return -2;
 }
 
-static void convert_pal(uint32_t *colors, size_t count, bool gray)
+static void convert_pal_bgra(uint32_t *colors, size_t count, bool gray)
 {
     for (int n = 0; n < count; n++) {
         uint32_t c = colors[n];
@@ -171,7 +171,7 @@ static void convert_pal(uint32_t *colors, size_t count, bool gray)
         b = b * a / 255;
         g = g * a / 255;
         r = r * a / 255;
-        colors[n] = r | (g << 8) | (b << 16) | (a << 24);
+        colors[n] = b | (g << 8) | (r << 16) | (a << 24);
     }
 }
 
@@ -183,7 +183,7 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
 {
     uint32_t pal[256] = {0};
     memcpy(pal, rect->data[1], rect->nb_colors * 4);
-    convert_pal(pal, rect->nb_colors, 0);
+    convert_pal_bgra(pal, rect->nb_colors, 0);
     
     SDL_Rectangle r = (SDL_Rectangle){rect->x, rect->y, rect->w, rect->h, rect->linesize[0]};
     FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_rgba32(r);

@@ -8,11 +8,17 @@
 @import MetalKit;
 
 NS_ASSUME_NONNULL_BEGIN
+
+typedef enum : NSUInteger {
+    IJKMetalSubtitleOutFormatDIRECT,
+    IJKMetalSubtitleOutFormatSWAP_RB
+} IJKMetalSubtitleOutFormat;
+
 NS_CLASS_AVAILABLE(10_13, 11_0)
 @interface IJKMetalSubtitlePipeline : NSObject
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
-              colorPixelFormat:(MTLPixelFormat)colorPixelFormat;
+                     outFormat:(IJKMetalSubtitleOutFormat)outFormat;
 - (void)lock;
 - (void)unlock;
 

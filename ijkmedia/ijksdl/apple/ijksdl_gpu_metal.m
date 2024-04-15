@@ -229,7 +229,7 @@ static void beginMetalDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
         
     } else {
         if (!fop->subPipeline) {
-            IJKMetalSubtitlePipeline *subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:gop->device colorPixelFormat:MTLPixelFormatBGRA8Unorm];
+            IJKMetalSubtitlePipeline *subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:gop->device outFormat:IJKMetalSubtitleOutFormatDIRECT];
             if ([subPipeline createRenderPipelineIfNeed]) {
                 fop->subPipeline = subPipeline;
             }

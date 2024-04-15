@@ -120,7 +120,7 @@ static void set_video_size(FF_ASS_Renderer *s, int w, int h)
     ass_set_shaper(ass->renderer, ASS_SHAPING_COMPLEX);
 }
 
-static void draw_ass_rgba(unsigned char *src, int src_w, int src_h,
+static void draw_ass_bgra(unsigned char *src, int src_w, int src_h,
                           int src_stride, unsigned char *dst, size_t dst_stride,
                           uint32_t color)
 {
@@ -137,9 +137,9 @@ static void draw_ass_rgba(unsigned char *src, int src_w, int src_h,
             const uint32_t sa = _sa * src[x];
             
             uint32_t dstpix = dstrow[x];
-            uint32_t dstr =  dstpix        & 0xFF;
+            uint32_t dstb =  dstpix        & 0xFF;
             uint32_t dstg = (dstpix >>  8) & 0xFF;
-            uint32_t dstb = (dstpix >> 16) & 0xFF;
+            uint32_t dstr = (dstpix >> 16) & 0xFF;
             uint32_t dsta = (dstpix >> 24) & 0xFF;
             
             dstr = COLOR_BLEND(sa, sr, dstr);
@@ -147,7 +147,7 @@ static void draw_ass_rgba(unsigned char *src, int src_w, int src_h,
             dstb = COLOR_BLEND(sa, sb, dstb);
             dsta = COLOR_BLEND(sa, 255, dsta);
             
-            dstrow[x] = dstr | (dstg << 8) | (dstb << 16) | (dsta << 24);
+            dstrow[x] = dstb | (dstg << 8) | (dstr << 16) | (dsta << 24);
         }
         dst += dst_stride;
         src += src_stride;
@@ -161,7 +161,7 @@ static void draw_single_inset(FFSubtitleBuffer * frame, ASS_Image *img, int laye
         return;
     unsigned char *dst = frame->data;
     dst += (img->dst_y - insety) * frame->rect.stride + (img->dst_x - insetx) * 4;
-    draw_ass_rgba(img->bitmap, img->w, img->h, img->stride, dst, frame->rect.stride, img->color);
+    draw_ass_bgra(img->bitmap, img->w, img->h, img->stride, dst, frame->rect.stride, img->color);
 }
 
 static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_TextureOverlay *texture)
