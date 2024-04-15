@@ -267,8 +267,10 @@ SDL_GPU *SDL_CreateGPU_WithContext(id context)
 void SDL_GPUFreeP(SDL_GPU **pgpu)
 {
     if (pgpu) {
-        (*pgpu)->dealloc(*pgpu);
-        free(*pgpu);
+        if (*pgpu) {
+            (*pgpu)->dealloc(*pgpu);
+            free(*pgpu);
+        }
         *pgpu = NULL;
     }
 }
