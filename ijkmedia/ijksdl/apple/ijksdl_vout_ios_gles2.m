@@ -246,9 +246,7 @@ void SDL_FBOOverlayFreeP(SDL_FBOOverlay **poverlay)
 {
     if (poverlay) {
         if (*poverlay) {
-            if ((*poverlay)->opaque) {
-                (*poverlay)->dealloc(*poverlay);
-            }
+            (*poverlay)->dealloc(*poverlay);
             free(*poverlay);
         }
         *poverlay = NULL;
