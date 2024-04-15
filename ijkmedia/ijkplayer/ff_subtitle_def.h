@@ -15,7 +15,6 @@
 typedef struct FFSubtitleBuffer {
     SDL_Rectangle rect;
     unsigned char *data;
-    int usedAss;
     int refCount;
 } FFSubtitleBuffer;
 

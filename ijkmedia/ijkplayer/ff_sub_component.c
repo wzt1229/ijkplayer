@@ -190,7 +190,6 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
     if (!frame) {
         return NULL;
     }
-    frame->usedAss = 0;
     
     for (int y = 0; y < rect->h; y++) {
         uint8_t *in = rect->data[0] + y * rect->linesize[0];

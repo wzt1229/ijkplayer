@@ -39,7 +39,6 @@ int exSub_contain_streamIdx(IJKEXSubtitle *sub, int idx);
 AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub);
 int exSub_get_serial(IJKEXSubtitle *sub);
 AVStream *exSub_get_stream(IJKEXSubtitle *sub);
-int exSub_blend_frame(IJKEXSubtitle *sub, float pts, FFSubtitleBuffer **buffer);
 int exSub_upload_texture(IJKEXSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture);
 void exSub_update_margin(IJKEXSubtitle *sub, int t, int b, int l, int r);
 void exSub_update_preference(IJKEXSubtitle *sub, IJKSDLSubtitlePreference* sp);
