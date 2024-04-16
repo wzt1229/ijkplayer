@@ -27,13 +27,50 @@
 
 #import "IJKVideoRenderingProtocol.h"
 
-@protocol IJKSDLSubtitleTextureProtocol <NSObject>
+@protocol IJKSDLSubtitleTextureWrapper <NSObject>
 
 @property(nonatomic) uint32_t texture;
 @property(nonatomic) int w;
 @property(nonatomic) int h;
 
 @end
+
+id<IJKSDLSubtitleTextureWrapper> IJKSDL_crate_openglTextureWrapper(uint32_t texture, int w, int h);
+
+// Normalized Device Coordinates
+static inline CGRect IJKSDL_make_NDC(SDL_Rectangle frame, float scale, CGSize viewport)
+{
+//    scale = 1.0;
+    float swidth  = frame.w * scale;
+    float sheight = frame.h * scale;
+    
+    float width  = viewport.width;
+    float height = viewport.height;
+    
+    //转化到 [-1,1] 的区间
+    float sx = frame.x - (scale - 1.0) * frame.w * 0.5;
+    float sy = frame.y - (scale - 1.0) * frame.h * 0.5;
+    
+    float x = sx / width * 2.0 - 1.0;
+    float y = 1.0 * (height - sy - sheight) / height * 2.0 - 1.0;
+    
+    float maxY = (height - sheight) / height;
+    if (y < -1) {
+        y = -1;
+    } else if (y > maxY) {
+        y = maxY;
+    }
+    
+    if (width != 0 && height != 0) {
+        return (CGRect){
+            x,
+            y,
+            2.0 * (swidth / width),
+            2.0 * (sheight / height)
+        };
+    }
+    return CGRectZero;
+}
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(void);
 void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* view);

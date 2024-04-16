@@ -554,6 +554,9 @@ static void IJK_GLES2_Renderer_Upload_Vbo_Data(IJK_GLES2_Renderer *renderer)
         renderer->texcoords[6],renderer->texcoords[7],
     };
     
+    // 更新顶点数据
+    glBindVertexArray(renderer->vao);
+    
     // 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
     glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
     // 将CPU数据发送到GPU,数据类型GL_ARRAY_BUFFER
@@ -796,7 +799,7 @@ GLboolean IJK_GLES2_Renderer_updateVertex2(IJK_GLES2_Renderer *renderer,
     IJK_GLES2_updateMVP_ifNeed(renderer);
     IJK_GLES2_updateRGB_adjust_ifNeed(renderer);
     glBindVertexArray(renderer->vao); IJK_GLES2_checkError_TRACE("glBindVertexArray");
-
+    IJK_GLES2_checkError_TRACE("updateVertex2");
     return GL_TRUE;
 }
 

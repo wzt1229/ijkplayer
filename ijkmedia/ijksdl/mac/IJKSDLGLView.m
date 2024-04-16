@@ -57,7 +57,7 @@
 #import "IJKSDLThread.h"
 #import "../gles2/internal.h"
 #import "ijksdl_vout_ios_gles2.h"
-#import "IJKSDLOpenGLFBO.h"
+#import "ijksdl_gpu_opengl_fbo_macos.h"
 
 #define kHDRAnimationMaxCount 90
 
@@ -264,6 +264,9 @@ static bool _is_need_dispath_to_global(void)
         IJK_GLES2_Renderer_updateColorConversion(_renderer, _colorPreference.brightness, _colorPreference.saturation,_colorPreference.contrast);
         
         IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, _darPreference.ratio);
+    } else {
+        if (!IJK_GLES2_Renderer_use(_renderer))
+            return NO;
     }
     return YES;
 }
@@ -303,7 +306,7 @@ static bool _is_need_dispath_to_global(void)
 
 - (void)doUploadSubtitle:(IJKOverlayAttach *)attach backingWidth:(float)backingWidth
 {
-    id<IJKSDLSubtitleTextureProtocol>subTexture = attach.subTexture;
+    id<IJKSDLSubtitleTextureWrapper>subTexture = attach.subTexture;
     if (subTexture) {
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         

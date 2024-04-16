@@ -11,6 +11,7 @@
 #import "IJKMetalSubtitlePipeline.h"
 #import "ijksdl_gpu.h"
 #include <libavutil/mem.h>
+#import "ijksdl_vout_ios_gles2.h"
 
 typedef struct SDL_GPU_Opaque_Metal {
     id<MTLDevice>device;
@@ -194,41 +195,7 @@ static SDL_FBOOverlay *createMetalFBO(id<MTLDevice> device, int w, int h)
 
 #pragma mark - FBO
 
-static CGRect subRect(SDL_Rectangle frame, float scale, CGSize viewport)
-{
-//    scale = 1.0;
-    float swidth  = frame.w * scale;
-    float sheight = frame.h * scale;
-    
-    float width  = viewport.width;
-    float height = viewport.height;
-    
-    //转化到 [-1,1] 的区间
-    float sx = frame.x - (scale - 1.0) * frame.w * 0.5;
-    float sy = frame.y - (scale - 1.0) * frame.h * 0.5;
-    
-    float x = sx / width * 2.0 - 1.0;
-    float y = 1.0 * (height - sy - sheight) / height * 2.0 - 1.0;
-    
-    float maxY = (height - sheight) / height;
-    if (y < -1) {
-        y = -1;
-    } else if (y > maxY) {
-        y = maxY;
-    }
-    
-    if (width != 0 && height != 0) {
-        return (CGRect){
-            x,
-            y,
-            2.0 * (swidth / width),
-            2.0 * (sheight / height)
-        };
-    }
-    return CGRectZero;
-}
-
-static void beginMetalDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
+static void beginDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
 {
     if (!gpu || !gpu->opaque || !overlay || !overlay->opaque) {
         return;
@@ -268,7 +235,7 @@ static void metalDraw(SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay)
     }
     SDL_FBOOverlay_Opaque_Metal *fop = foverlay->opaque;
     CGSize viewport = [fop->fbo size];
-    CGRect rect = subRect(toverlay->frame, toverlay->scale, viewport);
+    CGRect rect = IJKSDL_make_NDC(toverlay->frame, toverlay->scale, viewport);
     [fop->subPipeline updateSubtitleVertexIfNeed:rect];
     id<MTLTexture>texture = (__bridge id<MTLTexture>)toverlay->getTexture(toverlay);
     [fop->subPipeline uploadTextureWithEncoder:fop->renderEncoder texture:texture];
@@ -353,7 +320,7 @@ static SDL_FBOOverlay *createFBO(SDL_GPU *gpu, int w, int h)
     if (overlay) {
         overlay->w = w;
         overlay->h = h;
-        overlay->beginDraw = beginMetalDraw_fbo;
+        overlay->beginDraw = beginDraw_fbo;
         overlay->drawTexture = drawTexture_fbo;
         overlay->endDraw = endDraw_fbo;
         overlay->clear = clear_fbo;

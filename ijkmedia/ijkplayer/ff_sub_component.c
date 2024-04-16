@@ -374,9 +374,6 @@ static int subtitle_thread(void *arg)
     com->retry_opaque = NULL;
     com->st_idx = -1;
     av_packet_free(&com->pkt);
-    free_pre_list(com->pre_list);
-    SDL_FBOOverlayFreeP(&com->fbo);
-    SDL_TextureOverlay_Release(&com->texture);
     return 0;
 }
 
@@ -496,10 +493,14 @@ int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SD
         }
         
         FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
+        SDL_TextureOverlay_Retain(com->texture);
         int r = ff_ass_upload_texture(assRenderer, pts, com->texture);
         ff_ass_render_release(&assRenderer);
         if (r > 0) {
-            *texture = SDL_TextureOverlay_Retain(com->texture);
+            *texture = com->texture;
+        } else {
+            *texture = NULL;
+            SDL_TextureOverlay_Release(&com->texture);
         }
         return r;
     } else {
@@ -593,6 +594,9 @@ int subComponent_close(FFSubComponent **cp)
     }
     decoder_abort(&com->decoder, com->frameq);
     decoder_destroy(&com->decoder);
+    free_pre_list(com->pre_list);
+    SDL_FBOOverlayFreeP(&com->fbo);
+    SDL_TextureOverlay_Release(&com->texture);
     av_freep(cp);
     return 0;
 }

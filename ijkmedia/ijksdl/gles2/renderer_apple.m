@@ -61,7 +61,7 @@ typedef struct IJK_GLES2_Renderer_Opaque
 
 static GLboolean use(IJK_GLES2_Renderer *renderer)
 {
-    ALOGI("use common vtb render\n");
+    //ALOGI("use common vtb render\n");
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     //glEnable(GL_TEXTURE_TARGET);
     glUseProgram(renderer->program);            IJK_GLES2_checkError_TRACE("glUseProgram");
@@ -232,17 +232,20 @@ static GLboolean upload_Texture(IJK_GLES2_Renderer *renderer, void *picture)
     if (!opaque) {
         return GL_FALSE;
     }
-    
+    IJK_GLES2_checkError_TRACE("transferFunUM begin");
     if (renderer->colorMatrix != YUV_2_RGB_Color_Matrix_None) {
         glUniformMatrix3fv(renderer->um3_color_conversion, 1, GL_FALSE, IJK_GLES2_getColorMatrix(renderer->colorMatrix));
+        IJK_GLES2_checkError_TRACE("transferFunUM 1");
     }
     
     if (renderer->fullRangeUM != -1) {
         glUniform1i(renderer->fullRangeUM, renderer->isFullRange);
+        IJK_GLES2_checkError_TRACE("transferFunUM 2");
     }
     
     if (renderer->transferFunUM != -1) {
         glUniform1i(renderer->transferFunUM, renderer->transferFun);
+        IJK_GLES2_checkError_TRACE("transferFunUM 3");
     }
     
     if (renderer->hdrAnimationUM != -1) {
@@ -284,19 +287,23 @@ static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer, int texture, int w
     if (!opaque) {
         return GL_FALSE;
     }
-
+    
     GLenum GLTarget = GL_TEXTURE_TARGET;
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GLTarget, texture);
+    IJK_GLES2_checkError_TRACE("uploadSubtitle1");
     //设置采样器位置，和纹理单元对应
     glUniform1i(renderer->subSampler, 0);
+    IJK_GLES2_checkError_TRACE("uploadSubtitle2");
 #if TARGET_OS_OSX
     glUniform2f(renderer->opaque->subTextureDimension, w, h);
 #endif
+    IJK_GLES2_checkError_TRACE("uploadSubtitle3");
     glTexParameteri(GLTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GLTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GLTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GLTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
     return true;
 }
 

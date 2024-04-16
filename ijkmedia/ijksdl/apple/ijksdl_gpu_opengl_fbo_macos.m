@@ -1,18 +1,18 @@
 //
-//  IJKSDLOpenGLFBO.m
+//  ijksdl_gpu_opengl_fbo_macos.m
 //  IJKMediaPlayerKit
 //
-//  Created by Reach Matt on 2024/4/14.
+//  Created by Reach Matt on 2024/4/15.
 //
 
-#import "IJKSDLOpenGLFBO.h"
+#import "ijksdl_gpu_opengl_fbo_macos.h"
 #import "ijksdl_gles2.h"
+#import "ijksdl_vout_ios_gles2.h"
 
 @interface IJKSDLOpenGLFBO()
 
 @property(nonatomic, assign) GLuint fbo;
-@property(nonatomic, readwrite) CGSize size;
-@property(nonatomic, readwrite) uint32_t texture;
+@property(nonatomic, readwrite) id<IJKSDLSubtitleTextureWrapper> texture;
 
 @end
 
@@ -23,44 +23,40 @@
     if (_fbo) {
         glDeleteFramebuffers(1, &_fbo);
     }
-    
-    if (_texture) {
-        glDeleteTextures(1, &_texture);
-    }
-    
-    _size = CGSizeZero;
 }
 
 - (instancetype)initWithSize:(CGSize)size
 {
     self = [super init];
     if (self) {
+        uint32_t t;
         // Create a texture object that you apply to the model.
-        glGenTextures(1, &_texture);
-        glBindTexture(GL_TEXTURE_2D, _texture);
+        glGenTextures(1, &t);
+        GLenum target = GL_TEXTURE_RECTANGLE;//GL_TEXTURE_2D
+        glBindTexture(target, t);
 
         // Set up filter and wrap modes for the texture object.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
         // Allocate a texture image to which you can render to. Pass `NULL` for the data parameter
         // becuase you don't need to load image data. You generate the image by rendering to the texture.
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.width, size.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(target, 0, GL_RGBA, size.width, size.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
         glGenFramebuffers(1, &_fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture, 0);
-
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, t, 0);
+        glBindTexture(target, 0);
+        
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
-            _size = size;
+            _texture = IJKSDL_crate_openglTextureWrapper(t, size.width, size.height);
             return self;
         } else {
         #if DEBUG
             NSAssert(NO, @"Failed to make complete framebuffer object %x.",  glCheckFramebufferStatus(GL_FRAMEBUFFER));
         #endif
-            _size = CGSizeZero;
             return nil;
         }
     }
@@ -74,11 +70,16 @@
         return NO;
     }
     
-    if (CGSizeEqualToSize(_size, size) && _fbo && _texture) {
+    if ([self.texture w] == (int)size.width && [self.texture h] == (int)size.height && _fbo && _texture) {
         return YES;
     } else {
         return NO;
     }
+}
+
+- (CGSize)size
+{
+    return CGSizeMake([self.texture w], [self.texture h]);
 }
 
 - (void)bind
@@ -88,3 +89,4 @@
 }
 
 @end
+

@@ -58,7 +58,7 @@
     if (!self.overlay) {
         return NO;
     }
-    self.subTexture = (__bridge id<IJKSDLSubtitleTextureProtocol>)self.overlay->getTexture(self.overlay);
+    self.subTexture = (__bridge id<IJKSDLSubtitleTextureWrapper>)self.overlay->getTexture(self.overlay);
     return !!self.subTexture;
 }
 
@@ -219,6 +219,46 @@ void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* vi
     SDL_LockMutex(vout->mutex);
     SDL_VoutIos_SetGLView_l(vout, view);
     SDL_UnlockMutex(vout->mutex);
+}
+
+@interface _IJKSDLGLTextureWrapper : NSObject<IJKSDLSubtitleTextureWrapper>
+
+@property(nonatomic) GLuint texture;
+@property(nonatomic) int w;
+@property(nonatomic) int h;
+
+@end
+
+@implementation _IJKSDLGLTextureWrapper
+
+- (void)dealloc
+{
+    if (_texture) {
+        glDeleteTextures(1, &_texture);
+    }
+}
+
+- (GLuint)texture
+{
+    return _texture;
+}
+
+- (instancetype)initWith:(uint32_t)texture w:(int)w h:(int)h
+{
+    self = [super init];
+    if (self) {
+        self.w = w;
+        self.h = h;
+        self.texture = texture;
+    }
+    return self;
+}
+
+@end
+
+id<IJKSDLSubtitleTextureWrapper> IJKSDL_crate_openglTextureWrapper(uint32_t texture, int w, int h)
+{
+    return [[_IJKSDLGLTextureWrapper alloc] initWith:texture w:w h:h];
 }
 
 SDL_TextureOverlay * SDL_TextureOverlay_Retain(SDL_TextureOverlay *t)
