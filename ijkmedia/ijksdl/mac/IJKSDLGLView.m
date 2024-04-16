@@ -304,13 +304,13 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-- (void)doUploadSubtitle:(IJKOverlayAttach *)attach backingWidth:(float)backingWidth
+- (void)doUploadSubtitle:(IJKOverlayAttach *)attach viewport:(CGSize)viewport
 {
     id<IJKSDLSubtitleTextureWrapper>subTexture = attach.subTexture;
     if (subTexture) {
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
-        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, self.backingWidth, self.backingHeight);
+        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, viewport.width, viewport.height);
         if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture, subTexture.w, subTexture.h)) {
             IJK_GLES2_Renderer_drawArrays();
         } else {
@@ -379,7 +379,7 @@ static bool _is_need_dispath_to_global(void)
         //for video
         [self doUploadVideoPicture:attach];
         //for subtitle
-        [self doUploadSubtitle:attach backingWidth:self.backingWidth];
+        [self doUploadSubtitle:attach viewport:CGSizeMake(self.backingWidth, self.backingHeight)];
     } else {
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
@@ -514,7 +514,7 @@ static bool _is_need_dispath_to_global(void)
             }
             
             if (containSub) {
-                [self doUploadSubtitle:attach backingWidth:picSize.width];
+                [self doUploadSubtitle:attach viewport:picSize];
             }
             img = [self _snapshotTheContextWithSize:picSize];
         } else {
@@ -603,7 +603,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     
     GLint bytesPerRow = width * 4;
     const GLint bitsPerPixel = 32;
-    CGContextRef ctx = _CreateCGBitmapContext(width, height, 8, 32, bytesPerRow, kCGBitmapByteOrderDefault |kCGImageAlphaNoneSkipLast);
+    CGContextRef ctx = _CreateCGBitmapContext(width, height, 8, 32, bytesPerRow, kCGBitmapByteOrderDefault | kCGImageAlphaNoneSkipLast);
     if (ctx) {
         void * bitmapData = CGBitmapContextGetData(ctx);
         if (bitmapData) {
