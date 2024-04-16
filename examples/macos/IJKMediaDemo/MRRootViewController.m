@@ -1501,9 +1501,6 @@ static BOOL hdrAnimationShown = 0;
         IJKSDLSubtitlePreference p = self.player.subtitlePreference;
         p.color = color2int(color);
         self.player.subtitlePreference = p;
-        if (!self.player.isPlaying) {
-            [self.player.view setNeedsRefreshCurrentPic];
-        }
     } forKey:@"subtitle_text_color"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
@@ -1512,9 +1509,6 @@ static BOOL hdrAnimationShown = 0;
         IJKSDLSubtitlePreference p = self.player.subtitlePreference;
         p.bgColor = color2int(color);
         self.player.subtitlePreference = p;
-        if (!self.player.isPlaying) {
-            [self.player.view setNeedsRefreshCurrentPic];
-        }
     } forKey:@"subtitle_bg_color"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
@@ -1523,9 +1517,6 @@ static BOOL hdrAnimationShown = 0;
         IJKSDLSubtitlePreference p = self.player.subtitlePreference;
         p.strokeColor = color2int(color);
         self.player.subtitlePreference = p;
-        if (!self.player.isPlaying) {
-            [self.player.view setNeedsRefreshCurrentPic];
-        }
     } forKey:@"subtitle_stroke_color"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
@@ -1533,9 +1524,6 @@ static BOOL hdrAnimationShown = 0;
         IJKSDLSubtitlePreference p = self.player.subtitlePreference;
         p.strokeSize = [v intValue];
         self.player.subtitlePreference = p;
-        if (!self.player.isPlaying) {
-            [self.player.view setNeedsRefreshCurrentPic];
-        }
     } forKey:@"subtitle_stroke_size"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {

@@ -333,25 +333,29 @@ int ff_sub_packet_queue_flush(FFSubtitle *sub)
     return -1;
 }
 
-void ff_sub_update_preference(FFSubtitle *sub, IJKSDLSubtitlePreference* sp)
+int ff_update_sub_preference(FFSubtitle *sub, IJKSDLSubtitlePreference* sp)
 {
     if (sub) {
         sub->sp = *sp;
-        
+        int hasStream = 0;
         int idx = -1;
         if (sub->inSub) {
             idx = subComponent_get_stream(sub->inSub);
             if (idx != -1) {
                 subComponent_update_preference(sub->inSub, sp);
+                hasStream = 1;
             }
         }
         if (idx == -1 && sub->exSub) {
             idx = exSub_get_opened_stream_idx(sub->exSub);
             if (idx != -1) {
                 exSub_update_preference(sub->exSub, sp);
+                hasStream = 1;
             }
         }
+        return hasStream;
     }
+    return 0;
 }
 
 //---------------------------Internal Subtitle Functions--------------------------------------------------//

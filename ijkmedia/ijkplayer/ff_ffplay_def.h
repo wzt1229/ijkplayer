@@ -272,6 +272,7 @@ typedef struct VideoState {
     SDL_Thread _read_tid;
     const AVInputFormat *iformat;
     int abort_request;
+    int sub_preference_changed;
     int force_refresh;
     int paused;
     int last_paused;

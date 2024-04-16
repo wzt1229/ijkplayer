@@ -876,7 +876,14 @@ static void video_refresh(FFPlayer *opaque, double *remaining_time)
     FFPlayer *ffp = opaque;
     VideoState *is = ffp->is;
     double time;
-
+    
+    //applay subtitle preference changed when the palyer was paused.
+    if (is->paused && is->sub_preference_changed) {
+        video_display2(ffp);
+        is->sub_preference_changed = 0;
+        return;
+    }
+    
     if (!is->paused && get_master_sync_type(is) == AV_SYNC_EXTERNAL_CLOCK && is->realtime)
         check_external_clock_speed(is);
 
@@ -3144,7 +3151,7 @@ static AVDictionary **setup_find_stream_info_opts(AVFormatContext *s,
    return opts;
 }
 
-void ffp_apply_subtitle_preference(FFPlayer *ffp);
+int ffp_apply_subtitle_preference(FFPlayer *ffp);
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
 {
@@ -3991,7 +3998,7 @@ static int video_refresh_thread(void *arg)
         if (remaining_time > 0.0)
             av_usleep((int)(int64_t)(remaining_time * 1000000.0));
         remaining_time = REFRESH_RATE;
-        if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->step_on_seeking))
+        if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->step_on_seeking || is->sub_preference_changed))
             video_refresh(ffp, &remaining_time);
     }
 
@@ -5425,14 +5432,12 @@ void ffp_set_enable_accurate_seek(FFPlayer *ffp, int open)
     SDL_UnlockMutex(ffp->is->accurate_seek_mutex);
 }
 
-void ffp_apply_subtitle_preference(FFPlayer *ffp)
+int ffp_apply_subtitle_preference(FFPlayer *ffp)
 {
     if (!ffp || !ffp->is) {
-        return;
+        return 0;
     }
-    SDL_LockMutex(ffp->is->play_mutex);
-    ff_sub_update_preference(ffp->is->ffSub, &ffp->sp);
-    SDL_UnlockMutex(ffp->is->play_mutex);
+    return ff_update_sub_preference(ffp->is->ffSub, &ffp->sp);
 }
 
 void ffp_set_subtitle_preference(FFPlayer *ffp, IJKSDLSubtitlePreference* sp)
@@ -5440,6 +5445,11 @@ void ffp_set_subtitle_preference(FFPlayer *ffp, IJKSDLSubtitlePreference* sp)
     if (!ffp || !sp) {
         return;
     }
+    
     ffp->sp = *sp;
-    ffp_apply_subtitle_preference(ffp);
+    int r = ffp_apply_subtitle_preference(ffp);
+    //if subtitle preference changed and the player is paused,record need refresh vout
+    if (r && ffp->is && ffp->is->paused) {
+        ffp->is->sub_preference_changed = 1;
+    }
 }
