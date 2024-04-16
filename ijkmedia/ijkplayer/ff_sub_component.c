@@ -392,13 +392,6 @@ static SDL_Rectangle replace_bitmap(SDL_TextureOverlay *overlay, FFSubtitleBuffe
     }
 }
 
-static void set_dirtyRect(SDL_TextureOverlay *overlay, SDL_Rectangle rect)
-{
-    if (overlay) {
-        overlay->dirtyRect = rect;
-    }
-}
-
 static int subComponent_upload_fbo(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_FBOOverlay *fbo)
 {
     int serial = subComponent_get_serial(com);
