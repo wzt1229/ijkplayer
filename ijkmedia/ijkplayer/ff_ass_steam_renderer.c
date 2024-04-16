@@ -187,13 +187,17 @@ static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_Texture
     if (imgs) {
         texture->clearDirtyRect(texture);
         int bm = ass->bottom_margin;
+        int water_mark = ass->original_h * SUBTITLE_MOVE_WATERMARK;
         {
             ASS_Image *img = imgs;
             SDL_Rectangle dirtyRect = {0};
             while (img) {
-                int y = img->dst_y - bm;
-                if (y < 0) {
-                    y = 0;
+                int y = img->dst_y;
+                if (y > water_mark) {
+                    y -= bm;
+                    if (y < 0) {
+                        y = 0;
+                    }
                 }
                 SDL_Rectangle t = {img->dst_x, y, img->w, img->h};
                 dirtyRect = SDL_union_rectangle(dirtyRect, t);
@@ -208,7 +212,11 @@ static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_Texture
         int cnt = 0;
         while (imgs) {
             ++cnt;
-            draw_single_inset(frame, imgs, cnt, texture->dirtyRect.x, texture->dirtyRect.y, bm);
+            int offset = 0;
+            if (imgs->dst_y > water_mark) {
+                offset = bm;
+            }
+            draw_single_inset(frame, imgs, cnt, texture->dirtyRect.x, texture->dirtyRect.y, offset);
             imgs = imgs->next;
         }
         

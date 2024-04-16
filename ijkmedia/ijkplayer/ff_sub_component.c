@@ -451,11 +451,12 @@ static int subComponent_upload_fbo(FFSubComponent *com, float pts, SDL_GPU *gpu,
             float scale = com->sp.scale;
 
             fbo->beginDraw(gpu, fbo, 0);
-            
+            int water_mark = fbo->h * SUBTITLE_MOVE_WATERMARK;
             for (int i = 0; i < count; i++) {
                 FFSubtitleBuffer *sb = buffers[i];
                 SDL_TextureOverlay *texture = gpu->createTexture(gpu, sb->rect.w, sb->rect.h, SDL_TEXTURE_FMT_BRGA);
-                texture->frame = replace_bitmap(texture, sb, bottom_offset);
+                int offset = sb->rect.y > water_mark ? bottom_offset : 0;
+                texture->frame = replace_bitmap(texture, sb, offset);
                 texture->scale = scale;
                 fbo->drawTexture(gpu, fbo, texture);
                 SDL_TextureOverlay_Release(&texture);
