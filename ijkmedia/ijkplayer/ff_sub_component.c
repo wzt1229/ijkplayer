@@ -205,7 +205,7 @@ static void apply_preference(FFSubComponent *com)
     int b = com->sp.bottomMargin * com->height;
     
     if (com->assRenderer) {
-        com->assRenderer->iformat->update_margin(com->assRenderer, 0, b, 0, 0);
+        com->assRenderer->iformat->update_bottom_margin(com->assRenderer, b);
         com->assRenderer->iformat->set_font_scale(com->assRenderer, com->sp.scale);
         com->sp_changed = 0;
     }

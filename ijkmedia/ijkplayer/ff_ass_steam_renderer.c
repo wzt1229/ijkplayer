@@ -27,6 +27,8 @@ typedef struct FF_ASS_Context {
     char *force_style;
     int original_w, original_h;
     int shaping;
+    int bottom_margin;
+    int force_changed;
 } FF_ASS_Context;
 
 #define OFFSET(x) offsetof(FF_ASS_Context, x)
@@ -155,12 +157,16 @@ static void draw_ass_bgra(unsigned char *src, int src_w, int src_h,
     #undef COLOR_BLEND
 }
 
-static void draw_single_inset(FFSubtitleBuffer * frame, ASS_Image *img, int layer, int insetx, int insety)
+static void draw_single_inset(FFSubtitleBuffer * frame, ASS_Image *img, int layer, int insetx, int insety, int bottom_margin)
 {
     if (img->w == 0 || img->h == 0)
         return;
     unsigned char *dst = frame->data;
-    dst += (img->dst_y - insety) * frame->rect.stride + (img->dst_x - insetx) * 4;
+    int y = img->dst_y - insety - bottom_margin;
+    if (y < 0) {
+        y = 0;
+    }
+    dst += y * frame->rect.stride + (img->dst_x - insetx) * 4;
     draw_ass_bgra(img->bitmap, img->w, img->h, img->stride, dst, frame->rect.stride, img->color);
 }
 
@@ -173,17 +179,23 @@ static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_Texture
     int changed;
     ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
 
-    if (changed == 0) {
+    if (changed == 0 && !ass->force_changed) {
         return 0;
     }
+    ass->force_changed = 0;
     
     if (imgs) {
         texture->clearDirtyRect(texture);
+        int bm = ass->bottom_margin;
         {
             ASS_Image *img = imgs;
             SDL_Rectangle dirtyRect = {0};
             while (img) {
-                SDL_Rectangle t = {img->dst_x, img->dst_y, img->w, img->h};
+                int y = img->dst_y - bm;
+                if (y < 0) {
+                    y = 0;
+                }
+                SDL_Rectangle t = {img->dst_x, y, img->w, img->h};
                 dirtyRect = SDL_union_rectangle(dirtyRect, t);
                 img = img->next;
             }
@@ -196,7 +208,7 @@ static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_Texture
         int cnt = 0;
         while (imgs) {
             ++cnt;
-            draw_single_inset(frame, imgs, cnt, texture->dirtyRect.x, texture->dirtyRect.y);
+            draw_single_inset(frame, imgs, cnt, texture->dirtyRect.x, texture->dirtyRect.y, bm);
             imgs = imgs->next;
         }
         
@@ -314,13 +326,16 @@ static void process_chunk(FF_ASS_Renderer *s, char *ass_line, long long start_ti
     ass_process_chunk(ass->track, ass_line, (int)strlen(ass_line), start_time, duration);
 }
 
-static void update_margin(FF_ASS_Renderer *s, int t, int b, int l, int r)
+static void update_bottom_margin(FF_ASS_Renderer *s, int b)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass || !ass->renderer) {
         return;
     }
-    ass_set_margins(ass->renderer, t, b, l, r);
+    //设置后字体会被压缩变形
+    //ass_set_margins(ass->renderer, 0, b, 0, 0);
+    ass->bottom_margin = b;
+    ass->force_changed = 1;
 }
 
 static void set_font_scale(FF_ASS_Renderer *s, double scale)
@@ -368,7 +383,7 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .set_video_size     = set_video_size,
     .process_chunk      = process_chunk,
     .upload_texture     = upload_texture,
-    .update_margin      = update_margin,
+    .update_bottom_margin= update_bottom_margin,
     .set_font_scale     = set_font_scale,
     .uninit             = uninit,
 };

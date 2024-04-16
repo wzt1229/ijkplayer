@@ -26,7 +26,7 @@ typedef struct FF_ASS_Renderer_Format {
     void (*set_video_size)(FF_ASS_Renderer *s, int w, int h);
     void (*process_chunk)(FF_ASS_Renderer *s, char *ass_line, int64_t start, int64_t duration);
     int  (*upload_texture)(FF_ASS_Renderer *, double time_ms, SDL_TextureOverlay * texture);
-    void (*update_margin)(FF_ASS_Renderer *s, int t, int b, int l, int r);
+    void (*update_bottom_margin)(FF_ASS_Renderer *s, int b);
     void (*set_font_scale)(FF_ASS_Renderer *, double scale);
     void (*uninit)(FF_ASS_Renderer *);
 } FF_ASS_Renderer_Format;
