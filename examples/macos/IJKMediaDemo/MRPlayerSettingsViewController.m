@@ -207,9 +207,10 @@
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
     [fontManager setTarget:self];
     NSFontPanel *panel = [fontManager fontPanel:YES];
-    NSFont *font = [NSFont fontWithName:[MRCocoaBindingUserDefault subtitle_font_name] size:[MRCocoaBindingUserDefault subtitle_font_size]];
+    int fontSize = [MRCocoaBindingUserDefault subtitle_scale] * 50;
+    NSFont *font = [NSFont fontWithName:[MRCocoaBindingUserDefault subtitle_font_name] size:fontSize];
     if (!font) {
-        font = [NSFont systemFontOfSize:[MRCocoaBindingUserDefault subtitle_font_size]];
+        font = [NSFont systemFontOfSize:fontSize];
     }
     self.font = font;
     [panel setPanelFont:self.font isMultiple:NO];

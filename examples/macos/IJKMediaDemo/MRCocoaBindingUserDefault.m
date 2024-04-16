@@ -71,7 +71,7 @@
         @"overlay_format" : @"fcc-_es2",
         
         @"subtitle_font_name" : @"STSongti-SC-Regular",
-        @"subtitle_font_size" : @(50),
+        @"subtitle_scale" : @(1.0),
         @"subtitle_bottom_margin":@(0.5),
         @"subtitle_stroke_size" : @(5),
         @"subtitle_text_color" : text_color_data,
@@ -81,6 +81,8 @@
         @"snapshot_type" : @(3),
         @"accurate_seek" : @(1),
         @"seek_step" : @(15),
+        @"lock_screen_ratio" : @(1),
+        
         @"open_gzip" : @(1),
         @"use_dns_cache" : @(1),
         @"dns_cache_period" : @(600),
@@ -282,9 +284,9 @@
     return [self setValue:font_name forKey:@"subtitle_font_name"];
 }
 
-+ (float)subtitle_font_size
++ (float)subtitle_scale
 {
-    return [self floatForKey:@"subtitle_font_size"];
+    return [self floatForKey:@"subtitle_scale"];
 }
 
 + (void)setSubtitle_font_size:(float)font_size
@@ -362,6 +364,11 @@
 + (int)seek_step
 {
     return [self intForKey:@"seek_step"];
+}
+
++ (int)lock_screen_ratio
+{
+    return [self intForKey:@"lock_screen_ratio"];
 }
 
 + (int)open_gzip

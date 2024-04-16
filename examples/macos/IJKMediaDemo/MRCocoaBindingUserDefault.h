@@ -47,13 +47,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (BOOL)accurate_seek;
 + (int)seek_step;
++ (int)lock_screen_ratio;
+
 + (int)open_gzip;
 + (int)use_dns_cache;
 + (int)dns_cache_period;
 
 + (NSString *)subtitle_font_name;
 + (void)setSubtitle_font_name:(NSString *)font_name;
-+ (float)subtitle_font_size;
++ (float)subtitle_scale;
 + (void)setSubtitle_font_size:(float)font_size;
 + (float)subtitle_bottom_margin;
 + (float)subtitle_stroke_size;

@@ -789,28 +789,35 @@ static BOOL hdrAnimationShown = 0;
     NSLog(@"找不到解码器，联系开发小帅锅：%@",notifi.userInfo);
 }
 
+- (void)applyLockScreenRatio
+{
+    const CGSize videoSize = self.player.naturalSize;
+    if (CGSizeEqualToSize(CGSizeZero, videoSize)) {
+        return;
+    }
+    const CGRect screenVisibleFrame = self.view.window.screen.visibleFrame;
+    const CGSize screenSize = screenVisibleFrame.size;
+    CGSize targetSize = videoSize;
+    
+    if (videoSize.width > screenSize.width || videoSize.height > screenSize.height) {
+        float wRatio = screenSize.width / videoSize.width;
+        float hRatio = screenSize.height / videoSize.height;
+        float ratio  = MIN(wRatio, hRatio);
+        targetSize = CGSizeMake(floor(videoSize.width * ratio), floor(videoSize.height * ratio));
+    }
+    [self.view.window setAspectRatio:targetSize];
+    
+    CGRect targetRect = CGRectMake(screenVisibleFrame.origin.x + (screenSize.width - targetSize.width) / 2.0, screenVisibleFrame.origin.y + (screenSize.height - targetSize.height) / 2.0, targetSize.width, targetSize.height);
+    
+    NSLog(@"窗口位置:%@;视频尺寸：%@",NSStringFromRect(targetRect),NSStringFromSize(videoSize));
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
+        [self.view.window.animator setFrame:targetRect display:YES];
+    }];
+}
 - (void)ijkPlayerNaturalSizeAvailable:(NSNotification *)notifi
 {
-    if (self.player == notifi.object) {
-        const CGSize videoSize = NSSizeFromString(notifi.userInfo[@"size"]);
-        const CGRect screenVisibleFrame = self.view.window.screen.visibleFrame;
-        const CGSize screenSize = screenVisibleFrame.size;
-        CGSize targetSize = videoSize;
-        
-        if (videoSize.width > screenSize.width || videoSize.height > screenSize.height) {
-            float wRatio = screenSize.width / videoSize.width;
-            float hRatio = screenSize.height / videoSize.height;
-            float ratio  = MIN(wRatio, hRatio);
-            targetSize = CGSizeMake(floor(videoSize.width * ratio), floor(videoSize.height * ratio));
-        }
-        [self.view.window setAspectRatio:targetSize];
-        
-        CGRect targetRect = CGRectMake(screenVisibleFrame.origin.x + (screenSize.width - targetSize.width) / 2.0, screenVisibleFrame.origin.y + (screenSize.height - targetSize.height) / 2.0, targetSize.width, targetSize.height);
-        
-        NSLog(@"窗口位置:%@;视频尺寸：%@",NSStringFromRect(targetRect),NSStringFromSize(videoSize));
-        [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
-            [self.view.window.animator setFrame:targetRect display:YES];
-        }];
+    if (self.player == notifi.object && [MRCocoaBindingUserDefault lock_screen_ratio]) {
+        [self applyLockScreenRatio];
     }
 }
 
@@ -1349,7 +1356,7 @@ static BOOL hdrAnimationShown = 0;
     p.strokeColor = color2int([MRCocoaBindingUserDefault subtitle_stroke_color]);
     p.strokeSize = [MRCocoaBindingUserDefault subtitle_stroke_size];
     p.bottomMargin = [MRCocoaBindingUserDefault subtitle_bottom_margin];
-    p.scale = [MRCocoaBindingUserDefault subtitle_font_size] / 50;
+    p.scale = [MRCocoaBindingUserDefault subtitle_scale];
     NSString *name = [MRCocoaBindingUserDefault subtitle_font_name];
     if (name) {
         strcpy(p.name,[name UTF8String]);
@@ -1491,9 +1498,9 @@ static BOOL hdrAnimationShown = 0;
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__
         IJKSDLSubtitlePreference p = self.player.subtitlePreference;
-        p.scale = [v floatValue] / 50;
+        p.scale = [v floatValue];
         self.player.subtitlePreference = p;
-    } forKey:@"subtitle_font_size"];
+    } forKey:@"subtitle_scale"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
         __strongSelf__
@@ -1525,6 +1532,18 @@ static BOOL hdrAnimationShown = 0;
         p.strokeSize = [v intValue];
         self.player.subtitlePreference = p;
     } forKey:@"subtitle_stroke_size"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        [self.player enableAccurateSeek:[v boolValue]];
+    } forKey:@"accurate_seek"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
+        __strongSelf__
+        if ([v boolValue]) {
+            [self applyLockScreenRatio];
+        }
+    } forKey:@"lock_screen_ratio"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__
@@ -1575,11 +1594,6 @@ static BOOL hdrAnimationShown = 0;
         __strongSelf__
         [self retry];
     } forKey:@"dns_cache_period"];
-    
-    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
-        __strongSelf__
-        [self.player enableAccurateSeek:[v boolValue]];
-    } forKey:@"accurate_seek"];
 }
 
 - (NSString *)saveDir:(NSString *)subDir
