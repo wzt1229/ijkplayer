@@ -643,6 +643,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     
     CGLLockContext([openGLContext CGLContextObj]);
     [openGLContext makeCurrentContext];
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     CGImageRef img = [self _snapshotTheContextWithSize:size];
     CGLUnlockContext([openGLContext CGLContextObj]);
     
