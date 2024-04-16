@@ -905,14 +905,23 @@ void IJK_GLES2_Renderer_updateSubtitleVertex(IJK_GLES2_Renderer *renderer, float
     //ass字幕已经做了预乘，所以这里选择 GL_ONE，而不是 GL_SRC_ALPHA
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     
-    //字幕图片在纹理坐标系上的尺寸
-    float ratioW = 1.0 * width / renderer->layer_width;
-    float ratioH = 1.0 * height / renderer->layer_height;
+    float wRatio = renderer->layer_width / width;
+    float hRatio = renderer->layer_height / height;
     
-    float leftX  = 0 - ratioW;
-    float rightX = 0 + ratioW;
-    float bottomY = -1;
-    float topY = bottomY + 2 * ratioH;
+    CGRect subRect;
+    //aspect fill
+    if (wRatio > hRatio) {
+        float nH = (height * wRatio / renderer->layer_height);
+        subRect = CGRectMake(-1, -nH, 2.0, 2.0 * nH);
+    } else {
+        float nW = (width * hRatio / renderer->layer_width);
+        subRect = CGRectMake(-nW, -1, 2.0 * nW, 2.0);
+    }
+    
+    float leftX  = subRect.origin.x;
+    float rightX = leftX + subRect.size.width;
+    float bottomY = subRect.origin.y;
+    float topY = bottomY + subRect.size.height;
     
     //左下
     renderer->vertices[0] = leftX;
