@@ -354,9 +354,6 @@ static bool _is_need_dispath_to_global(void)
     if (!currentAttach) {
         return;
     }
-#warning TODO here
-    //update subtitle if need
-    [self generateSubTexture:currentAttach];
     [self doDisplayVideoPicAndSubtitle:currentAttach];
 }
 
@@ -397,11 +394,6 @@ static bool _is_need_dispath_to_global(void)
                          waitUntilDone:NO];
 }
 
-- (void)generateSubTexture:(IJKOverlayAttach *)attach
-{
-    
-}
-
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach
 {
     if (!attach) {
@@ -409,9 +401,6 @@ static bool _is_need_dispath_to_global(void)
         return NO;
     }
     //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
-    
-    [attach generateSubTexture];
-    
     //hold the attach as current.
     self.currentAttach = attach;
     

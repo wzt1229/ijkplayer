@@ -609,7 +609,6 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
         ALOGW("IJKMetalView: overlay is nil\n");
         return NO;
     }
-    [attach generateSubTexture];
     
     //hold the attach as current.
     self.currentAttach = attach;

@@ -53,13 +53,13 @@
     }
 }
 
-- (BOOL)generateSubTexture
+- (id)subTexture
 {
-    if (!self.overlay) {
-        return NO;
+    if (self.overlay) {
+        return (__bridge id)self.overlay->getTexture(self.overlay);
+    } else {
+        return nil;
     }
-    self.subTexture = (__bridge id<IJKSDLSubtitleTextureWrapper>)self.overlay->getTexture(self.overlay);
-    return !!self.subTexture;
 }
 
 @end

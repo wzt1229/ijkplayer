@@ -65,8 +65,6 @@ typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 @property(nonatomic) SDL_TextureOverlay *overlay;
 @property(nonatomic) id subTexture;
 
-- (BOOL)generateSubTexture;
-
 @end
 
 static inline uint32_t color2int(UIColor *color) {
