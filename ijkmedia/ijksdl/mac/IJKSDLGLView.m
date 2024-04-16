@@ -252,7 +252,7 @@ static bool _is_need_dispath_to_global(void)
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
-        if (!IJK_GLES2_Renderer_use(_renderer))
+        if (!IJK_GLES2_Renderer_init(_renderer))
             return NO;
         
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
@@ -265,7 +265,7 @@ static bool _is_need_dispath_to_global(void)
         
         IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, _darPreference.ratio);
     } else {
-        if (!IJK_GLES2_Renderer_use(_renderer))
+        if (!IJK_GLES2_Renderer_useProgram(_renderer))
             return NO;
     }
     return YES;
@@ -310,7 +310,7 @@ static bool _is_need_dispath_to_global(void)
     if (subTexture) {
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
         
-        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, viewport.width, viewport.height);
+        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, subTexture.w, subTexture.h);
         if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture, subTexture.w, subTexture.h)) {
             IJK_GLES2_Renderer_drawArrays();
         } else {

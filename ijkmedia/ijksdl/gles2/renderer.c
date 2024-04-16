@@ -625,7 +625,25 @@ static void IJK_GLES2_updateMVP_ifNeed(IJK_GLES2_Renderer *renderer)
 /*
  * Per-Renderer routine
  */
-GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
+GLboolean IJK_GLES2_Renderer_init(IJK_GLES2_Renderer *renderer)
+{
+    if (IJK_GLES2_Renderer_useProgram(renderer)) {
+        renderer->rgb_adjustment[0] = 1.0;
+        renderer->rgb_adjustment[1] = 1.0;
+        renderer->rgb_adjustment[2] = 1.0;
+        renderer->mvp_changed = 1;
+        renderer->rgb_adjust_changed = 1;
+        
+        IJK_GLES2_Renderer_TexCoords_reset(renderer);
+        IJK_GLES2_Renderer_Vertices_reset(renderer);
+        IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
+        IJK_GLES2_updateMVP_ifNeed(renderer);
+        return GL_TRUE;
+    }
+    return GL_FALSE;
+}
+
+GLboolean IJK_GLES2_Renderer_useProgram(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer)
         return GL_FALSE;
@@ -633,17 +651,6 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
     assert(renderer->func_use);
     if (!renderer->func_use(renderer))
         return GL_FALSE;
-    
-    renderer->rgb_adjustment[0] = 1.0;
-    renderer->rgb_adjustment[1] = 1.0;
-    renderer->rgb_adjustment[2] = 1.0;
-    renderer->mvp_changed = 1;
-    renderer->rgb_adjust_changed = 1;
-    
-    IJK_GLES2_Renderer_TexCoords_reset(renderer);
-    IJK_GLES2_Renderer_Vertices_reset(renderer);
-    IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
-    IJK_GLES2_updateMVP_ifNeed(renderer);
     return GL_TRUE;
 }
 

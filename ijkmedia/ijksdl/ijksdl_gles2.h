@@ -77,7 +77,9 @@ void      IJK_GLES2_Renderer_freeP(IJK_GLES2_Renderer **renderer);
 
 GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format);
-GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
+//call once
+GLboolean IJK_GLES2_Renderer_init(IJK_GLES2_Renderer *renderer);
+GLboolean IJK_GLES2_Renderer_useProgram(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer, float brightness, float satutaion, float contrast);
 
 GLboolean IJK_GLES2_Renderer_updateVertex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
