@@ -161,8 +161,6 @@ typedef enum : NSUInteger {
 #endif
 - (NSString *)name;
 @optional;
-//when video size changed will call videoNaturalSizeChanged.
-- (void)videoNaturalSizeChanged:(CGSize)size;
 //when video z rotate degrees changed will call videoZRotateDegrees.
 - (void)videoZRotateDegrees:(NSInteger)degrees;
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b;

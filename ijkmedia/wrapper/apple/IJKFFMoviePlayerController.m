@@ -820,9 +820,6 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
          postNotificationName:IJKMPMovieNaturalSizeAvailableNotification
          object:self userInfo:@{@"size":NSStringFromSize(self->_naturalSize)}];
 #endif
-        if ([self.view respondsToSelector:@selector(videoNaturalSizeChanged:)]) {
-            [self.view videoNaturalSizeChanged:self->_naturalSize];
-        }
     }
 }
 
