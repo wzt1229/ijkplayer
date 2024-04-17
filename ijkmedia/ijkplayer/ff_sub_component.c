@@ -485,7 +485,9 @@ int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SD
         if (!com->texture) {
             com->texture = gpu->createTexture(gpu, com->width, com->height, SDL_TEXTURE_FMT_BRGA);
         }
-        
+        if (!com->texture) {
+            return -1;
+        }
         FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
         SDL_TextureOverlay_Retain(com->texture);
         int r = ff_ass_upload_texture(assRenderer, pts, com->texture);
@@ -504,7 +506,9 @@ int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SD
         if (!com->fbo) {
             com->fbo = gpu->createFBO(gpu, com->width, com->height);
         }
-
+        if (!com->fbo) {
+            return -1;
+        }
         int r = subComponent_upload_fbo(com, pts, gpu, com->fbo);
         if (r > 0) {
             *texture = com->fbo->getTexture(com->fbo);
