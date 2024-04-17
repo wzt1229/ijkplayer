@@ -879,9 +879,9 @@ static void video_refresh(FFPlayer *opaque, double *remaining_time)
     double time;
     
     //applay subtitle preference changed when the palyer was paused.
-    if (is->paused && is->sub_preference_changed) {
+    if (is->paused && is->force_refresh_sub_changed) {
         video_display2(ffp);
-        is->sub_preference_changed = 0;
+        is->force_refresh_sub_changed = 0;
         return;
     }
     
@@ -3999,7 +3999,7 @@ static int video_refresh_thread(void *arg)
         if (remaining_time > 0.0)
             av_usleep((int)(int64_t)(remaining_time * 1000000.0));
         remaining_time = REFRESH_RATE;
-        if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->step_on_seeking || is->sub_preference_changed))
+        if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->step_on_seeking || is->force_refresh_sub_changed))
             video_refresh(ffp, &remaining_time);
     }
 
@@ -5026,6 +5026,9 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
         _ijkmeta_set_stream(ffp, AVMEDIA_TYPE_SUBTITLE, idx);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
         update_subtitle_texture(ffp, NULL);
+        if (closed && !opened && ffp->is->paused) {
+            ffp->is->force_refresh_sub_changed = 1;
+        }
     }
     return 0;
 }
@@ -5451,6 +5454,6 @@ void ffp_set_subtitle_preference(FFPlayer *ffp, IJKSDLSubtitlePreference* sp)
     int r = ffp_apply_subtitle_preference(ffp);
     //if subtitle preference changed and the player is paused,record need refresh vout
     if (r && ffp->is && ffp->is->paused) {
-        ffp->is->sub_preference_changed = 1;
+        ffp->is->force_refresh_sub_changed = 1;
     }
 }
