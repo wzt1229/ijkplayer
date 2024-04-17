@@ -234,7 +234,15 @@ void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* vi
 - (void)dealloc
 {
     if (_texture) {
-        glDeleteTextures(1, &_texture);
+        if ([[NSThread currentThread] isMainThread]) {
+            glDeleteTextures(1, &_texture);
+        } else {
+            __block GLuint t = _texture;
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                glDeleteTextures(1, &t);
+            }];
+        }
+        _texture = 0;
     }
 }
 
@@ -297,9 +305,10 @@ SDL_GPU *SDL_CreateGPU_WithContext(id context)
 {
     if ([context isKindOfClass:[NSOpenGLContext class]]) {
         return SDL_CreateGPU_WithGLContext(context);
-    } else {
+    } else if (context){
         return SDL_CreateGPU_WithMTLDevice(context);
     }
+    return NULL;
 }
 
 void SDL_GPUFreeP(SDL_GPU **pgpu)

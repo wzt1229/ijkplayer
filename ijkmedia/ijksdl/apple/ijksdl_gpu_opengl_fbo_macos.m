@@ -22,17 +22,15 @@
 {
     //the fbo was created in vout thread, when stop player the fbo will dealloc in a background thread by call shutdown
     if (_fbo) {
-        if ([NSThread currentThread] != [NSThread mainThread]) {
-            [self performSelector:@selector(deleteFBO) onThread:[NSThread mainThread] withObject:nil waitUntilDone:YES];
+        if ([[NSThread currentThread] isMainThread]) {
+            glDeleteFramebuffers(1, &_fbo);
         } else {
-            [self deleteFBO];
+            __block GLuint fbo = _fbo;
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                glDeleteFramebuffers(1, &fbo);
+            }];
         }
     }
-}
-
-- (void)deleteFBO
-{
-    glDeleteFramebuffers(1, &_fbo);
 }
 
 - (instancetype)initWithSize:(CGSize)size
