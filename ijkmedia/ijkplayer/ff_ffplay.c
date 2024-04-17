@@ -425,7 +425,7 @@ static void video_image_display2(FFPlayer *ffp)
         if (is->step_on_seeking) {
             update_subtitle_texture(ffp, NULL);
         } else if (is->ffSub) {
-            SDL_TextureOverlay *overlay;
+            SDL_TextureOverlay *overlay = NULL;
             int r = ff_sub_upload_texture(is->ffSub, vp->pts, ffp->gpu, &overlay);
             if (r > 0) {
                 update_subtitle_texture(ffp, overlay);

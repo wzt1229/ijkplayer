@@ -298,14 +298,11 @@ static SDL_TextureOverlay * getTexture_fbo(SDL_FBOOverlay *foverlay)
     }
     
     SDL_FBOOverlay_Opaque_Metal *fop = foverlay->opaque;
-    if (fop->texture) {
-        return SDL_TextureOverlay_Retain(fop->texture);
+    if (!fop->texture) {
+        id<MTLTexture> subTexture = [fop->fbo texture];
+        fop->texture = create_textureOverlay_with_mtlTexture(subTexture);
     }
-    
-    id<MTLTexture> subTexture = [fop->fbo texture];
-    SDL_TextureOverlay *texture = create_textureOverlay_with_mtlTexture(subTexture);
-    fop->texture = texture;
-    return texture;
+    return SDL_TextureOverlay_Retain(fop->texture);
 }
 
 static SDL_FBOOverlay *createFBO(SDL_GPU *gpu, int w, int h)

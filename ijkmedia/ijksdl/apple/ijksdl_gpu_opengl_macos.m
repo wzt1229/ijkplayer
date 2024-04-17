@@ -265,11 +265,11 @@ static SDL_TextureOverlay * getTexture_fbo(SDL_FBOOverlay *foverlay)
     }
     
     SDL_FBOOverlay_Opaque_GL *fop = foverlay->opaque;
-    if (fop->toverlay) {
-        return SDL_TextureOverlay_Retain(fop->toverlay);
+    if (!fop->toverlay) {
+        id<IJKSDLSubtitleTextureWrapper> subTexture = [fop->fbo texture];
+        fop->toverlay = create_textureOverlay_with_glTexture(fop->glContext, subTexture);
     }
-    id<IJKSDLSubtitleTextureWrapper> subTexture = [fop->fbo texture];
-    return create_textureOverlay_with_glTexture(fop->glContext, subTexture);
+    return SDL_TextureOverlay_Retain(fop->toverlay);
 }
 
 static SDL_FBOOverlay *createFBO(SDL_GPU *gpu, int w, int h)
