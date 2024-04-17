@@ -488,15 +488,14 @@ int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SD
         if (!com->texture) {
             return -1;
         }
+        
         FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-        SDL_TextureOverlay_Retain(com->texture);
         int r = ff_ass_upload_texture(assRenderer, pts, com->texture);
         ff_ass_render_release(&assRenderer);
         if (r > 0) {
-            *texture = com->texture;
+            *texture = SDL_TextureOverlay_Retain(com->texture);
         } else {
             *texture = NULL;
-            SDL_TextureOverlay_Release(&com->texture);
         }
         return r;
     } else {

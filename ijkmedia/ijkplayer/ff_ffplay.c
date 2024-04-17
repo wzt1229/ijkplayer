@@ -434,6 +434,7 @@ static void video_image_display2(FFPlayer *ffp)
             } else {
                 //keep current
             }
+            SDL_TextureOverlay_Release(&overlay);
         }
         
         if (ffp->render_wait_start && !ffp->start_on_prepared && is->pause_req) {
