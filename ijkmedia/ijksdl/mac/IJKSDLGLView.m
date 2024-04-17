@@ -128,10 +128,11 @@ static bool _is_need_dispath_to_global(void)
 
 - (void)dealloc
 {
-    [self.renderThread performSelector:@selector(setFbo:)
-                            withTarget:self
-                            withObject:nil
-                         waitUntilDone:YES];
+    if ([NSThread currentThread] != [NSThread mainThread]) {
+        [self performSelector:@selector(setFbo:) onThread:[NSThread mainThread] withObject:nil waitUntilDone:YES];
+    } else {
+        self.fbo = nil;
+    }
     
     if (_renderer) {
         IJK_GLES2_Renderer_freeP(&_renderer);
