@@ -223,7 +223,7 @@ static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureO
     CGRect rect = IJKSDL_make_NDC(toverlay->frame, toverlay->scale, viewport);
     [fop->renderer updateSubtitleVertexIfNeed:rect];
     id<IJKSDLSubtitleTextureWrapper> texture = (__bridge id<IJKSDLSubtitleTextureWrapper>)toverlay->getTexture(toverlay);
-    [fop->renderer renderTexture:texture];
+    [fop->renderer drawTexture:texture];
 }
 
 static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)

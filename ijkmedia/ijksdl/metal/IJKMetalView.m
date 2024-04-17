@@ -295,8 +295,7 @@ typedef CGRect NSRect;
     }
 
     [self.subPipeline updateSubtitleVertexIfNeed:subRect];
-    [self.subPipeline uploadTextureWithEncoder:renderEncoder
-                                       texture:subTexture];
+    [self.subPipeline drawTexture:subTexture encoder:renderEncoder];
     [self.subPipeline unlock];
 }
 

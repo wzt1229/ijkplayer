@@ -24,8 +24,7 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 
 - (BOOL)createRenderPipelineIfNeed;
 - (void)updateSubtitleVertexIfNeed:(CGRect)rect;
-- (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                         texture:(id)subTexture;
+- (void)drawTexture:(id)subTexture encoder:(id<MTLRenderCommandEncoder>)encoder;
 
 @end
 

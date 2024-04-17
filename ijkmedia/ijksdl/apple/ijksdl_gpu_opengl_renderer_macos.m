@@ -170,7 +170,23 @@ void main()
     IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
 }
 
-- (BOOL)uploadSubtitleTexture:(id<IJKSDLSubtitleTextureWrapper>)subTexture
+- (void)clean
+{
+    glClearColor(0.0,0.0,0.0,0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+}
+
+- (void)bindFBO:(IJKSDLOpenGLFBO *)fbo
+{
+    // Bind the FBO
+    [fbo bind];
+    CGSize viewport = [fbo size];
+    glViewport(0, 0, viewport.width, viewport.height);
+}
+
+- (void)drawTexture:(id<IJKSDLSubtitleTextureWrapper>)subTexture
 {
     //设置采样器位置，保证了每个uniform采样器对应着正确的纹理单元
     glUniform1i(_uniforms[UNIFORM_S_AI], 0);
@@ -189,29 +205,6 @@ void main()
     glBindVertexArray(0);
     
     IJK_GLES2_checkError("subtitle renderer draw");
-    return YES;
-}
-
-- (void)clean
-{
-    glClearColor(0.0,0.0,0.0,0.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-}
-
-- (void)bindFBO:(IJKSDLOpenGLFBO *)fbo
-{
-    // Bind the FBO
-    [fbo bind];
-    CGSize viewport = [fbo size];
-    glViewport(0, 0, viewport.width, viewport.height);
-}
-
-- (void)renderTexture:(id<IJKSDLSubtitleTextureWrapper>)subTexture
-{
-    IJK_GLES2_checkError("render subtitle texture");
-    [self uploadSubtitleTexture:subTexture];
 }
 
 @end

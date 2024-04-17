@@ -139,8 +139,7 @@
                                         options:MTLResourceStorageModeShared]; // 创建顶点缓存
 }
 
-- (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                         texture:(id)subTexture
+- (void)drawTexture:(id)subTexture encoder:(id<MTLRenderCommandEncoder>)encoder
 {
     [encoder setFragmentTexture:subTexture atIndex:IJKFragmentTextureIndexTextureY];
 

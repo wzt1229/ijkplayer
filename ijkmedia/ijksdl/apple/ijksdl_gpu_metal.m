@@ -238,7 +238,7 @@ static void metalDraw(SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay)
     CGRect rect = IJKSDL_make_NDC(toverlay->frame, toverlay->scale, viewport);
     [fop->subPipeline updateSubtitleVertexIfNeed:rect];
     id<MTLTexture>texture = (__bridge id<MTLTexture>)toverlay->getTexture(toverlay);
-    [fop->subPipeline uploadTextureWithEncoder:fop->renderEncoder texture:texture];
+    [fop->subPipeline drawTexture:texture encoder:fop->renderEncoder];
 }
 
 static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay)
