@@ -445,12 +445,12 @@ static int subComponent_upload_fbo(FFSubComponent *com, float pts, SDL_GPU *gpu,
             memcpy(com->pre_list, buffers, count * sizeof(buffers[0]));
         }
         com->sp_changed = 0;
-        fbo->clear(fbo);
         if (count > 0) {
             int bottom_offset = com->sp.bottomMargin * com->height;
             float scale = com->sp.scale;
 
             fbo->beginDraw(gpu, fbo, 0);
+            fbo->clear(fbo);
             int water_mark = fbo->h * SUBTITLE_MOVE_WATERMARK;
             for (int i = 0; i < count; i++) {
                 FFSubtitleBuffer *sb = buffers[i];
