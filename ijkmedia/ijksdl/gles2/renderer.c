@@ -95,19 +95,11 @@ void IJK_GLES2_Renderer_free(IJK_GLES2_Renderer *renderer)
     if (!renderer)
         return;
 
+    //delete opengl shader and buffers
+    IJK_GLES2_Renderer_reset(renderer);
+    
     if (renderer->func_destroy)
         renderer->func_destroy(renderer);
-
-#if 0
-    if (renderer->vertex_shader)    ALOGW("[GLES2] renderer: vertex_shader not deleted.\n");
-    if (renderer->fragment_shader)  ALOGW("[GLES2] renderer: fragment_shader not deleted.\n");
-    if (renderer->program)          ALOGW("[GLES2] renderer: program not deleted.\n");
-
-    for (int i = 0; i < IJK_GLES2_MAX_PLANE; ++i) {
-        if (renderer->plane_textures[i])
-            ALOGW("[GLES2] renderer: plane texture[%d] not deleted.\n", i);
-    }
-#endif
 
     free(renderer);
 }
