@@ -285,8 +285,8 @@ typedef CGRect NSRect;
     float hRatio = viewport.height / subTexture.height;
     
     CGRect subRect;
-    //aspect fill
-    if (wRatio > hRatio) {
+    //aspect fit
+    if (wRatio < hRatio) {
         float nH = (subTexture.height * wRatio / viewport.height);
         subRect = CGRectMake(-1, -nH, 2.0, 2.0 * nH);
     } else {

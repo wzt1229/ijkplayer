@@ -901,8 +901,8 @@ void IJK_GLES2_Renderer_updateSubtitleVertex(IJK_GLES2_Renderer *renderer, float
     float hRatio = renderer->layer_height / height;
     
     CGRect subRect;
-    //aspect fill
-    if (wRatio > hRatio) {
+    //aspect fit
+    if (wRatio < hRatio) {
         float nH = (height * wRatio / renderer->layer_height);
         subRect = CGRectMake(-1, -nH, 2.0, 2.0 * nH);
     } else {
