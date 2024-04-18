@@ -8,6 +8,7 @@
 #import "ijksdl_gpu_opengl_fbo_macos.h"
 #import "ijksdl_gles2.h"
 #import "ijksdl_vout_ios_gles2.h"
+#include <libavutil/log.h>
 
 @interface IJKSDLOpenGLFBO()
 
@@ -56,14 +57,17 @@
         glGenFramebuffers(1, &_fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, t, 0);
-        glBindTexture(target, 0);
         
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (GL_FRAMEBUFFER_COMPLETE == status) {
             _texture = IJKSDL_crate_openglTextureWrapper(t, size.width, size.height);
+            glBindTexture(target, 0);
             return self;
         } else {
+            glBindTexture(target, 0);
+            av_log(NULL, AV_LOG_ERROR, "CheckFramebufferStatus:%x\n",status);
         #if DEBUG
-            NSAssert(NO, @"Failed to make complete framebuffer object %x.",  glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            NSAssert(NO, @"Failed to make complete framebuffer object %x.", status);
         #endif
             return nil;
         }
