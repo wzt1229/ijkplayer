@@ -233,6 +233,7 @@ static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
     }
     
     SDL_GPU_Opaque_GL *gop = gpu->opaque;
+    glFlush();
     CGLUnlockContext([gop->glContext CGLContextObj]);
 }
 
@@ -307,6 +308,30 @@ static void dealloc_gpu(SDL_GPU *gpu)
     free(gop);
 }
 
+static NSOpenGLContext *createGLContext(NSOpenGLContext *sharedContext)
+{
+    NSOpenGLPixelFormatAttribute attrs[] =
+    {
+        NSOpenGLPFAAccelerated,
+        NSOpenGLPFANoRecovery,
+        NSOpenGLPFADoubleBuffer,
+        NSOpenGLPFADepthSize, 24,
+#if ! USE_LEGACY_OPENGL
+        NSOpenGLPFAOpenGLProfile,NSOpenGLProfileVersion3_2Core,
+#endif
+        NSOpenGLPFAAllowOfflineRenderers, 1,
+        0
+    };
+   
+    NSOpenGLPixelFormat *pf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+    
+    if (pf)
+    {
+        return [[NSOpenGLContext alloc] initWithFormat:pf shareContext:sharedContext];
+    }
+    return nil;
+}
+
 SDL_GPU *SDL_CreateGPU_WithGLContext(NSOpenGLContext * context)
 {
     SDL_GPU *gl = (SDL_GPU*) calloc(1, sizeof(SDL_GPU));
@@ -318,7 +343,7 @@ SDL_GPU *SDL_CreateGPU_WithGLContext(NSOpenGLContext * context)
         free(gl);
         return NULL;
     }
-    opaque->glContext = context;
+    opaque->glContext = createGLContext(context);
     gl->opaque = opaque;
     gl->createTexture = createTexture;
     gl->createFBO = createFBO;
