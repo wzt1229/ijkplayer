@@ -351,37 +351,37 @@ static int subComponent_packet_pgs(FFSubComponent *com, float pts, FFSubtitleBuf
         return -2;
     }
     
-    int total = 0;
-    while ((total = frame_queue_nb_remaining(com->frameq)) > 0) {
-        Frame *sp = frame_queue_peek(com->frameq);
-        //drop old serial subs
-        if (sp->serial != serial) {
-            frame_queue_next(com->frameq);
-            continue;
-        }
-        
-        float end = sp->pts + sp->duration;
-        //字幕显示时间已经结束了
-        if (pts > end) {
-            frame_queue_next(com->frameq);
-            continue;
-        }
-        break;
-    }
-
-    if (total > SUB_REF_MAX_LEN) {
-        total = SUB_REF_MAX_LEN;
-    }
-    
     FFSubtitleBufferPacket buffer_array = { 0 };
     buffer_array.scale = com->sp.scale;
     buffer_array.width = com->width;
     buffer_array.height = com->height;
     buffer_array.bottom_margin = com->sp.bottomMargin * com->height;
     
-    for (int i = 0; i < total; i ++) {
+    int i = 0;
+    
+    while (buffer_array.len < SUB_REF_MAX_LEN) {
         Frame *sp = frame_queue_peek_offset(com->frameq, i);
-        if (sp && sp->sub_list[0] && pts > sp->pts) {
+        if (!sp) {
+            break;
+        }
+        //drop old serial subs
+        if (sp->serial != serial) {
+            frame_queue_next(com->frameq);
+            continue;
+        }
+        float end = sp->pts + sp->duration;
+        //字幕显示时间已经结束了
+        if (pts > end) {
+            frame_queue_next(com->frameq);
+            continue;
+        }
+        
+        if (!sp->sub_list[0]) {
+            i++;
+            continue;
+        }
+        
+        if (pts > sp->pts) {
             for (int j = 0; j < sizeof(sp->sub_list)/sizeof(sp->sub_list[0]); j++) {
                 FFSubtitleBuffer *sb = sp->sub_list[j];
                 if (sb) {
@@ -390,6 +390,7 @@ static int subComponent_packet_pgs(FFSubComponent *com, float pts, FFSubtitleBuf
                     break;
                 }
             }
+            i++;
             continue;
         } else {
             break;
