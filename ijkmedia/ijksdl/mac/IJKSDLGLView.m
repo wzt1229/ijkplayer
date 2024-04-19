@@ -126,12 +126,20 @@ static bool _is_need_dispath_to_global(void)
 @synthesize preventDisplay;
 @synthesize showHdrAnimation = _showHdrAnimation;
 
+- (void)destroyRender
+{
+    IJK_GLES2_Renderer_freeP(&_renderer);
+}
+
 - (void)dealloc
 {
     self.fbo = nil;
-    
     if (_renderer) {
-        IJK_GLES2_Renderer_freeP(&_renderer);
+        if (self.renderThread && [NSThread currentThread] != self.renderThread.thread) {
+            [self.renderThread performSelector:@selector(destroyRender) withTarget:self withObject:nil waitUntilDone:YES];
+        } else {
+            [self destroyRender];
+        }
     }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];

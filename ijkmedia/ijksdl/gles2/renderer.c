@@ -67,16 +67,8 @@ void IJK_GLES2_Renderer_reset(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer)
         return;
-
-    if (renderer->vertex_shader)
-        glDeleteShader(renderer->vertex_shader);
-    if (renderer->fragment_shader)
-        glDeleteShader(renderer->fragment_shader);
     if (renderer->program)
         glDeleteProgram(renderer->program);
-
-    renderer->vertex_shader   = 0;
-    renderer->fragment_shader = 0;
     renderer->program         = 0;
 
     for (int i = 0; i < IJK_GLES2_MAX_PLANE; ++i) {
@@ -85,7 +77,6 @@ void IJK_GLES2_Renderer_reset(IJK_GLES2_Renderer *renderer)
             renderer->plane_textures[i] = 0;
         }
     }
-    
     glDeleteBuffers(1, &renderer->vbo);
     glDeleteVertexArrays(1, &renderer->vao);
 }
@@ -94,13 +85,12 @@ void IJK_GLES2_Renderer_free(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer)
         return;
-
     //delete opengl shader and buffers
     IJK_GLES2_Renderer_reset(renderer);
     
     if (renderer->func_destroy)
         renderer->func_destroy(renderer);
-
+    IJK_GLES2_checkError("renderer free");
     free(renderer);
 }
 
@@ -152,8 +142,12 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
     if (!renderer)
         goto fail;
     
-    renderer->vertex_shader = vertex_shader;
-    renderer->fragment_shader = fragment_shader;
+    if (vertex_shader)
+        glDeleteShader(vertex_shader);
+    if (fragment_shader)
+        glDeleteShader(fragment_shader);
+    IJK_GLES2_checkError("glDeleteShader");
+    
     renderer->program = program;
     
     renderer->av4_position = glGetAttribLocation(renderer->program, "av4_Position");                IJK_GLES2_checkError_TRACE("glGetAttribLocation(av4_Position)");
@@ -165,7 +159,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
     return renderer;
 
 fail:
-
+    
     if (renderer && renderer->program)
         IJK_GLES2_printProgramInfo(renderer->program);
 

@@ -82,8 +82,6 @@ typedef struct IJK_GLES2_Renderer
 
     GLuint program;
 
-    GLuint vertex_shader;
-    GLuint fragment_shader;
     GLuint plane_textures[IJK_GLES2_MAX_PLANE];
 
     GLint av4_position;
