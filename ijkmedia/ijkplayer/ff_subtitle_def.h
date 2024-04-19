@@ -54,4 +54,21 @@ static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,I
     return 1;
 }
 
+#define SUB_REF_MAX_LEN 32
+
+typedef struct FFSubtitleBufferPacket {
+    FFSubtitleBuffer *e[SUB_REF_MAX_LEN];
+    int len;
+    float scale;
+    int bottom_margin;
+    int isAss;
+    int width;
+    int height;
+} FFSubtitleBufferPacket;
+
+//return zero means equal
+int isFFSubtitleBufferArrayDiff(FFSubtitleBufferPacket *a1, FFSubtitleBufferPacket *a2);
+void FreeSubtitleBufferArray(FFSubtitleBufferPacket *a);
+void ResetSubtitleBufferArray(FFSubtitleBufferPacket *dst, FFSubtitleBufferPacket *src);
+
 #endif /* ff_subtitle_def_h */

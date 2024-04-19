@@ -13,6 +13,7 @@
 #include "ff_ffplay_debug.h"
 #include "ijksdl_gpu.h"
 #include "ijksdl/ijksdl_gpu.h"
+#include "ff_subtitle_def_internal.h"
 
 typedef struct FFSubtitle {
     PacketQueue packetq;
@@ -25,6 +26,8 @@ typedef struct FFSubtitle {
     int streamStartTime;//ic start_time (s)
     int video_w, video_h;
     IJKSDLSubtitlePreference sp;
+    SDL_TextureOverlay *texture;
+    SDL_FBOOverlay *fbo;
 }FFSubtitle;
 
 //---------------------------Public Common Functions--------------------------------------------------//
@@ -83,7 +86,8 @@ int ff_sub_destroy(FFSubtitle **subp)
     }
     packet_queue_destroy(&sub->packetq);
     frame_queue_destory(&sub->frameq);
-    
+    SDL_FBOOverlayFreeP(&sub->fbo);
+    SDL_TextureOverlay_Release(&sub->texture);
     sub->delay = 0.0f;
     sub->current_pts = 0.0f;
     sub->maxInternalStream = -1;
@@ -94,6 +98,9 @@ int ff_sub_destroy(FFSubtitle **subp)
 
 int ff_sub_close_current(FFSubtitle *sub)
 {
+    if (!sub) {
+        return -1;
+    }
     if (sub->inSub) {
         return subComponent_close(&sub->inSub);
     } else if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
@@ -119,9 +126,9 @@ int ff_sub_drop_old_frames(FFSubtitle *sub)
     return count;
 }
 
-int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
+static int ff_sub_upload_buffer(FFSubtitle *sub, float pts, FFSubtitleBufferPacket *packet)
 {
-    if (!sub || !texture) {
+    if (!sub || !packet) {
         return -1;
     }
     
@@ -130,18 +137,99 @@ int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureO
     
     if (sub->inSub) {
         if (subComponent_get_stream(sub->inSub) != -1) {
-            return subComponent_upload_texture(sub->inSub, pts, gpu, texture);
+            return subComponent_upload_buffer(sub->inSub, pts, packet);
         }
     }
     
     if (sub->exSub) {
         if (exSub_get_opened_stream_idx(sub->exSub) != -1) {
             pts -= sub->streamStartTime;
-            return exSub_upload_texture(sub->exSub, pts, gpu, texture);
+            return exSub_upload_buffer(sub->exSub, pts, packet);
         }
     }
     
     return -3;
+}
+
+static SDL_TextureOverlay * subtitle_ass_upload_texture(SDL_TextureOverlay *texture, FFSubtitleBufferPacket *packet)
+{
+    for (int i = 0; i < packet->len; i++) {
+        FFSubtitleBuffer *buffer = packet->e[i];
+        texture->clearDirtyRect(texture);
+        texture->dirtyRect = buffer->rect;
+        texture->replaceRegion(texture, buffer->rect, buffer->data);
+    }
+    return SDL_TextureOverlay_Retain(texture);
+}
+
+static SDL_TextureOverlay * subtitle_upload_fbo(SDL_GPU *gpu, SDL_FBOOverlay *fbo, FFSubtitleBufferPacket *packet)
+{
+    fbo->beginDraw(gpu, fbo, 0);
+    fbo->clear(fbo);
+    int water_mark = fbo->h * SUBTITLE_MOVE_WATERMARK;
+    int bottom_offset = packet->bottom_margin;
+    for (int i = 0; i < packet->len; i++) {
+        FFSubtitleBuffer *sub = packet->e[i];
+        SDL_TextureOverlay *texture = gpu->createTexture(gpu, sub->rect.w, sub->rect.h, SDL_TEXTURE_FMT_BRGA);
+        int offset = sub->rect.y > water_mark ? bottom_offset : 0;
+        SDL_Rectangle rect = sub->rect;
+        rect.y -= offset;
+        if (rect.y < 0) {
+            rect.y = 0;
+        }
+        texture->replaceRegion(texture, rect, sub->data);
+        texture->scale = packet->scale;
+        fbo->drawTexture(gpu, fbo, texture);
+        SDL_TextureOverlay_Release(&texture);
+    }
+    fbo->endDraw(gpu, fbo);
+    return fbo->getTexture(fbo);
+}
+
+int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
+{
+    if (!sub || !texture) {
+        return -1;
+    }
+    
+    FFSubtitleBufferPacket packet = {0};
+    int r = ff_sub_upload_buffer(sub, pts, &packet);
+    if (r <= 0) {
+        *texture = NULL;
+        return r;
+    }
+    
+    if (packet.isAss) {
+        if (sub->texture && (sub->texture->w != packet.width || sub->texture->h != packet.height)) {
+            SDL_TextureOverlay_Release(&sub->texture);
+        }
+        if (!sub->texture) {
+            sub->texture = gpu->createTexture(gpu, packet.width, packet.height, SDL_TEXTURE_FMT_BRGA);
+        }
+        if (!sub->texture) {
+            r = -1;
+            goto end;
+        }
+        
+        *texture = subtitle_ass_upload_texture(sub->texture, &packet);
+        goto end;
+    } else {
+        if (sub->fbo && (sub->fbo->w != packet.width || sub->fbo->h != packet.height)) {
+            SDL_FBOOverlayFreeP(&sub->fbo);
+        }
+        if (!sub->fbo) {
+            sub->fbo = gpu->createFBO(gpu, packet.width, packet.height);
+        }
+        if (!sub->fbo) {
+            r = -1;
+            goto end;
+        }
+        
+        *texture = subtitle_upload_fbo(gpu, sub->fbo, &packet);
+    }
+end:
+    FreeSubtitleBufferArray(&packet);
+    return r;
 }
 
 int ff_sub_frame_queue_size(FFSubtitle *sub)

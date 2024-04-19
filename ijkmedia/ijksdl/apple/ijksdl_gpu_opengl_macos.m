@@ -37,6 +37,8 @@ static void* getTexture(SDL_TextureOverlay *overlay);
 static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void *pixels)
 {
     if (overlay && overlay->opaque) {
+        overlay->frame = rect;
+        
         SDL_TextureOverlay_Opaque_GL *op = overlay->opaque;
         id<IJKSDLSubtitleTextureWrapper>t = op->texture;
         CGLLockContext([op->glContext CGLContextObj]);
@@ -53,7 +55,7 @@ static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void 
             rect.y = 0;
             rect.h = t.h;
         }
-        
+
         glTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, rect.x, rect.y, (GLsizei)rect.w, (GLsizei)rect.h, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid *)pixels);
         IJK_GLES2_checkError("replaceOpenGlRegion");
         glBindTexture(GL_TEXTURE_RECTANGLE, 0);

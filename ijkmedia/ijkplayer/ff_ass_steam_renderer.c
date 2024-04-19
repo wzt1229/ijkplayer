@@ -170,12 +170,13 @@ static void draw_single_inset(FFSubtitleBuffer * frame, ASS_Image *img, int laye
     draw_ass_bgra(img->bitmap, img->w, img->h, img->stride, dst, frame->rect.stride, img->color);
 }
 
-static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_TextureOverlay *texture)
+static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **buffer)
 {
     FF_ASS_Context *ass = s->priv_data;
-    if (!ass) {
+    if (!ass || !buffer) {
         return -1;
     }
+    
     int changed;
     ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
 
@@ -185,29 +186,25 @@ static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_Texture
     ass->force_changed = 0;
     
     if (imgs) {
-        texture->clearDirtyRect(texture);
         int bm = ass->bottom_margin;
         int water_mark = ass->original_h * SUBTITLE_MOVE_WATERMARK;
-        {
-            ASS_Image *img = imgs;
-            SDL_Rectangle dirtyRect = {0};
-            while (img) {
-                int y = img->dst_y;
-                if (y > water_mark) {
-                    y -= bm;
-                    if (y < 0) {
-                        y = 0;
-                    }
+        ASS_Image *img = imgs;
+        SDL_Rectangle dirtyRect = {0};
+        while (img) {
+            int y = img->dst_y;
+            if (y > water_mark) {
+                y -= bm;
+                if (y < 0) {
+                    y = 0;
                 }
-                SDL_Rectangle t = {img->dst_x, y, img->w, img->h};
-                dirtyRect = SDL_union_rectangle(dirtyRect, t);
-                img = img->next;
             }
-            texture->dirtyRect = dirtyRect;
+            SDL_Rectangle t = {img->dst_x, y, img->w, img->h};
+            dirtyRect = SDL_union_rectangle(dirtyRect, t);
+            img = img->next;
         }
         
-        FFSubtitleBuffer* frame = ff_subtitle_buffer_alloc_rgba32(texture->dirtyRect);
-        texture->dirtyRect.stride = frame->rect.stride;
+        FFSubtitleBuffer* frame = ff_subtitle_buffer_alloc_rgba32(dirtyRect);
+        dirtyRect.stride = frame->rect.stride;
         
         int cnt = 0;
         while (imgs) {
@@ -216,12 +213,10 @@ static int upload_texture(struct FF_ASS_Renderer *s, double time_ms, SDL_Texture
             if (imgs->dst_y > water_mark) {
                 offset = bm;
             }
-            draw_single_inset(frame, imgs, cnt, texture->dirtyRect.x, texture->dirtyRect.y, offset);
+            draw_single_inset(frame, imgs, cnt, dirtyRect.x, dirtyRect.y, offset);
             imgs = imgs->next;
         }
-        
-        texture->replaceRegion(texture, frame->rect, frame->data);
-        ff_subtitle_buffer_release(&frame);
+        *buffer = frame;
         return 1;
     } else {
         av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
@@ -390,7 +385,7 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .set_attach_font    = set_attach_font,
     .set_video_size     = set_video_size,
     .process_chunk      = process_chunk,
-    .upload_texture     = upload_texture,
+    .upload_buffer      = upload_buffer,
     .update_bottom_margin= update_bottom_margin,
     .set_font_scale     = set_font_scale,
     .uninit             = uninit,
@@ -468,9 +463,9 @@ void ff_ass_render_release(FF_ASS_Renderer **arp)
     }
 }
 
-int ff_ass_upload_texture(FF_ASS_Renderer * assRenderer, float begin, SDL_TextureOverlay * texture)
+int ff_ass_upload_buffer(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer ** buffer)
 {
-    return assRenderer->iformat->upload_texture(assRenderer, begin * 1000, texture);
+    return assRenderer->iformat->upload_buffer(assRenderer, begin * 1000, buffer);
 }
 
 void ff_ass_process_chunk(FF_ASS_Renderer * assRenderer, const char *ass_line, float begin, float end)

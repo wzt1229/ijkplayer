@@ -27,9 +27,7 @@ typedef struct FFSubComponent{
     void *retry_opaque;
     FF_ASS_Renderer *assRenderer;
     int width, height;
-    SDL_TextureOverlay *texture;
-    SDL_FBOOverlay *fbo;
-    FFSubtitleBuffer* pre_list [SUB_REF_MAX_LEN];
+    FFSubtitleBufferPacket sub_buffer_array;
     IJKSDLSubtitlePreference sp;
     int sp_changed;
 }FFSubComponent;
@@ -233,37 +231,6 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
     return NULL == com->assRenderer;
 }
 
-static void free_pre_list(FFSubtitleBuffer *sbp [])
-{
-    if (sbp) {
-        int count = 0;
-        while (count < SUB_REF_MAX_LEN) {
-            FFSubtitleBuffer *h = sbp[count];
-            if (!h) {
-                break;
-            }
-            ff_subtitle_buffer_release(&h);
-            count++;
-        }
-    }
-}
-
-static int diff_list(FFSubtitleBuffer *sbp1 [], FFSubtitleBuffer *sbp2 [])
-{
-    for (int i = 0; i < SUB_REF_MAX_LEN; i++) {
-        FFSubtitleBuffer *h1 = sbp1[i];
-        FFSubtitleBuffer *h2 = sbp2[i];
-        if (h1 != h2) {
-            return 1;
-        } else if (h1 == NULL) {
-            return 0;
-        } else {
-            continue;
-        }
-    }
-    return 0;
-}
-
 static int subtitle_thread(void *arg)
 {
     FFSubComponent *com = arg;
@@ -377,22 +344,7 @@ static int subtitle_thread(void *arg)
     return 0;
 }
 
-static SDL_Rectangle replace_bitmap(SDL_TextureOverlay *overlay, FFSubtitleBuffer *frame, int bottom_offset)
-{
-    SDL_Rectangle rect = frame->rect;
-    rect.y -= bottom_offset;
-    if (rect.y < 0) {
-        rect.y = 0;
-    }
-    if (overlay && frame) {
-        overlay->replaceRegion(overlay, rect, frame->data);
-        return rect;
-    } else {
-        return SDL_Zero_Rectangle;
-    }
-}
-
-static int subComponent_upload_fbo(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_FBOOverlay *fbo)
+static int subComponent_packet_pgs(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
     int serial = subComponent_get_serial(com);
     if (serial == -1) {
@@ -416,16 +368,24 @@ static int subComponent_upload_fbo(FFSubComponent *com, float pts, SDL_GPU *gpu,
         }
         break;
     }
+
+    if (total > SUB_REF_MAX_LEN) {
+        total = SUB_REF_MAX_LEN;
+    }
     
-    FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
-    int idx = 0;
-    for (int i = 0; i < total && idx < SUB_REF_MAX_LEN; i ++) {
+    FFSubtitleBufferPacket buffer_array = { 0 };
+    buffer_array.scale = com->sp.scale;
+    buffer_array.width = com->width;
+    buffer_array.height = com->height;
+    buffer_array.bottom_margin = com->sp.bottomMargin * com->height;
+    
+    for (int i = 0; i < total; i ++) {
         Frame *sp = frame_queue_peek_offset(com->frameq, i);
         if (sp && sp->sub_list[0] && pts > sp->pts) {
             for (int j = 0; j < sizeof(sp->sub_list)/sizeof(sp->sub_list[0]); j++) {
                 FFSubtitleBuffer *sb = sp->sub_list[j];
                 if (sb) {
-                    buffers[idx++] = ff_subtitle_buffer_retain(sb);
+                    buffer_array.e[buffer_array.len++] = ff_subtitle_buffer_retain(sb);
                 } else {
                     break;
                 }
@@ -435,82 +395,47 @@ static int subComponent_upload_fbo(FFSubComponent *com, float pts, SDL_GPU *gpu,
             break;
         }
     }
-    int count = idx;
     
-    if (com->sp_changed || diff_list(com->pre_list, buffers)) {
-        free_pre_list(com->pre_list);
-        bzero(com->pre_list, sizeof(com->pre_list));
-        
-        if (count > 0) {
-            memcpy(com->pre_list, buffers, count * sizeof(buffers[0]));
-        }
+    if (com->sp_changed || isFFSubtitleBufferArrayDiff(&com->sub_buffer_array, &buffer_array)) {
         com->sp_changed = 0;
-        if (count > 0) {
-            int bottom_offset = com->sp.bottomMargin * com->height;
-            float scale = com->sp.scale;
-
-            fbo->beginDraw(gpu, fbo, 0);
-            fbo->clear(fbo);
-            int water_mark = fbo->h * SUBTITLE_MOVE_WATERMARK;
-            for (int i = 0; i < count; i++) {
-                FFSubtitleBuffer *sb = buffers[i];
-                SDL_TextureOverlay *texture = gpu->createTexture(gpu, sb->rect.w, sb->rect.h, SDL_TEXTURE_FMT_BRGA);
-                int offset = sb->rect.y > water_mark ? bottom_offset : 0;
-                texture->frame = replace_bitmap(texture, sb, offset);
-                texture->scale = scale;
-                fbo->drawTexture(gpu, fbo, texture);
-                SDL_TextureOverlay_Release(&texture);
-            }
-            
-            fbo->endDraw(gpu, fbo);
-            return 1;
-        }
+        ResetSubtitleBufferArray(&com->sub_buffer_array, &buffer_array);
+        ResetSubtitleBufferArray(packet, &buffer_array);
+        FreeSubtitleBufferArray(&buffer_array);
+        return 1;
     } else {
-        free_pre_list(buffers);
+        FreeSubtitleBufferArray(&buffer_array);
         return 0;
     }
     return -3;
 }
 
-int subComponent_upload_texture(FFSubComponent *com, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
+int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
-    if (!com || com->packetq->abort_request || !gpu || !texture) {
+    if (!com || com->packetq->abort_request || !packet) {
         return -1;
     }
     
     if (com->assRenderer) {
-        if (com->texture && (com->texture->w != com->width || com->texture->h != com->height)) {
-            SDL_TextureOverlay_Release(&com->texture);
-        }
-        if (!com->texture) {
-            com->texture = gpu->createTexture(gpu, com->width, com->height, SDL_TEXTURE_FMT_BRGA);
-        }
-        if (!com->texture) {
-            return -1;
-        }
-        
+        FFSubtitleBuffer *buffer = NULL;
         FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-        int r = ff_ass_upload_texture(assRenderer, pts, com->texture);
+        int r = ff_ass_upload_buffer(com->assRenderer, pts, &buffer);
         ff_ass_render_release(&assRenderer);
         if (r > 0) {
-            *texture = SDL_TextureOverlay_Retain(com->texture);
-        } else {
-            *texture = NULL;
+            FFSubtitleBufferPacket arr = {0};
+            arr.scale = 1.0;
+            arr.len = 1;
+            arr.isAss = 1;
+            arr.e[0] = buffer;
+            arr.width = com->width;
+            arr.height = com->height;
+            *packet = arr;
         }
         return r;
     } else {
-        if (com->fbo && (com->fbo->w != com->width || com->fbo->h != com->height)) {
-            SDL_FBOOverlayFreeP(&com->fbo);
-        }
-        if (!com->fbo) {
-            com->fbo = gpu->createFBO(gpu, com->width, com->height);
-        }
-        if (!com->fbo) {
-            return -1;
-        }
-        int r = subComponent_upload_fbo(com, pts, gpu, com->fbo);
+        int r = subComponent_packet_pgs(com, pts, packet);
         if (r > 0) {
-            *texture = com->fbo->getTexture(com->fbo);
+            packet->width = com->width;
+            packet->height = com->height;
         }
         return r;
     }
@@ -591,9 +516,7 @@ int subComponent_close(FFSubComponent **cp)
     }
     decoder_abort(&com->decoder, com->frameq);
     decoder_destroy(&com->decoder);
-    free_pre_list(com->pre_list);
-    SDL_FBOOverlayFreeP(&com->fbo);
-    SDL_TextureOverlay_Release(&com->texture);
+    FreeSubtitleBufferArray(&com->sub_buffer_array);
     av_freep(cp);
     return 0;
 }

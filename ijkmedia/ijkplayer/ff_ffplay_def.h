@@ -195,8 +195,6 @@ typedef struct Clock {
     int *queue_serial;    /* pointer to the current packet queue serial, used for obsolete clock detection */
 } Clock;
 
-#define SUB_REF_MAX_LEN SUBPICTURE_QUEUE_SIZE
-
 /* Common struct for handling all types of decoded data and allocated render buffers. */
 typedef struct Frame {
     AVFrame *frame;

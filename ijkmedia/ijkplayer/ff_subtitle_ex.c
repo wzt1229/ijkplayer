@@ -498,9 +498,9 @@ AVStream *exSub_get_stream(IJKEXSubtitle *sub)
     return NULL;
 }
 
-int exSub_upload_texture(IJKEXSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
+int exSub_upload_buffer(IJKEXSubtitle *sub, float pts, FFSubtitleBufferPacket *packet)
 {
-    return subComponent_upload_texture(sub->component, pts, gpu, texture);
+    return subComponent_upload_buffer(sub->component, pts, packet);
 }
 
 void exSub_update_preference(IJKEXSubtitle *sub, IJKSDLSubtitlePreference* sp)

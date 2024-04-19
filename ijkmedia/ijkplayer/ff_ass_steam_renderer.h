@@ -14,8 +14,7 @@
 
 typedef struct FF_ASS_Renderer FF_ASS_Renderer;
 typedef struct AVStream AVStream;
-typedef struct SDL_TextureOverlay SDL_TextureOverlay;
-typedef struct SDL_GPU SDL_GPU;
+typedef struct FFSubtitleBuffer FFSubtitleBuffer;
 
 typedef struct FF_ASS_Renderer_Format {
     const AVClass *priv_class;
@@ -25,7 +24,7 @@ typedef struct FF_ASS_Renderer_Format {
     void (*set_attach_font)(FF_ASS_Renderer *s, AVStream *st);
     void (*set_video_size)(FF_ASS_Renderer *s, int w, int h);
     void (*process_chunk)(FF_ASS_Renderer *s, char *ass_line, int64_t start, int64_t duration);
-    int  (*upload_texture)(FF_ASS_Renderer *, double time_ms, SDL_TextureOverlay * texture);
+    int  (*upload_buffer)(FF_ASS_Renderer *, double time_ms, FFSubtitleBuffer **buffer);
     void (*update_bottom_margin)(FF_ASS_Renderer *s, int b);
     void (*set_font_scale)(FF_ASS_Renderer *, double scale);
     void (*uninit)(FF_ASS_Renderer *);
@@ -42,7 +41,7 @@ FF_ASS_Renderer *ff_ass_render_create_default(uint8_t *subtitle_header, int subt
 FF_ASS_Renderer * ff_ass_render_retain(FF_ASS_Renderer *ar);
 void ff_ass_render_release(FF_ASS_Renderer **arp);
 
-int ff_ass_upload_texture(FF_ASS_Renderer * assRenderer, float begin, SDL_TextureOverlay * texture);
+int ff_ass_upload_buffer(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer **buffer);
 void ff_ass_process_chunk(FF_ASS_Renderer * assRenderer, const char *ass_line, float begin, float end);
 
 #endif /* ff_ass_steam_renderer_h */

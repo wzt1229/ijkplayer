@@ -21,6 +21,7 @@ typedef struct FFSubtitleBuffer FFSubtitleBuffer;
 typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 typedef struct SDL_GPU SDL_GPU;
 typedef struct IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
+typedef struct FFSubtitleBufferPacket FFSubtitleBufferPacket;
 
 int exSub_create(IJKEXSubtitle **subp, FrameQueue * frameq, PacketQueue * pktq, int vw, int vh);
 void exSub_reset_video_size(IJKEXSubtitle *sub, int vw, int vh);
@@ -40,6 +41,7 @@ AVCodecContext * exSub_get_avctx(IJKEXSubtitle *sub);
 int exSub_get_serial(IJKEXSubtitle *sub);
 AVStream *exSub_get_stream(IJKEXSubtitle *sub);
 int exSub_upload_texture(IJKEXSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture);
+int exSub_upload_buffer(IJKEXSubtitle *sub, float pts, FFSubtitleBufferPacket *packet);
 void exSub_update_margin(IJKEXSubtitle *sub, int t, int b, int l, int r);
 void exSub_update_preference(IJKEXSubtitle *sub, IJKSDLSubtitlePreference* sp);
 

@@ -39,6 +39,7 @@ static void* getTexture(SDL_TextureOverlay *overlay);
 static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void *pixels)
 {
     if (overlay && overlay->opaque) {
+        overlay->frame = rect;
         SDL_TextureOverlay_Opaque_Metal *op = overlay->opaque;
         if (op->texture) {
             if (rect.x + rect.w > op->texture.width) {
@@ -56,7 +57,7 @@ static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void 
                 {rect.x, rect.y, 0}, // MTLOrigin
                 {rect.w, rect.h, 1} // MTLSize
             };
-            
+
             [op->texture replaceRegion:region
                            mipmapLevel:0
                              withBytes:pixels
