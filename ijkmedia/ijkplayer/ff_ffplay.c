@@ -543,8 +543,6 @@ static void stream_close(FFPlayer *ffp)
     if (is->video_stream >= 0)
         stream_component_close(ffp, is->video_stream);
     
-    ff_sub_close_current(is->ffSub);
-    
     avformat_close_input(&is->ic);
     
     av_log(NULL, AV_LOG_DEBUG, "wait for video_refresh_tid\n");
@@ -557,7 +555,6 @@ static void stream_close(FFPlayer *ffp)
     frame_queue_destory(&is->pictq);
     frame_queue_destory(&is->sampq);
 
-    ff_sub_destroy(&is->ffSub);
     SDL_DestroyCond(is->audio_accurate_seek_cond);
     SDL_DestroyCond(is->video_accurate_seek_cond);
     SDL_DestroyCond(is->continue_read_thread);
@@ -4002,7 +3999,8 @@ static int video_refresh_thread(void *arg)
         if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->step_on_seeking || is->force_refresh_sub_changed))
             video_refresh(ffp, &remaining_time);
     }
-
+    
+    ff_sub_destroy(&is->ffSub);
     return 0;
 }
 
