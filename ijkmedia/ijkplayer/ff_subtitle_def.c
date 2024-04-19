@@ -81,7 +81,7 @@ void FreeSubtitleBufferArray(FFSubtitleBufferPacket *a)
 {
     if (a) {
         while (a->len > 0) {
-            ff_subtitle_buffer_release(&a->e[a->len--]);
+            ff_subtitle_buffer_release(&a->e[--a->len]);
         }
     }
 }
