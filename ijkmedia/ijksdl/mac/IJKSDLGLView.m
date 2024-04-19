@@ -153,13 +153,11 @@ static bool _is_need_dispath_to_global(void)
 {
     self = [super initWithFrame:frame];
     if (self) {
-        if (@available(macOS 10.13, *)) {
-            if (_is_need_dispath_to_global()) {
-                self.renderThread = _globalThread_();
-            } else {
-                self.renderThread = [[IJKSDLThread alloc] initWithName:@"ijk_renderer"];
-                [self.renderThread start];
-            }
+        if (_is_need_dispath_to_global()) {
+            self.renderThread = _globalThread_();
+        } else {
+            self.renderThread = [[IJKSDLThread alloc] initWithName:@"ijk_renderer"];
+            [self.renderThread start];
         }
         [self setup];
 
@@ -395,14 +393,10 @@ static bool _is_need_dispath_to_global(void)
 - (void)setNeedsRefreshCurrentPic
 {
     //use single global thread!
-    if (@available(macOS 10.13, *)) {
-        [self.renderThread performSelector:@selector(doRefreshCurrentAttach:)
-                                withTarget:self
-                                withObject:self.currentAttach
-                             waitUntilDone:NO];
-    } else {
-        [self doRefreshCurrentAttach:self.currentAttach];
-    }
+    [self.renderThread performSelector:@selector(doRefreshCurrentAttach:)
+                            withTarget:self
+                            withObject:self.currentAttach
+                         waitUntilDone:NO];
 }
 
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach
@@ -419,14 +413,10 @@ static bool _is_need_dispath_to_global(void)
         return YES;
     }
     
-    if (@available(macOS 10.13, *)) {
-        [self.renderThread performSelector:@selector(doDisplayVideoPicAndSubtitle:)
-                                withTarget:self
-                                withObject:attach
-                             waitUntilDone:NO];
-    } else {
-        [self doDisplayVideoPicAndSubtitle:attach];
-    }
+    [self.renderThread performSelector:@selector(doDisplayVideoPicAndSubtitle:)
+                            withTarget:self
+                            withObject:attach
+                         waitUntilDone:NO];
     return YES;
 }
 
@@ -670,14 +660,10 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         {
             CGImageRef reuslt = NULL;
             NSValue * address = [NSValue valueWithPointer:(void *)&reuslt];
-            if (@available(macOS 10.13, *)) {
-                [self.renderThread performSelector:@selector(_snapshot_screen:)
-                                        withTarget:self
-                                        withObject:address
-                                     waitUntilDone:YES];
-            } else {
-                [self _snapshot_screen:address];
-            }
+            [self.renderThread performSelector:@selector(_snapshot_screen:)
+                                    withTarget:self
+                                    withObject:address
+                                 waitUntilDone:YES];
             return reuslt ? (CGImageRef)CFAutorelease(reuslt) : NULL;
         }
         case IJKSDLSnapshot_Effect_Origin:
@@ -689,14 +675,10 @@ static CGImageRef _FlipCGImage(CGImageRef src)
                 @"attach" : attach,
                 @"outImg" : address
             };
-            if (@available(macOS 10.13, *)) {
-                [self.renderThread performSelector:@selector(_snapshotEffectOriginWithSubtitle:)
-                                        withTarget:self
-                                        withObject:params
-                                     waitUntilDone:YES];
-            } else {
-                [self _snapshotEffectOriginWithSubtitle:params];
-            }
+            [self.renderThread performSelector:@selector(_snapshotEffectOriginWithSubtitle:)
+                                    withTarget:self
+                                    withObject:params
+                                 waitUntilDone:YES];
             return reuslt ? (CGImageRef)CFAutorelease(reuslt) : NULL;
         }
         case IJKSDLSnapshot_Effect_Subtitle_Origin:
@@ -708,14 +690,10 @@ static CGImageRef _FlipCGImage(CGImageRef src)
                 @"attach" : attach,
                 @"outImg" : address
             };
-            if (@available(macOS 10.13, *)) {
-                [self.renderThread performSelector:@selector(_snapshotEffectOriginWithSubtitle:)
-                                        withTarget:self
-                                        withObject:params
-                                     waitUntilDone:YES];
-            } else {
-                [self _snapshotEffectOriginWithSubtitle:params];
-            }
+            [self.renderThread performSelector:@selector(_snapshotEffectOriginWithSubtitle:)
+                                    withTarget:self
+                                    withObject:params
+                                 waitUntilDone:YES];
             return reuslt ? (CGImageRef)CFAutorelease(reuslt) : NULL;
         }
     }
