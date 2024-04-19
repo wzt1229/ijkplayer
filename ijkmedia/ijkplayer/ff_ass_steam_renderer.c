@@ -29,6 +29,7 @@ typedef struct FF_ASS_Context {
     int shaping;
     int bottom_margin;
     int force_changed;
+    double scale;
 } FF_ASS_Context;
 
 #define OFFSET(x) offsetof(FF_ASS_Context, x)
@@ -177,6 +178,8 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
         return -1;
     }
     
+    //update scale before render_frame;can't in other thread otherwise in find cache frame cause assert
+    ass_set_font_scale(ass->renderer, ass->scale);
     int changed;
     ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
 
@@ -347,7 +350,7 @@ static void set_font_scale(FF_ASS_Renderer *s, double scale)
     if (!ass || !ass->renderer) {
         return;
     }
-    ass_set_font_scale(ass->renderer, scale);
+    ass->scale = scale;
 }
 
 static void uninit(FF_ASS_Renderer *s)
