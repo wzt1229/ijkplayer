@@ -211,10 +211,13 @@ static bool _is_need_dispath_to_global(void)
     
     ///Fix the default red background color on the Intel platform
     [[self openGLContext] makeCurrentContext];
+    // Synchronize buffer swaps with vertical refresh rate
+    GLint swapInt = 1;
+    [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
+    glClearColor(0.0, 0.0, 0.0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     [[self openGLContext]flushBuffer];
 }
-
 
 - (void)setShowHdrAnimation:(BOOL)showHdrAnimation
 {
@@ -425,31 +428,6 @@ static bool _is_need_dispath_to_global(void)
                             withObject:attach
                          waitUntilDone:NO];
     return YES;
-}
-
-- (void)initGL
-{
-    // The reshape function may have changed the thread to which our OpenGL
-    // context is attached before prepareOpenGL and initGL are called.  So call
-    // makeCurrentContext to ensure that our OpenGL context current to this
-    // thread (i.e. makeCurrentContext directs all OpenGL calls on this thread
-    // to [self openGLContext])
-    [[self openGLContext] makeCurrentContext];
-    
-    // Synchronize buffer swaps with vertical refresh rate
-    GLint swapInt = 1;
-    [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
-    
-    glClearColor(0.0, 0.0, 0.0, 1.0f);
-}
-
-- (void)prepareOpenGL
-{
-    [super prepareOpenGL];
-
-    // Make all the OpenGL calls to setup rendering
-    //  and build the necessary rendering objects
-    [self initGL];
 }
 
 #pragma mark - for snapshot
