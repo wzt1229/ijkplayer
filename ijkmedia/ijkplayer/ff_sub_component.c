@@ -64,7 +64,7 @@ static int read_packets(FFSubComponent *com)
             } else if (ret == AVERROR_EOF) {
                 packet_queue_put_nullpacket(com->packetq, com->pkt, com->st_idx);
                 com->eof = 1;
-                return 1;
+                return -2;
             } else {
                 return -3;
             }
@@ -86,6 +86,7 @@ static int get_packet(FFSubComponent *com, Decoder *d)
                 return -2;
             }
             com->seek_req = -1;
+            com->eof = 0;
             packet_queue_flush(com->packetq);
             continue;
         }
@@ -124,6 +125,7 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
                     d->finished = 0;
                     d->next_pts = d->start_pts;
                     d->next_pts_tb = d->start_pts_tb;
+                    ff_ass_flush_events(com->assRenderer);
                 }
             }
             if (d->queue->serial == d->pkt_serial)
@@ -539,7 +541,6 @@ int subComponent_seek_to(FFSubComponent *com, int sec)
         sec = 0;
     }
     com->seek_req = seconds_to_fftime(sec);
-    com->eof = 0;
     return 0;
 }
 

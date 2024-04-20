@@ -113,7 +113,7 @@ static void set_video_size(FF_ASS_Renderer *s, int w, int h)
     ass_set_frame_size(ass->renderer, w, h);
     ass_set_storage_size(ass->renderer, w, h);
     ass_set_font_scale(ass->renderer, 1.0);
-    ass_set_cache_limits(ass->renderer, 3, 0);
+    //ass_set_cache_limits(ass->renderer, 3, 0);
     ass_set_line_spacing( ass->renderer, 0.0);
 //    ass_set_pixel_aspect(ass->renderer, (double)w / h /
 //                         ((double)ass->original_w / ass->original_h));
@@ -158,7 +158,7 @@ static void draw_ass_bgra(unsigned char *src, int src_w, int src_h,
     #undef COLOR_BLEND
 }
 
-static void draw_single_inset(FFSubtitleBuffer * frame, ASS_Image *img, int layer, int insetx, int insety, int bottom_margin)
+static void draw_single_inset(FFSubtitleBuffer *frame, ASS_Image *img, int insetx, int insety, int bottom_margin)
 {
     if (img->w == 0 || img->h == 0)
         return;
@@ -216,7 +216,7 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
             if (imgs->dst_y > water_mark) {
                 offset = bm;
             }
-            draw_single_inset(frame, imgs, cnt, dirtyRect.x, dirtyRect.y, offset);
+            draw_single_inset(frame, imgs, dirtyRect.x, dirtyRect.y, offset);
             imgs = imgs->next;
         }
         *buffer = frame;
@@ -332,6 +332,15 @@ static void process_chunk(FF_ASS_Renderer *s, char *ass_line, long long start_ti
     ass_process_chunk(ass->track, ass_line, (int)strlen(ass_line), start_time, duration);
 }
 
+static void flush_events(FF_ASS_Renderer *s)
+{
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass) {
+        return;
+    }
+    ass_flush_events(ass->track);
+}
+
 static void update_bottom_margin(FF_ASS_Renderer *s, int b)
 {
     FF_ASS_Context *ass = s->priv_data;
@@ -388,6 +397,7 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .set_attach_font    = set_attach_font,
     .set_video_size     = set_video_size,
     .process_chunk      = process_chunk,
+    .flush_events       = flush_events,
     .upload_buffer      = upload_buffer,
     .update_bottom_margin= update_bottom_margin,
     .set_font_scale     = set_font_scale,
@@ -468,10 +478,24 @@ void ff_ass_render_release(FF_ASS_Renderer **arp)
 
 int ff_ass_upload_buffer(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer ** buffer)
 {
+    if (!assRenderer) {
+        return -1;
+    }
     return assRenderer->iformat->upload_buffer(assRenderer, begin * 1000, buffer);
 }
 
 void ff_ass_process_chunk(FF_ASS_Renderer * assRenderer, const char *ass_line, float begin, float end)
 {
+    if (!assRenderer) {
+        return;
+    }
     assRenderer->iformat->process_chunk(assRenderer, (char *)ass_line, begin, end);
+}
+
+void ff_ass_flush_events(FF_ASS_Renderer * assRenderer)
+{
+    if (!assRenderer) {
+        return;
+    }
+    assRenderer->iformat->flush_events(assRenderer);
 }
