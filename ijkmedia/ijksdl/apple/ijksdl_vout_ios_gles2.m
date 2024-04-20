@@ -234,14 +234,7 @@ void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* vi
 - (void)dealloc
 {
     if (_texture) {
-        if ([[NSThread currentThread] isMainThread]) {
-            glDeleteTextures(1, &_texture);
-        } else {
-            __block GLuint t = _texture;
-            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                glDeleteTextures(1, &t);
-            }];
-        }
+        glDeleteTextures(1, &_texture);
         _texture = 0;
     }
 }

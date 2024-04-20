@@ -21,17 +21,12 @@
 
 - (void)dealloc
 {
-    //the fbo was created in vout thread, when stop player the fbo will dealloc in a background thread by call shutdown
+    //the fbo was created in vout thread, so must keep delete fbo in same thread.
+    //and now fbo is ffsub property,we destroy ffsub in vout thread.
     if (_fbo) {
-        if ([[NSThread currentThread] isMainThread]) {
-            glDeleteFramebuffers(1, &_fbo);
-        } else {
-            __block GLuint fbo = _fbo;
-            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                glDeleteFramebuffers(1, &fbo);
-            }];
-        }
+        glDeleteFramebuffers(1, &_fbo);
     }
+    _texture = nil;
 }
 
 - (instancetype)initWithSize:(CGSize)size
