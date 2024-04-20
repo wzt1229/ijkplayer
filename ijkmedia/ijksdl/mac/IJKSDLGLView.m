@@ -128,12 +128,12 @@ static bool _is_need_dispath_to_global(void)
 
 - (void)destroyRender
 {
+    self.fbo = nil;
     IJK_GLES2_Renderer_freeP(&_renderer);
 }
 
 - (void)dealloc
 {
-    self.fbo = nil;
     if (_renderer) {
         if (self.renderThread && [NSThread currentThread] != self.renderThread.thread) {
             [self.renderThread performSelector:@selector(destroyRender) withTarget:self withObject:nil waitUntilDone:YES];
@@ -405,8 +405,7 @@ static bool _is_need_dispath_to_global(void)
         ALOGW("IJKSDLGLView: overlay is nil\n");
         return NO;
     }
-    //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
-    //hold the attach as current.
+    //in vout thread hold the attach,let currentAttach dealloc in vout thread,because it's texture overlay was created in vout thread,must keep same thread in macOS 10.12 is so important!
     self.currentAttach = attach;
     
     if (self.preventDisplay) {
