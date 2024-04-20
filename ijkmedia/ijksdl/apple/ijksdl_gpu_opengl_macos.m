@@ -255,8 +255,8 @@ static void dealloc_fbo(SDL_FBOOverlay *overlay)
     }
     
     SDL_FBOOverlay_Opaque_GL *fop = overlay->opaque;
-    SDL_TextureOverlay_Release(&fop->toverlay);
     fop->fbo = nil;
+    SDL_TextureOverlay_Release(&fop->toverlay);
     fop->glContext = nil;
     free(fop);
 }

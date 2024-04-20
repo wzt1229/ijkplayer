@@ -604,13 +604,13 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach
 {
-    if (!attach) {
-        ALOGW("IJKMetalView: overlay is nil\n");
-        return NO;
-    }
-    
     //hold the attach as current.
     self.currentAttach = attach;
+    
+    if (!attach.videoPicture) {
+        ALOGW("IJKMetalView: videiPicture is nil\n");
+        return NO;
+    }
     
     attach.videoTextures = [[self class] doGenerateTexture:attach.videoPicture textureCache:_pictureTextureCache];
     

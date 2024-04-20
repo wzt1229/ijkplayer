@@ -72,15 +72,15 @@ void SDL_VoutFreeP(SDL_Vout **pvout)
     *pvout = NULL;
 }
 
-int SDL_VoutDisplayYUVOverlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
+int SDL_VoutDisplayYUVOverlay(SDL_Vout *vout, SDL_VoutOverlay *overlay, SDL_TextureOverlay *sub_overlay)
 {
-    if (vout && overlay && vout->display_overlay)
-        return vout->display_overlay(vout, overlay);
+    if (vout && vout->display_overlay)
+        return vout->display_overlay(vout, overlay, sub_overlay);
 
     return -1;
 }
 
-int SDL_VoutConvertFrame(SDL_Vout *vout, int dst_format,const AVFrame *inFrame, const AVFrame **outFrame)
+int SDL_VoutConvertFrame(SDL_Vout *vout, int dst_format, const AVFrame *inFrame, const AVFrame **outFrame)
 {
     if (!vout) {
         return -1;

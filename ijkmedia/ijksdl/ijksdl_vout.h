@@ -62,6 +62,7 @@ struct SDL_VoutOverlay {
 
 typedef struct SDL_Vout_Opaque SDL_Vout_Opaque;
 typedef struct SDL_Vout SDL_Vout;
+typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 
 struct SDL_Vout {
     SDL_mutex *mutex;
@@ -69,9 +70,7 @@ struct SDL_Vout {
     SDL_Vout_Opaque *opaque;
     SDL_VoutOverlay *(*create_overlay)(int width, int height, int frame_format, SDL_Vout *vout);
     void (*free_l)(SDL_Vout *vout);
-    int (*display_overlay)(SDL_Vout *vout, SDL_VoutOverlay *overlay);
-    void (*update_subtitle)(SDL_Vout *vout, void *overlay);
-    
+    int (*display_overlay)(SDL_Vout *vout, SDL_VoutOverlay *overlay, SDL_TextureOverlay *sub_overlay);
     Uint32 overlay_format;
     int z_rotate_degrees;
     //convert image
@@ -81,7 +80,7 @@ struct SDL_Vout {
 
 void SDL_VoutFree(SDL_Vout *vout);
 void SDL_VoutFreeP(SDL_Vout **pvout);
-int  SDL_VoutDisplayYUVOverlay(SDL_Vout *vout, SDL_VoutOverlay *overlay);
+int  SDL_VoutDisplayYUVOverlay(SDL_Vout *vout, SDL_VoutOverlay *overlay, SDL_TextureOverlay *sub_overlay);
 //convert a frame use vout. not free outFrame,when free vout the outFrame will free. if convert failed return greater then 0.
 int  SDL_VoutConvertFrame(SDL_Vout *vout,int dst_format, const AVFrame *inFrame, const AVFrame **outFrame);
 

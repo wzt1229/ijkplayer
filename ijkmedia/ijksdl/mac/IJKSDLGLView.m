@@ -401,12 +401,13 @@ static bool _is_need_dispath_to_global(void)
 
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach
 {
-    if (!attach) {
-        ALOGW("IJKSDLGLView: overlay is nil\n");
-        return NO;
-    }
     //in vout thread hold the attach,let currentAttach dealloc in vout thread,because it's texture overlay was created in vout thread,must keep same thread in macOS 10.12 is so important!
     self.currentAttach = attach;
+    
+    if (!attach.videoPicture) {
+        ALOGW("IJKSDLGLView: videiPicture is nil\n");
+        return NO;
+    }
     
     if (self.preventDisplay) {
         return YES;

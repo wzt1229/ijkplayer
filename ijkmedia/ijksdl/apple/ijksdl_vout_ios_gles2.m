@@ -68,7 +68,6 @@ struct SDL_Vout_Opaque {
     void *cvPixelBufferPool;
     int cv_format;
     __strong UIView<IJKVideoRenderingProtocol> *gl_view;
-    SDL_TextureOverlay *overlay;
 };
 
 static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_format, SDL_Vout *vout)
@@ -101,9 +100,6 @@ static void vout_free_l(SDL_Vout *vout)
             CVPixelBufferPoolRelease(opaque->cvPixelBufferPool);
             opaque->cvPixelBufferPool = NULL;
         }
-        if (opaque->overlay) {
-            SDL_TextureOverlay_Release(&opaque->overlay);
-        }
     }
 
     SDL_Vout_FreeInternal(vout);
@@ -121,7 +117,7 @@ static CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay
     }
 }
 
-static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
+static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay, SDL_TextureOverlay *sub_overlay)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
     UIView<IJKVideoRenderingProtocol>* gl_view = opaque->gl_view;
@@ -132,8 +128,9 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 
     if (!overlay) {
-        ALOGE("vout_display_overlay_l: NULL overlay\n");
-        return -2;
+        IJKOverlayAttach *attach = [[IJKOverlayAttach alloc] init];
+        attach.overlay = SDL_TextureOverlay_Retain(sub_overlay);
+        return [gl_view displayAttach:attach];
     }
 
     if (overlay->w <= 0 || overlay->h <= 0) {
@@ -161,7 +158,7 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         attach.autoZRotate = overlay->auto_z_rotate_degrees;
         //attach.bufferW = overlay->pitches[0];
         attach.videoPicture = CVPixelBufferRetain(videoPic);
-        attach.overlay = SDL_TextureOverlay_Retain(opaque->overlay);
+        attach.overlay = SDL_TextureOverlay_Retain(sub_overlay);
         return [gl_view displayAttach:attach];
     } else {
         ALOGE("vout_display_overlay_l: no video picture.\n");
@@ -169,26 +166,14 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 }
 
-static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
+static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay, SDL_TextureOverlay *sub_overlay)
 {
     @autoreleasepool {
         SDL_LockMutex(vout->mutex);
-        int retval = vout_display_overlay_l(vout, overlay);
+        int retval = vout_display_overlay_l(vout, overlay, sub_overlay);
         SDL_UnlockMutex(vout->mutex);
         return retval;
     }
-}
-
-static void vout_update_subtitle(SDL_Vout *vout, void *overlay)
-{
-    SDL_Vout_Opaque *opaque = vout->opaque;
-    if (!opaque) {
-        return;
-    }
-    if (opaque->overlay) {
-        SDL_TextureOverlay_Release(&opaque->overlay);
-    }
-    opaque->overlay = SDL_TextureOverlay_Retain(overlay);
 }
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(void)
@@ -202,7 +187,6 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2(void)
     vout->create_overlay = vout_create_overlay;
     vout->free_l = vout_free_l;
     vout->display_overlay = vout_display_overlay;
-    vout->update_subtitle = vout_update_subtitle;
     return vout;
 }
 

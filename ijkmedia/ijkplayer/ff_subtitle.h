@@ -28,7 +28,7 @@ int ff_sub_destroy(FFSubtitle **subp);
 //
 int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx);
 int ff_sub_close_current(FFSubtitle *sub);
-int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture);
+void ff_sub_get_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture);
 int ff_sub_drop_old_frames(FFSubtitle *sub);
 int ff_sub_frame_queue_size(FFSubtitle *sub);
 

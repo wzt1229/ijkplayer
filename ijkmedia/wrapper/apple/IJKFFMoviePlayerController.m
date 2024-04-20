@@ -656,9 +656,6 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 #endif
     [self setScreenOn:NO];
     [self destroyHud];
-    //release glview in main thread.
-    _view = _glView = nil;
-    ijkmp_ios_set_glview(_mediaPlayer, nil);
     [self performSelectorInBackground:@selector(shutdownWaitStop:) withObject:self];
 }
 

@@ -407,34 +407,16 @@ static void free_picture(Frame *vp)
 // FFP_MERGE: upload_texture
 // FFP_MERGE: video_image_display
 
-static void update_subtitle_texture(FFPlayer *ffp, SDL_TextureOverlay *overlay)
-{
-    //update subtitle,save into vout's opaque
-    if (ffp->vout->update_subtitle) {
-        SDL_LockMutex(ffp->vout->mutex);
-        ffp->vout->update_subtitle(ffp->vout, overlay);
-        SDL_UnlockMutex(ffp->vout->mutex);
-    }
-}
-
 static void video_image_display2(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
     Frame *vp = frame_queue_peek_last(&is->pictq);
     if (vp->bmp) {
+        SDL_TextureOverlay *sub_overlay = NULL;
         if (is->step_on_seeking) {
-            update_subtitle_texture(ffp, NULL);
+            //ignore subtitle
         } else if (is->ffSub) {
-            SDL_TextureOverlay *overlay = NULL;
-            int r = ff_sub_upload_texture(is->ffSub, vp->pts, ffp->gpu, &overlay);
-            if (r > 0) {
-                update_subtitle_texture(ffp, overlay);
-            } else if (r < 0) {
-                update_subtitle_texture(ffp, NULL);
-            } else {
-                //keep current
-            }
-            SDL_TextureOverlay_Release(&overlay);
+            ff_sub_get_texture(is->ffSub, vp->pts, ffp->gpu, &sub_overlay);
         }
         
         if (ffp->render_wait_start && !ffp->start_on_prepared && is->pause_req) {
@@ -446,7 +428,9 @@ static void video_image_display2(FFPlayer *ffp)
                 SDL_Delay(20);
             }
         }
-        SDL_VoutDisplayYUVOverlay(ffp->vout, vp->bmp);
+        SDL_VoutDisplayYUVOverlay(ffp->vout, vp->bmp, sub_overlay);
+        SDL_TextureOverlay_Release(&sub_overlay);
+        
         ffp->stat.vfps = SDL_SpeedSamplerAdd(&ffp->vfps_sampler, FFP_SHOW_VFPS_FFPLAY, "vfps[ffplay]");
         if (!ffp->first_video_frame_rendered) {
             ffp->first_video_frame_rendered = 1;
@@ -3999,7 +3983,9 @@ static int video_refresh_thread(void *arg)
         if (is->show_mode != SHOW_MODE_NONE && (!is->paused || is->force_refresh || is->step_on_seeking || is->force_refresh_sub_changed))
             video_refresh(ffp, &remaining_time);
     }
-    
+    //clean GLView's attach,because the attach retained sub_overlay;
+    //otherwise sub_overlay will be free in main thread!
+    SDL_VoutDisplayYUVOverlay(ffp->vout, NULL, NULL);
     ff_sub_destroy(&is->ffSub);
     return 0;
 }
