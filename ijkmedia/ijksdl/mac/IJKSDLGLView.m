@@ -414,6 +414,10 @@ static bool _is_need_dispath_to_global(void)
         return YES;
     }
     
+    if (self.backingWidth == 0 || self.backingHeight == 0) {
+        return NO;
+    }
+    
     [self.renderThread performSelector:@selector(doDisplayVideoPicAndSubtitle:)
                             withTarget:self
                             withObject:attach

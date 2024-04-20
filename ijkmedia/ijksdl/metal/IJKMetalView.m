@@ -618,6 +618,9 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
         return YES;
     }
     
+    if (CGSizeEqualToSize(CGSizeZero, self.drawableSize)) {
+        return NO;
+    }
     //not dispatch to main thread, use current sub thread (ff_vout) draw
     [self draw];
     
