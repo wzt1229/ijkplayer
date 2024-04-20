@@ -5023,7 +5023,6 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
         int idx = opened ? stream : -1;
         _ijkmeta_set_stream(ffp, AVMEDIA_TYPE_SUBTITLE, idx);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-        update_subtitle_texture(ffp, NULL);
         if (closed && !opened && ffp->is->paused) {
             ffp->is->force_refresh_sub_changed = 1;
         }

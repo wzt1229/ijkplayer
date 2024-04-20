@@ -23,6 +23,7 @@ typedef struct SDL_GPU SDL_GPU;
 // lifecycle
 int ff_sub_init(FFSubtitle **subp);
 void ff_sub_abort(FFSubtitle *sub);
+//call in voout thread,because internal fbo and texture were created in vout thread!
 int ff_sub_destroy(FFSubtitle **subp);
 //
 int ff_inSub_open_component(FFSubtitle *sub, int stream_index, AVStream* st, AVCodecContext *avctx);
