@@ -301,7 +301,9 @@ static bool _is_need_dispath_to_global(void)
 {
     CGSize viewSize = [self bounds].size;
     CGSize viewSizePixels = [self convertSizeToBacking:viewSize];
-    
+    if (CGSizeEqualToSize(CGSizeZero, viewSize)) {
+        return;
+    }
     if (self.backingWidth != viewSizePixels.width || self.backingHeight != viewSizePixels.height) {
         self.backingWidth  = viewSizePixels.width;
         self.backingHeight = viewSizePixels.height;
