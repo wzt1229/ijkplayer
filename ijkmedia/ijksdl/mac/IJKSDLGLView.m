@@ -87,6 +87,7 @@ static bool _is_low_os_version(void)
 
 static bool _is_need_dispath_to_global(void)
 {
+    return false;
     bool low_os = _is_low_os_version();
     if (low_os) {
         return true;
