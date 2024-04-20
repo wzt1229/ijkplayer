@@ -193,7 +193,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
-    NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil];
+    NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:[self context]];
     
 #if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3 && defined(DEBUG)
     // When we're using a CoreProfile context, crash if we call a legacy OpenGL function
@@ -763,7 +763,31 @@ static CGImageRef _FlipCGImage(CGImageRef src)
 
 - (id)context
 {
-    return self.openGLContext;
+    static NSOpenGLContext* context;
+    
+    if (!context) {
+        NSOpenGLPixelFormatAttribute attrs[] =
+        {
+            NSOpenGLPFAAccelerated,
+            NSOpenGLPFANoRecovery,
+            NSOpenGLPFADoubleBuffer,
+            NSOpenGLPFADepthSize, 24,
+    #if ! USE_LEGACY_OPENGL
+            NSOpenGLPFAOpenGLProfile,NSOpenGLProfileVersion3_2Core,
+    #endif
+    //        NSOpenGLPFAAllowOfflineRenderers, 1,
+            0
+        };
+       
+        NSOpenGLPixelFormat *pf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+        
+        if (pf) {
+            context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil];
+        } else {
+            ALOGE("No OpenGL pixel format");
+        }
+    }
+    return context;
 }
 
 - (NSString *)name
