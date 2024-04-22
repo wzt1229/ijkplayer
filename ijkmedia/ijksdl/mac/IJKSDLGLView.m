@@ -216,8 +216,7 @@ static bool _is_need_dispath_to_global(void)
     [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
     glClearColor(0.0, 0.0, 0.0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-//    [[self openGLContext]flushBuffer];
-    glFlush();
+    [[self openGLContext]flushBuffer];
 }
 
 - (void)setShowHdrAnimation:(BOOL)showHdrAnimation
@@ -391,8 +390,7 @@ static bool _is_need_dispath_to_global(void)
     } else {
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
-    glFlush();
-//    [[self openGLContext]flushBuffer];
+    [[self openGLContext]flushBuffer];
 }
 
 - (void)setNeedsRefreshCurrentPic
@@ -497,8 +495,7 @@ static bool _is_need_dispath_to_global(void)
         } else {
             ALOGE("[GL] create fbo failed\n");
         }
-//        [[self openGLContext]flushBuffer];
-        glFlush();
+        [[self openGLContext]flushBuffer];
     }
     
     if (outImg && img) {

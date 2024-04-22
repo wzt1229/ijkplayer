@@ -228,7 +228,7 @@ static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
     }
     
     SDL_GPU_Opaque_GL *gop = gpu->opaque;
-    glFlush();
+    [gop->glContext flushBuffer];
 }
 
 static void clear_fbo(SDL_FBOOverlay *overlay)
