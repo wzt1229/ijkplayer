@@ -26,7 +26,6 @@ typedef struct FF_ASS_Context {
     char *charenc;
     char *force_style;
     int original_w, original_h;
-    int shaping;
     int bottom_margin;
     int force_changed;
     double scale;
@@ -109,18 +108,14 @@ static void set_video_size(FF_ASS_Renderer *s, int w, int h)
     
     ass->original_w = w;
     ass->original_h = h;
+    ass->scale = 1.0;
     
     ass_set_frame_size(ass->renderer, w, h);
     ass_set_storage_size(ass->renderer, w, h);
-    ass_set_font_scale(ass->renderer, 1.0);
     //ass_set_cache_limits(ass->renderer, 3, 0);
     ass_set_line_spacing( ass->renderer, 0.0);
 //    ass_set_pixel_aspect(ass->renderer, (double)w / h /
 //                         ((double)ass->original_w / ass->original_h));
-//    if (ass->shaping != -1)
-//        ass_set_shaper(ass->renderer, ass->shaping);
-    
-    ass_set_shaper(ass->renderer, ASS_SHAPING_COMPLEX);
 }
 
 static void draw_ass_bgra(unsigned char *src, int src_w, int src_h,
@@ -186,7 +181,6 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
     if (changed == 0 && !ass->force_changed) {
         return 0;
     }
-    ass->force_changed = 0;
     
     if (imgs) {
         int bm = ass->bottom_margin;
@@ -220,9 +214,14 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
             imgs = imgs->next;
         }
         *buffer = frame;
+        ass->force_changed = 0;
         return 1;
     } else {
-        av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
+        if (ass->force_changed) {
+            ass->force_changed = 0;
+        } else {
+            av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
+        }
         return -2;
     }
 }
