@@ -37,15 +37,9 @@ static void* getTexture(SDL_TextureOverlay *overlay);
 static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void *pixels)
 {
     if (overlay && overlay->opaque) {
-        overlay->frame = rect;
         
         SDL_TextureOverlay_Opaque_GL *op = overlay->opaque;
         id<IJKSDLSubtitleTextureWrapper>t = op->texture;
-        CGLLockContext([op->glContext CGLContextObj]);
-        [op->glContext makeCurrentContext];
-        glBindTexture(GL_TEXTURE_RECTANGLE, t.texture);
-        IJK_GLES2_checkError("bind texture subtitle");
-        
         if (rect.x + rect.w > t.w) {
             rect.x = 0;
             rect.w = t.w;
@@ -55,7 +49,11 @@ static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void 
             rect.y = 0;
             rect.h = t.h;
         }
-
+        overlay->dirtyRect = SDL_union_rectangle(overlay->dirtyRect, rect);
+        
+        CGLLockContext([op->glContext CGLContextObj]);
+        [op->glContext makeCurrentContext];
+        glBindTexture(GL_TEXTURE_RECTANGLE, t.texture);
         glTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, rect.x, rect.y, (GLsizei)rect.w, (GLsizei)rect.h, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid *)pixels);
         IJK_GLES2_checkError("replaceOpenGlRegion");
         glBindTexture(GL_TEXTURE_RECTANGLE, 0);
@@ -72,9 +70,11 @@ static void clearOpenGLRegion(SDL_TextureOverlay *overlay)
     if (isZeroRectangle(overlay->dirtyRect)) {
         return;
     }
+    
     void *pixels = av_mallocz(overlay->dirtyRect.stride * overlay->dirtyRect.h);
     replaceRegion(overlay, overlay->dirtyRect, pixels);
-    av_free(pixels);
+    av_freep(&pixels);
+    overlay->dirtyRect = SDL_Zero_Rectangle;
 }
 
 static void dealloc_texture(SDL_TextureOverlay *overlay)
@@ -215,14 +215,14 @@ static void beginDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
     }
 }
 
-static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay)
+static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay, SDL_Rectangle frame)
 {
     if (!gpu || !gpu->opaque || !foverlay || !foverlay->opaque || !toverlay) {
         return;
     }
     SDL_FBOOverlay_Opaque_GL *fop = foverlay->opaque;
     CGSize viewport = [fop->fbo size];
-    CGRect rect = IJKSDL_make_NDC(toverlay->frame, toverlay->scale, viewport);
+    CGRect rect = IJKSDL_make_NDC(frame, toverlay->scale, viewport);
     [fop->renderer updateSubtitleVertexIfNeed:rect];
     id<IJKSDLSubtitleTextureWrapper> texture = (__bridge id<IJKSDLSubtitleTextureWrapper>)toverlay->getTexture(toverlay);
     [fop->renderer drawTexture:texture];

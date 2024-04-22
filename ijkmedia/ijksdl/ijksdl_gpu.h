@@ -15,7 +15,6 @@ typedef struct SDL_TextureOverlay {
     void *opaque;
     int w;
     int h;
-    SDL_Rectangle frame;
     float scale;
     SDL_Rectangle dirtyRect;
     int changed;
@@ -38,7 +37,7 @@ typedef struct SDL_FBOOverlay {
     int h;
     void (*clear)(SDL_FBOOverlay *overlay);
     void (*beginDraw)(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass);
-    void (*drawTexture)(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay);
+    void (*drawTexture)(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay, SDL_Rectangle frame);
     void (*endDraw)(SDL_GPU *gpu, SDL_FBOOverlay *overlay);
     SDL_TextureOverlay *(*getTexture)(SDL_FBOOverlay *overlay);
     void (*dealloc)(SDL_FBOOverlay *overlay);

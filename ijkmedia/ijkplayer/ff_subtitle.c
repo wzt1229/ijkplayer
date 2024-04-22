@@ -155,10 +155,9 @@ static int ff_sub_upload_buffer(FFSubtitle *sub, float pts, FFSubtitleBufferPack
 
 static SDL_TextureOverlay * subtitle_ass_upload_texture(SDL_TextureOverlay *texture, FFSubtitleBufferPacket *packet)
 {
+    texture->clearDirtyRect(texture);
     for (int i = 0; i < packet->len; i++) {
         FFSubtitleBuffer *buffer = packet->e[i];
-        texture->clearDirtyRect(texture);
-        texture->dirtyRect = buffer->rect;
         texture->replaceRegion(texture, buffer->rect, buffer->data);
     }
     return SDL_TextureOverlay_Retain(texture);
@@ -172,16 +171,24 @@ static SDL_TextureOverlay * subtitle_upload_fbo(SDL_GPU *gpu, SDL_FBOOverlay *fb
     int bottom_offset = packet->bottom_margin;
     for (int i = 0; i < packet->len; i++) {
         FFSubtitleBuffer *sub = packet->e[i];
+        
         SDL_TextureOverlay *texture = gpu->createTexture(gpu, sub->rect.w, sub->rect.h, SDL_TEXTURE_FMT_BRGA);
-        int offset = sub->rect.y > water_mark ? bottom_offset : 0;
-        SDL_Rectangle rect = sub->rect;
-        rect.y -= offset;
-        if (rect.y < 0) {
-            rect.y = 0;
-        }
-        texture->replaceRegion(texture, rect, sub->data);
         texture->scale = packet->scale;
-        fbo->drawTexture(gpu, fbo, texture);
+        
+        SDL_Rectangle bounds = sub->rect;
+        bounds.x = 0;
+        bounds.y = 0;
+        texture->replaceRegion(texture, bounds, sub->data);
+        
+        
+        int offset = sub->rect.y > water_mark ? bottom_offset : 0;
+        SDL_Rectangle frame = sub->rect;
+        frame.y -= offset;
+        if (frame.y < 0) {
+            frame.y = 0;
+        }
+        
+        fbo->drawTexture(gpu, fbo, texture, frame);
         SDL_TextureOverlay_Release(&texture);
     }
     fbo->endDraw(gpu, fbo);
@@ -215,7 +222,6 @@ static int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_T
         }
         
         *texture = subtitle_ass_upload_texture(sub->assTexture, &packet);
-        goto end;
     } else {
         if (sub->fbo && (sub->fbo->w != packet.width || sub->fbo->h != packet.height)) {
             SDL_FBOOverlayFreeP(&sub->fbo);

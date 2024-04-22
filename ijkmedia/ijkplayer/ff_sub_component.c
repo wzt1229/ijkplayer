@@ -202,9 +202,8 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
 
 static void apply_preference(FFSubComponent *com)
 {
-    int b = com->sp.bottomMargin * com->height;
-    
     if (com->assRenderer) {
+        int b = com->sp.bottomMargin * com->height;
         com->assRenderer->iformat->update_bottom_margin(com->assRenderer, b);
         com->assRenderer->iformat->set_font_scale(com->assRenderer, com->sp.scale);
         com->sp_changed = 0;
@@ -566,9 +565,12 @@ void subComponent_update_preference(FFSubComponent *com, IJKSDLSubtitlePreferenc
     if (!com) {
         return;
     }
-    com->sp = *sp;
-    com->sp_changed = 1;
-    apply_preference(com);
+    
+    if (!isIJKSDLSubtitlePreferenceEqual(&com->sp, sp)) {
+        com->sp = *sp;
+        com->sp_changed = 1;
+        apply_preference(com);
+    }
 }
 
 int subComponent_eof_and_pkt_empty(FFSubComponent *sc)

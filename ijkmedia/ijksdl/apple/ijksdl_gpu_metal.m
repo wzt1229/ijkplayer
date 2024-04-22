@@ -39,7 +39,6 @@ static void* getTexture(SDL_TextureOverlay *overlay);
 static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void *pixels)
 {
     if (overlay && overlay->opaque) {
-        overlay->frame = rect;
         SDL_TextureOverlay_Opaque_Metal *op = overlay->opaque;
         if (op->texture) {
             if (rect.x + rect.w > op->texture.width) {
@@ -51,6 +50,8 @@ static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void 
                 rect.y = 0;
                 rect.h = (int)op->texture.height;
             }
+            
+            overlay->dirtyRect = SDL_union_rectangle(overlay->dirtyRect, rect);
             
             int bpr = rect.stride;
             MTLRegion region = {
@@ -75,9 +76,11 @@ static void clearMetalRegion(SDL_TextureOverlay *overlay)
     if (isZeroRectangle(overlay->dirtyRect)) {
         return;
     }
+    
     void *pixels = av_mallocz(overlay->dirtyRect.stride * overlay->dirtyRect.h);
     replaceRegion(overlay, overlay->dirtyRect, pixels);
     av_free(pixels);
+    overlay->dirtyRect = SDL_Zero_Rectangle;
 }
 
 static void dealloc_texture(SDL_TextureOverlay *overlay)
@@ -229,25 +232,25 @@ static void beginDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
     }
 }
 
-static void metalDraw(SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay)
+static void metalDraw(SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay, SDL_Rectangle frame)
 {
     if (!foverlay || !toverlay || !foverlay->opaque) {
         return;
     }
     SDL_FBOOverlay_Opaque_Metal *fop = foverlay->opaque;
     CGSize viewport = [fop->fbo size];
-    CGRect rect = IJKSDL_make_NDC(toverlay->frame, toverlay->scale, viewport);
+    CGRect rect = IJKSDL_make_NDC(frame, toverlay->scale, viewport);
     [fop->subPipeline updateSubtitleVertexIfNeed:rect];
     id<MTLTexture>texture = (__bridge id<MTLTexture>)toverlay->getTexture(toverlay);
     [fop->subPipeline drawTexture:texture encoder:fop->renderEncoder];
 }
 
-static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay)
+static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay, SDL_Rectangle frame)
 {
     if (!foverlay || !toverlay) {
         return;
     }
-    metalDraw(foverlay, toverlay);
+    metalDraw(foverlay, toverlay, frame);
 }
 
 static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
