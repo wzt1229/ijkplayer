@@ -211,15 +211,20 @@ static void apply_preference(FFSubComponent *com)
     }
 }
 
+static int is_format_use_ass(AVCodecContext *avctx)
+{
+    enum AVMediaType codec_type = avctx->codec_type;
+    enum AVCodecID   codec_id = avctx->codec_id;
+    return codec_type == AVMEDIA_TYPE_SUBTITLE && (codec_id == AV_CODEC_ID_ASS || codec_id == AV_CODEC_ID_SUBRIP);
+}
+
 static int create_ass_renderer_if_need(FFSubComponent *com)
 {
     if (com->assRenderer) {
         return 0;
     }
-    enum AVMediaType codec_type = com->decoder.avctx->codec_type;
-    enum AVCodecID   codec_id = com->decoder.avctx->codec_id;
     
-    if (com->width > 0 && com->height > 0 && codec_type == AVMEDIA_TYPE_SUBTITLE && (codec_id == AV_CODEC_ID_ASS || codec_id == AV_CODEC_ID_SUBRIP)) {
+    if (com->width > 0 && com->height > 0 && is_format_use_ass(com->decoder.avctx)) {
         FF_ASS_Renderer *assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->width, com->height, NULL);
         if (assRenderer && com->ic) {
             for (int i = 0; i < com->ic->nb_streams; i++) {
@@ -452,10 +457,12 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVFormatContext* ic
     
     int sw = avctx->width,sh = avctx->height;
     if (!sw || !sh) {
-        //放大两倍，使得 retina 屏显示清楚
         int ratio = 1;
     #ifdef __APPLE__
-        ratio = 2;
+        //文本字幕放大两倍，使得 retina 屏显示清楚
+        if (is_format_use_ass(avctx)) {
+            ratio = 2;
+        }
     #endif
         sw = vw * ratio;
         sh = vh * ratio;
