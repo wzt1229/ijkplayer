@@ -51,13 +51,11 @@ static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void 
         }
         overlay->dirtyRect = SDL_union_rectangle(overlay->dirtyRect, rect);
         
-        CGLLockContext([op->glContext CGLContextObj]);
         [op->glContext makeCurrentContext];
         glBindTexture(GL_TEXTURE_RECTANGLE, t.texture);
         glTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, rect.x, rect.y, (GLsizei)rect.w, (GLsizei)rect.h, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid *)pixels);
         IJK_GLES2_checkError("replaceOpenGlRegion");
         glBindTexture(GL_TEXTURE_RECTANGLE, 0);
-        CGLUnlockContext([op->glContext CGLContextObj]);
     }
 }
 
@@ -119,7 +117,6 @@ static SDL_TextureOverlay * create_textureOverlay_with_glTexture(NSOpenGLContext
 
 static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, int h, SDL_TEXTURE_FMT fmt)
 {
-    CGLLockContext([context CGLContextObj]);
     [context makeCurrentContext];
     uint32_t texture;
     // Create a texture object that you apply to the model.
@@ -133,7 +130,6 @@ static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, 
     glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    
     glBindTexture(GL_TEXTURE_RECTANGLE, 0);
-    CGLUnlockContext([context CGLContextObj]);
     IJK_GLES2_checkError("create OpenGL Texture");
     id<IJKSDLSubtitleTextureWrapper> t = IJKSDL_crate_openglTextureWrapper(texture, w, h);
     return create_textureOverlay_with_glTexture(context, t);
@@ -180,11 +176,9 @@ static SDL_FBOOverlay *createOpenGLFBO(NSOpenGLContext *glContext, int w, int h)
         }
     }
     
-    CGLLockContext([glContext CGLContextObj]);
     [glContext makeCurrentContext];
     opaque->fbo = [[IJKSDLOpenGLFBO alloc] initWithSize:size];
-    CGLUnlockContext([glContext CGLContextObj]);
-    
+
     opaque->glContext = glContext;
     overlay->opaque = opaque;
     return overlay;
@@ -207,7 +201,6 @@ static void beginDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
         }
         
         if (fop->renderer) {
-            CGLLockContext([gop->glContext CGLContextObj]);
             [gop->glContext makeCurrentContext];
             [fop->renderer setupOpenGLProgramIfNeed];
             [fop->renderer bindFBO:fop->fbo];
@@ -236,7 +229,6 @@ static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
     
     SDL_GPU_Opaque_GL *gop = gpu->opaque;
     glFlush();
-    CGLUnlockContext([gop->glContext CGLContextObj]);
 }
 
 static void clear_fbo(SDL_FBOOverlay *overlay)
