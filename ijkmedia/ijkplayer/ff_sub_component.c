@@ -26,7 +26,9 @@ typedef struct FFSubComponent{
     subComponent_retry_callback retry_callback;
     void *retry_opaque;
     FF_ASS_Renderer *assRenderer;
-    int width, height;
+    int bitmapRenderer;
+    int video_width, video_height;
+    int sub_width, sub_height;
     FFSubtitleBufferPacket sub_buffer_array;
     IJKSDLSubtitlePreference sp;
     int sp_changed;
@@ -203,18 +205,11 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
 static void apply_preference(FFSubComponent *com)
 {
     if (com->assRenderer) {
-        int b = com->sp.bottomMargin * com->height;
+        int b = com->sp.bottomMargin * com->sub_height;
         com->assRenderer->iformat->update_bottom_margin(com->assRenderer, b);
         com->assRenderer->iformat->set_font_scale(com->assRenderer, com->sp.scale);
         com->sp_changed = 0;
     }
-}
-
-static int is_format_use_ass(AVCodecContext *avctx)
-{
-    enum AVMediaType codec_type = avctx->codec_type;
-    enum AVCodecID   codec_id = avctx->codec_id;
-    return codec_type == AVMEDIA_TYPE_SUBTITLE && (codec_id == AV_CODEC_ID_ASS || codec_id == AV_CODEC_ID_SUBRIP);
 }
 
 static int create_ass_renderer_if_need(FFSubComponent *com)
@@ -223,18 +218,40 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
         return 0;
     }
     
-    if (com->width > 0 && com->height > 0 && is_format_use_ass(com->decoder.avctx)) {
-        FF_ASS_Renderer *assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->width, com->height, NULL);
-        if (assRenderer && com->ic) {
-            for (int i = 0; i < com->ic->nb_streams; i++) {
-                AVStream *st = com->ic->streams[com->st_idx];
-                assRenderer->iformat->set_attach_font(assRenderer, st);
-            }
+    int ratio = 1;
+#ifdef __APPLE__
+    //文本字幕放大两倍，使得 retina 屏显示清楚
+    ratio = 2;
+    com->sub_width  = com->video_width  * ratio;
+    com->sub_height = com->video_height * ratio;
+#endif
+    
+    FF_ASS_Renderer *assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->sub_width, com->sub_height, NULL);
+    if (assRenderer && com->ic) {
+        for (int i = 0; i < com->ic->nb_streams; i++) {
+            AVStream *st = com->ic->streams[com->st_idx];
+            assRenderer->iformat->set_attach_font(assRenderer, st);
         }
-        com->assRenderer = assRenderer;
-        apply_preference(com);
     }
+    com->assRenderer = assRenderer;
+    apply_preference(com);
+    
     return NULL == com->assRenderer;
+}
+
+static int create_bitmap_renderer_if_need(FFSubComponent *com)
+{
+    if (com->bitmapRenderer) {
+        return 0;
+    }
+    com->bitmapRenderer = 1;
+    com->sub_width = com->decoder.avctx->width;
+    com->sub_height = com->decoder.avctx->height;
+    if (!com->sub_width || !com->sub_height) {
+        com->sub_width = com->video_width;
+        com->sub_height = com->video_height;
+    }
+    return 0;
 }
 
 static int subtitle_thread(void *arg)
@@ -259,23 +276,25 @@ static int subtitle_thread(void *arg)
             break;
         
         if (got_subtitle) {
-            double pts = 0;
-            if (sub.pts != AV_NOPTS_VALUE)
-                pts = sub.pts / (double)AV_TIME_BASE;
-            
             //av_log(NULL, AV_LOG_ERROR,"sub received frame:%f\n",pts);
             int serial = com->decoder.pkt_serial;
             if (com->packetq->serial == serial) {
-                if (com->decoder.avctx->codec_id == AV_CODEC_ID_HDMV_PGS_SUBTITLE || com->decoder.avctx->codec_id == AV_CODEC_ID_FIRST_SUBTITLE) {
-                    
-                    FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
-                    int count = 0;
-                    for (int i = 0; i < sub.num_rects; i++) {
-                        AVSubtitleRect *rect = sub.rects[i];
+                
+                double pts = 0;
+                if (sub.pts != AV_NOPTS_VALUE)
+                    pts = sub.pts / (double)AV_TIME_BASE;
+                
+                int count = 0;
+                FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
+                for (int i = 0; i < sub.num_rects; i++) {
+                    AVSubtitleRect *rect = sub.rects[i];
+                    //AV_CODEC_ID_HDMV_PGS_SUBTITLE
+                    //AV_CODEC_ID_FIRST_SUBTITLE
+                    if (rect->type == SUBTITLE_BITMAP) {
                         if (rect->w <= 0 || rect->h <= 0) {
                             continue;
                         }
-                        if (rect->type == SUBTITLE_BITMAP) {
+                        if (!create_bitmap_renderer_if_need(com)) {
                             FFSubtitleBuffer* sb = convert_pal8_to_bgra(rect);
                             if (sb) {
                                 buffers[count++] = sb;
@@ -283,13 +302,25 @@ static int subtitle_thread(void *arg)
                                 break;
                             }
                         }
+                    } else {
+                        char *ass_line = rect->ass;
+                        if (!ass_line)
+                            continue;
+                        if (!create_ass_renderer_if_need(com)) {
+                            const float begin = pts + (float)sub.start_display_time / 1000.0;
+                            float end = sub.end_display_time - sub.start_display_time;
+                            ff_ass_process_chunk(com->assRenderer, ass_line, begin * 1000, end);
+                            count++;
+                        }
                     }
-                    
-                    if (count == 0) {
-                        avsubtitle_free(&sub);
-                        continue;
-                    }
-                    
+                }
+                
+                if (count == 0) {
+                    avsubtitle_free(&sub);
+                    continue;
+                }
+                
+                if (com->bitmapRenderer) {
                     Frame *sp = frame_queue_peek_writable(com->frameq);
                     if (com->packetq->abort_request || !sp) {
                         pre_pts = 0;
@@ -309,8 +340,8 @@ static int subtitle_thread(void *arg)
                         sp->duration = SUB_MAX_KEEP_DU;
                     }
                     sp->serial = serial;
-                    sp->width  = com->decoder.avctx->width;
-                    sp->height = com->decoder.avctx->height;
+                    sp->width  = com->sub_width;
+                    sp->height = com->sub_height;
                     sp->shown = 0;
                     
                     if (count > 0) {
@@ -320,25 +351,12 @@ static int subtitle_thread(void *arg)
                     }
                     frame_queue_push(com->frameq);
                     pre_pts = sp->pts;
-                    
-                    avsubtitle_free(&sub);
-                } else {
-                    for (int i = 0; i < sub.num_rects; i++) {
-                        char *ass_line = sub.rects[i]->ass;
-                        if (!ass_line)
-                            break;
-                        if (!create_ass_renderer_if_need(com)) {
-                            const float begin = pts + (float)sub.start_display_time / 1000.0;
-                            float end = sub.end_display_time - sub.start_display_time;
-                            ff_ass_process_chunk(com->assRenderer, ass_line, begin * 1000, end);
-                        }
-                    }
-                    avsubtitle_free(&sub);
                 }
             } else {
                 pre_pts = 0;
                 av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
             }
+            avsubtitle_free(&sub);
         }
     }
     
@@ -359,9 +377,9 @@ static int subComponent_packet_pgs(FFSubComponent *com, float pts, FFSubtitleBuf
     
     FFSubtitleBufferPacket buffer_array = { 0 };
     buffer_array.scale = com->sp.scale;
-    buffer_array.width = com->width;
-    buffer_array.height = com->height;
-    buffer_array.bottom_margin = com->sp.bottomMargin * com->height;
+    buffer_array.width = com->sub_width;
+    buffer_array.height = com->sub_height;
+    buffer_array.bottom_margin = com->sp.bottomMargin * com->sub_height;
     
     int i = 0;
     
@@ -405,11 +423,19 @@ static int subComponent_packet_pgs(FFSubComponent *com, float pts, FFSubtitleBuf
     
     if (com->sp_changed || isFFSubtitleBufferArrayDiff(&com->sub_buffer_array, &buffer_array)) {
         com->sp_changed = 0;
+        if (buffer_array.len == 0 && com->sub_buffer_array.len == 0) {
+            //clean subtitle
+            return -1;
+        }
         ResetSubtitleBufferArray(&com->sub_buffer_array, &buffer_array);
         ResetSubtitleBufferArray(packet, &buffer_array);
         FreeSubtitleBufferArray(&buffer_array);
         return 1;
     } else {
+        if (buffer_array.len == 0) {
+            //clean subtitle
+            return -1;
+        }
         FreeSubtitleBufferArray(&buffer_array);
         return 0;
     }
@@ -433,18 +459,15 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
             arr.len = 1;
             arr.isAss = 1;
             arr.e[0] = buffer;
-            arr.width = com->width;
-            arr.height = com->height;
+            arr.width = com->sub_width;
+            arr.height = com->sub_height;
             *packet = arr;
         }
         return r;
+    } else if (com->bitmapRenderer) {
+        return subComponent_packet_pgs(com, pts, packet);
     } else {
-        int r = subComponent_packet_pgs(com, pts, packet);
-        if (r > 0) {
-            packet->width = com->width;
-            packet->height = com->height;
-        }
-        return r;
+        return -2;
     }
 }
 
@@ -454,30 +477,13 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVFormatContext* ic
         return -1;
     }
     
-    int sw = avctx->width,sh = avctx->height;
-    if (!sw || !sh) {
-        int ratio = 1;
-    #ifdef __APPLE__
-        //文本字幕放大两倍，使得 retina 屏显示清楚
-        if (is_format_use_ass(avctx)) {
-            ratio = 2;
-        }
-    #endif
-        sw = vw * ratio;
-        sh = vh * ratio;
-    }
-    
-    if (!sw || !sh) {
-        return -1;
-    }
-    
     FFSubComponent *com = av_mallocz(sizeof(FFSubComponent));
     if (!com) {
         return -2;
     }
     
-    com->width = sw;
-    com->height = sh;
+    com->video_width = vw;
+    com->video_height = vh;
     
     assert(frameq);
     assert(packetq);
