@@ -366,6 +366,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
+    CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
 
     if ([self setupRendererIfNeed:attach] && IJK_GLES2_Renderer_isValid(_renderer)) {
@@ -383,6 +384,7 @@ static bool _is_need_dispath_to_global(void)
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
     [[self openGLContext]flushBuffer];
+    CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
 - (void)setNeedsRefreshCurrentPic
@@ -434,6 +436,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
+    CGLLockContext([[self openGLContext] CGLContextObj]);
     [[self openGLContext] makeCurrentContext];
     //[self setupRendererIfNeed:attach];
     CGImageRef img = NULL;
@@ -489,6 +492,7 @@ static bool _is_need_dispath_to_global(void)
         }
         [[self openGLContext]flushBuffer];
     }
+    CGLUnlockContext([[self openGLContext] CGLContextObj]);
     
     if (outImg && img) {
         *outImg = CGImageRetain(img);
@@ -607,8 +611,11 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         return;
     }
     
+    CGLLockContext([openGLContext CGLContextObj]);
+    [openGLContext makeCurrentContext];
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     CGImageRef img = [self _snapshotTheContextWithSize:size];
+    CGLUnlockContext([openGLContext CGLContextObj]);
     
     if (outImg && img) {
         *outImg = CGImageRetain(img);
