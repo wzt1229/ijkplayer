@@ -117,7 +117,7 @@ void main()
     }
     
     self.lastRect = rect;
-    
+    //OpenGL坐标范围只为-1到1
     float x = rect.origin.x;
     float y = rect.origin.y;
     float w = rect.size.width;
@@ -130,9 +130,14 @@ void main()
      V1|V2
      -->V1V2V3
      -->V2V3V4
+     
+     texture
+     ^y
+     |V3 V4
+     |V1 V2
+     |---->x
      */
     
-    y *= -1;
     GLfloat quadData [] = {
         x,     y,
         x + w, y,

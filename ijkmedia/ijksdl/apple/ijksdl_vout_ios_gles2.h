@@ -38,28 +38,81 @@
 id<IJKSDLSubtitleTextureWrapper> IJKSDL_crate_openglTextureWrapper(uint32_t texture, int w, int h);
 
 // Normalized Device Coordinates
-static inline CGRect IJKSDL_make_NDC(SDL_Rectangle frame, float scale, CGSize viewport)
+static inline CGRect IJKSDL_make_mteal_NDC(SDL_Rectangle frame, float scale, CGSize viewport)
 {
-//    scale = 1.0;
     float swidth  = frame.w * scale;
     float sheight = frame.h * scale;
     
     float width  = viewport.width;
     float height = viewport.height;
     
-    //转化到 [-1,1] 的区间
+    //处理缩放导致的坐标变化
     float sx = frame.x - (scale - 1.0) * frame.w * 0.5;
-    float sy = frame.y - (scale - 1.0) * frame.h * 0.5;
+    float sy = frame.y;
     
-    float x = sx / width * 2.0 - 1.0;
-    float y = 1.0 * (height - sy - sheight) / height * 2.0 - 1.0;
-    
-    float maxY = (height - sheight) / height;
-    if (y < -1) {
-        y = -1;
-    } else if (y > maxY) {
-        y = maxY;
+    if (sy > height - sheight) {
+        sy = height - sheight;
     }
+    
+    if (sy < 0) {
+        sy = 0;
+    }
+    
+    //转化到 [-1,1] 的区间
+    float x = sx / width * 2.0 - 1.0;
+    float y = 1.0 * (height - sheight - sy ) / height * 2.0 - 1.0;
+    
+    //实际输出 [maxY,-1]
+    /*
+     (x,y)在左上角，y轴，1在最上面，-1在最下面
+     x,y--------
+     |          |
+     |----------
+     */
+    
+    if (width != 0 && height != 0) {
+        return (CGRect){
+            x,
+            y,
+            2.0 * (swidth / width),
+            2.0 * (sheight / height)
+        };
+    }
+    return CGRectZero;
+}
+
+// Normalized Device Coordinates
+static inline CGRect IJKSDL_make_openGL_NDC(SDL_Rectangle frame, float scale, CGSize viewport)
+{
+    float swidth  = frame.w * scale;
+    float sheight = frame.h * scale;
+    
+    float width  = viewport.width;
+    float height = viewport.height;
+    
+    //处理缩放导致的坐标变化
+    float sx = frame.x - (scale - 1.0) * frame.w * 0.5;
+    float sy = frame.y;
+    
+    if (sy > height - sheight) {
+        sy = height - sheight;
+    }
+    
+    if (sy < 0) {
+        sy = 0;
+    }
+    
+    //转化到 [-1,1] 的区间
+    float x = sx / width * 2.0 - 1.0;
+    float y = 1.0 * sy / height * 2.0 - 1.0;
+    
+    //实际输出 [-1,maxY]
+    /*
+     (x,y)在左上角，y轴，-1在最上面，1在最下面
+     x,y--------
+     |          |
+     |----------
+     */
     
     if (width != 0 && height != 0) {
         return (CGRect){

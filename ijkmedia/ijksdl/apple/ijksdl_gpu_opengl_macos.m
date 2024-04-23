@@ -222,7 +222,7 @@ static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureO
     }
     SDL_FBOOverlay_Opaque_GL *fop = foverlay->opaque;
     CGSize viewport = [fop->fbo size];
-    CGRect rect = IJKSDL_make_NDC(frame, toverlay->scale, viewport);
+    CGRect rect = IJKSDL_make_openGL_NDC(frame, toverlay->scale, viewport);
     [fop->renderer updateSubtitleVertexIfNeed:rect];
     id<IJKSDLSubtitleTextureWrapper> texture = (__bridge id<IJKSDLSubtitleTextureWrapper>)toverlay->getTexture(toverlay);
     [fop->renderer drawTexture:texture];

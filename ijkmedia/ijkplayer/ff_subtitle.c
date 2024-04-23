@@ -180,13 +180,9 @@ static SDL_TextureOverlay * subtitle_upload_fbo(SDL_GPU *gpu, SDL_FBOOverlay *fb
         bounds.y = 0;
         texture->replaceRegion(texture, bounds, sub->data);
         
-        
         int offset = sub->rect.y > water_mark ? bottom_offset : 0;
         SDL_Rectangle frame = sub->rect;
         frame.y -= offset;
-        if (frame.y < 0) {
-            frame.y = 0;
-        }
         
         fbo->drawTexture(gpu, fbo, texture, frame);
         SDL_TextureOverlay_Release(&texture);

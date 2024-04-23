@@ -72,7 +72,7 @@
         
         @"subtitle_font_name" : @"STSongti-SC-Regular",
         @"subtitle_scale" : @(1.0),
-        @"subtitle_bottom_margin":@(0.5),
+        @"subtitle_bottom_margin":@(20),
         @"subtitle_stroke_size" : @(5),
         @"subtitle_text_color" : text_color_data,
         @"subtitle_bg_color" : subtitle_bg_color_data,
@@ -294,9 +294,9 @@
     return [self setValue:@(font_size) forKey:@"subtitle_font_size"];
 }
 
-+ (float)subtitle_bottom_margin
++ (int)subtitle_bottom_margin
 {
-    return [self floatForKey:@"subtitle_bottom_margin"];
+    return [self intForKey:@"subtitle_bottom_margin"];
 }
 
 + (float)subtitle_stroke_size

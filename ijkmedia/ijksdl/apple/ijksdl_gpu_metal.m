@@ -239,7 +239,7 @@ static void metalDraw(SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay, SD
     }
     SDL_FBOOverlay_Opaque_Metal *fop = foverlay->opaque;
     CGSize viewport = [fop->fbo size];
-    CGRect rect = IJKSDL_make_NDC(frame, toverlay->scale, viewport);
+    CGRect rect = IJKSDL_make_mteal_NDC(frame, toverlay->scale, viewport);
     [fop->subPipeline updateSubtitleVertexIfNeed:rect];
     id<MTLTexture>texture = (__bridge id<MTLTexture>)toverlay->getTexture(toverlay);
     [fop->subPipeline drawTexture:texture encoder:fop->renderEncoder];
