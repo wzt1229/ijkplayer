@@ -160,13 +160,12 @@ typedef enum : NSUInteger {
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
 #endif
 - (NSString *)name;
+- (id)context;
+
 @optional;
 //when video z rotate degrees changed will call videoZRotateDegrees.
 - (void)videoZRotateDegrees:(NSInteger)degrees;
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b;
-//when palyer paused,close subtile stream will call this method.
-- (void)cleanSubtitle;
-- (id)context;
 
 @end
 

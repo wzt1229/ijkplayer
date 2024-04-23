@@ -4965,17 +4965,21 @@ int ffp_get_video_rotate_degrees(FFPlayer *ffp)
     return theta;
 }
 
-static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
+static int ffp_set_external_stream_selected(FFPlayer *ffp, int stream, int selected, int *st_type, int *out_opened, int *out_closed)
 {
     if (!ffp->subtitle)
         return -1;
     VideoState *is = ffp->is;
+    if (st_type) {
+        *st_type = AVMEDIA_TYPE_SUBTITLE;
+    }
     
-    int closed = 0,opened = 0;
     int current = ff_sub_get_opened_stream_idx(is->ffSub);
     if (selected && current == stream) {
         return 1;
     }
+    
+    int closed = 0,opened = 0;
     if (current != -1) {
         ff_sub_close_current(is->ffSub);
         closed = 1;
@@ -5005,13 +5009,13 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
             }
         }
     }
-    if (closed || opened) {
-        int idx = opened ? stream : -1;
-        _ijkmeta_set_stream(ffp, AVMEDIA_TYPE_SUBTITLE, idx);
-        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-        if (closed && !opened && ffp->is->paused) {
-            ffp->is->force_refresh_sub_changed = 1;
-        }
+    
+    if (out_opened) {
+        *out_opened = opened;
+    }
+    
+    if (out_closed) {
+        *out_closed = closed;
     }
     return 0;
 }
@@ -5020,7 +5024,7 @@ static int ffp_set_sub_stream_selected(FFPlayer *ffp, int stream, int selected)
 //err: less than zero;
 //ok: zero;
 //already ok: greater than zero;
-static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selected)
+static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selected, int *st_type, int *out_opened, int *out_closed)
 {
     VideoState        *is = ffp->is;
     AVFormatContext   *ic = NULL;
@@ -5032,11 +5036,14 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
         return -1;
 
     int type = ic->streams[stream]->codecpar->codec_type;
-
+    if (st_type) {
+        *st_type = type;
+    }
     int closed = 0,opened = 0;
             
     switch (type) {
         case AVMEDIA_TYPE_VIDEO:
+        {
             if (selected && stream == is->video_stream) {
                 return 1;
             }
@@ -5047,8 +5054,10 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
             if (selected) {
                 opened = stream_component_open(ffp, stream) == 0;
             }
+        }
             break;
         case AVMEDIA_TYPE_AUDIO:
+        {
             if (selected && stream == is->audio_stream) {
                 return 1;
             }
@@ -5062,20 +5071,25 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
                 ffp->pf_playback_volume_changed = 1;
                 opened = stream_component_open(ffp, stream) == 0;
             }
+        }
             break;
         case AVMEDIA_TYPE_SUBTITLE:
-            return ffp_set_sub_stream_selected(ffp, stream, selected);
+        {
+            int r = ffp_set_external_stream_selected(ffp, stream, selected, st_type, &opened, &closed);
+            
+            if (out_opened) {
+                *out_opened = opened;
+            }
+            
+            if (out_closed) {
+                *out_closed = closed;
+            }
+            return r;
+        }
         default:
             av_log(ffp, AV_LOG_ERROR, "select invalid stream %d of video type %d\n", stream, codecpar->codec_type);
             return -1;
     }
-    
-    if (opened || closed) {
-        int idx = opened ? stream : -1;
-        _ijkmeta_set_stream(ffp, type, idx);
-        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-    }
-            
     return 0;
 }
 
@@ -5089,18 +5103,20 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
     if (!ic)
         return -2;
     
+    int opened,closed,r,isExt = 0;
+    int type;
     if (stream >= 0 && stream < ic->nb_streams) {
-        int r = ffp_set_internal_stream_selected(ffp, stream, selected);
-        if (r == 0) {
-            return 1;
-        } else if (r > 0){
-            return 0;
-        } else {
-            return r;
-        }
+        r = ffp_set_internal_stream_selected(ffp, stream, selected, &type, &opened, &closed);
     } else if (ff_sub_isExternal_stream(is->ffSub, stream)) {
-        int r = ffp_set_sub_stream_selected(ffp, stream, selected);
-        if (r == 0 && selected) {
+        isExt = 1;
+        r = ffp_set_external_stream_selected(ffp, stream, selected, &type, &opened, &closed);
+    } else {
+        av_log(ffp, AV_LOG_ERROR, "can't selecet invalid stream index: %d\n", stream);
+        return -3;
+    }
+    
+    if (r == 0) {
+        if (opened && isExt) {
             //seek the extra subtitle
             float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
             float delay = ff_sub_get_delay(is->ffSub);
@@ -5110,15 +5126,23 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
             if (cid != AV_CODEC_ID_NONE) {
                 ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(cid));
             }
-            return 0;
-        } else if (r > 0){
-            return 0;
-        } else {
-            return r;
         }
+        
+        if (opened || closed) {
+            int idx = opened ? stream : -1;
+            _ijkmeta_set_stream(ffp, type, idx);
+            ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+            if (type == AVMEDIA_TYPE_SUBTITLE && (closed || opened) && ffp->is->paused) {
+                ffp->is->force_refresh_sub_changed = 1;
+            }
+        }
+        return 0;
+    } else if (r > 0){
+        av_log(ffp, AV_LOG_ERROR, "keep current selected %s stream index: %d\n", isExt ? "external" : "internal", stream);
+        return r;
     } else {
-        av_log(ffp, AV_LOG_ERROR, "can't selecet invalid stream index: %d\n", stream);
-        return -3;
+        av_log(ffp, AV_LOG_ERROR, "can't selecet ext stream index: %d\n", stream);
+        return r;
     }
 }
 
@@ -5335,7 +5359,9 @@ int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
                 float delay = ff_sub_get_delay(is->ffSub);
                 ff_sub_seek_to(is->ffSub, delay, sec);
                 ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-                
+                if (ffp->is->paused) {
+                    ffp->is->force_refresh_sub_changed = 1;
+                }
                 enum AVCodecID cid = ff_sub_get_codec_id(is->ffSub);
                 if (cid != AV_CODEC_ID_NONE) {
                     ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(cid));

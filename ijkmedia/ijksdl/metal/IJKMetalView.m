@@ -141,15 +141,6 @@ typedef CGRect NSRect;
     }
 }
 
-- (void)cleanSubtitle
-{
-    IJKOverlayAttach * attach = self.currentAttach;
-    if (attach && attach.subTexture) {
-        attach.subTexture = nil;
-        [self setNeedsRefreshCurrentPic];
-    }
-}
-
 - (CGSize)computeNormalizedVerticesRatio:(IJKOverlayAttach *)attach
 {
     if (_scalingMode == IJKMPMovieScalingModeFill) {

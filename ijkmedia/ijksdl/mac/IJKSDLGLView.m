@@ -232,14 +232,6 @@ static bool _is_need_dispath_to_global(void)
     self.videoDegrees = degrees;
 }
 
-- (void)cleanSubtitle
-{
-    if (self.currentAttach.subTexture) {
-        self.currentAttach.subTexture = nil;
-        [self setNeedsRefreshCurrentPic];
-    }
-}
-
 - (BOOL)setupRendererIfNeed:(IJKOverlayAttach *)attach
 {
     if (attach == nil)
