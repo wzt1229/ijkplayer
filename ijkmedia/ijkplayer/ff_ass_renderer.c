@@ -1,11 +1,11 @@
 //
-//  ff_ass_steam_renderer.c
+//  ff_ass_renderer.c
 //  IJKMediaPlayerKit
 //
 //  Created by Reach Matt on 2024/3/5.
 //
 
-#include "ff_ass_steam_renderer.h"
+#include "ff_ass_renderer.h"
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
 #include "libavutil/avstring.h"

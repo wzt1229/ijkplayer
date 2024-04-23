@@ -8,7 +8,7 @@
 #include "ff_sub_component.h"
 #include "ff_frame_queue.h"
 #include "ff_packet_list.h"
-#include "ff_ass_steam_renderer.h"
+#include "ff_ass_renderer.h"
 #include "ijksdl/ijksdl_gpu.h"
 #include "ff_subtitle_def_internal.h"
 

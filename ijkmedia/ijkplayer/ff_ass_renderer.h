@@ -1,5 +1,5 @@
 //
-//  ff_ass_steam_renderer.h
+//  ff_ass_renderer.h
 //  IJKMediaPlayerKit
 //
 //  Created by Reach Matt on 2024/3/5.
