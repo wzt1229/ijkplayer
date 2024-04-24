@@ -108,6 +108,7 @@ static bool _is_need_dispath_to_global(void)
 @property(atomic) IJKSDLOpenGLFBO * fbo;
 @property(atomic) IJKSDLThread *renderThread;
 @property(assign) int hdrAnimationFrameCount;
+@property(nonatomic) NSOpenGLContext* sharedContext;
 
 @end
 
@@ -193,7 +194,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
-    NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:[self context]];
+    NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:[self sharedContext]];
     
 #if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3 && defined(DEBUG)
     // When we're using a CoreProfile context, crash if we call a legacy OpenGL function
@@ -732,11 +733,9 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     glClearColor(r/255.0, g/255.0, b/255.0, 1.0f);
 }
 
-- (id)context
+- (NSOpenGLContext *)sharedContext
 {
-    static NSOpenGLContext* context;
-    
-    if (!context) {
+    if (!_sharedContext) {
         NSOpenGLPixelFormatAttribute attrs[] =
         {
             NSOpenGLPFAAccelerated,
@@ -753,12 +752,17 @@ static CGImageRef _FlipCGImage(CGImageRef src)
         NSOpenGLPixelFormat *pf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
         
         if (pf) {
-            context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil];
+            _sharedContext = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil];
         } else {
             ALOGE("No OpenGL pixel format");
         }
     }
-    return context;
+    return _sharedContext;
+}
+
+- (id)context
+{
+    return [self sharedContext];
 }
 
 - (NSString *)name
