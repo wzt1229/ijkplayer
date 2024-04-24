@@ -96,30 +96,30 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
-//static void lock_gl(NSOpenGLContext *ctx)
-//{
-//    CGLLockContext([ctx CGLContextObj]);
-//}
-//
-//static void unlock_gl(NSOpenGLContext *ctx)
-//{
-//    CGLUnlockContext([ctx CGLContextObj]);
-//}
-
 static NSLock *_gl_lock;
 
 static void lock_gl(NSOpenGLContext *ctx)
 {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _gl_lock = [[NSLock alloc] init];
-    });
-    [_gl_lock lock];
+    bool low_os = _is_low_os_version();
+    if (low_os) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            _gl_lock = [[NSLock alloc] init];
+        });
+        [_gl_lock lock];
+    } else {
+        CGLLockContext([ctx CGLContextObj]);
+    }
 }
 
 static void unlock_gl(NSOpenGLContext *ctx)
 {
-    [_gl_lock unlock];
+    bool low_os = _is_low_os_version();
+    if (low_os) {
+        [_gl_lock unlock];
+    } else {
+        CGLUnlockContext([ctx CGLContextObj]);
+    }
 }
 
 @interface IJKSDLGLView()
