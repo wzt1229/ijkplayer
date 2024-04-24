@@ -390,7 +390,12 @@ static void unlock_gl(NSOpenGLContext *ctx)
     } else {
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
-    [[self openGLContext]flushBuffer];
+    
+    if (self.inLiveResize) {
+        glFlush();
+    } else {
+        [[self openGLContext]flushBuffer];
+    }
     unlock_gl([self openGLContext]);
 }
 
