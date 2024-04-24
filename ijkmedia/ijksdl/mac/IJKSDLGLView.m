@@ -119,7 +119,8 @@ static void unlock_gl(NSOpenGLContext *ctx)
 @property(atomic) IJKSDLOpenGLFBO * fbo;
 @property(atomic) IJKSDLThread *renderThread;
 @property(assign) int hdrAnimationFrameCount;
-@property(nonatomic) NSOpenGLContext* sharedContext;
+@property(nonatomic) NSOpenGLContext *sharedContext;
+@property(nonatomic) NSArray *bgColor;
 
 @end
 
@@ -214,16 +215,30 @@ static void unlock_gl(NSOpenGLContext *ctx)
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
     [self setWantsBestResolutionOpenGLSurface:YES];
-//    [self setWantsExtendedDynamicRangeOpenGLSurface:YES];
-    
-    ///Fix the default red background color on the Intel platform
-    [[self openGLContext] makeCurrentContext];
     // Synchronize buffer swaps with vertical refresh rate
     GLint swapInt = 1;
     [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
-    glClearColor(0.0, 0.0, 0.0, 1.0f);
+    //Fix the default red background color on the Intel platform
+    self.bgColor = @[@(0.0),@(0.0),@(0.0),@(1.0)];
+}
+
+- (void)applyClearColor
+{
+    if ([self.bgColor count] != 4) {
+        return;
+    }
+    if (self.backingWidth == 0 || self.backingHeight == 0) {
+        return;
+    }
+    NSArray *rgb = self.bgColor;
+    lock_gl([self openGLContext]);
+    [[self openGLContext] makeCurrentContext];
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, self.backingWidth, self.backingHeight);
+    glClearColor([rgb[0] floatValue], [rgb[2] floatValue], [rgb[2] floatValue], [rgb[3] floatValue]);
     glClear(GL_COLOR_BUFFER_BIT);
     [[self openGLContext]flushBuffer];
+    unlock_gl([self openGLContext]);
 }
 
 - (void)setShowHdrAnimation:(BOOL)showHdrAnimation
@@ -362,6 +377,7 @@ static void unlock_gl(NSOpenGLContext *ctx)
 - (void)doRefreshCurrentAttach:(IJKOverlayAttach *)currentAttach
 {
     if (!currentAttach) {
+        [self applyClearColor];
         return;
     }
     [self doDisplayVideoPicAndSubtitle:currentAttach];
@@ -739,8 +755,10 @@ static CGImageRef _FlipCGImage(CGImageRef src)
 
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b
 {
-    [[self openGLContext] makeCurrentContext];
-    glClearColor(r/255.0, g/255.0, b/255.0, 1.0f);
+    self.bgColor = @[@(r/255.0),@(g/255.0),@(b/255.0),@(1.0)];
+    if (!self.currentAttach) {
+        [self doRefreshCurrentAttach:self.currentAttach];
+    }
 }
 
 - (NSOpenGLContext *)sharedContext
