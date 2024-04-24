@@ -208,7 +208,11 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
             ++cnt;
             int offset = 0;
             if (imgs->dst_y > water_mark) {
-                offset = bm;
+                if (imgs->dst_y - bm < 0) {
+                    offset = imgs->dst_y;
+                } else {
+                    offset = bm;
+                }
             }
             draw_single_inset(frame, imgs, dirtyRect.x, dirtyRect.y, offset);
             imgs = imgs->next;

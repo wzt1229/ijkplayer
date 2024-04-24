@@ -55,6 +55,8 @@ static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void 
         [op->glContext makeCurrentContext];
         glBindTexture(GL_TEXTURE_RECTANGLE, t.texture);
         glTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, rect.x, rect.y, (GLsizei)rect.w, (GLsizei)rect.h, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid *)pixels);
+        //macOS 10.14及以下系统，需要glFlush操作，多线程共享该纹理，否者导致出现多个拖影，或者只有一部分被替换的奇怪bug。
+        glFlush();
         IJK_GLES2_checkError("replaceOpenGlRegion");
         glBindTexture(GL_TEXTURE_RECTANGLE, 0);
         CGLUnlockContext([op->glContext CGLContextObj]);
