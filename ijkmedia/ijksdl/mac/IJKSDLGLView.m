@@ -96,6 +96,32 @@ static bool _is_need_dispath_to_global(void)
     }
 }
 
+//static void lock_gl(NSOpenGLContext *ctx)
+//{
+//    CGLLockContext([ctx CGLContextObj]);
+//}
+//
+//static void unlock_gl(NSOpenGLContext *ctx)
+//{
+//    CGLUnlockContext([ctx CGLContextObj]);
+//}
+
+static NSLock *_gl_lock;
+
+static void lock_gl(NSOpenGLContext *ctx)
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _gl_lock = [[NSLock alloc] init];
+    });
+    [_gl_lock lock];
+}
+
+static void unlock_gl(NSOpenGLContext *ctx)
+{
+    [_gl_lock unlock];
+}
+
 @interface IJKSDLGLView()
 
 @property(atomic) IJKOverlayAttach *currentAttach;
@@ -367,7 +393,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
-    CGLLockContext([[self openGLContext] CGLContextObj]);
+    lock_gl([self openGLContext]);
     [[self openGLContext] makeCurrentContext];
 
     if ([self setupRendererIfNeed:attach] && IJK_GLES2_Renderer_isValid(_renderer)) {
@@ -385,7 +411,7 @@ static bool _is_need_dispath_to_global(void)
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
     [[self openGLContext]flushBuffer];
-    CGLUnlockContext([[self openGLContext] CGLContextObj]);
+    unlock_gl([self openGLContext]);
 }
 
 - (void)setNeedsRefreshCurrentPic
@@ -437,7 +463,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
-    CGLLockContext([[self openGLContext] CGLContextObj]);
+    lock_gl([self openGLContext]);
     [[self openGLContext] makeCurrentContext];
     //[self setupRendererIfNeed:attach];
     CGImageRef img = NULL;
@@ -493,8 +519,7 @@ static bool _is_need_dispath_to_global(void)
         }
         [[self openGLContext]flushBuffer];
     }
-    CGLUnlockContext([[self openGLContext] CGLContextObj]);
-    
+    unlock_gl([self openGLContext]);
     if (outImg && img) {
         *outImg = CGImageRetain(img);
     }
