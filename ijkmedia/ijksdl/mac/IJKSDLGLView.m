@@ -45,6 +45,14 @@
  macos 10.14 later use global single thread not smooth when create multil glview.
  */
 
+/*
+ 2024.4.25
+ when create multiple glview,flushBuffer will present contenxt to screen in multiple thread, but
+ on low macOS (below 10.13) CGLLock is no effect for multiple NSOpenGLContext even though shared one context!
+ so on low macOS we use global NSLock.
+ every glview hold a render thread.
+ */
+
 #import "IJKSDLGLView.h"
 #import <AVFoundation/AVFoundation.h>
 #import <CoreVideo/CoreVideo.h>
@@ -61,18 +69,6 @@
 
 #define kHDRAnimationMaxCount 90
 
-static IJKSDLThread *__ijk_global_thread;
-
-static IJKSDLThread * _globalThread_(void)
-{
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        __ijk_global_thread = [[IJKSDLThread alloc] initWithName:@"ijk_global_render"];
-        [__ijk_global_thread start];
-    });
-    return __ijk_global_thread;
-}
-
 // greather than 10.14 no need dispatch to global.
 static bool _is_low_os_version(void)
 {
@@ -83,17 +79,6 @@ static bool _is_low_os_version(void)
         return false;
     }
     return true;
-}
-
-static bool _is_need_dispath_to_global(void)
-{
-    return false;
-    bool low_os = _is_low_os_version();
-    if (low_os) {
-        return true;
-    } else {
-        return false;
-    }
 }
 
 static NSLock *_gl_lock;
@@ -172,21 +157,16 @@ static void unlock_gl(NSOpenGLContext *ctx)
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    if (self.renderThread != __ijk_global_thread) {
-        [self.renderThread stop];
-    }
+    [self.renderThread stop];
+        
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
     if (self) {
-        if (_is_need_dispath_to_global()) {
-            self.renderThread = _globalThread_();
-        } else {
-            self.renderThread = [[IJKSDLThread alloc] initWithName:@"ijk_renderer"];
-            [self.renderThread start];
-        }
+        self.renderThread = [[IJKSDLThread alloc] initWithName:@"ijk_renderer"];
+        [self.renderThread start];
         [self setup];
 
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
