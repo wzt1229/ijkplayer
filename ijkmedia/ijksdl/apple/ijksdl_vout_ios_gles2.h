@@ -38,7 +38,7 @@
 id<IJKSDLSubtitleTextureWrapper> IJKSDL_crate_openglTextureWrapper(uint32_t texture, int w, int h);
 
 // Normalized Device Coordinates
-static inline CGRect IJKSDL_make_mteal_NDC(SDL_Rectangle frame, float scale, CGSize viewport)
+static inline CGRect IJKSDL_make_metal_NDC(SDL_Rectangle frame, float scale, CGSize viewport)
 {
     float swidth  = frame.w * scale;
     float sheight = frame.h * scale;
@@ -48,26 +48,30 @@ static inline CGRect IJKSDL_make_mteal_NDC(SDL_Rectangle frame, float scale, CGS
     
     //处理缩放导致的坐标变化
     float sx = frame.x - (scale - 1.0) * frame.w * 0.5;
-    float sy = frame.y;
+    //图像y轴正方向朝下，加上高度表示的是左下角的坐标；
+    float sy = frame.y + sheight;
     
-    if (sy > height - sheight) {
-        sy = height - sheight;
+    //左下角往下最多贴着最下面
+    if (sy > height) {
+        sy = height;
+    }
+    //左下角往上最少要保持一个内容的高度
+    if (sy < sheight) {
+        sy = sheight;
     }
     
-    if (sy < 0) {
-        sy = 0;
-    }
-    
-    //转化到 [-1,1] 的区间
-    float x = sx / width * 2.0 - 1.0;
-    float y = 1.0 * (height - sheight - sy ) / height * 2.0 - 1.0;
-    
+#define NDC(x) (x * 2.0 - 1.0)
+    float x = NDC(sx / width);
+    //计算的是从下往上的距离
+    float y = NDC((height - sy) / height);
+#undef NDC
+
     //实际输出 [maxY,-1]
     /*
-     (x,y)在左上角，y轴，1在最上面，-1在最下面
-     x,y--------
+     (x,y)在左下角，y轴，1在最上面，-1在最下面
+      ----------
      |          |
-     |----------
+     x,y--------
      */
     
     if (width != 0 && height != 0) {
@@ -102,11 +106,13 @@ static inline CGRect IJKSDL_make_openGL_NDC(SDL_Rectangle frame, float scale, CG
         sy = 0;
     }
     
-    //转化到 [-1,1] 的区间
-    float x = sx / width * 2.0 - 1.0;
-    float y = 1.0 * sy / height * 2.0 - 1.0;
+#define NDC(x) (x * 2.0 - 1.0)
+    float x = NDC(sx / width);
+    //将 y 的原始值范围 [0,(height - sheight) / height] 转化到 [-1,1] 标准化范围
+    //计算的是从上往下的距离
+    float y = NDC(sy / height);
+#undef NDC
     
-    //实际输出 [-1,maxY]
     /*
      (x,y)在左上角，y轴，-1在最上面，1在最下面
      x,y--------
