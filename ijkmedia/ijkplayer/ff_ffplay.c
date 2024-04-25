@@ -5136,10 +5136,16 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 ffp->is->force_refresh_sub_changed = 1;
             }
         }
-        return 0;
+        
+        if (isExt) {
+            return 0;
+        } else {
+            //for internal subtitle stream need seek
+            return 1;
+        }
     } else if (r > 0){
         av_log(ffp, AV_LOG_ERROR, "keep current selected %s stream index: %d\n", isExt ? "external" : "internal", stream);
-        return r;
+        return 0;
     } else {
         av_log(ffp, AV_LOG_ERROR, "can't selecet ext stream index: %d\n", stream);
         return r;
