@@ -185,19 +185,24 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
     if (imgs) {
         int bm = ass->bottom_margin;
         int water_mark = ass->original_h * SUBTITLE_MOVE_WATERMARK;
-        ASS_Image *img = imgs;
         SDL_Rectangle dirtyRect = {0};
-        while (img) {
-            int y = img->dst_y;
-            if (y > water_mark) {
-                y -= bm;
-                if (y < 0) {
-                    y = 0;
+        
+        {
+            ASS_Image *img = imgs;
+            while (img) {
+                int y = img->dst_y;
+                if (y > water_mark) {
+                    y -= bm;
+                    if (y < 0) {
+                        y = 0;
+                    } else if (y + img->h > ass->original_h) {
+                        y = ass->original_h - img->h;
+                    }
                 }
+                SDL_Rectangle t = {img->dst_x, y, img->w, img->h};
+                dirtyRect = SDL_union_rectangle(dirtyRect, t);
+                img = img->next;
             }
-            SDL_Rectangle t = {img->dst_x, y, img->w, img->h};
-            dirtyRect = SDL_union_rectangle(dirtyRect, t);
-            img = img->next;
         }
         
         FFSubtitleBuffer* frame = ff_subtitle_buffer_alloc_rgba32(dirtyRect);
@@ -206,14 +211,16 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
         int cnt = 0;
         while (imgs) {
             ++cnt;
-            int offset = 0;
-            if (imgs->dst_y > water_mark) {
-                if (imgs->dst_y - bm < 0) {
-                    offset = imgs->dst_y;
-                } else {
-                    offset = bm;
+            int y = imgs->dst_y;
+            if (y > water_mark) {
+                y -= bm;
+                if (y < 0) {
+                    y = 0;
+                } else if (y + imgs->h > ass->original_h) {
+                    y = ass->original_h - imgs->h;
                 }
             }
+            int offset = imgs->dst_y - y;
             draw_single_inset(frame, imgs, dirtyRect.x, dirtyRect.y, offset);
             imgs = imgs->next;
         }
