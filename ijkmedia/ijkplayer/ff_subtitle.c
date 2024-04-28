@@ -432,7 +432,10 @@ static int open_any_stream(FFSubtitle *sub, int stream, const char *enc)
         //open internal
         AVStream *st = sub->ic_internal->streams[sub->need_update_stream];
         int r = subComponent_open(&sub->com, stream, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h);
-        move_backup_to_normal(sub, stream);
+        if (!r) {
+            subComponent_update_preference(sub->com, &sub->sp);
+            move_backup_to_normal(sub, stream);
+        }
         return r;
     } else {
         const char *file = ext_file_path_for_idx(sub, stream);
@@ -441,6 +444,7 @@ static int open_any_stream(FFSubtitle *sub, int stream, const char *enc)
                 AVStream *st = exSub_get_stream(sub->exSub);
                 int st_id = exSub_get_stream_id(sub->exSub);
                 if (!subComponent_open(&sub->com, st_id, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h)) {
+                    subComponent_update_preference(sub->com, &sub->sp);
                     exSub_start_read(sub->exSub);
                     return 0;
                 } else {
@@ -501,7 +505,6 @@ int ff_sub_update_stream_if_need(FFSubtitle *sub)
             //reset to 0
             sub->backup_charenc_idx = 0;
             if (!err) {
-                subComponent_update_preference(sub->com, &sub->sp);
                 sub->last_stream = sub->need_update_stream;
                 r = 1;
             }

@@ -475,7 +475,7 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
         goto fail;
     }
     
-    av_log(NULL, AV_LOG_INFO, "sub stream opened:%d,serial:%d\n", stream_index, packetq->serial);
+    av_log(NULL, AV_LOG_INFO, "sub stream opened:%d use enc:%s,serial:%d\n", stream_index, enc, packetq->serial);
     *cp = com;
     return 0;
 fail:

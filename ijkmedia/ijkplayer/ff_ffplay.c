@@ -3417,8 +3417,8 @@ static int read_thread(void *arg)
         if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
             AVStream *st = ic->streams[st_index[AVMEDIA_TYPE_SUBTITLE]];
             st->discard = AVDISCARD_DEFAULT;
-            ffp_apply_subtitle_preference(ffp);
             ff_sub_record_need_select_stream(is->ffSub, st_index[AVMEDIA_TYPE_SUBTITLE]);
+            ffp_apply_subtitle_preference(ffp);
         }
     }
     
@@ -5049,8 +5049,11 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
                 st->discard = AVDISCARD_ALL;
             }
             int r = ff_sub_record_need_select_stream(is->ffSub, selected ? stream : -1);
-            if (r == 1 && is->paused) {
-                is->force_refresh_sub_changed = 1;
+            if (r == 1) {
+                ffp_apply_subtitle_preference(ffp);
+                if (is->paused) {
+                    is->force_refresh_sub_changed = 1;
+                }
             }
             return r;
         }
@@ -5085,6 +5088,7 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
     } else {
         int r = ff_sub_record_need_select_stream(is->ffSub, selected ? stream : -1);
         if (r == 1) {
+            ffp_apply_subtitle_preference(ffp);
             if (is->paused) {
                 is->force_refresh_sub_changed = 1;
             }
@@ -5308,8 +5312,11 @@ int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
         ijkmeta_append_child_l(ffp->meta, stream_meta);
         //succ
         int ret = ff_sub_record_need_select_stream(is->ffSub, idx);
-        if (ret == 1 && is->paused) {
-            is->force_refresh_sub_changed = 1;
+        if (ret == 1) {
+            ffp_apply_subtitle_preference(ffp);
+            if (is->paused) {
+                is->force_refresh_sub_changed = 1;
+            }
         }
         return r;
     } else {
