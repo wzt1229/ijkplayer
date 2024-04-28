@@ -19,10 +19,6 @@ typedef struct FFSubComponent{
     PacketQueue* packetq;
     Decoder decoder;
     FrameQueue* frameq;
-    AVFormatContext *ic;
-    int64_t seek_req;
-    AVPacket *pkt;
-    int eof;
     subComponent_retry_callback retry_callback;
     void *retry_opaque;
     FF_ASS_Renderer *assRenderer;
@@ -34,106 +30,42 @@ typedef struct FFSubComponent{
     int sp_changed;
 }FFSubComponent;
 
-static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
-{
-    return queue->abort_request || queue->nb_packets > min_frames;
-}
-
-static int read_packets(FFSubComponent *com)
-{
-    if (!com) {
-        return -1;
-    }
-    
-    if (com->eof) {
-        return -2;
-    }
-    
-    if (com->ic) {
-        com->pkt->flags = 0;
-        do {
-            if (stream_has_enough_packets(com->packetq, 5)) {
-                return 1;
-            }
-            int ret = av_read_frame(com->ic, com->pkt);
-            if (ret >= 0) {
-                if (com->pkt->stream_index != com->st_idx) {
-                    av_packet_unref(com->pkt);
-                    continue;
-                }
-                packet_queue_put(com->packetq, com->pkt);
-                continue;
-            } else if (ret == AVERROR_EOF) {
-                packet_queue_put_nullpacket(com->packetq, com->pkt, com->st_idx);
-                com->eof = 1;
-                return -2;
-            } else {
-                return -3;
-            }
-        } while (com->packetq->abort_request == 0);
-    }
-    return -4;
-}
-
-static int get_packet(FFSubComponent *com, Decoder *d)
-{
-    while (com->packetq->abort_request == 0) {
-        
-        if (com->seek_req >= 0) {
-            av_log(NULL, AV_LOG_DEBUG,"sub seek to:%lld\n",fftime_to_seconds(com->seek_req));
-            if (avformat_seek_file(com->ic, -1, INT64_MIN, com->seek_req, INT64_MAX, 0) < 0) {
-                av_log(NULL, AV_LOG_WARNING, "%d: could not seek to position %lld\n",
-                       com->st_idx, com->seek_req);
-                com->seek_req = -1;
-                return -2;
-            }
-            com->seek_req = -1;
-            com->eof = 0;
-            packet_queue_flush(com->packetq);
-            continue;
-        }
-        
-        int r = packet_queue_get(d->queue, d->pkt, 0, &d->pkt_serial);
-        if (r < 0) {
-            return -1;
-        } else if (r == 0) {
-            if (read_packets(com) >= 0) {
-                continue;
-            } else {
-                av_usleep(1000 * 3);
-            }
-        } else {
-            return 0;
-        }
-    }
-    return -3;
-}
-
 static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
 {
     int ret = AVERROR(EAGAIN);
 
     for (;com->packetq->abort_request == 0;) {
         
-        do {
-            if (d->packet_pending) {
-                d->packet_pending = 0;
-            } else {
-                int old_serial = d->pkt_serial;
-                if (get_packet(com, d) < 0)
-                    return -1;
-                if (old_serial != d->pkt_serial) {
-                    avcodec_flush_buffers(d->avctx);
-                    d->finished = 0;
-                    d->next_pts = d->start_pts;
-                    d->next_pts_tb = d->start_pts_tb;
-                    ff_ass_flush_events(com->assRenderer);
-                }
+        if (d->packet_pending) {
+            d->packet_pending = 0;
+        } else {
+            int old_serial = d->pkt_serial;
+            int get_pkt = packet_queue_get(d->queue, d->pkt, 0, &d->pkt_serial);
+            //av_log(NULL, AV_LOG_ERROR, "sub packet_queue_get:%d\n",get_pkt);
+            if (get_pkt < 0)
+                return -1;
+            if (get_pkt == 0) {
+                av_usleep(1000 * 3);
+                continue;
             }
-            if (d->queue->serial == d->pkt_serial)
-                break;
+            
+            if (d->pkt->stream_index != com->st_idx) {
+                av_packet_unref(d->pkt);
+                continue;
+            }
+            if (old_serial != d->pkt_serial) {
+                avcodec_flush_buffers(d->avctx);
+                d->finished = 0;
+                d->next_pts = d->start_pts;
+                d->next_pts_tb = d->start_pts_tb;
+                ff_ass_flush_events(com->assRenderer);
+            }
+        }
+        if (d->queue->serial != d->pkt_serial)
+        {
             av_packet_unref(d->pkt);
-        } while (com->packetq->abort_request == 0);
+            continue;
+        }
 
         int got_frame = 0;
         
@@ -226,14 +158,8 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
     com->sub_height = com->video_height * ratio;
 #endif
     
-    FF_ASS_Renderer *assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->sub_width, com->sub_height, NULL);
-    if (assRenderer && com->ic) {
-        for (int i = 0; i < com->ic->nb_streams; i++) {
-            AVStream *st = com->ic->streams[com->st_idx];
-            assRenderer->iformat->set_attach_font(assRenderer, st);
-        }
-    }
-    com->assRenderer = assRenderer;
+    com->assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->sub_width, com->sub_height, NULL);
+    
     apply_preference(com);
     
     return NULL == com->assRenderer;
@@ -354,7 +280,7 @@ static int subtitle_thread(void *arg)
                 }
             } else {
                 pre_pts = 0;
-                av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
+                //av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
             }
             avsubtitle_free(&sub);
         }
@@ -364,13 +290,18 @@ static int subtitle_thread(void *arg)
     com->retry_callback = NULL;
     com->retry_opaque = NULL;
     com->st_idx = -1;
-    av_packet_free(&com->pkt);
+    
     return 0;
 }
 
 static int subComponent_packet_pgs(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
-    int serial = subComponent_get_serial(com);
+    if (!com) {
+        return -1;
+    }
+    
+    int serial = com->packetq->serial;
+    
     if (serial == -1) {
         return -2;
     }
@@ -471,49 +402,87 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
     }
 }
 
-int subComponent_open(FFSubComponent **cp, int stream_index, AVFormatContext* ic, AVCodecContext *avctx, PacketQueue* packetq, FrameQueue* frameq, subComponent_retry_callback callback, void *opaque, int vw, int vh)
+int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, PacketQueue* packetq, FrameQueue* frameq, const char *enc, subComponent_retry_callback callback, void *opaque, int vw, int vh)
 {
+    assert(frameq);
+    assert(packetq);
+    
+    int r = 0;
+    FFSubComponent *com = NULL;
+    
     if (!cp) {
         return -1;
     }
     
-    FFSubComponent *com = av_mallocz(sizeof(FFSubComponent));
-    if (!com) {
+    if (AVMEDIA_TYPE_SUBTITLE != stream->codecpar->codec_type) {
         return -2;
+    }
+    
+    stream->discard = AVDISCARD_DEFAULT;
+    AVCodecContext* avctx = avcodec_alloc_context3(NULL);
+    if (!avctx) {
+        return -3;
+    }
+    
+    if (avcodec_parameters_to_context(avctx, stream->codecpar) < 0) {
+        r = -4;
+        goto fail;
+    }
+    
+    //so important,ohterwise,sub frame has not pts.
+    avctx->pkt_timebase = stream->time_base;
+    if (enc) {
+        avctx->sub_charenc = av_strdup(enc);
+        avctx->sub_charenc_mode = FF_SUB_CHARENC_MODE_AUTOMATIC;
+    }
+    const AVCodec* codec = avcodec_find_decoder(stream->codecpar->codec_id);
+    
+    if (!codec) {
+        r = -5;
+        goto fail;
+    }
+    
+    if (avcodec_open2(avctx, codec, NULL) < 0) {
+        r = -6;
+        goto fail;
+    }
+    
+    com = av_mallocz(sizeof(FFSubComponent));
+    if (!com) {
+        r = -7;
+        goto fail;
     }
     
     com->video_width = vw;
     com->video_height = vh;
-    
-    assert(frameq);
-    assert(packetq);
-    
     com->frameq = frameq;
     com->packetq = packetq;
-    com->seek_req = -1;
-    com->ic = ic;
-    com->pkt = av_packet_alloc();
-    com->eof = 0;
     com->retry_callback = callback;
     com->retry_opaque = opaque;
+    com->st_idx = stream_index;
+    com->sp = ijk_subtitle_default_preference();
     
     int ret = decoder_init(&com->decoder, avctx, com->packetq, NULL);
     
     if (ret < 0) {
-        av_free(com);
-        return ret;
+        r = -7;
+        goto fail;
     }
     
     ret = decoder_start(&com->decoder, subtitle_thread, com, "ff_subtitle_dec");
     if (ret < 0) {
-        decoder_destroy(&com->decoder);
-        av_free(com);
-        return ret;
+        r = -8;
+        goto fail;
     }
-    com->st_idx = stream_index;
+    
     av_log(NULL, AV_LOG_INFO, "sub stream opened:%d,serial:%d\n", stream_index, packetq->serial);
     *cp = com;
     return 0;
+fail:
+    decoder_destroy(&com->decoder);
+    av_free(com);
+    avcodec_free_context(&avctx);
+    return r;
 }
 
 int subComponent_close(FFSubComponent **cp)
@@ -544,26 +513,9 @@ int subComponent_get_stream(FFSubComponent *com)
     return -1;
 }
 
-int subComponent_seek_to(FFSubComponent *com, int sec)
-{
-    if (!com || !com->ic) {
-        return -1;
-    }
-    if (sec < 0) {
-        sec = 0;
-    }
-    com->seek_req = seconds_to_fftime(sec);
-    return 0;
-}
-
 AVCodecContext * subComponent_get_avctx(FFSubComponent *com)
 {
     return com ? com->decoder.avctx : NULL;
-}
-
-int subComponent_get_serial(FFSubComponent *com)
-{
-    return com ? com->packetq->serial : -1;
 }
 
 void subComponent_update_preference(FFSubComponent *com, IJKSDLSubtitlePreference* sp)
@@ -577,13 +529,4 @@ void subComponent_update_preference(FFSubComponent *com, IJKSDLSubtitlePreferenc
         com->sp_changed = 1;
         apply_preference(com);
     }
-}
-
-int subComponent_eof_and_pkt_empty(FFSubComponent *sc)
-{
-    if (!sc) {
-        return -1;
-    }
-    
-    return sc->eof && sc->decoder.finished == sc->packetq->serial && frame_queue_nb_remaining(sc->frameq) == 0;
 }

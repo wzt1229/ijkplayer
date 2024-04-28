@@ -372,8 +372,6 @@ typedef struct VideoState {
     AVFilterGraph *agraph;              // audio filter graph
 #endif
 
-    int last_video_stream, last_audio_stream, last_subtitle_stream;
-
     SDL_cond *continue_read_thread;
 
     /* extra fields */
@@ -598,7 +596,6 @@ typedef struct FFPlayer {
     int infinite_buffer;
     enum ShowMode show_mode;
     char *audio_codec_name;
-    char *subtitle_codec_name;
     char *video_codec_name;
     double rdftspeed;
 #ifdef FFP_MERGE
