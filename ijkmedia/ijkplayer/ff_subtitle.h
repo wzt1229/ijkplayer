@@ -38,7 +38,6 @@ int ff_sub_get_current_stream(FFSubtitle *sub);
 //0 means has no sub;1 means internal sub;2 means external sub;
 int ff_sub_current_stream_type(FFSubtitle *sub);
 
-int ff_sub_close_current(FFSubtitle *sub);
 void ff_sub_get_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture);
 int ff_sub_drop_old_frames(FFSubtitle *sub);
 int ff_sub_frame_queue_size(FFSubtitle *sub);

@@ -173,23 +173,6 @@ int ff_sub_destroy(FFSubtitle **subp)
     return 0;
 }
 
-int ff_sub_close_current(FFSubtitle *sub)
-{
-    if (!sub) {
-        return -1;
-    }
-    sub->last_stream = IJK_SUBTITLE_STREAM_UNDEF;
-    
-    int r = 0;
-    if (sub->com) {
-        r = subComponent_close(&sub->com);
-    }
-    if (sub->exSub) {
-        exSub_close_input(&sub->exSub);
-    }
-    return r;
-}
-
 int ff_sub_drop_old_frames(FFSubtitle *sub)
 {
     int count = 0;
@@ -488,6 +471,28 @@ static int do_retry_next_charenc(void *opaque)
     open_any_stream(sub, st_id, enc);
     SDL_UnlockMutex(sub->mutex);
     return 0;
+}
+
+static int ff_sub_close_current(FFSubtitle *sub)
+{
+    if (!sub) {
+        return -1;
+    }
+    sub->last_stream = IJK_SUBTITLE_STREAM_UNDEF;
+    
+    int r = 0;
+    
+    ff_sub_abort(sub);
+    
+    if (sub->exSub) {
+        exSub_close_input(&sub->exSub);
+    }
+    
+    if (sub->com) {
+        r = subComponent_close(&sub->com);
+    }
+    
+    return r;
 }
 
 //-1: no change. 0:close current. 1:opened new
