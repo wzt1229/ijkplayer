@@ -116,6 +116,13 @@ fail:
     return r;
 }
 
+void ff_sub_desctoy_objs(FFSubtitle *sub)
+{
+    SDL_TextureOverlay_Release(&sub->assTexture);
+    SDL_TextureOverlay_Release(&sub->preTexture);
+    SDL_FBOOverlayFreeP(&sub->fbo);
+}
+
 void ff_sub_abort(FFSubtitle *sub)
 {
     if (!sub) {
@@ -148,9 +155,6 @@ int ff_sub_destroy(FFSubtitle **subp)
     packet_queue_destroy(&sub->packetq);
     packet_queue_destroy(&sub->packetq2);
     frame_queue_destory(&sub->frameq);
-    SDL_TextureOverlay_Release(&sub->assTexture);
-    SDL_TextureOverlay_Release(&sub->preTexture);
-    SDL_FBOOverlayFreeP(&sub->fbo);
     
     sub->delay = 0.0f;
     sub->current_pts = 0.0f;
@@ -163,6 +167,7 @@ int ff_sub_destroy(FFSubtitle **subp)
         }
     }
     SDL_UnlockMutex(sub->mutex);
+    
     SDL_DestroyMutex(sub->mutex);
     av_freep(subp);
     return 0;
@@ -207,17 +212,17 @@ static int ff_sub_upload_buffer(FFSubtitle *sub, float pts, FFSubtitleBufferPack
     if (!sub || !packet) {
         return -1;
     }
-    
+    SDL_LockMutex(sub->mutex);
     sub->current_pts = pts;
     pts += (sub ? sub->delay : 0.0);
-    
+    int err = -2;
     if (sub->com) {
-        if (subComponent_get_stream(sub->com) != -1) {
-            return subComponent_upload_buffer(sub->com, pts, packet);
+        if (subComponent_get_stream(sub->com) >= 0) {
+            err = subComponent_upload_buffer(sub->com, pts, packet);
         }
     }
-    
-    return -3;
+    SDL_UnlockMutex(sub->mutex);
+    return err;
 }
 
 static SDL_TextureOverlay * subtitle_ass_upload_texture(SDL_TextureOverlay *texture, FFSubtitleBufferPacket *packet)

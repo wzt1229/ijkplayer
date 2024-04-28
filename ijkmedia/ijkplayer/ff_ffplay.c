@@ -557,7 +557,6 @@ static void stream_close(FFPlayer *ffp)
     ff_sub_abort(is->ffSub);
     av_log(NULL, AV_LOG_DEBUG, "wait for read_tid\n");
     SDL_WaitThread(is->read_tid, NULL);
-
     /* close each stream */
     if (is->audio_stream >= 0)
         stream_component_close(ffp, is->audio_stream);
@@ -568,7 +567,8 @@ static void stream_close(FFPlayer *ffp)
     
     av_log(NULL, AV_LOG_DEBUG, "wait for video_refresh_tid\n");
     SDL_WaitThread(is->video_refresh_tid, NULL);
-
+    ff_sub_destroy(&is->ffSub);
+    
     packet_queue_destroy(&is->videoq);
     packet_queue_destroy(&is->audioq);
 
@@ -4001,7 +4001,7 @@ static int video_refresh_thread(void *arg)
     //clean GLView's attach,because the attach retained sub_overlay;
     //otherwise sub_overlay will be free in main thread!
     SDL_VoutDisplayYUVOverlay(ffp->vout, NULL, NULL);
-    ff_sub_destroy(&is->ffSub);
+    ff_sub_desctoy_objs(is->ffSub);
     return 0;
 }
 
@@ -4229,7 +4229,6 @@ void ffp_destroy(FFPlayer *ffp)
     SDL_DestroyMutexP(&ffp->vf_mutex);
 
     msg_queue_destroy(&ffp->msg_queue);
-
 
     av_free(ffp);
 }

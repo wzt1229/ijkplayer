@@ -20,8 +20,9 @@ typedef struct SDL_GPU SDL_GPU;
 
 // lifecycle
 int ff_sub_init(FFSubtitle **subp);
+//call in vout thread,because internal fbo and texture were created in vout thread!
+void ff_sub_desctoy_objs(FFSubtitle *sub);
 void ff_sub_abort(FFSubtitle *sub);
-//call in voout thread,because internal fbo and texture were created in vout thread!
 int ff_sub_destroy(FFSubtitle **subp);
 
 //when video steam ic ready,call me.

@@ -18,7 +18,6 @@ typedef struct FFExSubtitle {
     int stream_id;//ic 里的
     int eof;
     int64_t seek_req;
-    int abort;
 }FFExSubtitle;
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -73,7 +72,7 @@ static int ex_read_thread(void *opaque)
                 av_usleep(3 * 1000);
                 continue;
             }
-        } while (sub->abort == 0 && sub->pktq->abort_request == 0);
+        } while (sub->pktq->abort_request == 0);
     }
     av_packet_free(&pkt);
     return 0;
@@ -195,7 +194,6 @@ void exSub_close_input(FFExSubtitle **subp)
     if (!sub) {
         return;
     }
-    sub->abort = 1;
     SDL_WaitThread(sub->read_thread, NULL);
     sub->read_thread = NULL;
     
