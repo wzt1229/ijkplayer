@@ -15,12 +15,14 @@
 #include "ff_subtitle_def.h"
 #include "ijksdl/ijksdl_gpu.h"
 #include "ff_subtitle_def_internal.h"
+#include "ijksdl/ijksdl_mutex.h"
 
 typedef struct FF_ASS_Context {
     const AVClass *priv_class;
     ASS_Library  *library;
     ASS_Renderer *renderer;
     ASS_Track    *track;
+    SDL_mutex    *mutex;
     
     char *fontsdir;
     char *charenc;
@@ -94,7 +96,7 @@ static int init_libass(FF_ASS_Renderer *s)
         av_log(s, AV_LOG_ERROR, "Could not create a libass track\n");
         return AVERROR(EINVAL);
     }
-    
+    ass->mutex = SDL_CreateMutex();
     ass->track->track_type = TRACK_TYPE_ASS;
     return 0;
 }
@@ -173,11 +175,13 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
         return -1;
     }
     
+    SDL_LockMutex(ass->mutex);
     //update scale before render_frame;can't in other thread otherwise in find cache frame cause assert
     ass_set_font_scale(ass->renderer, ass->scale);
     int changed;
     ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
-
+    SDL_UnlockMutex(ass->mutex);
+    
     if (changed == 0 && !ass->force_changed) {
         return 0;
     }
@@ -339,7 +343,9 @@ static void process_chunk(FF_ASS_Renderer *s, char *ass_line, long long start_ti
     if (!ass) {
         return;
     }
+    SDL_LockMutex(ass->mutex);
     ass_process_chunk(ass->track, ass_line, (int)strlen(ass_line), start_time, duration);
+    SDL_UnlockMutex(ass->mutex);
 }
 
 static void flush_events(FF_ASS_Renderer *s)
@@ -348,7 +354,9 @@ static void flush_events(FF_ASS_Renderer *s)
     if (!ass) {
         return;
     }
+    SDL_LockMutex(ass->mutex);
     ass_flush_events(ass->track);
+    SDL_UnlockMutex(ass->mutex);
 }
 
 static void update_bottom_margin(FF_ASS_Renderer *s, int b)
@@ -378,12 +386,16 @@ static void uninit(FF_ASS_Renderer *s)
     if (!ass) {
         return;
     }
+    SDL_LockMutex(ass->mutex);
     if (ass->track)
         ass_free_track(ass->track);
     if (ass->renderer)
         ass_renderer_done(ass->renderer);
     if (ass->library)
         ass_library_done(ass->library);
+    SDL_UnlockMutex(ass->mutex);
+    
+    SDL_DestroyMutex(ass->mutex);
 }
 
 static void *ass_context_child_next(void *obj, void *prev)

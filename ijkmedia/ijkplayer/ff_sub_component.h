@@ -20,7 +20,7 @@ typedef struct FrameQueue FrameQueue;
 typedef struct AVFormatContext AVFormatContext;
 typedef struct IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
 typedef struct FFSubtitleBufferPacket FFSubtitleBufferPacket;
-
+typedef struct SDL_mutex SDL_mutex;
 //when hasn't ic, not support seek;
 int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, PacketQueue* packetq, FrameQueue* frameq, const char *enc, subComponent_retry_callback callback, void *opaque, int vw, int vh);
 int subComponent_close(FFSubComponent **cp);
