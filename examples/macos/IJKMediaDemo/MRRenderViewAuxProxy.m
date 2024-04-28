@@ -89,6 +89,11 @@
     return [view snapshot:aType];
 }
 
+- (id)context 
+{
+    return nil;
+}
+
 - (void)setColorPreference:(IJKSDLColorConversionPreference)colorPreference
 {
     _colorPreference = colorPreference;

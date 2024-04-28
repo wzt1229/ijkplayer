@@ -1355,7 +1355,7 @@ static BOOL hdrAnimationShown = 0;
     p.bgColor = color2int([MRCocoaBindingUserDefault subtitle_bg_color]);
     p.strokeColor = color2int([MRCocoaBindingUserDefault subtitle_stroke_color]);
     p.strokeSize = [MRCocoaBindingUserDefault subtitle_stroke_size];
-    p.bottomMargin = ( [MRCocoaBindingUserDefault subtitle_bottom_margin] - 20) / 100.0;
+    p.bottomMargin = ([MRCocoaBindingUserDefault subtitle_bottom_margin] - 20) / 100.0;
     p.scale = [MRCocoaBindingUserDefault subtitle_scale];
     NSString *name = [MRCocoaBindingUserDefault subtitle_font_name];
     if (name) {
