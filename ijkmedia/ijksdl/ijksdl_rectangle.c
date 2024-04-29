@@ -6,6 +6,7 @@
 //
 
 #include "ijksdl_rectangle.h"
+#include <assert.h>
 
 int isZeroRectangle(SDL_Rectangle rect)
 {
@@ -43,5 +44,8 @@ SDL_Rectangle SDL_union_rectangle(SDL_Rectangle rect1, SDL_Rectangle rect2) {
     result.w = ((x1 > x2) ? x1 : x2) - result.x;
     result.h = ((y1 > y2) ? y1 : y2) - result.y;
 
+    assert(rect2.stride/rect2.w == rect1.stride/rect1.w);
+    
+    result.stride = result.w * rect2.stride/rect2.w;
     return result;
 }

@@ -20,11 +20,12 @@ Frame *frame_queue_peek_offset(FrameQueue *f, int offset);
 Frame *frame_queue_peek_last(FrameQueue *f);
 Frame *frame_queue_peek_pre_writable(FrameQueue *f);
 Frame *frame_queue_peek_writable(FrameQueue *f);
+Frame *frame_queue_peek_writable_noblock(FrameQueue *f);
 // wait until we have a readable a new frame
 Frame *frame_queue_peek_readable(FrameQueue *f);
 //return a readable frame or NULL, not wait
 Frame *frame_queue_peek_readable_noblock(FrameQueue *f);
-void frame_queue_push(FrameQueue *f);
+int frame_queue_push(FrameQueue *f);
 int frame_queue_nb_remaining(FrameQueue *f);
 void frame_queue_next(FrameQueue *f);
 

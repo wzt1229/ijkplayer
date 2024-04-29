@@ -549,13 +549,13 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
 
 static void stream_close(FFPlayer *ffp)
 {
+    av_log(NULL, AV_LOG_INFO, "stream_close will close\n");
     VideoState *is = ffp->is;
     /* XXX: use a special url_shutdown call to abort parse cleanly */
     is->abort_request = 1;
     packet_queue_abort(&is->videoq);
     packet_queue_abort(&is->audioq);
     ff_sub_abort(is->ffSub);
-    av_log(NULL, AV_LOG_DEBUG, "wait for read_tid\n");
     SDL_WaitThread(is->read_tid, NULL);
     /* close each stream */
     if (is->audio_stream >= 0)
@@ -596,6 +596,7 @@ static void stream_close(FFPlayer *ffp)
     av_free(is->filename);
     av_free(is);
     ffp->is = NULL;
+    av_log(NULL, AV_LOG_INFO, "stream_close did close\n");
 }
 
 // FFP_MERGE: do_exit

@@ -107,6 +107,18 @@ Frame *frame_queue_peek_writable(FrameQueue *f)
     return &f->queue[f->windex];
 }
 
+Frame *frame_queue_peek_writable_noblock(FrameQueue *f)
+{
+    SDL_LockMutex(f->mutex);
+    if (f->size >= f->max_size || f->pktq->abort_request) {
+        SDL_UnlockMutex(f->mutex);
+        return NULL;
+    }
+    SDL_UnlockMutex(f->mutex);
+
+    return &f->queue[f->windex];
+}
+
 Frame *frame_queue_peek_pre_writable(FrameQueue *f)
 {
     if (f->pktq->abort_request)
@@ -152,15 +164,16 @@ Frame *frame_queue_peek_readable_noblock(FrameQueue *f)
     return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
 }
 
-
-void frame_queue_push(FrameQueue *f)
+int frame_queue_push(FrameQueue *f)
 {
     if (++f->windex == f->max_size)
         f->windex = 0;
+    int size;
     SDL_LockMutex(f->mutex);
-    f->size++;
+    size = ++f->size;
     SDL_CondSignal(f->cond);
     SDL_UnlockMutex(f->mutex);
+    return size;
 }
 
 void frame_queue_next(FrameQueue *f)

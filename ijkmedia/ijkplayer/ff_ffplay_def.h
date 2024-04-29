@@ -161,8 +161,6 @@ typedef struct PacketQueue {
     SDL_cond *cond;
     MyAVPacketList *recycle_pkt;
     int recycle_count;
-    int alloc_count;
-
     int is_buffer_indicator;
 } PacketQueue;
 

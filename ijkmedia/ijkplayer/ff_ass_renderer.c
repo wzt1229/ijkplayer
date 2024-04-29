@@ -168,7 +168,7 @@ static void draw_single_inset(FFSubtitleBuffer *frame, ASS_Image *img, int inset
     draw_ass_bgra(img->bitmap, img->w, img->h, img->stride, dst, frame->rect.stride, img->color);
 }
 
-static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **buffer)
+static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **buffer, int ignore_change)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass || !buffer) {
@@ -180,65 +180,77 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
     ass_set_font_scale(ass->renderer, ass->scale);
     int changed;
     ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
-    SDL_UnlockMutex(ass->mutex);
     
-    if (changed == 0 && !ass->force_changed) {
+//    long sec = time_ms/1000;
+//    int h = 0,m = 0;
+//    if (sec > 3600) {
+//        h = sec / 3600;
+//    }
+//    if (sec > 60) {
+//        m = sec % 3600 / 60;
+//    }
+//    sec %= 60;
+//    
+//    av_log(NULL, AV_LOG_INFO, "ass_render_frame:%02d:%02d:%02d,changed:%d,imgs:%d\n",h,m,sec,changed,!!imgs);
+    
+    if (!imgs) {
+        if (ass->force_changed) {
+            ass->force_changed = 0;
+        }
+        SDL_UnlockMutex(ass->mutex);
+        return -1;
+    }
+    
+    if (!ignore_change && changed == 0 && !ass->force_changed) {
+        SDL_UnlockMutex(ass->mutex);
         return 0;
     }
     
-    if (imgs) {
-        int bm = ass->bottom_margin;
-        int water_mark = ass->original_h * SUBTITLE_MOVE_WATERMARK;
-        SDL_Rectangle dirtyRect = {0};
-        
-        {
-            ASS_Image *img = imgs;
-            while (img) {
-                int y = img->dst_y;
-                if (y > water_mark) {
-                    y -= bm;
-                    if (y < 0) {
-                        y = 0;
-                    } else if (y + img->h > ass->original_h) {
-                        y = ass->original_h - img->h;
-                    }
-                }
-                SDL_Rectangle t = {img->dst_x, y, img->w, img->h};
-                dirtyRect = SDL_union_rectangle(dirtyRect, t);
-                img = img->next;
-            }
-        }
-        
-        FFSubtitleBuffer* frame = ff_subtitle_buffer_alloc_rgba32(dirtyRect);
-        dirtyRect.stride = frame->rect.stride;
-        
-        int cnt = 0;
-        while (imgs) {
-            ++cnt;
-            int y = imgs->dst_y;
+    int bm = ass->bottom_margin;
+    int water_mark = ass->original_h * SUBTITLE_MOVE_WATERMARK;
+    SDL_Rectangle dirtyRect = {0};
+    
+    {
+        ASS_Image *img = imgs;
+        while (img) {
+            int y = img->dst_y;
             if (y > water_mark) {
                 y -= bm;
                 if (y < 0) {
                     y = 0;
-                } else if (y + imgs->h > ass->original_h) {
-                    y = ass->original_h - imgs->h;
+                } else if (y + img->h > ass->original_h) {
+                    y = ass->original_h - img->h;
                 }
             }
-            int offset = imgs->dst_y - y;
-            draw_single_inset(frame, imgs, dirtyRect.x, dirtyRect.y, offset);
-            imgs = imgs->next;
+            SDL_Rectangle t = {img->dst_x, y, img->w, img->h};
+            dirtyRect = SDL_union_rectangle(dirtyRect, t);
+            img = img->next;
         }
-        *buffer = frame;
-        ass->force_changed = 0;
-        return 1;
-    } else {
-        if (ass->force_changed) {
-            ass->force_changed = 0;
-        } else {
-            av_log(NULL, AV_LOG_ERROR, "ass_render_frame NULL at time ms:%f\n", time_ms);
-        }
-        return -2;
     }
+    
+    FFSubtitleBuffer* frame = ff_subtitle_buffer_alloc_rgba32(dirtyRect);
+    dirtyRect.stride = frame->rect.stride;
+    
+    int cnt = 0;
+    while (imgs) {
+        ++cnt;
+        int y = imgs->dst_y;
+        if (y > water_mark) {
+            y -= bm;
+            if (y < 0) {
+                y = 0;
+            } else if (y + imgs->h > ass->original_h) {
+                y = ass->original_h - imgs->h;
+            }
+        }
+        int offset = imgs->dst_y - y;
+        draw_single_inset(frame, imgs, dirtyRect.x, dirtyRect.y, offset);
+        imgs = imgs->next;
+    }
+    *buffer = frame;
+    ass->force_changed = 0;
+    SDL_UnlockMutex(ass->mutex);
+    return 1;
 }
 
 static const char * const font_mimetypes[] = {
@@ -343,6 +355,17 @@ static void process_chunk(FF_ASS_Renderer *s, char *ass_line, long long start_ti
     if (!ass) {
         return;
     }
+    //    long sec = start_time/1000;
+    //    int h = 0,m = 0;
+    //    if (sec > 3600) {
+    //        h = sec / 3600;
+    //    }
+    //    if (sec > 60) {
+    //        m = sec % 3600 / 60;
+    //    }
+    //    sec %= 60;
+    //
+    //    av_log(NULL, AV_LOG_INFO, "ass_process_chunk:%02d:%02d:%02d\n",h,m,sec);
     SDL_LockMutex(ass->mutex);
     ass_process_chunk(ass->track, ass_line, (int)strlen(ass_line), start_time, duration);
     SDL_UnlockMutex(ass->mutex);
@@ -367,8 +390,10 @@ static void update_bottom_margin(FF_ASS_Renderer *s, int b)
     }
     //设置后字体会被压缩变形
     //ass_set_margins(ass->renderer, 0, b, 0, 0);
+    SDL_LockMutex(ass->mutex);
     ass->bottom_margin = b;
     ass->force_changed = 1;
+    SDL_UnlockMutex(ass->mutex);
 }
 
 static void set_font_scale(FF_ASS_Renderer *s, double scale)
@@ -377,7 +402,9 @@ static void set_font_scale(FF_ASS_Renderer *s, double scale)
     if (!ass || !ass->renderer) {
         return;
     }
+    SDL_LockMutex(ass->mutex);
     ass->scale = scale;
+    SDL_UnlockMutex(ass->mutex);
 }
 
 static void uninit(FF_ASS_Renderer *s)
@@ -498,12 +525,12 @@ void ff_ass_render_release(FF_ASS_Renderer **arp)
     }
 }
 
-int ff_ass_upload_buffer(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer ** buffer)
+int ff_ass_upload_buffer(FF_ASS_Renderer * assRenderer, float begin, FFSubtitleBuffer ** buffer, int ignore_change)
 {
     if (!assRenderer) {
         return -1;
     }
-    return assRenderer->iformat->upload_buffer(assRenderer, begin * 1000, buffer);
+    return assRenderer->iformat->upload_buffer(assRenderer, begin * 1000, buffer, ignore_change);
 }
 
 void ff_ass_process_chunk(FF_ASS_Renderer * assRenderer, const char *ass_line, float begin, float end)
