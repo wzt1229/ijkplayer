@@ -35,87 +35,121 @@ typedef struct FFSubComponent{
     float pre_load_pts;
 }FFSubComponent;
 
+static void apply_preference(FFSubComponent *com)
+{
+    if (com->assRenderer) {
+        int b = com->sp.bottomMargin * com->sub_height;
+        com->assRenderer->iformat->update_bottom_margin(com->assRenderer, b);
+        com->assRenderer->iformat->set_font_scale(com->assRenderer, com->sp.scale);
+        com->sp_changed = 0;
+    }
+}
+
 #if ASS_USE_PRE_RENDER
 static int pre_render_ass_frame(FFSubComponent *com, int serial)
 {
+    if (com->bitmapRenderer) {
+        return -1;
+    }
+    
     if (com->pre_load_pts < 0) {
         if (com->current_pts >= 0) {
             com->pre_load_pts = com->current_pts;
         }
     }
     
-    if (com->pre_load_pts >= 0 && !com->bitmapRenderer) {
-        if (frame_queue_nb_remaining(com->frameq) >= CACHE_ASS_IMG_COUNT) {
-            return -1;
-        }
-        FFSubtitleBuffer *pre_buffer = NULL;
-        FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-        int result = 0;
-        while (com->packetq->abort_request == 0) {
-            FFSubtitleBuffer *buffer = NULL;
-            double pts = com->pre_load_pts;
-            
-            int r = ff_ass_upload_buffer(com->assRenderer, pts, &buffer, 0);
-            if (r == 0) {
-                //no change, reuse pre frame
-                if (!pre_buffer) {
-                    Frame *lastFrame = frame_queue_peek_pre_writable(com->frameq);
-                    if (lastFrame) {
-                        pre_buffer = ff_subtitle_buffer_retain(lastFrame->sub_list[0]);
-                    }
-                    if (!pre_buffer) {
-                        ff_ass_upload_buffer(com->assRenderer, pts, &pre_buffer, 1);
-                        if (pre_buffer) {
-                            av_log(NULL, AV_LOG_DEBUG, "pre frame is nil, uploaded from ass render.\n");
-                        }
-                    }
-                }
-                buffer = ff_subtitle_buffer_retain(pre_buffer);
-            } else if (r > 0) {
-                // buffer is new.
-                if (pre_buffer) {
-                    ff_subtitle_buffer_release(&pre_buffer);
-                }
-                pre_buffer = ff_subtitle_buffer_retain(buffer);
+    if (com->sp_changed) {
+        while (frame_queue_nb_remaining(com->frameq) > 0) {
+            Frame *af = frame_queue_peek_readable(com->frameq);
+            if (af) {
+                frame_queue_next(com->frameq);
             } else {
-                //clean
-                com->pre_load_pts += A_ASS_IMG_DURATION;
-                result = -1;
                 break;
-            }
-            if (!buffer) {
-                com->pre_load_pts += A_ASS_IMG_DURATION;
-                result = -1;
-                break;
-            }
-            Frame *sp = frame_queue_peek_writable_noblock(com->frameq);
-            if (!sp) {
-                ff_subtitle_buffer_release(&buffer);
-                result = -2;
-                break;
-            }
-            com->pre_load_pts += A_ASS_IMG_DURATION;
-            sp->pts = pts;
-            sp->duration = A_ASS_IMG_DURATION;
-            sp->serial = serial;
-            sp->width  = com->sub_width;
-            sp->height = com->sub_height;
-            sp->shown = 0;
-            sp->sub_list[0] = buffer;
-            
-            int size = frame_queue_push(com->frameq);
-            
-            if (size > CACHE_ASS_IMG_COUNT) {
-                break;
-            } else {
-                continue;
             }
         }
-        ff_subtitle_buffer_release(&pre_buffer);
-        ff_ass_render_release(&assRenderer);
-        return result;
+        if (com->current_pts >= 0) {
+            //let the pts can display right now.
+            com->pre_load_pts = com->current_pts - A_ASS_IMG_DURATION;
+        }
+        apply_preference(com);
     }
-    return -1;
+    
+    if (com->pre_load_pts < 0) {
+        return -1;
+    }
+    
+    if (frame_queue_nb_remaining(com->frameq) >= CACHE_ASS_IMG_COUNT) {
+        return -1;
+    }
+    
+    FFSubtitleBuffer *pre_buffer = NULL;
+    FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
+    int result = 0;
+    while (com->packetq->abort_request == 0) {
+        FFSubtitleBuffer *buffer = NULL;
+        double pts = com->pre_load_pts;
+        
+        int r = ff_ass_upload_buffer(com->assRenderer, pts, &buffer, 0);
+        if (r == 0) {
+            //no change, reuse pre frame
+            if (!pre_buffer) {
+                Frame *lastFrame = frame_queue_peek_pre_writable(com->frameq);
+                if (lastFrame) {
+                    pre_buffer = ff_subtitle_buffer_retain(lastFrame->sub_list[0]);
+                }
+                if (!pre_buffer) {
+                    ff_ass_upload_buffer(com->assRenderer, pts, &pre_buffer, 1);
+                    if (pre_buffer) {
+                        av_log(NULL, AV_LOG_DEBUG, "pre frame is nil, uploaded from ass render.\n");
+                    }
+                }
+            }
+            buffer = ff_subtitle_buffer_retain(pre_buffer);
+        } else if (r > 0) {
+            // buffer is new.
+            if (pre_buffer) {
+                ff_subtitle_buffer_release(&pre_buffer);
+            }
+            pre_buffer = ff_subtitle_buffer_retain(buffer);
+        } else {
+            //clean
+            com->pre_load_pts += A_ASS_IMG_DURATION;
+            result = -1;
+            break;
+        }
+        if (!buffer) {
+            com->pre_load_pts += A_ASS_IMG_DURATION;
+            result = -1;
+            break;
+        }
+        
+        
+        Frame *sp = frame_queue_peek_writable_noblock(com->frameq);
+        if (!sp) {
+            ff_subtitle_buffer_release(&buffer);
+            result = -2;
+            break;
+        }
+        com->pre_load_pts += A_ASS_IMG_DURATION;
+        sp->pts = pts;
+        sp->duration = A_ASS_IMG_DURATION;
+        sp->serial = serial;
+        sp->width  = com->sub_width;
+        sp->height = com->sub_height;
+        sp->shown = 0;
+        sp->sub_list[0] = buffer;
+        
+        int size = frame_queue_push(com->frameq);
+        
+        if (size > CACHE_ASS_IMG_COUNT) {
+            break;
+        } else {
+            continue;
+        }
+    }
+    ff_subtitle_buffer_release(&pre_buffer);
+    ff_ass_render_release(&assRenderer);
+    return result;
 }
 #endif
 
@@ -162,8 +196,8 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
                         break;
                     }
                 }
-                com->current_pts = -1;
                 com->pre_load_pts = -1;
+                com->current_pts = -1;
                 av_log(NULL, AV_LOG_INFO, "sub flush serial:%d\n",d->pkt_serial);
             }
         }
@@ -238,16 +272,6 @@ static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
             *out++ = pal[*in++];
     }
     return frame;
-}
-
-static void apply_preference(FFSubComponent *com)
-{
-    if (com->assRenderer) {
-        int b = com->sp.bottomMargin * com->sub_height;
-        com->assRenderer->iformat->update_bottom_margin(com->assRenderer, b);
-        com->assRenderer->iformat->set_font_scale(com->assRenderer, com->sp.scale);
-        com->sp_changed = 0;
-    }
 }
 
 static int create_ass_renderer_if_need(FFSubComponent *com)
@@ -400,7 +424,7 @@ static int subtitle_thread(void *arg)
     return 0;
 }
 
-static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
+static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet, int ignore_cache)
 {
     if (!com || !packet) {
         return -1;
@@ -410,6 +434,10 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
     
     if (serial == -1) {
         return -2;
+    }
+    
+    if (com->sp_changed) {
+        return -100;
     }
     
     int i = 0;
@@ -424,9 +452,9 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
             frame_queue_next(com->frameq);
             continue;
         }
-        float end = sp->pts + sp->duration;
+        
         //字幕显示时间已经结束了
-        if (pts > end) {
+        if (pts > sp->pts + sp->duration) {
             frame_queue_next(com->frameq);
             continue;
         }
@@ -436,6 +464,7 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
             continue;
         }
         
+        //已经开始
         if (pts > sp->pts) {
             for (int j = 0; j < sizeof(sp->sub_list)/sizeof(sp->sub_list[0]); j++) {
                 FFSubtitleBuffer *sb = sp->sub_list[j];
@@ -448,23 +477,24 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
             i++;
             continue;
         } else {
+            //还没已经开始
+            i++;
             break;
         }
     }
     
-    if (com->sp_changed || isFFSubtitleBufferArrayDiff(&com->sub_buffer_array, packet)) {
-        com->sp_changed = 0;
+    if (packet->len == 0) {
+        //i > 0 means the frame queue is not empty
+        return i > 0 ? -1 : -100;
+    }
+    
+    if (ignore_cache || isFFSubtitleBufferArrayDiff(&com->sub_buffer_array, packet)) {
         ResetSubtitleBufferArray(&com->sub_buffer_array, packet);
-        return packet->len == 0 ? -1 : 1;
+        return 1;
     } else {
-        if (packet->len == 0) {
-            //clean subtitle
-            return -1;
-        }
         FreeSubtitleBufferArray(packet);
         return 0;
     }
-    return -3;
 }
 
 static int subComponent_packet_from_ass_render(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
@@ -485,7 +515,7 @@ static int subComponent_packet_from_ass_render(FFSubComponent *com, float pts, F
 
 static int subComponent_packet_ass_from_frame_queue(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
-    return subComponent_packet_from_frame_queue(com, pts, packet);
+    return subComponent_packet_from_frame_queue(com, pts, packet, 0);
 }
 
 static int subComponent_packet_for_ass(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
@@ -503,9 +533,7 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
         return -1;
     }
     
-    if (com->current_pts < 0) {
-        com->current_pts = pts;        
-    }
+    com->current_pts = pts;
     
     if (com->assRenderer) {
         FFSubtitleBufferPacket myPacket = {0};
@@ -527,8 +555,9 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
         myPacket.bottom_margin = com->sp.bottomMargin * com->sub_height;
         myPacket.isAss = 0;
         
-        int r = subComponent_packet_from_frame_queue(com, pts, &myPacket);
+        int r = subComponent_packet_from_frame_queue(com, pts, &myPacket, com->sp_changed);
         if (r > 0) {
+            com->sp_changed = 0;
             *packet = myPacket;
         }
         return r;
@@ -664,6 +693,5 @@ void subComponent_update_preference(FFSubComponent *com, IJKSDLSubtitlePreferenc
     if (!isIJKSDLSubtitlePreferenceEqual(&com->sp, sp)) {
         com->sp = *sp;
         com->sp_changed = 1;
-        apply_preference(com);
     }
 }

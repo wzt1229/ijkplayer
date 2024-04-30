@@ -292,28 +292,27 @@ end:
     return r;
 }
 
-void ff_sub_get_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
+int ff_sub_get_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture)
 {
     if (!texture) {
-        return;
+        return -1;
     }
     
-    {
-        SDL_TextureOverlay *sub_overlay = NULL;
-        int r = ff_sub_upload_texture(sub, pts, gpu, &sub_overlay);
-        if (r > 0) {
-            //replace
-            SDL_TextureOverlay_Release(&sub->preTexture);
-            sub->preTexture = sub_overlay;
-        } else if (r < 0) {
-            //clean
-            SDL_TextureOverlay_Release(&sub->preTexture);
-        } else {
-            //keep current
-        }
+    SDL_TextureOverlay *sub_overlay = NULL;
+    int r = ff_sub_upload_texture(sub, pts, gpu, &sub_overlay);
+    if (r > 0) {
+        //replace
+        SDL_TextureOverlay_Release(&sub->preTexture);
+        sub->preTexture = sub_overlay;
+    } else if (r < 0) {
+        //clean
+        SDL_TextureOverlay_Release(&sub->preTexture);
+    } else {
+        //keep current
     }
     
     *texture = SDL_TextureOverlay_Retain(sub->preTexture);
+    return r;
 }
 
 void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, int video_h)
