@@ -457,6 +457,7 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
             //clean subtitle
             return -1;
         }
+        FreeSubtitleBufferArray(packet);
         return 0;
     }
     return -3;
