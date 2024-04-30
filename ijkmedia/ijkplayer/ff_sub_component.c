@@ -123,6 +123,14 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             break;
         }
         
+        int delta = (int)((com->current_pts - pts) * 1000);
+        if (delta > A_ASS_IMG_DURATION * 1000) {
+            ff_subtitle_buffer_release(&buffer);
+            //subtitle is slower than video, so need fast forward
+            com->pre_load_pts = com->current_pts + 0.2;
+            av_log(NULL, AV_LOG_WARNING, "subtitle is slower than video:%dms",delta);
+            continue;
+        }
         
         Frame *sp = frame_queue_peek_writable_noblock(com->frameq);
         if (!sp) {
