@@ -5311,7 +5311,7 @@ int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
         //exist
     } else if (r == 0) {
         ijkmeta_append_child_l(ffp->meta, stream_meta);
-        //succ
+        //succ,not send STREAM_CHANGED msg because would send after selected the new stream int vout thread.
         int ret = ff_sub_record_need_select_stream(is->ffSub, idx);
         if (ret == 1) {
             ffp_apply_subtitle_preference(ffp);
@@ -5334,6 +5334,7 @@ int ffp_addOnly_external_subtitle(FFPlayer *ffp, const char *file_name)
     int r = ff_sub_add_ex_subtitle(is->ffSub, file_name, &stream_meta, NULL);
     if (r == 0) {
         ijkmeta_append_child_l(ffp->meta, stream_meta);
+        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     }
     return r;
 }
