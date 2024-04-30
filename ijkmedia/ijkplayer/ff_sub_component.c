@@ -14,6 +14,8 @@
 
 #define SUB_MAX_KEEP_DU 3.0
 #define ASS_USE_PRE_RENDER 1
+#define CACHE_ASS_IMG_COUNT 6
+#define A_ASS_IMG_DURATION 0.03
 
 typedef struct FFSubComponent{
     int st_idx;
@@ -43,12 +45,14 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
     }
     
     if (com->pre_load_pts >= 0 && !com->bitmapRenderer) {
+        if (frame_queue_nb_remaining(com->frameq) >= CACHE_ASS_IMG_COUNT) {
+            return -1;
+        }
         FFSubtitleBuffer *pre_buffer = NULL;
         FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
         int result = 0;
         while (com->packetq->abort_request == 0) {
             FFSubtitleBuffer *buffer = NULL;
-            double duration = 0.03;
             double pts = com->pre_load_pts;
             
             int r = ff_ass_upload_buffer(com->assRenderer, pts, &buffer, 0);
@@ -75,12 +79,12 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
                 pre_buffer = ff_subtitle_buffer_retain(buffer);
             } else {
                 //clean
-                com->pre_load_pts += duration;
+                com->pre_load_pts += A_ASS_IMG_DURATION;
                 result = -1;
                 break;
             }
             if (!buffer) {
-                com->pre_load_pts += duration;
+                com->pre_load_pts += A_ASS_IMG_DURATION;
                 result = -1;
                 break;
             }
@@ -90,9 +94,9 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
                 result = -2;
                 break;
             }
-            com->pre_load_pts += duration;
+            com->pre_load_pts += A_ASS_IMG_DURATION;
             sp->pts = pts;
-            sp->duration = duration;
+            sp->duration = A_ASS_IMG_DURATION;
             sp->serial = serial;
             sp->width  = com->sub_width;
             sp->height = com->sub_height;
@@ -101,7 +105,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             
             int size = frame_queue_push(com->frameq);
             
-            if (size > 3) {
+            if (size > CACHE_ASS_IMG_COUNT) {
                 break;
             } else {
                 continue;
@@ -135,7 +139,7 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
                 r = pre_render_ass_frame(com, old_serial);
 #endif
                 if (r) {
-                    av_usleep(1000 * 3);
+                    av_usleep(1000 * 10);
                 }
                 continue;
             }
