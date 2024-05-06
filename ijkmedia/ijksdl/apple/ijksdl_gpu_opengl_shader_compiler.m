@@ -1,11 +1,11 @@
 //
-//  ijksdl_gpu_opengl_compiler_macos.m
+//  ijksdl_gpu_opengl_shader_compiler.m
 //  IJKMediaPlayerKit
 //
 //  Created by Reach Matt on 2024/4/15.
 //
 
-#import "ijksdl_gpu_opengl_compiler_macos.h"
+#import "ijksdl_gpu_opengl_shader_compiler.h"
 #import "ijksdl_gles2.h"
 
 @interface IJKSDLOpenGLCompiler ()

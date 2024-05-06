@@ -1,5 +1,5 @@
 //
-//  ijksdl_gpu_opengl_compiler_macos.h
+//  ijksdl_gpu_opengl_shader_compiler.h
 //  IJKMediaPlayerKit
 //
 //  Created by Reach Matt on 2024/4/15.

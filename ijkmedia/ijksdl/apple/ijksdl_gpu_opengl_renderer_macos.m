@@ -6,7 +6,7 @@
 //
 
 #import "ijksdl_gpu_opengl_renderer_macos.h"
-#import "ijksdl_gpu_opengl_compiler_macos.h"
+#import "ijksdl_gpu_opengl_shader_compiler.h"
 #import "ijksdl_gpu_opengl_fbo_macos.h"
 #import "ijksdl_gles2.h"
 #import "ijksdl_vout_ios_gles2.h"
