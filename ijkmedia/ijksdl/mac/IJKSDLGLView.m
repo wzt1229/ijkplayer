@@ -110,8 +110,6 @@ static void unlock_gl(NSOpenGLContext *ctx)
 @interface IJKSDLGLView()
 
 @property(atomic) IJKOverlayAttach *currentAttach;
-
-@property(nonatomic) NSInteger videoDegrees;
 //view size
 @property(assign) CGSize viewSize;
 @property(atomic) GLint backingWidth;
@@ -159,7 +157,6 @@ static void unlock_gl(NSOpenGLContext *ctx)
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
     [self.renderThread stop];
-        
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -249,11 +246,6 @@ static void unlock_gl(NSOpenGLContext *ctx)
     }
 }
 
-- (void)videoZRotateDegrees:(NSInteger)degrees
-{
-    self.videoDegrees = degrees;
-}
-
 - (BOOL)setupRendererIfNeed:(IJKOverlayAttach *)attach
 {
     if (attach == nil)
@@ -334,7 +326,6 @@ static void unlock_gl(NSOpenGLContext *ctx)
     id<IJKSDLSubtitleTextureWrapper>subTexture = attach.subTexture;
     if (subTexture) {
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-        
         IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, subTexture.w, subTexture.h);
         if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture, subTexture.w, subTexture.h)) {
             IJK_GLES2_Renderer_drawArrays();
@@ -417,7 +408,6 @@ static void unlock_gl(NSOpenGLContext *ctx)
 
 - (void)setNeedsRefreshCurrentPic
 {
-    //use single global thread!
     [self.renderThread performSelector:@selector(doRefreshCurrentAttach:)
                             withTarget:self
                             withObject:self.currentAttach

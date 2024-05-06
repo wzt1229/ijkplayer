@@ -79,6 +79,8 @@
 #include <stdatomic.h>
 #if defined(__ANDROID__)
 #include "ijksoundtouch/ijksoundtouch_wrap.h"
+#elif defined(__APPLE__)
+#include <TargetConditionals.h>
 #endif
 
 #ifndef AV_CODEC_FLAG2_FAST

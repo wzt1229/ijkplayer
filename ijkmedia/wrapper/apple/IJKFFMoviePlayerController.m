@@ -22,7 +22,6 @@
  */
 
 #import "IJKFFMoviePlayerController.h"
-#import "IJKSDLGLView.h"
 #import "IJKMetalView.h"
 #import "IJKSDLHudControl.h"
 #import "IJKFFMoviePlayerDef.h"
@@ -35,6 +34,8 @@
 #include "string.h"
 #if TARGET_OS_IOS
 #import "IJKAudioKit.h"
+#else
+#import "IJKSDLGLView.h"
 #endif
 
 #include "../ijkmedia/ijkplayer/apple/ijkplayer_ios.h"
@@ -248,19 +249,21 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         UIView<IJKVideoRenderingProtocol> *glView = nil;
     #if TARGET_OS_IOS
         CGRect rect = [[UIScreen mainScreen] bounds];
+        rect.origin = CGPointZero;
+        glView = [[IJKMetalView alloc] initWithFrame:rect];
     #else
         CGRect rect = [[[NSScreen screens] firstObject]frame];
         rect.origin = CGPointZero;
-    #endif
         if (!options.metalRenderer) {
             glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         } else {
-            if (@available(macOS 10.13, ios 11.0, *)) {
+            if (@available(macOS 10.13, *)) {
                 glView = [[IJKMetalView alloc] initWithFrame:rect];
             } else {
                 glView = [[IJKSDLGLView alloc] initWithFrame:rect];
             }
         }
+    #endif
         [self _initWithContent:aUrl options:options glView:glView];
     }
     return self;
@@ -1553,10 +1556,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         case FFP_MSG_VIDEO_Z_ROTATE_DEGREE:
             if (_videoZRotateDegrees != avmsg->arg1) {
                 _videoZRotateDegrees = avmsg->arg1;
-                
-                if ([self.view respondsToSelector:@selector(videoZRotateDegrees:)]) {
-                    [self.view videoZRotateDegrees:_videoZRotateDegrees];
-                }
                 
                 [[NSNotificationCenter defaultCenter]
                          postNotificationName:IJKMPMovieZRotateAvailableNotification

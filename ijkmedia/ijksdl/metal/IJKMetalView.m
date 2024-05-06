@@ -59,20 +59,6 @@ typedef CGRect NSRect;
 #endif
 @synthesize showHdrAnimation = _showHdrAnimation;
 
-- (CGSize)screenSize
-{
-    static CGSize _screenSize;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        for (NSScreen *sc in [NSScreen screens]) {
-            if (sc.frame.size.width > _screenSize.width && sc.frame.size.height > _screenSize.height) {
-                _screenSize = sc.frame.size;
-            }
-        }
-    });
-    return _screenSize;
-}
-
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -511,12 +497,6 @@ typedef CGRect NSRect;
 {
     CGImageRef cgImg = [self snapshot:IJKSDLSnapshot_Screen];
     return [[UIImage alloc]initWithCGImage:cgImg];
-}
-
-- (void)didMoveToWindow
-{
-    [super didMoveToWindow];
-    [self refreshSubtitleExtSacle];
 }
 
 #else

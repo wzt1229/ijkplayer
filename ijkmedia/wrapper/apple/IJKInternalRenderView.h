@@ -13,7 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface IJKInternalRenderView : NSObject
 
+#if TARGET_OS_OSX
 + (UIView<IJKVideoRenderingProtocol> *)createGLRenderView;
+#endif
 
 + (UIView<IJKVideoRenderingProtocol> *)createMetalRenderView NS_AVAILABLE(10_13, 11_0);
 

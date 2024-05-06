@@ -68,6 +68,7 @@ typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 @end
 
 static inline uint32_t color2int(UIColor *color) {
+#if TARGET_OS_OSX
     if (@available(macOS 10.13, *)) {
         if (color.type != NSColorSpaceModelRGB) {
             
@@ -76,6 +77,7 @@ static inline uint32_t color2int(UIColor *color) {
     if (![color.colorSpaceName isEqualToString:NSDeviceRGBColorSpace] && ![color.colorSpaceName isEqualToString:NSCalibratedRGBColorSpace]) {
         color = [color colorUsingColorSpaceName:NSDeviceRGBColorSpace];
     }
+#endif
     CGFloat r,g,b,a;
     [color getRed:&r green:&g blue:&b alpha:&a];
     
@@ -163,8 +165,6 @@ typedef enum : NSUInteger {
 - (id)context;
 
 @optional;
-//when video z rotate degrees changed will call videoZRotateDegrees.
-- (void)videoZRotateDegrees:(NSInteger)degrees;
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b;
 
 @end

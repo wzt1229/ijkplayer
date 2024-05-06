@@ -29,9 +29,6 @@
         #include <OpenGL/OpenGL.h>
         #include <OpenGL/gl3.h>
         #include <OpenGL/gl3ext.h>
-    #else
-        #include <OpenGLES/ES2/gl.h>
-        #include <OpenGLES/ES2/glext.h>
     #endif /* TARGET_OS_OSX */
 #else
     #include <GLES2/gl2.h>

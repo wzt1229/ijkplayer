@@ -51,6 +51,7 @@ TODO: Add long description of the pod here.
       '$(inherited)',
       '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
       '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/dvdread/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ass/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'EXCLUDED_ARCHS' => 'armv7',
@@ -102,12 +103,20 @@ TODO: Add long description of the pod here.
     'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
     'ijkmedia/ijkplayer/android/**/*.*',
     'ijkmedia/ijksdl/android/**/*.*',
+    'ijkmedia/ijksdl/ijksdl_egl.*',
+    'ijkmedia/ijksdl/ijksdl_container.*',
     'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}'
   s.osx.exclude_files = 
-    'ijkmedia/ijksdl/ijksdl_egl.*',
     'ijkmedia/ijksdl/ios/*.*',
     'ijkmedia/wrapper/apple/IJKAudioKit.*'
-  s.ios.exclude_files = 'ijkmedia/ijksdl/mac/*.*'
+  s.ios.exclude_files = 
+    'ijkmedia/ijksdl/mac/*.*',
+    'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_macos.{h,m}',
+    'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_fbo_macos.{h,m}',
+    'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_renderer_macos.{h,m}',
+    'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_shader_compiler.{h,m}',
+    'ijkmedia/ijksdl/gles2/**/*.*',
+    'ijkmedia/ijksdl/ijksdl_gles2.h'
 
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
   s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'

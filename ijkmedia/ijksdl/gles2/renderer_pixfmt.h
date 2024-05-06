@@ -233,9 +233,9 @@ static struct vt_format vt_formats[] = {
             { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
             { GL_RED, GL_UNSIGNED_BYTE, GL_RED }
 #else
-            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT },
-            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT },
-            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT }
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED }
 #endif
         }
     },
@@ -248,9 +248,9 @@ static struct vt_format vt_formats[] = {
             { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
             { GL_RED, GL_UNSIGNED_BYTE, GL_RED }
 #else
-            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT },
-            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT },
-            { GL_RED_EXT, GL_UNSIGNED_BYTE, GL_RED_EXT }
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED },
+            { GL_RED, GL_UNSIGNED_BYTE, GL_RED }
 #endif
         }
     },

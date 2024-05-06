@@ -31,11 +31,10 @@
 #include "ijkplayer/ff_subtitle_def.h"
 #import "ijksdl_gpu_metal.h"
 
-#if TARGET_OS_IOS
-#include "../ios/IJKSDLGLView.h"
-#else
+#if TARGET_OS_OSX
 #include "../mac/IJKSDLGLView.h"
 #import "ijksdl_gpu_opengl_macos.h"
+#import <OpenGL/gl3.h>
 #endif
 
 
@@ -205,6 +204,7 @@ void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* vi
     SDL_UnlockMutex(vout->mutex);
 }
 
+#if TARGET_OS_OSX
 @interface _IJKSDLGLTextureWrapper : NSObject<IJKSDLSubtitleTextureWrapper>
 
 @property(nonatomic) GLuint texture;
@@ -245,6 +245,7 @@ id<IJKSDLSubtitleTextureWrapper> IJKSDL_crate_openglTextureWrapper(uint32_t text
 {
     return [[_IJKSDLGLTextureWrapper alloc] initWith:texture w:w h:h];
 }
+#endif
 
 SDL_TextureOverlay * SDL_TextureOverlay_Retain(SDL_TextureOverlay *t)
 {
@@ -280,11 +281,15 @@ void SDL_FBOOverlayFreeP(SDL_FBOOverlay **poverlay)
 
 SDL_GPU *SDL_CreateGPU_WithContext(id context)
 {
+#if TARGET_OS_OSX
     if ([context isKindOfClass:[NSOpenGLContext class]]) {
         return SDL_CreateGPU_WithGLContext(context);
     } else if (context){
         return SDL_CreateGPU_WithMTLDevice(context);
     }
+#else
+    return SDL_CreateGPU_WithMTLDevice(context);
+#endif
     return NULL;
 }
 
@@ -299,6 +304,7 @@ void SDL_GPUFreeP(SDL_GPU **pgpu)
     }
 }
 
+#if TARGET_OS_OSX
 #pragma mark - save image for debug ass
 
 static CGContextRef _CreateCGBitmapContext(size_t w, size_t h, size_t bpc, size_t bpp, size_t bpr, uint32_t bmi)
@@ -432,4 +438,4 @@ void SaveIMGToFile(uint8_t *data,int width,int height,IMG_FORMAT format, char *t
         CGContextRelease(ctx);
     }
 }
-
+#endif

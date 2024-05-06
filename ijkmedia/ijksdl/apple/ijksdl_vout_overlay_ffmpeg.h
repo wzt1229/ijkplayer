@@ -28,7 +28,6 @@
 #include "../ijksdl_stdinc.h"
 #include "../ijksdl_vout.h"
 #include "ijksdl_inc_ffmpeg.h"
-#include "internal.h"
 
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
