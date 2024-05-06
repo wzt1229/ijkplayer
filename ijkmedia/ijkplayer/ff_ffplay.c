@@ -410,7 +410,7 @@ static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
     if (r > 0) {
         AVCodecContext * avctx = ff_sub_get_avctx(is->ffSub);
         ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
-        int stream = ff_sub_get_current_stream(is->ffSub);
+        int stream = ff_sub_get_current_stream(is->ffSub, NULL);
         ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, stream);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
         
@@ -445,7 +445,7 @@ static void video_image_display2(FFPlayer *ffp)
         } else if (is->ffSub) {
             int r = ff_apply_subtitle_stream_change(ffp);
             //has stream
-            if (ffp->subtitle && ff_sub_get_current_stream(is->ffSub) >= 0) {
+            if (ffp->subtitle && ff_sub_get_current_stream(is->ffSub, NULL) >= 0) {
                 int got = ff_sub_get_texture(is->ffSub, vp->pts, ffp->gpu, &sub_overlay);
                 //when got equal to -100 means the ass subtitle frame not ready,need retry!
                 if (!sub_overlay && (r > 0 || got == -100) && is->pause_req) {
@@ -3728,7 +3728,7 @@ static int read_thread(void *arg)
                     packet_queue_put_nullpacket(&is->videoq, pkt, is->video_stream);
                 if (is->audio_stream >= 0)
                     packet_queue_put_nullpacket(&is->audioq, pkt, is->audio_stream);
-                int st = ff_sub_get_current_stream(is->ffSub);
+                int st = ff_sub_get_current_stream(is->ffSub, NULL);
                 if (st >= 0) {
                     ff_sub_put_null_packet(is->ffSub, pkt, st);
                 }
@@ -3739,7 +3739,7 @@ static int read_thread(void *arg)
                     packet_queue_put_nullpacket(&is->videoq, pkt, is->video_stream);
                 if (is->audio_stream >= 0)
                     packet_queue_put_nullpacket(&is->audioq, pkt, is->audio_stream);
-                int st = ff_sub_get_current_stream(is->ffSub);
+                int st = ff_sub_get_current_stream(is->ffSub, NULL);
                 if (st >= 0) {
                     ff_sub_put_null_packet(is->ffSub, pkt, st);
                 }
@@ -3806,10 +3806,11 @@ static int read_thread(void *arg)
                        && !(is->video_st && (is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC))) {
                 packet_queue_put(&is->videoq, pkt);
             } else {
-                int sub_stream = ff_sub_get_current_stream(is->ffSub);
-                if (stream_index == sub_stream) {
+                int sub_pending_stream;
+                int sub_stream = ff_sub_get_current_stream(is->ffSub, &sub_pending_stream);
+                if (stream_index == sub_stream && sub_pending_stream == -2) {
                     ff_sub_put_packet(is->ffSub, pkt);
-                } else if (st->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+                } else if (stream_index == sub_pending_stream) {
                     ff_sub_put_packet_backup(is->ffSub, pkt);
                 } else {
                     av_packet_unref(pkt);
@@ -5044,7 +5045,7 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
                 AVStream *st = ic->streams[stream];
                 st->discard = AVDISCARD_DEFAULT;
             }
-            int current = ff_sub_get_current_stream(is->ffSub);
+            int current = ff_sub_get_current_stream(is->ffSub, NULL);
             if (current >= 0 && current < ic->nb_streams) {
                 AVStream *st = ic->streams[current];
                 st->discard = AVDISCARD_ALL;
@@ -5154,7 +5155,7 @@ int64_t ffp_get_property_int64(FFPlayer *ffp, int id, int64_t default_value)
             if (!ffp || !ffp->is)
                 return default_value;
             VideoState *is = ffp->is;
-            int idx = ff_sub_get_current_stream(is->ffSub);
+            int idx = ff_sub_get_current_stream(is->ffSub, NULL);
             if (idx >= 0) {
                 return idx;
             } else {

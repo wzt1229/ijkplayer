@@ -501,6 +501,7 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
     }
 }
 
+#if ! ASS_USE_PRE_RENDER
 static int subComponent_packet_from_ass_render(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
     if (!com || !packet) {
@@ -516,6 +517,7 @@ static int subComponent_packet_from_ass_render(FFSubComponent *com, float pts, F
     }
     return r;
 }
+#endif
 
 static int subComponent_packet_ass_from_frame_queue(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {

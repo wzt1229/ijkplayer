@@ -129,7 +129,6 @@ void ff_sub_abort(FFSubtitle *sub)
         return;
     }
     packet_queue_abort(&sub->packetq);
-    packet_queue_abort(&sub->packetq2);
 }
 
 int ff_sub_destroy(FFSubtitle **subp)
@@ -534,11 +533,14 @@ AVCodecContext * ff_sub_get_avctx(FFSubtitle *sub)
     return subComponent_get_avctx(sub->com);
 }
 
-int ff_sub_get_current_stream(FFSubtitle *sub)
+int ff_sub_get_current_stream(FFSubtitle *sub, int *pending)
 {
     int r;
     SDL_LockMutex(sub->mutex);
     r = sub->last_stream;
+    if (pending) {
+        *pending = sub->need_update_stream;
+    }
     SDL_UnlockMutex(sub->mutex);
     return r;
 }
@@ -588,6 +590,7 @@ int ff_sub_put_null_packet(FFSubtitle *sub, AVPacket *pkt, int st_idx)
 int ff_sub_put_packet(FFSubtitle *sub, AVPacket *pkt)
 {
     if (sub) {
+        move_backup_to_normal(sub, pkt->stream_index);
         //av_log(NULL, AV_LOG_INFO,"sub put pkt:%lld\n",pkt->pts/1000);
         return packet_queue_put(&sub->packetq, pkt);
     }
