@@ -600,7 +600,7 @@ int ff_sub_put_packet(FFSubtitle *sub, AVPacket *pkt)
 int ff_sub_put_packet_backup(FFSubtitle *sub, AVPacket *pkt)
 {
     if (sub) {
-        //av_log(NULL, AV_LOG_INFO,"sub put pkt:%lld\n",pkt->pts/1000);
+        //av_log(NULL, AV_LOG_INFO,"sub put pkt to backup:%lld\n",pkt->pts/1000);
         return packet_queue_put(&sub->packetq2, pkt);
     }
     return -1;
@@ -663,6 +663,7 @@ int ff_sub_packet_queue_flush(FFSubtitle *sub)
 {
     if (sub) {
         packet_queue_flush(&sub->packetq);
+        packet_queue_flush(&sub->packetq2);
         return 0;
     }
     return -1;
