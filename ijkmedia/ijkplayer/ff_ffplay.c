@@ -425,6 +425,7 @@ static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
     } else if (r == 0) {
         ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, "");
         ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
+        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     }
     return r;
 }
