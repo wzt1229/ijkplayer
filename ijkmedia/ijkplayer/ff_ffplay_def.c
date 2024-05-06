@@ -30,6 +30,11 @@ int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond
 int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *name)
 {
     packet_queue_start(d->queue);
+    if (d->pkt_serial != d->queue->serial) {
+        av_log(NULL, AV_LOG_INFO, "correct decoder serial from %d to %d\n",d->pkt_serial,d->queue->serial);
+        d->pkt_serial = d->queue->serial;
+    }
+    
     d->decoder_tid = SDL_CreateThreadEx(&d->_decoder_tid, fn, arg, name);
     if (!d->decoder_tid) {
         av_log(NULL, AV_LOG_ERROR, "SDL_CreateThread(): %s\n", SDL_GetError());
