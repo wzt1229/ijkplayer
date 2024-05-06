@@ -1,3 +1,14 @@
+tag k0.11.0
+--------------------------------
+
+- support ass subtitle effects, and adjust position and scale in real time
+- support display multiple pgs bitmap subtitle at the same moment, and adjust position and scale in real time
+- dropped old subtitle renderer (text->image(CoreGraphy)->CVPixelBuffer->Texture)
+- subtitle preference move to player from view
+- dropped iOS OpenGL renderer
+- support http gzip and deflate use headers
+- restore ijk dns cache and http event hook
+
 tag k0.10.5
 --------------------------------
 
