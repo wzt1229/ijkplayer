@@ -444,10 +444,6 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
         return -2;
     }
     
-    if (com->sp_changed) {
-        return -100;
-    }
-    
     int i = 0;
     
     while (packet->len < SUB_REF_MAX_LEN) {
@@ -523,6 +519,9 @@ static int subComponent_packet_from_ass_render(FFSubComponent *com, float pts, F
 
 static int subComponent_packet_ass_from_frame_queue(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
+    if (com->sp_changed) {
+        return -100;
+    }
     return subComponent_packet_from_frame_queue(com, pts, packet, 0);
 }
 
