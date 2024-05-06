@@ -110,6 +110,9 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 - (UIImage *)thumbnailImageAtCurrentTime;
 #endif
 
+//subtitle preference
+@property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
+
 #pragma mark Notifications
 
 #ifdef __cplusplus

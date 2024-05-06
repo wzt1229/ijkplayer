@@ -114,6 +114,7 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 @synthesize isSeekBuffering = _isSeekBuffering;
 @synthesize isAudioSync = _isAudioSync;
 @synthesize isVideoSync = _isVideoSync;
+@synthesize subtitlePreference = _subtitlePreference;
 
 #define FFP_IO_STAT_STEP (50 * 1024)
 
