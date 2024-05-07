@@ -167,15 +167,21 @@ static int exSub_create(FFExSubtitle **subp, PacketQueue * pktq)
 
 int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_name)
 {
-    if (exSub_create(subp, pktq)) {
+    if (!subp) {
         return -1;
     }
     
-    FFExSubtitle *sub = *subp;
-    
-    if (exSub_open_filepath(sub, file_name) != 0) {
+    FFExSubtitle *mySub = NULL;
+    if (exSub_create(&mySub, pktq)) {
         return -2;
     }
+    
+    if (exSub_open_filepath(mySub, file_name) != 0) {
+        exSub_close_input(&mySub);
+        return -3;
+    }
+    
+    *subp = mySub;
     return 0;
 }
 
@@ -194,8 +200,11 @@ void exSub_close_input(FFExSubtitle **subp)
     if (!sub) {
         return;
     }
-    SDL_WaitThread(sub->read_thread, NULL);
-    sub->read_thread = NULL;
+    //maybe open input failed, read_thread is NULL.
+    if (sub->read_thread) {
+        SDL_WaitThread(sub->read_thread, NULL);
+        sub->read_thread = NULL;
+    }
     
     if (sub->ic)
         avformat_close_input(&sub->ic);
