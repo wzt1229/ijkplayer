@@ -27,10 +27,18 @@
 #import "IJKVideoRenderingProtocol.h"
 
 // media meta
-#define k_IJKM_KEY_FORMAT         @"format"
-#define k_IJKM_KEY_DURATION_US    @"duration_us"
-#define k_IJKM_KEY_START_US       @"start_us"
-#define k_IJKM_KEY_BITRATE        @"bitrate"
+#define k_IJKM_KEY_FORMAT               @"format"
+#define k_IJKM_KEY_DURATION_US          @"duration_us"
+#define k_IJKM_KEY_START_US             @"start_us"
+#define k_IJKM_KEY_BITRATE              @"bitrate"
+#define k_IJKM_KEY_ENCODER              @"encoder"
+#define k_IJKM_KEY_MINOR_VER            @"minor_version"
+#define k_IJKM_KEY_COMPATIBLE_BRANDS    @"compatible_brands"
+#define k_IJKM_KEY_MAJOR_BRAND          @"major_brand"
+#define k_IJKM_KEY_ARTIST               @"artist"
+#define k_IJKM_KEY_ALBUM                @"album"
+#define k_IJKM_KEY_TYER                 @"TYER"
+
 
 // stream meta
 #define k_IJKM_KEY_TYPE           @"type"
@@ -55,14 +63,15 @@
 #define k_IJKM_KEY_SAR_DEN        @"sar_den"
 // stream: audio
 #define k_IJKM_KEY_SAMPLE_RATE    @"sample_rate"
-//#define k_IJKM_KEY_CHANNEL_LAYOUT @"channel_layout"
-#define k_IJKM_KEY_ARTIST         @"artist"
-#define k_IJKM_KEY_ALBUM          @"album"
-#define k_IJKM_KEY_TYER           @"TYER"
+//audio meta also has "title" and "language" key
+//#define k_IJKM_KEY_TITLE          @"title"
+//#define k_IJKM_KEY_LANGUAGE       @"language"
+
 // stream: subtitle
 #define k_IJKM_KEY_TITLE          @"title"
 #define k_IJKM_KEY_LANGUAGE       @"language"
 #define k_IJKM_KEY_EX_SUBTITLE_URL @"ex_subtile_url"
+
 #define kk_IJKM_KEY_STREAMS       @"streams"
 
 typedef enum IJKLogLevel {

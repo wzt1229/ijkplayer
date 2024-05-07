@@ -898,6 +898,9 @@ static BOOL hdrAnimationShown = 0;
 {
     if (self.player.isPreparedToPlay) {
         NSDictionary *dic = self.player.monitor.mediaMeta;
+        NSArray *chapteArr = self.player.monitor.chapterMetaArr;
+        NSLog(@"video chapters:%@",chapteArr);
+        
         MRPlayerSettingsViewController *settings = [self findSettingViewController];
         [settings updateTracks:dic];
         if (!self.tickTimer) {

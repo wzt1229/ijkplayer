@@ -28,26 +28,36 @@
 #include <stdlib.h>
 
 // media meta
-#define IJKM_KEY_FORMAT         "format"
-#define IJKM_KEY_DURATION_US    "duration_us"
-#define IJKM_KEY_START_US       "start_us"
-#define IJKM_KEY_BITRATE        "bitrate"
-#define IJKM_KEY_VIDEO_STREAM   "video"
-#define IJKM_KEY_AUDIO_STREAM   "audio"
-#define IJKM_KEY_TIMEDTEXT_STREAM "timedtext"
+#define IJKM_KEY_FORMAT             "format"
+#define IJKM_KEY_DURATION_US        "duration_us"
+#define IJKM_KEY_START_US           "start_us"
+#define IJKM_KEY_BITRATE            "bitrate"
+#define IJKM_KEY_VIDEO_STREAM       "video"
+#define IJKM_KEY_AUDIO_STREAM       "audio"
+#define IJKM_KEY_TIMEDTEXT_STREAM   "timedtext"
 
 // stream meta
 #define IJKM_KEY_TYPE               "type"
 #define IJKM_VAL_TYPE__VIDEO        "video"
 #define IJKM_VAL_TYPE__AUDIO        "audio"
 #define IJKM_VAL_TYPE__TIMEDTEXT    "timedtext"
+#define IJKM_VAL_TYPE__CHAPTER      "chapter"
 #define IJKM_VAL_TYPE__UNKNOWN      "unknown"
+#define IJKM_META_KEY_ID            "id"
+#define IJKM_META_KEY_START         "start"
+#define IJKM_META_KEY_END           "end"
+#define IJKM_META_KEY_TITLE         "title"
+
 #define IJKM_KEY_LANGUAGE           "language"
 #define IJKM_KEY_TITLE              "title"
 #define IJKM_KEY_STREAM_IDX         "stream_idx"
 #define IJKM_KEY_ARTIST             "artist"
 #define IJKM_KEY_ALBUM              "album"
 #define IJKM_KEY_TYER               "TYER"
+#define IJKM_KEY_ENCODER            "encoder"
+#define IJKM_KEY_MINOR_VER          "minor_version"
+#define IJKM_KEY_COMPATIBLE_BRANDS  "compatible_brands"
+#define IJKM_KEY_MAJOR_BRAND        "major_brand"
 
 #define IJKM_KEY_CODEC_NAME         "codec_name"
 #define IJKM_KEY_CODEC_PROFILE      "codec_profile"
@@ -65,6 +75,7 @@
 #define IJKM_KEY_TBR_DEN        "tbr_den"
 #define IJKM_KEY_SAR_NUM        "sar_num"
 #define IJKM_KEY_SAR_DEN        "sar_den"
+
 // stream: audio
 #define IJKM_KEY_SAMPLE_RATE    "sample_rate"
 //#define IJKM_KEY_CHANNEL_LAYOUT "channel_layout"

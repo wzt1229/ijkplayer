@@ -1228,10 +1228,13 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_DURATION_US, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_START_US, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_BITRATE, nil);
-
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ARTIST, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ALBUM, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_TYER, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ENCODER, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_MINOR_VER, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_COMPATIBLE_BRANDS, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_MAJOR_BRAND, nil);
         
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_VIDEO_STREAM, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_AUDIO_STREAM, nil);
@@ -1300,6 +1303,20 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                         if (subtitle_stream == i) {
                             _monitor.subtitleMeta = streamMeta;
                         }
+                    } else if (0 == strcmp(type, IJKM_VAL_TYPE__CHAPTER)) {
+                        NSMutableArray *chapterMetaArr = [NSMutableArray array];
+                        size_t count = ijkmeta_get_children_count_l(streamRawMeta);
+                        for (size_t i = 0; i < count; ++i) {
+                            IjkMediaMeta *chapterRawMeta = ijkmeta_get_child_l(streamRawMeta, i);
+                            NSMutableDictionary *chapterMeta = [[NSMutableDictionary alloc] init];
+                            fillMetaInternal(chapterMeta, chapterRawMeta, IJKM_META_KEY_ID, nil);
+                            fillMetaInternal(chapterMeta, chapterRawMeta, IJKM_META_KEY_START, nil);
+                            fillMetaInternal(chapterMeta, chapterRawMeta, IJKM_META_KEY_END, nil);
+                            //fill title meta only,expand other later
+                            fillMetaInternal(chapterMeta, chapterRawMeta, IJKM_META_KEY_TITLE, nil);
+                            [chapterMetaArr addObject:chapterMeta];
+                        }
+                        _monitor.chapterMetaArr = chapterMetaArr.count > 0 ? chapterMetaArr : nil;
                     }
                 }
             }
