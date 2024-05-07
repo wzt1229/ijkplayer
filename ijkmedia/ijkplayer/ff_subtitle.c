@@ -18,7 +18,7 @@
 #define IJK_SUBTITLE_STREAM_UNDEF -2
 #define IJK_SUBTITLE_STREAM_NONE -1
 
-#define IJK_EX_SUBTITLE_STREAM_MAX_COUNT    100
+#define IJK_EX_SUBTITLE_STREAM_MAX_COUNT    512
 #define IJK_EX_SUBTITLE_STREAM_MIN_OFFSET   1000
 #define IJK_EX_SUBTITLE_STREAM_MAX_OFFSET   (IJK_EX_SUBTITLE_STREAM_MIN_OFFSET + IJK_EX_SUBTITLE_STREAM_MAX_COUNT)
 
@@ -698,8 +698,8 @@ static void create_meta(IjkMediaMeta **out_meta, int idx, const char *url)
     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_STREAM_IDX, stream_idx);
     ijkmeta_set_string_l(stream_meta, IJKM_KEY_TYPE, IJKM_VAL_TYPE__TIMEDTEXT);
     ijkmeta_set_string_l(stream_meta, IJKM_KEY_EX_SUBTITLE_URL, url);
-    char title[64] = {0};
-    snprintf(title, 64, "Track%d", idx + 1);
+    char title[16] = {0};
+    snprintf(title, 16, "Track%d", idx + 1);
     ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title);
     
     *out_meta = stream_meta;

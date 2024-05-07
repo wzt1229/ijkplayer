@@ -70,6 +70,7 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 - (void)prepareToPlay;
 - (BOOL)loadThenActiveSubtitle:(NSURL*)url;
 - (BOOL)loadSubtitleOnly:(NSURL*)url;
+//最多512个字幕
 - (BOOL)loadSubtitlesOnly:(NSArray<NSURL*>*)urlArr;
 - (void)play;
 - (void)pause;
