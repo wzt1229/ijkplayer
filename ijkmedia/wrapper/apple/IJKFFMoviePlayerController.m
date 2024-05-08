@@ -388,14 +388,15 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer || urlArr.count == 0)
         return NO;
     const char *files[512] = {0};
-    for (int i = 0; i < MIN(urlArr.count, 512); i++) {
+    NSUInteger maxCount = MIN(urlArr.count, 512);
+    for (int i = 0; i < maxCount; i++) {
         NSURL *url = [urlArr objectAtIndex:i];
         NSString *filePath = [url isFileURL] ? [url path] : [url absoluteString];
         const char *file = [filePath UTF8String];
         files[i] = file;
     }
     
-    int ret = ijkmp_addOnly_external_subtitles(_mediaPlayer, files, (int)urlArr.count);
+    int ret = ijkmp_addOnly_external_subtitles(_mediaPlayer, files, (int)maxCount);
     return ret > 0;
 }
 
