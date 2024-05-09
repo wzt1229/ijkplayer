@@ -323,7 +323,6 @@ static int subtitle_thread(void *arg)
     FFSubComponent *com = arg;
     int got_subtitle;
     
-    double pre_pts = 0;
     for (;com->packetq->abort_request == 0;) {
         AVSubtitle sub;
         got_subtitle = decode_a_frame(com, &com->decoder, &sub);
@@ -387,21 +386,19 @@ static int subtitle_thread(void *arg)
                 if (com->bitmapRenderer) {
                     Frame *sp = frame_queue_peek_writable(com->frameq);
                     if (com->packetq->abort_request || !sp) {
-                        pre_pts = 0;
                         avsubtitle_free(&sub);
                         break;
                     }
                     sp->pts = pts + (float)sub.start_display_time / 1000.0;
-                    if (sub.end_display_time != 4294967295) {
+                    if (sub.end_display_time > sub.start_display_time &&
+                        sub.end_display_time != UINT32_MAX) {
                         sp->duration = (float)(sub.end_display_time - sub.start_display_time) / 1000.0;
-                    } else if (pre_pts){
+                    } else {
+                        sp->duration = -1;
                         Frame *pre = frame_queue_peek_pre_writable(com->frameq);
                         if (pre) {
-                            float t = sp->pts - pre_pts;
-                            pre->duration = t;
+                            pre->duration = sp->pts - pre->pts;
                         }
-                    } else {
-                        sp->duration = SUB_MAX_KEEP_DU;
                     }
                     sp->serial = serial;
                     sp->width  = com->sub_width;
@@ -414,10 +411,8 @@ static int subtitle_thread(void *arg)
                         bzero(sp->sub_list, sizeof(sp->sub_list));
                     }
                     frame_queue_push(com->frameq);
-                    pre_pts = sp->pts;
                 }
             } else {
-                pre_pts = 0;
                 //av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
             }
             avsubtitle_free(&sub);
@@ -451,16 +446,40 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
         if (!sp) {
             break;
         }
+        
         //drop old serial subs
         if (sp->serial != serial) {
+            av_log(NULL, AV_LOG_ERROR,"sub stream drop old serial frame:%d\n",sp->serial);
             frame_queue_next(com->frameq);
             continue;
         }
         
-        //字幕显示时间已经结束了
-        if (pts > sp->pts + sp->duration) {
-            frame_queue_next(com->frameq);
-            continue;
+        if (sp->duration > 0) {
+            if (pts > sp->pts + sp->duration) {
+                av_log(NULL, AV_LOG_ERROR,"sub stream drop overtime1 frame:%f\n",sp->pts);
+                frame_queue_next(com->frameq);
+                continue;
+            }
+        } else {
+            Frame *next = frame_queue_peek_offset(com->frameq, i + 1);
+            if (next) {
+                float du = next->pts - sp->pts;
+                if (du <= 0) {
+                    av_log(NULL, AV_LOG_ERROR,"sub stream drop overtime2 frame:%f\n",sp->pts);
+                    frame_queue_next(com->frameq);
+                    continue;
+                } else if (du > 0) {
+                    du = du < SUB_MAX_KEEP_DU ? du : SUB_MAX_KEEP_DU;
+                    sp->duration = du;
+                }
+            } else {
+                float delta = pts - sp->pts;
+                if (delta > SUB_MAX_KEEP_DU) {
+                    av_log(NULL, AV_LOG_ERROR,"sub stream drop overtime3 frame:%f\n",sp->pts);
+                    frame_queue_next(com->frameq);
+                    continue;
+                }
+            }
         }
         
         if (!sp->sub_list[0]) {
