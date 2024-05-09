@@ -412,7 +412,7 @@ static void move_backup_to_normal(FFSubtitle *sub, int stream)
 static int open_any_stream(FFSubtitle *sub, int stream, const char *enc)
 {
     if (stream < 0) {
-        return -1;
+        return -2;
     }
     if (stream < sub->ic_internal->nb_streams) {
         //open internal
@@ -429,13 +429,14 @@ static int open_any_stream(FFSubtitle *sub, int stream, const char *enc)
             if (!exSub_open_input(&sub->exSub, &sub->packetq, file)) {
                 AVStream *st = exSub_get_stream(sub->exSub);
                 int st_id = exSub_get_stream_id(sub->exSub);
-                if (!subComponent_open(&sub->com, st_id, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h)) {
+                int r = subComponent_open(&sub->com, st_id, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h);
+                if (!r) {
                     subComponent_update_preference(sub->com, &sub->sp);
                     exSub_start_read(sub->exSub);
                     return 0;
                 } else {
                     exSub_close_input(&sub->exSub);
-                    return -1;
+                    return r;
                 }
             } else {
                 return -2;
@@ -493,8 +494,8 @@ static int ff_sub_close_current(FFSubtitle *sub)
     return r;
 }
 
-//-1: no change. 0:close current. 1:opened new
-int ff_sub_update_stream_if_need(FFSubtitle *sub)
+//-1: no change. 0:close current. 1:opened new, less than -1 means open failed
+int ff_sub_update_stream_if_need(FFSubtitle *sub, int *update_stream)
 {
     int r = -1;
     SDL_LockMutex(sub->mutex);
@@ -507,17 +508,23 @@ int ff_sub_update_stream_if_need(FFSubtitle *sub)
             r = 0;
         }
         
+        if (update_stream) {
+            *update_stream = sub->need_update_stream;
+        }
         //open new
         if (sub->need_update_stream != IJK_SUBTITLE_STREAM_NONE) {
             int err = open_any_stream(sub, sub->need_update_stream, NULL);
             //reset to 0
             sub->backup_charenc_idx = 0;
-            if (!err) {
+            if (err) {
+                
+                r = err;
+            } else {
                 sub->last_stream = sub->need_update_stream;
                 r = 1;
             }
         }
-        
+
         sub->need_update_stream = IJK_SUBTITLE_STREAM_UNDEF;
     }
     SDL_UnlockMutex(sub->mutex);

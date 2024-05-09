@@ -580,25 +580,24 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     assert(frameq);
     assert(packetq);
     
-    int r = 0;
     FFSubComponent *com = NULL;
     
     if (!cp) {
-        return -1;
+        return -2;
     }
     
     if (AVMEDIA_TYPE_SUBTITLE != stream->codecpar->codec_type) {
-        return -2;
+        return -3;
     }
     
     stream->discard = AVDISCARD_DEFAULT;
     AVCodecContext* avctx = avcodec_alloc_context3(NULL);
     if (!avctx) {
-        return -3;
+        return -4;
     }
     
     if (avcodec_parameters_to_context(avctx, stream->codecpar) < 0) {
-        return -4;
+        return -5;
     }
     
     //so important,ohterwise,sub frame has not pts.
@@ -611,7 +610,7 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     
     if (!codec) {
         av_log(NULL, AV_LOG_ERROR, "can't find [%s] subtitle decoder!",avcodec_get_name(stream->codecpar->codec_id));
-        return -5;
+        return -100;
     }
     
     if (avcodec_open2(avctx, codec, NULL) < 0) {

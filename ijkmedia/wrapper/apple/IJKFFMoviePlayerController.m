@@ -1384,6 +1384,10 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             [[NSNotificationCenter defaultCenter] postNotificationName:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self];
             break;
         }
+        case FFP_MSG_SELECTING_STREAM_FAILED:  {//select stream failed
+            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerSelectingStreamDidFailed object:self userInfo:@{IJKMoviePlayerSelectingStreamIDUserInfoKey : @(avmsg->arg1), IJKMoviePlayerSelectingStreamErrUserInfoKey : @(avmsg->arg2)}];
+            break;
+        }
         case FFP_MSG_PREPARED: {
             _monitor.prepareDuration = (int64_t)SDL_GetTickHR() - _monitor.prepareStartTick;
             //prepared not send,beacuse FFP_MSG_VIDEO_DECODER_OPEN event already send

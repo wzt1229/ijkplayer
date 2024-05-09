@@ -712,6 +712,8 @@ static BOOL hdrAnimationShown = 0;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerHdrAnimationStateChanged:) name:IJKMoviePlayerHDRAnimationStateChanged object:self.player.view];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerSelectingStreamDidFailed:) name:IJKMoviePlayerSelectingStreamDidFailed object:self.player];
+    
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
     [self applyScalingMode];
@@ -746,6 +748,15 @@ static BOOL hdrAnimationShown = 0;
             NSLog(@"hdr animation is end.");
             hdrAnimationShown = 1;
         }
+    }
+}
+
+- (void)ijkPlayerSelectingStreamDidFailed:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        int stream = [notifi.userInfo[IJKMoviePlayerSelectingStreamIDUserInfoKey] intValue];
+        int code = [notifi.userInfo[IJKMoviePlayerSelectingStreamErrUserInfoKey] intValue];
+        NSLog(@"Selecting Stream Did Failed:%d,%d",stream,code);
     }
 }
 

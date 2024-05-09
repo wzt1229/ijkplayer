@@ -408,7 +408,8 @@ static void free_picture(Frame *vp)
 static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
-    int r = ff_sub_update_stream_if_need(is->ffSub);
+    int update_stream;
+    int r = ff_sub_update_stream_if_need(is->ffSub, &update_stream);
     if (r > 0) {
         AVCodecContext * avctx = ff_sub_get_avctx(is->ffSub);
         ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
@@ -428,6 +429,8 @@ static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
         ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, "");
         ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+    } else if (r < -1) {
+        ffp_notify_msg3(ffp, FFP_MSG_SELECTING_STREAM_FAILED, update_stream, r);
     }
     return r;
 }
@@ -2918,7 +2921,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         else                   av_log(NULL, AV_LOG_WARNING,
                                       "No codec could be found with id %s\n", avcodec_get_name(avctx->codec_id));
         ret = AVERROR(EINVAL);
-        ffp_notify_msg2(ffp, FFP_MSG_NO_CODEC_FOUND,avctx->codec_id);
+        ffp_notify_msg2(ffp, FFP_MSG_NO_CODEC_FOUND, avctx->codec_id);
         goto fail;
     }
 
