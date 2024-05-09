@@ -123,13 +123,17 @@ Frame *frame_queue_peek_pre_writable(FrameQueue *f)
 {
     if (f->pktq->abort_request)
         return NULL;
-    if (f->size < 2) {
+    
+    SDL_LockMutex(f->mutex);
+    if (f->size < 1) {
+        SDL_UnlockMutex(f->mutex);
         return NULL;
     }
     int idx = f->windex - 1;
     if (idx < 0) {
         idx = f->max_size - 1;
     }
+    SDL_UnlockMutex(f->mutex);
     return &f->queue[idx];
 }
 
