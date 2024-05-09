@@ -430,6 +430,9 @@ static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
         ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     } else if (r < -1) {
+        ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, "");
+        ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
+        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
         ffp_notify_msg3(ffp, FFP_MSG_SELECTING_STREAM_FAILED, update_stream, r);
     }
     return r;

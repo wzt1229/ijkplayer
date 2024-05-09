@@ -517,7 +517,6 @@ int ff_sub_update_stream_if_need(FFSubtitle *sub, int *update_stream)
             //reset to 0
             sub->backup_charenc_idx = 0;
             if (err) {
-                
                 r = err;
             } else {
                 sub->last_stream = sub->need_update_stream;
