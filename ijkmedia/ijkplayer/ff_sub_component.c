@@ -598,8 +598,7 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     }
     
     if (avcodec_parameters_to_context(avctx, stream->codecpar) < 0) {
-        r = -4;
-        goto fail;
+        return -4;
     }
     
     //so important,ohterwise,sub frame has not pts.
@@ -611,19 +610,19 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     const AVCodec* codec = avcodec_find_decoder(stream->codecpar->codec_id);
     
     if (!codec) {
-        r = -5;
-        goto fail;
+        av_log(NULL, AV_LOG_ERROR, "can't find [%s] subtitle decoder!",avcodec_get_name(stream->codecpar->codec_id));
+        return -5;
     }
     
     if (avcodec_open2(avctx, codec, NULL) < 0) {
-        r = -6;
-        goto fail;
+        av_log(NULL, AV_LOG_ERROR, "can't open [%s] subtitle decoder!",avcodec_get_name(stream->codecpar->codec_id));
+        return -6;
     }
     
     com = av_mallocz(sizeof(FFSubComponent));
     if (!com) {
-        r = -7;
-        goto fail;
+        avcodec_free_context(&avctx);
+        return -7;
     }
     
     com->video_width = vw;
@@ -640,24 +639,23 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     int ret = decoder_init(&com->decoder, avctx, com->packetq, NULL);
     
     if (ret < 0) {
-        r = -7;
-        goto fail;
+        av_log(NULL, AV_LOG_ERROR, "subtitle decoder init failed:%d", ret);
+        avcodec_free_context(&avctx);
+        av_free(com);
+        return -8;
     }
     
     ret = decoder_start(&com->decoder, subtitle_thread, com, "ff_subtitle_dec");
     if (ret < 0) {
-        r = -8;
-        goto fail;
+        av_log(NULL, AV_LOG_ERROR, "subtitle decoder start failed:%d", ret);
+        decoder_destroy(&com->decoder);
+        av_free(com);
+        return -9;
     }
     
     av_log(NULL, AV_LOG_INFO, "sub stream opened:%d use enc:%s,serial:%d\n", stream_index, enc, packetq->serial);
     *cp = com;
     return 0;
-fail:
-    decoder_destroy(&com->decoder);
-    av_free(com);
-    avcodec_free_context(&avctx);
-    return r;
 }
 
 int subComponent_close(FFSubComponent **cp)
