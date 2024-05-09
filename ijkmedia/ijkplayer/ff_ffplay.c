@@ -5043,16 +5043,23 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
             break;
         case AVMEDIA_TYPE_SUBTITLE:
         {
+            int current = ff_sub_get_current_stream(is->ffSub, NULL);
+            if (selected && stream == current) {
+                av_log(ffp, AV_LOG_INFO, "can't reselected subtitle stream : %d\n", stream);
+                return 0;
+            }
+            
+            if (current >= 0 && current < ic->nb_streams) {
+                AVStream *st = ic->streams[current];
+                st->discard = AVDISCARD_ALL;
+            }
+            
             if (selected) {
                 //let av_read_frame not discard
                 AVStream *st = ic->streams[stream];
                 st->discard = AVDISCARD_DEFAULT;
             }
-            int current = ff_sub_get_current_stream(is->ffSub, NULL);
-            if (current >= 0 && current < ic->nb_streams) {
-                AVStream *st = ic->streams[current];
-                st->discard = AVDISCARD_ALL;
-            }
+            
             int r = ff_sub_record_need_select_stream(is->ffSub, selected ? stream : -1);
             if (r == 1) {
                 ffp_apply_subtitle_preference(ffp);
