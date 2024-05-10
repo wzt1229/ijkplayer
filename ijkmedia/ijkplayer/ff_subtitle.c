@@ -454,19 +454,28 @@ static int do_retry_next_charenc(void *opaque)
         return -1;
     }
     
-    if (sub->backup_charenc_idx >= ff_sub_backup_charenc_len) {
+    SDL_LockMutex(sub->mutex);
+    
+    int st_id = sub->last_stream;
+    if (st_id < 0) {
+        SDL_UnlockMutex(sub->mutex);
         return -2;
+    }
+    
+    if (sub->backup_charenc_idx >= ff_sub_backup_charenc_len) {
+        SDL_UnlockMutex(sub->mutex);
+        return -3;
     }
     
     const char *enc = ff_sub_backup_charenc[sub->backup_charenc_idx];
     sub->backup_charenc_idx++;
-    
-    int st_id = sub->last_stream;
-    if (st_id < 0) {
-        return -3;
+    //close old
+    packet_queue_abort(&sub->packetq);
+    if (sub->exSub) {
+        exSub_close_input(&sub->exSub);
     }
-    SDL_LockMutex(sub->mutex);
     subComponent_close(&sub->com);
+    //open new
     open_any_stream(sub, st_id, enc);
     SDL_UnlockMutex(sub->mutex);
     return 0;
@@ -513,9 +522,9 @@ int ff_sub_update_stream_if_need(FFSubtitle *sub, int *update_stream)
         }
         //open new
         if (sub->need_update_stream != IJK_SUBTITLE_STREAM_NONE) {
-            int err = open_any_stream(sub, sub->need_update_stream, NULL);
             //reset to 0
             sub->backup_charenc_idx = 0;
+            int err = open_any_stream(sub, sub->need_update_stream, NULL);
             if (err) {
                 r = err;
             } else {
@@ -523,7 +532,6 @@ int ff_sub_update_stream_if_need(FFSubtitle *sub, int *update_stream)
                 r = 1;
             }
         }
-
         sub->need_update_stream = IJK_SUBTITLE_STREAM_UNDEF;
     }
     SDL_UnlockMutex(sub->mutex);
