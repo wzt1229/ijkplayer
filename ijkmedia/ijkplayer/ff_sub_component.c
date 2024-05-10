@@ -671,7 +671,7 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
         return -9;
     }
     
-    av_log(NULL, AV_LOG_INFO, "sub stream opened:%d use enc:%s,serial:%d\n", stream_index, enc, packetq->serial);
+    av_log(NULL, AV_LOG_INFO, "sub stream opened:%d use enc:%s,serial:%d,decoder:%s\n", stream_index, enc, packetq->serial, avcodec_get_name(stream->codecpar->codec_id));
     *cp = com;
     return 0;
 }
