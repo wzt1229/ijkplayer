@@ -28,22 +28,15 @@
 #include "ijksdl/ijksdl_vout_internal.h"
 #include "ijksdl_vout_overlay_ffmpeg.h"
 #include "ijksdl_vout_overlay_ffmpeg_hw.h"
-#if TARGET_OS_IOS
-#include "../ios/IJKSDLGLView.h"
-#else
+#include "ijkplayer/ff_subtitle_def.h"
+#import "ijksdl_gpu_metal.h"
+
+#if TARGET_OS_OSX
 #include "../mac/IJKSDLGLView.h"
+#import "ijksdl_gpu_opengl_macos.h"
+#import <OpenGL/gl3.h>
 #endif
 
-@implementation IJKSDLSubtitle
-
-- (void)dealloc
-{
-    if (_pixels) {
-        av_freep((void *)&_pixels);
-    }
-}
-
-@end
 
 @implementation IJKOverlayAttach
 
@@ -54,6 +47,18 @@
         self.videoPicture = NULL;
     }
     self.subTexture = nil;
+    if (self.overlay) {
+        SDL_TextureOverlay_Release(&self->_overlay);
+    }
+}
+
+- (id)subTexture
+{
+    if (self.overlay) {
+        return (__bridge id)self.overlay->getTexture(self.overlay);
+    } else {
+        return nil;
+    }
 }
 
 @end
@@ -62,23 +67,22 @@ struct SDL_Vout_Opaque {
     void *cvPixelBufferPool;
     int cv_format;
     __strong UIView<IJKVideoRenderingProtocol> *gl_view;
-    IJKSDLSubtitle *sub;
 };
 
-static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout)
+static SDL_VoutOverlay *vout_create_overlay_l(int width, int height, int src_format, SDL_Vout *vout)
 {
     switch (src_format) {
         case AV_PIX_FMT_VIDEOTOOLBOX:
             return SDL_VoutFFmpeg_HW_CreateOverlay(width, height, vout);
         default:
-            return SDL_VoutFFmpeg_CreateOverlay(width, height, src_format, cvpixelbufferpool, vout);
+            return SDL_VoutFFmpeg_CreateOverlay(width, height, src_format, vout);
     }
 }
 
-static SDL_VoutOverlay *vout_create_overlay_apple(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout)
+static SDL_VoutOverlay *vout_create_overlay(int width, int height, int src_format, SDL_Vout *vout)
 {
     SDL_LockMutex(vout->mutex);
-    SDL_VoutOverlay *overlay = vout_create_overlay_l(width, height, src_format, cvpixelbufferpool, vout);
+    SDL_VoutOverlay *overlay = vout_create_overlay_l(width, height, src_format, vout);
     SDL_UnlockMutex(vout->mutex);
     return overlay;
 }
@@ -91,7 +95,6 @@ static void vout_free_l(SDL_Vout *vout)
     SDL_Vout_Opaque *opaque = vout->opaque;
     if (opaque) {
         opaque->gl_view = nil;
-        opaque->sub = nil;
         if (opaque->cvPixelBufferPool) {
             CVPixelBufferPoolRelease(opaque->cvPixelBufferPool);
             opaque->cvPixelBufferPool = NULL;
@@ -113,7 +116,7 @@ static CVPixelBufferRef SDL_Overlay_getCVPixelBufferRef(SDL_VoutOverlay *overlay
     }
 }
 
-static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
+static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay, SDL_TextureOverlay *sub_overlay)
 {
     SDL_Vout_Opaque *opaque = vout->opaque;
     UIView<IJKVideoRenderingProtocol>* gl_view = opaque->gl_view;
@@ -124,8 +127,9 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 
     if (!overlay) {
-        ALOGE("vout_display_overlay_l: NULL overlay\n");
-        return -2;
+        IJKOverlayAttach *attach = [[IJKOverlayAttach alloc] init];
+        attach.overlay = SDL_TextureOverlay_Retain(sub_overlay);
+        return [gl_view displayAttach:attach];
     }
 
     if (overlay->w <= 0 || overlay->h <= 0) {
@@ -153,8 +157,7 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
         attach.autoZRotate = overlay->auto_z_rotate_degrees;
         //attach.bufferW = overlay->pitches[0];
         attach.videoPicture = CVPixelBufferRetain(videoPic);
-        attach.sub = opaque->sub;
-        
+        attach.overlay = SDL_TextureOverlay_Retain(sub_overlay);
         return [gl_view displayAttach:attach];
     } else {
         ALOGE("vout_display_overlay_l: no video picture.\n");
@@ -162,101 +165,14 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay)
     }
 }
 
-static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay)
+static int vout_display_overlay(SDL_Vout *vout, SDL_VoutOverlay *overlay, SDL_TextureOverlay *sub_overlay)
 {
     @autoreleasepool {
         SDL_LockMutex(vout->mutex);
-        int retval = vout_display_overlay_l(vout, overlay);
+        int retval = vout_display_overlay_l(vout, overlay, sub_overlay);
         SDL_UnlockMutex(vout->mutex);
         return retval;
     }
-}
-
-static void vout_update_subtitle(SDL_Vout *vout, const char *text)
-{
-    SDL_Vout_Opaque *opaque = vout->opaque;
-    if (!opaque) {
-        return;
-    }
-    
-    opaque->sub = nil;
-    
-    if (!text || strlen(text) == 0) {
-        return;
-    }
-    
-    IJKSDLSubtitle *sub = [[IJKSDLSubtitle alloc]init];
-    sub.text = [[NSString alloc] initWithUTF8String:text];
-    opaque->sub = sub;
-}
-
-static uint8_t* copy_pal8_to_bgra(const AVSubtitleRect* rect)
-{
-    const int buff_size = rect->w * rect->h * 4; /* times 4 because 4 bytes per pixel */
-    uint32_t *buff = av_malloc((size_t)buff_size);
-    if (buff == NULL) {
-        ALOGE("Error allocating memory for subtitle bitmap.\n");
-        return NULL;
-    }
-    
-    //AV_PIX_FMT_RGB32 is handled in an endian-specific manner. An RGBA color is put together as: (A << 24) | (R << 16) | (G << 8) | B
-    //This is stored as BGRA on little-endian CPU architectures and ARGB on big-endian CPUs.
-    
-    uint32_t colors[256];
-    
-    uint8_t *bgra = rect->data[1];
-    if (bgra) {
-        for (int i = 0; i < 256; ++i) {
-            /* Colour conversion. */
-            int idx = i * 4; /* again, 4 bytes per pixel */
-            uint8_t a = bgra[idx],
-            r = bgra[idx + 1],
-            g = bgra[idx + 2],
-            b = bgra[idx + 3];
-            colors[i] = (b << 24) | (g << 16) | (r << 8) | a;
-        }
-    } else {
-        bzero(colors, 256);
-    }
-    
-    for (int y = 0; y < rect->h; ++y) {
-        for (int x = 0; x < rect->w; ++x) {
-            /* 1 byte per pixel */
-            int coordinate = x + y * rect->linesize[0];
-            /* 32bpp color table */
-            int pos = rect->data[0][coordinate];
-            if (pos < 256) {
-                buff[x + (y * rect->w)] = colors[pos];
-            } else {
-                printf("%d\n",pos);
-            }
-        }
-    }
-    
-    return (uint8_t*)buff;
-}
-
-static void vout_update_subtitle_picture(SDL_Vout *vout, const AVSubtitleRect *bmp)
-{
-    SDL_Vout_Opaque *opaque = vout->opaque;
-    if (!opaque) {
-        return;
-    }
-    opaque->sub = nil;
-    
-    if (!bmp) {
-        return;
-    }
-    
-    IJKSDLSubtitle *sub = [[IJKSDLSubtitle alloc]init];
-    /// the graphic subtitles' bitmap with pixel format AV_PIX_FMT_PAL8,
-    /// https://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5
-    /// need to be converted to BGRA32 before use
-    /// PAL8 to BGRA32, bytes per line increased by multiplied 4
-    sub.w = bmp->w;
-    sub.h = bmp->h;
-    sub.pixels = copy_pal8_to_bgra(bmp);
-    opaque->sub = sub;
 }
 
 SDL_Vout *SDL_VoutIos_CreateForGLES2(void)
@@ -267,12 +183,9 @@ SDL_Vout *SDL_VoutIos_CreateForGLES2(void)
 
     SDL_Vout_Opaque *opaque = vout->opaque;
     opaque->cv_format = -1;
-    
-    vout->create_overlay_apple = vout_create_overlay_apple;
+    vout->create_overlay = vout_create_overlay;
     vout->free_l = vout_free_l;
     vout->display_overlay = vout_display_overlay;
-    vout->update_subtitle = vout_update_subtitle;
-    vout->update_subtitle_picture = vout_update_subtitle_picture;
     return vout;
 }
 
@@ -290,3 +203,239 @@ void SDL_VoutIos_SetGLView(SDL_Vout *vout, UIView<IJKVideoRenderingProtocol>* vi
     SDL_VoutIos_SetGLView_l(vout, view);
     SDL_UnlockMutex(vout->mutex);
 }
+
+#if TARGET_OS_OSX
+@interface _IJKSDLGLTextureWrapper : NSObject<IJKSDLSubtitleTextureWrapper>
+
+@property(nonatomic) GLuint texture;
+@property(nonatomic) int w;
+@property(nonatomic) int h;
+
+@end
+
+@implementation _IJKSDLGLTextureWrapper
+
+- (void)dealloc
+{
+    if (_texture) {
+        glDeleteTextures(1, &_texture);
+        _texture = 0;
+    }
+}
+
+- (GLuint)texture
+{
+    return _texture;
+}
+
+- (instancetype)initWith:(uint32_t)texture w:(int)w h:(int)h
+{
+    self = [super init];
+    if (self) {
+        self.w = w;
+        self.h = h;
+        self.texture = texture;
+    }
+    return self;
+}
+
+@end
+
+id<IJKSDLSubtitleTextureWrapper> IJKSDL_crate_openglTextureWrapper(uint32_t texture, int w, int h)
+{
+    return [[_IJKSDLGLTextureWrapper alloc] initWith:texture w:w h:h];
+}
+#endif
+
+SDL_TextureOverlay * SDL_TextureOverlay_Retain(SDL_TextureOverlay *t)
+{
+    if (t) {
+        __atomic_add_fetch(&t->refCount, 1, __ATOMIC_RELEASE);
+    }
+    return t;
+}
+
+void SDL_TextureOverlay_Release(SDL_TextureOverlay **tp)
+{
+    if (tp) {
+        if (*tp) {
+            if (__atomic_add_fetch(&(*tp)->refCount, -1, __ATOMIC_RELEASE) == 0) {
+                (*tp)->dealloc(*tp);
+                free(*tp);
+            }
+        }
+        *tp = NULL;
+    }
+}
+
+void SDL_FBOOverlayFreeP(SDL_FBOOverlay **poverlay)
+{
+    if (poverlay) {
+        if (*poverlay) {
+            (*poverlay)->dealloc(*poverlay);
+            free(*poverlay);
+        }
+        *poverlay = NULL;
+    }
+}
+
+SDL_GPU *SDL_CreateGPU_WithContext(id context)
+{
+#if TARGET_OS_OSX
+    if ([context isKindOfClass:[NSOpenGLContext class]]) {
+        return SDL_CreateGPU_WithGLContext(context);
+    } else if (context){
+        return SDL_CreateGPU_WithMTLDevice(context);
+    }
+#else
+    return SDL_CreateGPU_WithMTLDevice(context);
+#endif
+    return NULL;
+}
+
+void SDL_GPUFreeP(SDL_GPU **pgpu)
+{
+    if (pgpu) {
+        if (*pgpu) {
+            (*pgpu)->dealloc(*pgpu);
+            free(*pgpu);
+        }
+        *pgpu = NULL;
+    }
+}
+
+#if TARGET_OS_OSX
+#pragma mark - save image for debug ass
+
+static CGContextRef _CreateCGBitmapContext(size_t w, size_t h, size_t bpc, size_t bpp, size_t bpr, uint32_t bmi)
+{
+    assert(bpp != 24);
+    /*
+     AV_PIX_FMT_RGB24 bpp is 24! not supported!
+     Crash:
+     2020-06-06 00:08:20.245208+0800 FFmpegTutorial[23649:2335631] [Unknown process name] CGBitmapContextCreate: unsupported parameter combination: set CGBITMAP_CONTEXT_LOG_ERRORS environmental variable to see the details
+     2020-06-06 00:08:20.245417+0800 FFmpegTutorial[23649:2335631] [Unknown process name] CGBitmapContextCreateImage: invalid context 0x0. If you want to see the backtrace, please set CG_CONTEXT_SHOW_BACKTRACE environmental variable.
+     */
+    //Update: Since 10.8, CGColorSpaceCreateDeviceRGB is equivalent to sRGB, and is closer to option 2)
+    //CGColorSpaceCreateWithName(kCGColorSpaceSRGB)
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef bitmapContext = CGBitmapContextCreate(
+        NULL,
+        w,
+        h,
+        bpc,
+        bpr,
+        colorSpace,
+        bmi
+    );
+    
+    CGColorSpaceRelease(colorSpace);
+    return bitmapContext;
+}
+
+static NSError * mr_mkdirP(NSString *aDir)
+{
+    BOOL isDirectory = NO;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:aDir isDirectory:&isDirectory]) {
+        if (isDirectory) {
+            return nil;
+        } else {
+            //remove the file
+            [[NSFileManager defaultManager] removeItemAtPath:aDir error:NULL];
+        }
+    }
+    //aDir is not exist
+    NSError *err = nil;
+    [[NSFileManager defaultManager] createDirectoryAtPath:aDir withIntermediateDirectories:YES attributes:nil error:&err];
+    return err;
+}
+
+static NSString * mr_DirWithType(NSSearchPathDirectory directory,NSArray<NSString *>*pathArr)
+{
+    NSString *directoryDir = [NSSearchPathForDirectoriesInDomains(directory, NSUserDomainMask, YES) firstObject];
+    NSString *aDir = directoryDir;
+    for (NSString *dir in pathArr) {
+        aDir = [aDir stringByAppendingPathComponent:dir];
+    }
+    if (mr_mkdirP(aDir)) {
+        return nil;
+    }
+    return aDir;
+}
+
+static BOOL saveImageToFile(CGImageRef img,NSString *imgPath)
+{
+    CFStringRef imageUTType = NULL;
+    NSString *fileType = [[imgPath pathExtension] lowercaseString];
+    if ([fileType isEqualToString:@"jpg"] || [fileType isEqualToString:@"jpeg"]) {
+        imageUTType = kUTTypeJPEG;
+    } else if ([fileType isEqualToString:@"png"]) {
+        imageUTType = kUTTypePNG;
+    } else if ([fileType isEqualToString:@"tiff"]) {
+        imageUTType = kUTTypeTIFF;
+    } else if ([fileType isEqualToString:@"bmp"]) {
+        imageUTType = kUTTypeBMP;
+    } else if ([fileType isEqualToString:@"gif"]) {
+        imageUTType = kUTTypeGIF;
+    } else if ([fileType isEqualToString:@"pdf"]) {
+        imageUTType = kUTTypePDF;
+    }
+    
+    if (imageUTType == NULL) {
+        imageUTType = kUTTypePNG;
+    }
+
+    CFStringRef key = kCGImageDestinationLossyCompressionQuality;
+    CFStringRef value = CFSTR("0.5");
+    const void * keys[] = {key};
+    const void * values[] = {value};
+    CFDictionaryRef opts = CFDictionaryCreate(CFAllocatorGetDefault(), keys, values, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    NSURL *fileUrl = [NSURL fileURLWithPath:imgPath];
+    CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef) fileUrl, imageUTType, 1, opts);
+    CFRelease(opts);
+    
+    if (destination) {
+        CGImageDestinationAddImage(destination, img, NULL);
+        CGImageDestinationFinalize(destination);
+        CFRelease(destination);
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+void SaveIMGToFile(uint8_t *data,int width,int height,IMG_FORMAT format, char *tag, int pts)
+{
+    const GLint bytesPerRow = width * 4;
+    
+    uint32_t bmi;
+    if (format == IMG_FORMAT_RGBA) {
+        bmi = kCGBitmapByteOrderDefault | kCGImageAlphaNoneSkipLast;
+    } else {
+        bmi = kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst;
+    }
+    CGContextRef ctx = _CreateCGBitmapContext(width, height, 8, 32, bytesPerRow, bmi);
+    if (ctx) {
+        void * bitmapData = CGBitmapContextGetData(ctx);
+        if (bitmapData) {
+            memcpy(bitmapData, data, bytesPerRow * height);
+            CGImageRef img = CGBitmapContextCreateImage(ctx);
+            if (img) {
+                NSString *dir = mr_DirWithType(NSPicturesDirectory, @[@"ijkplayer"]);
+                if (!tag) {
+                    tag = "";
+                }
+                if (pts == -1) {
+                    pts = (int)CFAbsoluteTimeGetCurrent();
+                }
+                NSString *fileName = [NSString stringWithFormat:@"%s-%d.png",tag,pts];
+                NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+                NSLog(@"save img:%@",filePath);
+                saveImageToFile(img, filePath);
+                CFRelease(img);
+            }
+        }
+        CGContextRelease(ctx);
+    }
+}
+#endif

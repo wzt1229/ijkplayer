@@ -59,6 +59,7 @@ static void ijkmp_ios_set_glview_l(IjkMediaPlayer *mp, UIView<IJKVideoRenderingP
     assert(mp->ffplayer->vout);
     
     SDL_VoutIos_SetGLView(mp->ffplayer->vout, glView);
+    mp->ffplayer->gpu = SDL_CreateGPU_WithContext(glView.context);
 }
 
 void ijkmp_ios_set_glview(IjkMediaPlayer *mp, UIView<IJKVideoRenderingProtocol>* glView)

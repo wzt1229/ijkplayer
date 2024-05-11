@@ -82,8 +82,6 @@ typedef struct IJK_GLES2_Renderer
 
     GLuint program;
 
-    GLuint vertex_shader;
-    GLuint fragment_shader;
     GLuint plane_textures[IJK_GLES2_MAX_PLANE];
 
     GLint av4_position;
@@ -148,7 +146,6 @@ typedef struct IJK_GLES2_Renderer
     //for rotate
     int rotate_type;//x=1;y=2;z=3
     int rotate_degrees;
-    float subtitle_bottom_margin;
     GLfloat rgb_adjustment[3];
 } IJK_GLES2_Renderer;
 

@@ -191,18 +191,49 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
 
     if (ic->bit_rate)
         ijkmeta_set_int64_l(meta, IJKM_KEY_BITRATE, ic->bit_rate);
-
-    AVDictionaryEntry *artist = av_dict_get(ic->metadata, IJKM_KEY_ARTIST, NULL, 0);
-    if (artist && artist->value)
-        ijkmeta_set_string_l(meta, IJKM_KEY_ARTIST, artist->value);
-    AVDictionaryEntry *album = av_dict_get(ic->metadata, IJKM_KEY_ALBUM, NULL, 0);
-    if (album && album->value)
-        ijkmeta_set_string_l(meta, IJKM_KEY_ALBUM, album->value);
-    AVDictionaryEntry *tyer = av_dict_get(ic->metadata, IJKM_KEY_TYER, NULL, 0);
-    if (tyer && tyer->value)
-        ijkmeta_set_string_l(meta, IJKM_KEY_TYER, tyer->value);
     
-//    //debug all ic metadata
+    char *ic_string_val_keys[] = {IJKM_KEY_ARTIST,IJKM_KEY_ALBUM,IJKM_KEY_TYER,IJKM_KEY_MINOR_VER,IJKM_KEY_COMPATIBLE_BRANDS,IJKM_KEY_MAJOR_BRAND,NULL};
+    {
+        char **ic_key_header = ic_string_val_keys;
+        char *ic_key;
+        while ((ic_key = *ic_key_header)) {
+            AVDictionaryEntry *entry = av_dict_get(ic->metadata, ic_key, NULL, 0);
+            if (entry && entry->value)
+                ijkmeta_set_string_l(meta, ic_key, entry->value);
+            ic_key_header++;
+        }
+    }
+    
+    {
+        IjkMediaMeta *chapter_meta = NULL;
+        for (int i = 0; i < ic->nb_chapters; i++) {
+            if (!chapter_meta) {
+                chapter_meta = ijkmeta_create();
+            }
+            AVChapter *chapter = ic->chapters[i];
+            //ms
+            double tb = av_q2d(chapter->time_base) * 1000;
+            long start = (long)(chapter->start * tb);
+            long end = (long)(chapter->end * tb);
+            IjkMediaMeta *sub_meta = ijkmeta_create();
+            ijkmeta_set_int64_l(sub_meta, IJKM_META_KEY_START, start);
+            ijkmeta_set_int64_l(sub_meta, IJKM_META_KEY_END, end);
+            ijkmeta_set_int64_l(sub_meta, IJKM_META_KEY_ID, chapter->id);
+            
+            //set all raw meta
+            AVDictionaryEntry *tag = NULL;
+            while ((tag = av_dict_get(chapter->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+                ijkmeta_set_string_l(sub_meta, tag->key, tag->value);
+            
+            ijkmeta_append_child_l(chapter_meta, sub_meta);
+        }
+        if (chapter_meta) {
+            ijkmeta_set_string_l(chapter_meta, IJKM_KEY_TYPE, IJKM_VAL_TYPE__CHAPTER);
+            ijkmeta_append_child_l(meta, chapter_meta);
+        }
+    }
+    
+    //debug all ic metadata
 //    AVDictionaryEntry *tag = NULL;
 //    while ((tag = av_dict_get(ic->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
 //        printf("ic metadata item:%s=%s\n", tag->key, tag->value);

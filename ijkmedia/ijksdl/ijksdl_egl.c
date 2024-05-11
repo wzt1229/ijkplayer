@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef __APPLE__
-
 #include "ijksdl_egl.h"
 
 #include <stdlib.h>
@@ -385,5 +383,3 @@ IJK_EGL *IJK_EGL_create()
 
     return egl;
 }
-
-#endif

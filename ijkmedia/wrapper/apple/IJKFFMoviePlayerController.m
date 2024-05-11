@@ -22,7 +22,6 @@
  */
 
 #import "IJKFFMoviePlayerController.h"
-#import "IJKSDLGLView.h"
 #import "IJKMetalView.h"
 #import "IJKSDLHudControl.h"
 #import "IJKFFMoviePlayerDef.h"
@@ -35,6 +34,8 @@
 #include "string.h"
 #if TARGET_OS_IOS
 #import "IJKAudioKit.h"
+#else
+#import "IJKSDLGLView.h"
 #endif
 
 #include "../ijkmedia/ijkplayer/apple/ijkplayer_ios.h"
@@ -114,6 +115,7 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 @synthesize isSeekBuffering = _isSeekBuffering;
 @synthesize isAudioSync = _isAudioSync;
 @synthesize isVideoSync = _isVideoSync;
+@synthesize subtitlePreference = _subtitlePreference;
 
 #define FFP_IO_STAT_STEP (50 * 1024)
 
@@ -212,16 +214,18 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_set_option(_mediaPlayer, IJKMP_OPT_CATEGORY_PLAYER, "overlay-format", "fcc-_es2");
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"safe", 0);
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_PLAYER,"protocol_whitelist","ffconcat,file,http,https");
+    //httpproxy
     ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray,dvd,rtmp,rtsp,rtp,srtp,udp");
     
+    _subtitlePreference = ijk_subtitle_default_preference();
     // init hud
     _hudCtrl = [IJKSDLHudControl new];
 
     self.shouldShowHudView = options.showHudView;
-
+    
     [options applyTo:_mediaPlayer];
+    
     _pauseInBackground = NO;
-
     // init extra
     _keepScreenOnWhilePlaying = YES;
     [self setScreenOn:YES];
@@ -245,19 +249,21 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         UIView<IJKVideoRenderingProtocol> *glView = nil;
     #if TARGET_OS_IOS
         CGRect rect = [[UIScreen mainScreen] bounds];
+        rect.origin = CGPointZero;
+        glView = [[IJKMetalView alloc] initWithFrame:rect];
     #else
         CGRect rect = [[[NSScreen screens] firstObject]frame];
         rect.origin = CGPointZero;
-    #endif
         if (!options.metalRenderer) {
             glView = [[IJKSDLGLView alloc] initWithFrame:rect];
         } else {
-            if (@available(macOS 10.13, ios 11.0, *)) {
+            if (@available(macOS 10.13, *)) {
                 glView = [[IJKMetalView alloc] initWithFrame:rect];
             } else {
                 glView = [[IJKSDLGLView alloc] initWithFrame:rect];
             }
         }
+    #endif
         [self _initWithContent:aUrl options:options glView:glView];
     }
     return self;
@@ -307,21 +313,23 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     NSString *render = [self.view name];
     [self setHudValue:render forKey:@"v-renderer"];
     
-//    if (![_contentURL isFileURL]) {
-//        [self setHudValue:nil forKey:@"scheme"];
-//        [self setHudValue:nil forKey:@"host"];
-//        [self setHudValue:nil forKey:@"path"];
-//        [self setHudValue:nil forKey:@"ip"];
-//        [self setHudValue:nil forKey:@"tcp-info"];
-//        [self setHudValue:nil forKey:@"http"];
-//        [self setHudValue:nil forKey:@"tcp-spd"];
-//        [self setHudValue:nil forKey:@"t-prepared"];
-//        [self setHudValue:nil forKey:@"t-render"];
-//        [self setHudValue:nil forKey:@"t-preroll"];
-//        [self setHudValue:nil forKey:@"t-http-open"];
-//        [self setHudValue:nil forKey:@"t-http-seek"];
-//    }
-//
+    if (![_contentURL isFileURL]) {
+        [self setHudValue:nil forKey:@"scheme"];
+        [self setHudValue:nil forKey:@"host"];
+        [self setHudValue:nil forKey:@"path"];
+        [self setHudValue:nil forKey:@"ip"];
+        [self setHudValue:nil forKey:@"tcp-info"];
+        [self setHudValue:nil forKey:@"http"];
+        [self setHudValue:nil forKey:@"tcp-spd"];
+        [self setHudValue:nil forKey:@"t-prepared"];
+        [self setHudValue:nil forKey:@"t-render"];
+        [self setHudValue:nil forKey:@"t-preroll"];
+        [self setHudValue:nil forKey:@"t-http-open"];
+        [self setHudValue:nil forKey:@"t-http-seek"];
+    } else {
+        [self setHudValue:nil forKey:@"path"];
+    }
+
     [self setHudUrl:_contentURL];
     
     //解决中文路径 bluray://中文编码/打不开流问题
@@ -380,14 +388,15 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (!_mediaPlayer || urlArr.count == 0)
         return NO;
     const char *files[512] = {0};
-    for (int i = 0; i < MIN(urlArr.count, 512); i++) {
+    NSUInteger maxCount = MIN(urlArr.count, 512);
+    for (int i = 0; i < maxCount; i++) {
         NSURL *url = [urlArr objectAtIndex:i];
         NSString *filePath = [url isFileURL] ? [url path] : [url absoluteString];
         const char *file = [filePath UTF8String];
         files[i] = file;
     }
     
-    int ret = ijkmp_addOnly_external_subtitles(_mediaPlayer, files, (int)urlArr.count);
+    int ret = ijkmp_addOnly_external_subtitles(_mediaPlayer, files, (int)maxCount);
     return ret > 0;
 }
 
@@ -652,9 +661,6 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
 #endif
     [self setScreenOn:NO];
     [self destroyHud];
-    //release glview in main thread.
-    _view = _glView = nil;
-    ijkmp_ios_set_glview(_mediaPlayer, nil);
     [self performSelectorInBackground:@selector(shutdownWaitStop:) withObject:self];
 }
 
@@ -816,9 +822,6 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
          postNotificationName:IJKMPMovieNaturalSizeAvailableNotification
          object:self userInfo:@{@"size":NSStringFromSize(self->_naturalSize)}];
 #endif
-        if ([self.view respondsToSelector:@selector(videoNaturalSizeChanged:)]) {
-            [self.view videoNaturalSizeChanged:self->_naturalSize];
-        }
     }
 }
 
@@ -1005,10 +1008,10 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
                            formatedDurationMilli(_monitor.lastHttpOpenDuration),
                            _monitor.httpOpenCount]
                    forKey:@"t-http-open"];
-//        [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
-//                           formatedDurationMilli(_monitor.lastHttpSeekDuration),
-//                           _monitor.httpSeekCount]
-//                   forKey:@"t-http-seek"];
+        [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
+                           formatedDurationMilli(_monitor.lastHttpSeekDuration),
+                           _monitor.httpSeekCount]
+                   forKey:@"t-http-seek"];
     }
 }
 
@@ -1028,8 +1031,12 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         hudView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin;
         CGFloat screenWidth = [[UIScreen mainScreen]bounds].size.width;
 #else
-        hudView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin;
-        CGFloat screenWidth = [[[NSScreen screens] firstObject]frame].size.width;
+        hudView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin | NSViewMinYMargin | NSViewMaxYMargin;
+        NSScreen *screen = self.view.window.screen;
+        if (!screen) {
+            screen = [[NSScreen screens] firstObject];
+        }
+        CGFloat screenWidth = [screen frame].size.width;
 #endif
         rect.size.width = MIN(screenWidth / 3.0, 350);
         rect.origin.x = CGRectGetWidth(self.view.bounds) - rect.size.width;
@@ -1108,13 +1115,13 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         _enableAccurateSeek = open ? 1 : 2;
     } else {
         _enableAccurateSeek = 0;
-        ijk_set_enable_accurate_seek(_mediaPlayer, open);
+        ijkmp_set_enable_accurate_seek(_mediaPlayer, open);
     }
 }
 
 - (void)stepToNextFrame
 {
-    ijk_step_to_next_frame(_mediaPlayer);
+    ijkmp_step_to_next_frame(_mediaPlayer);
 }
 
 - (BOOL)shouldShowHudView
@@ -1222,10 +1229,13 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_DURATION_US, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_START_US, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_BITRATE, nil);
-
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ARTIST, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ALBUM, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_TYER, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ENCODER, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_MINOR_VER, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_COMPATIBLE_BRANDS, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_MAJOR_BRAND, nil);
         
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_VIDEO_STREAM, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_AUDIO_STREAM, nil);
@@ -1294,6 +1304,20 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                         if (subtitle_stream == i) {
                             _monitor.subtitleMeta = streamMeta;
                         }
+                    } else if (0 == strcmp(type, IJKM_VAL_TYPE__CHAPTER)) {
+                        NSMutableArray *chapterMetaArr = [NSMutableArray array];
+                        size_t count = ijkmeta_get_children_count_l(streamRawMeta);
+                        for (size_t i = 0; i < count; ++i) {
+                            IjkMediaMeta *chapterRawMeta = ijkmeta_get_child_l(streamRawMeta, i);
+                            NSMutableDictionary *chapterMeta = [[NSMutableDictionary alloc] init];
+                            fillMetaInternal(chapterMeta, chapterRawMeta, IJKM_META_KEY_ID, nil);
+                            fillMetaInternal(chapterMeta, chapterRawMeta, IJKM_META_KEY_START, nil);
+                            fillMetaInternal(chapterMeta, chapterRawMeta, IJKM_META_KEY_END, nil);
+                            //fill title meta only,expand other later
+                            fillMetaInternal(chapterMeta, chapterRawMeta, IJKM_META_KEY_TITLE, nil);
+                            [chapterMetaArr addObject:chapterMeta];
+                        }
+                        _monitor.chapterMetaArr = chapterMetaArr.count > 0 ? chapterMetaArr : nil;
                     }
                 }
             }
@@ -1357,15 +1381,11 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         case FFP_MSG_SELECTED_STREAM_CHANGED:  {//stream changed msg
             IjkMediaMeta *rawMeta = ijkmp_get_meta_l(_mediaPlayer);
             [self traverseIJKMetaData:rawMeta];
-            //clean old subtitle
-            if (!self.monitor.subtitleMeta) {
-                if ([self.view respondsToSelector:@selector(cleanSubtitle)]) {
-                    if (![self isPlaying]) {
-                        [self.view cleanSubtitle];
-                    }
-                }
-            }
             [[NSNotificationCenter defaultCenter] postNotificationName:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self];
+            break;
+        }
+        case FFP_MSG_SELECTING_STREAM_FAILED:  {//select stream failed
+            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerSelectingStreamDidFailed object:self userInfo:@{IJKMoviePlayerSelectingStreamIDUserInfoKey : @(avmsg->arg1), IJKMoviePlayerSelectingStreamErrUserInfoKey : @(avmsg->arg2)}];
             break;
         }
         case FFP_MSG_PREPARED: {
@@ -1559,10 +1579,6 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             if (_videoZRotateDegrees != avmsg->arg1) {
                 _videoZRotateDegrees = avmsg->arg1;
                 
-                if ([self.view respondsToSelector:@selector(videoZRotateDegrees:)]) {
-                    [self.view videoZRotateDegrees:_videoZRotateDegrees];
-                }
-                
                 [[NSNotificationCenter defaultCenter]
                          postNotificationName:IJKMPMovieZRotateAvailableNotification
                          object:self userInfo:@{@"degrees":@(_videoZRotateDegrees)}];
@@ -1578,7 +1594,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         case FFP_MSG_AFTER_SEEK_FIRST_FRAME: {
             int du = avmsg->arg1;
             if (_enableAccurateSeek > 0) {
-                ijk_set_enable_accurate_seek(_mediaPlayer, _enableAccurateSeek == 1);
+                ijkmp_set_enable_accurate_seek(_mediaPlayer, _enableAccurateSeek == 1);
                 _enableAccurateSeek = 0;
             }
             [[NSNotificationCenter defaultCenter]
@@ -1640,8 +1656,10 @@ static int media_player_msg_loop(void* arg)
 - (void)setHudUrl:(NSURL *)url
 {
     if ([[NSThread currentThread] isMainThread]) {
-        [self setHudValue:url.scheme forKey:@"scheme"];
-        [self setHudValue:url.host   forKey:@"host"];
+        if (![url.scheme isEqualToString:@"file"]) {
+            [self setHudValue:url.scheme forKey:@"scheme"];
+            [self setHudValue:url.host   forKey:@"host"];
+        }
         [self setHudValue:url.path   forKey:@"path"];
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -1708,8 +1726,10 @@ static int onInjectTcpIOControl(IJKFFMoviePlayerController *mpc, id<IJKMediaUrlO
             break;
     }
 
-    if (delegate == nil)
+    if (delegate == nil) {
+        [mpc setHudValue: [NSString stringWithFormat:@"fd:%d", realData->fd] forKey:@"tcp-info"];
         return 0;
+    }
 
     NSString *urlString = [NSString stringWithUTF8String:realData->ip];
 
@@ -2087,7 +2107,7 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
         long pst = ijkmp_get_current_position(_mediaPlayer);
         int r = ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
         if (r > 0) {
-            ijkmp_seek_to(_mediaPlayer, pst);
+            ijkmp_seek_to(_mediaPlayer, pst-200);
         }
     }
 }
@@ -2111,6 +2131,14 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
 - (float)currentSubtitleExtraDelay
 {
     return ijkmp_get_subtitle_extra_delay(_mediaPlayer);
+}
+
+- (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
+{
+    if (!isIJKSDLSubtitlePreferenceEqual(&_subtitlePreference, &subtitlePreference)) {
+        _subtitlePreference = subtitlePreference;
+        ijkmp_set_subtitle_preference(_mediaPlayer, &subtitlePreference);
+    }
 }
 
 @end

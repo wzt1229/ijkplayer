@@ -67,16 +67,8 @@ void IJK_GLES2_Renderer_reset(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer)
         return;
-
-    if (renderer->vertex_shader)
-        glDeleteShader(renderer->vertex_shader);
-    if (renderer->fragment_shader)
-        glDeleteShader(renderer->fragment_shader);
     if (renderer->program)
         glDeleteProgram(renderer->program);
-
-    renderer->vertex_shader   = 0;
-    renderer->fragment_shader = 0;
     renderer->program         = 0;
 
     for (int i = 0; i < IJK_GLES2_MAX_PLANE; ++i) {
@@ -85,7 +77,6 @@ void IJK_GLES2_Renderer_reset(IJK_GLES2_Renderer *renderer)
             renderer->plane_textures[i] = 0;
         }
     }
-    
     glDeleteBuffers(1, &renderer->vbo);
     glDeleteVertexArrays(1, &renderer->vao);
 }
@@ -94,21 +85,12 @@ void IJK_GLES2_Renderer_free(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer)
         return;
-
+    //delete opengl shader and buffers
+    IJK_GLES2_Renderer_reset(renderer);
+    
     if (renderer->func_destroy)
         renderer->func_destroy(renderer);
-
-#if 0
-    if (renderer->vertex_shader)    ALOGW("[GLES2] renderer: vertex_shader not deleted.\n");
-    if (renderer->fragment_shader)  ALOGW("[GLES2] renderer: fragment_shader not deleted.\n");
-    if (renderer->program)          ALOGW("[GLES2] renderer: program not deleted.\n");
-
-    for (int i = 0; i < IJK_GLES2_MAX_PLANE; ++i) {
-        if (renderer->plane_textures[i])
-            ALOGW("[GLES2] renderer: plane texture[%d] not deleted.\n", i);
-    }
-#endif
-
+    IJK_GLES2_checkError("renderer free");
     free(renderer);
 }
 
@@ -160,8 +142,12 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
     if (!renderer)
         goto fail;
     
-    renderer->vertex_shader = vertex_shader;
-    renderer->fragment_shader = fragment_shader;
+    if (vertex_shader)
+        glDeleteShader(vertex_shader);
+    if (fragment_shader)
+        glDeleteShader(fragment_shader);
+    IJK_GLES2_checkError("glDeleteShader");
+    
     renderer->program = program;
     
     renderer->av4_position = glGetAttribLocation(renderer->program, "av4_Position");                IJK_GLES2_checkError_TRACE("glGetAttribLocation(av4_Position)");
@@ -173,7 +159,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create_base(const char *fragment_shader_s
     return renderer;
 
 fail:
-
+    
     if (renderer && renderer->program)
         IJK_GLES2_printProgramInfo(renderer->program);
 
@@ -491,11 +477,6 @@ void IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer,int type,int d
     }
 }
 
-void IJK_GLES2_Renderer_updateSubtitleBottomMargin(IJK_GLES2_Renderer *renderer,float value)
-{
-    renderer->subtitle_bottom_margin = value;
-}
-
 void IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer,int degrees)
 {
     if (renderer->auto_z_rotate_degrees != degrees) {
@@ -558,6 +539,9 @@ static void IJK_GLES2_Renderer_Upload_Vbo_Data(IJK_GLES2_Renderer *renderer)
         renderer->texcoords[4],renderer->texcoords[5],
         renderer->texcoords[6],renderer->texcoords[7],
     };
+    
+    // 更新顶点数据
+    glBindVertexArray(renderer->vao);
     
     // 绑定顶点缓存对象到当前的顶点位置,之后对GL_ARRAY_BUFFER的操作即是对_VBO的操作
     glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
@@ -627,7 +611,25 @@ static void IJK_GLES2_updateMVP_ifNeed(IJK_GLES2_Renderer *renderer)
 /*
  * Per-Renderer routine
  */
-GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
+GLboolean IJK_GLES2_Renderer_init(IJK_GLES2_Renderer *renderer)
+{
+    if (IJK_GLES2_Renderer_useProgram(renderer)) {
+        renderer->rgb_adjustment[0] = 1.0;
+        renderer->rgb_adjustment[1] = 1.0;
+        renderer->rgb_adjustment[2] = 1.0;
+        renderer->mvp_changed = 1;
+        renderer->rgb_adjust_changed = 1;
+        
+        IJK_GLES2_Renderer_TexCoords_reset(renderer);
+        IJK_GLES2_Renderer_Vertices_reset(renderer);
+        IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
+        IJK_GLES2_updateMVP_ifNeed(renderer);
+        return GL_TRUE;
+    }
+    return GL_FALSE;
+}
+
+GLboolean IJK_GLES2_Renderer_useProgram(IJK_GLES2_Renderer *renderer)
 {
     if (!renderer)
         return GL_FALSE;
@@ -635,17 +637,6 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
     assert(renderer->func_use);
     if (!renderer->func_use(renderer))
         return GL_FALSE;
-    
-    renderer->rgb_adjustment[0] = 1.0;
-    renderer->rgb_adjustment[1] = 1.0;
-    renderer->rgb_adjustment[2] = 1.0;
-    renderer->mvp_changed = 1;
-    renderer->rgb_adjust_changed = 1;
-    
-    IJK_GLES2_Renderer_TexCoords_reset(renderer);
-    IJK_GLES2_Renderer_Vertices_reset(renderer);
-    IJK_GLES2_Renderer_Upload_Vbo_Data(renderer);
-    IJK_GLES2_updateMVP_ifNeed(renderer);
     return GL_TRUE;
 }
 
@@ -801,7 +792,7 @@ GLboolean IJK_GLES2_Renderer_updateVertex2(IJK_GLES2_Renderer *renderer,
     IJK_GLES2_updateMVP_ifNeed(renderer);
     IJK_GLES2_updateRGB_adjust_ifNeed(renderer);
     glBindVertexArray(renderer->vao); IJK_GLES2_checkError_TRACE("glBindVertexArray");
-
+    IJK_GLES2_checkError_TRACE("updateVertex2");
     return GL_TRUE;
 }
 
@@ -897,20 +888,26 @@ GLboolean IJK_GLES2_Renderer_uploadSubtitleTexture(IJK_GLES2_Renderer *renderer,
 void IJK_GLES2_Renderer_updateSubtitleVertex(IJK_GLES2_Renderer *renderer, float width, float height)
 {
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //ass字幕已经做了预乘，所以这里选择 GL_ONE，而不是 GL_SRC_ALPHA
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     
-    //字幕图片在纹理坐标系上的尺寸
-    float ratioW = 1.0 * width / renderer->layer_width;
-    float ratioH = 1.0 * height / renderer->layer_height;
+    float wRatio = renderer->layer_width / width;
+    float hRatio = renderer->layer_height / height;
     
-    float leftX  = 0 - ratioW;
-    float rightX = 0 + ratioW;
-    //距离底部0.1，实际是 (0.1 * layer_height)px; [-1,1]
-    float margin = (renderer->subtitle_bottom_margin - 1) * 2 + 1;
-    margin = FFMAX(margin, -1.0);
-    margin = FFMIN(margin, 1.0 - 2 * ratioH);
-    float bottomY = margin;
-    float topY = bottomY + 2 * ratioH;
+    CGRect subRect;
+    //aspect fit
+    if (wRatio < hRatio) {
+        float nH = (height * wRatio / renderer->layer_height);
+        subRect = CGRectMake(-1, -nH, 2.0, 2.0 * nH);
+    } else {
+        float nW = (width * hRatio / renderer->layer_width);
+        subRect = CGRectMake(-nW, -1, 2.0 * nW, 2.0);
+    }
+    
+    float leftX  = subRect.origin.x;
+    float rightX = leftX + subRect.size.width;
+    float bottomY = subRect.origin.y;
+    float topY = bottomY + subRect.size.height;
     
     //左下
     renderer->vertices[0] = leftX;

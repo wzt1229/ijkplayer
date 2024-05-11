@@ -72,7 +72,7 @@ fail:
     return ret;
 }
 
-static int ijklivehook_probe(AVProbeData *probe)
+static int ijklivehook_probe(const AVProbeData *probe)
 {
     if (av_strstart(probe->filename, "ijklivehook:", NULL))
         return AVPROBE_SCORE_MAX;

@@ -847,14 +847,20 @@ void ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callb
     ffp_set_audio_sample_observer(mp->ffplayer, cb);
 }
 
-void ijk_set_enable_accurate_seek(IjkMediaPlayer *mp,int open)
+void ijkmp_set_enable_accurate_seek(IjkMediaPlayer *mp, int open)
 {
     assert(mp);
     ffp_set_enable_accurate_seek(mp->ffplayer, open);
 }
 
-void ijk_step_to_next_frame(IjkMediaPlayer *mp)
+void ijkmp_step_to_next_frame(IjkMediaPlayer *mp)
 {
     assert(mp);
     ffp_step_to_next_frame(mp->ffplayer);
+}
+
+void ijkmp_set_subtitle_preference(IjkMediaPlayer *mp, IJKSDLSubtitlePreference* sp)
+{
+    assert(mp);
+    ffp_set_subtitle_preference(mp->ffplayer, sp);
 }

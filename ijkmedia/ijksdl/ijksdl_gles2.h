@@ -29,9 +29,6 @@
         #include <OpenGL/OpenGL.h>
         #include <OpenGL/gl3.h>
         #include <OpenGL/gl3ext.h>
-    #else
-        #include <OpenGLES/ES2/gl.h>
-        #include <OpenGLES/ES2/glext.h>
     #endif /* TARGET_OS_OSX */
 #else
     #include <GLES2/gl2.h>
@@ -77,7 +74,9 @@ void      IJK_GLES2_Renderer_freeP(IJK_GLES2_Renderer **renderer);
 
 GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format);
-GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
+//call once
+GLboolean IJK_GLES2_Renderer_init(IJK_GLES2_Renderer *renderer);
+GLboolean IJK_GLES2_Renderer_useProgram(IJK_GLES2_Renderer *renderer);
 void IJK_GLES2_Renderer_updateColorConversion(IJK_GLES2_Renderer *renderer, float brightness, float satutaion, float contrast);
 
 GLboolean IJK_GLES2_Renderer_updateVertex(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
@@ -101,7 +100,6 @@ void IJK_GLES2_Renderer_endDrawSubtitle(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_setGravity(IJK_GLES2_Renderer *renderer, int gravity, GLsizei view_width, GLsizei view_height);
 
 void      IJK_GLES2_Renderer_updateRotate(IJK_GLES2_Renderer *renderer, int type, int degrees);
-void      IJK_GLES2_Renderer_updateSubtitleBottomMargin(IJK_GLES2_Renderer *renderer, float value);
 void      IJK_GLES2_Renderer_updateAutoZRotate(IJK_GLES2_Renderer *renderer, int degrees);
 void      IJK_GLES2_Renderer_updateUserDefinedDAR(IJK_GLES2_Renderer *renderer, float ratio);
 int       IJK_GLES2_Renderer_isZRotate90oddMultiple(IJK_GLES2_Renderer *renderer);

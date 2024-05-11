@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'IJKMediaPlayerKit'
-  s.version          = '0.10.5'
+  s.version          = '0.11.0'
   s.summary          = 'IJKMediaPlayerKit for ios/macOS.'
   
 # This description is used to generate tags and improve search results.
@@ -37,6 +37,7 @@ TODO: Add long description of the pod here.
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ffmpeg/include',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/bluray/include',
       '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/dvdread/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ass/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_USE_METAL_2=1',
@@ -50,6 +51,7 @@ TODO: Add long description of the pod here.
       '$(inherited)',
       '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
       '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/dvdread/include',
+      '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ass/include',
       '${PODS_TARGET_SRCROOT}/ijkmedia'
     ],
     'EXCLUDED_ARCHS' => 'armv7',
@@ -77,7 +79,8 @@ TODO: Add long description of the pod here.
   s.source_files = 
     'ijkmedia/ijkplayer/**/*.{h,c,m,cpp}',
     'ijkmedia/ijksdl/**/*.{h,c,m,cpp,metal}',
-    'ijkmedia/wrapper/apple/*.{h,m}'
+    'ijkmedia/wrapper/apple/*.{h,m}',
+    'ijkmedia/tools/*.{h,c}'
   # s.project_header_files = 'ijkmedia/**/*.{h}'
   s.public_header_files =
     'ijkmedia/wrapper/apple/IJKMediaPlayback.h',
@@ -90,19 +93,30 @@ TODO: Add long description of the pod here.
     'ijkmedia/wrapper/apple/IJKKVOController.h',
     'ijkmedia/wrapper/apple/IJKVideoRenderingProtocol.h',
     'ijkmedia/wrapper/apple/IJKMediaPlayerKit.h',
-    'ijkmedia/wrapper/apple/IJKInternalRenderView.h'
+    'ijkmedia/wrapper/apple/IJKInternalRenderView.h',
+    'ijkmedia/ijkplayer/ff_subtitle_def.h',
+    'ijkmedia/ijksdl/ijksdl_rectangle.h',
+    'ijkmedia/tools/*.{h}'
   s.exclude_files = 
     'ijkmedia/ijksdl/ijksdl_extra_log.c',
     'ijkmedia/ijkplayer/ijkversion.h',
     'ijkmedia/ijkplayer/ijkavformat/ijkioandroidio.c',
     'ijkmedia/ijkplayer/android/**/*.*',
     'ijkmedia/ijksdl/android/**/*.*',
+    'ijkmedia/ijksdl/ijksdl_egl.*',
+    'ijkmedia/ijksdl/ijksdl_container.*',
     'ijkmedia/ijksdl/ffmpeg/ijksdl_vout_overlay_ffmpeg.{h,c}'
   s.osx.exclude_files = 
-    'ijkmedia/ijksdl/ijksdl_egl.*',
     'ijkmedia/ijksdl/ios/*.*',
     'ijkmedia/wrapper/apple/IJKAudioKit.*'
-  s.ios.exclude_files = 'ijkmedia/ijksdl/mac/*.*'
+  s.ios.exclude_files = 
+    'ijkmedia/ijksdl/mac/*.*',
+    'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_macos.{h,m}',
+    'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_fbo_macos.{h,m}',
+    'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_renderer_macos.{h,m}',
+    'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_shader_compiler.{h,m}',
+    'ijkmedia/ijksdl/gles2/**/*.*',
+    'ijkmedia/ijksdl/ijksdl_gles2.h'
 
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
   s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'

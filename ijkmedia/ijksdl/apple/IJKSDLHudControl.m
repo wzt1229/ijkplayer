@@ -56,17 +56,6 @@ typedef UITableView HudContentView;
 
 @implementation IJKSDLHudControl
 
-// for debug
-//- (instancetype)initWithFrame:(NSRect)frameRect
-//{
-//    self = [super initWithFrame:frameRect];
-//    if (self) {
-//        [self setWantsLayer:YES];
-//        self.layer.backgroundColor = [[NSColor blueColor] CGColor];
-//    }
-//    return self;
-//}
-
 - (NSMutableDictionary *)keyIndexes
 {
     if (!_keyIndexes) {
@@ -133,7 +122,6 @@ typedef UITableView HudContentView;
     scrollView.hasVerticalScroller = NO;
     scrollView.hasHorizontalScroller = NO;
     scrollView.drawsBackground = NO;
-    
     NSTableView *tableView = [[NSTableView alloc] initWithFrame:self.view.bounds];
     tableView.autoresizingMask = NSViewHeightSizable | NSViewWidthSizable;
     tableView.intercellSpacing = NSMakeSize(0, 0);

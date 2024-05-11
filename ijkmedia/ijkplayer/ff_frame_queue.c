@@ -11,7 +11,17 @@ void frame_queue_unref_item(Frame *vp)
 {
     av_frame_unref(vp->frame);
     SDL_VoutUnrefYUVOverlay(vp->bmp);
-    avsubtitle_free(&vp->sub);
+    
+    int count = 0;
+    while (count < SUB_REF_MAX_LEN) {
+        FFSubtitleBuffer *h = vp->sub_list[count];
+        if (!h) {
+            break;
+        }
+        ff_subtitle_buffer_release(&h);
+        count++;
+    }
+    bzero(vp->sub_list, sizeof(vp->sub_list));
 }
 
 int frame_queue_init(FrameQueue *f, PacketQueue *pktq, int max_size, int keep_last)
@@ -68,6 +78,14 @@ Frame *frame_queue_peek_next(FrameQueue *f)
     return &f->queue[(f->rindex + f->rindex_shown + 1) % f->max_size];
 }
 
+Frame *frame_queue_peek_offset(FrameQueue *f, int offset)
+{
+    if (offset >= f->size) {
+        return NULL;
+    }
+    return &f->queue[(f->rindex + f->rindex_shown + offset) % f->max_size];
+}
+
 Frame *frame_queue_peek_last(FrameQueue *f)
 {
     return &f->queue[f->rindex];
@@ -89,9 +107,38 @@ Frame *frame_queue_peek_writable(FrameQueue *f)
     return &f->queue[f->windex];
 }
 
+Frame *frame_queue_peek_writable_noblock(FrameQueue *f)
+{
+    SDL_LockMutex(f->mutex);
+    if (f->size >= f->max_size || f->pktq->abort_request) {
+        SDL_UnlockMutex(f->mutex);
+        return NULL;
+    }
+    SDL_UnlockMutex(f->mutex);
+
+    return &f->queue[f->windex];
+}
+
+Frame *frame_queue_peek_pre_writable(FrameQueue *f)
+{
+    if (f->pktq->abort_request)
+        return NULL;
+    
+    SDL_LockMutex(f->mutex);
+    if (f->size < 1) {
+        SDL_UnlockMutex(f->mutex);
+        return NULL;
+    }
+    int idx = f->windex - 1;
+    if (idx < 0) {
+        idx = f->max_size - 1;
+    }
+    SDL_UnlockMutex(f->mutex);
+    return &f->queue[idx];
+}
+
 Frame *frame_queue_peek_readable(FrameQueue *f)
 {
-    /* wait until we have a readable a new frame */
     SDL_LockMutex(f->mutex);
     while (f->size - f->rindex_shown <= 0 &&
            !f->pktq->abort_request) {
@@ -105,14 +152,32 @@ Frame *frame_queue_peek_readable(FrameQueue *f)
     return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
 }
 
-void frame_queue_push(FrameQueue *f)
+Frame *frame_queue_peek_readable_noblock(FrameQueue *f)
+{
+    SDL_LockMutex(f->mutex);
+    if (f->size - f->rindex_shown <= 0 &&
+           !f->pktq->abort_request) {
+        SDL_UnlockMutex(f->mutex);
+        return NULL;
+    }
+    SDL_UnlockMutex(f->mutex);
+
+    if (f->pktq->abort_request)
+        return NULL;
+
+    return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
+}
+
+int frame_queue_push(FrameQueue *f)
 {
     if (++f->windex == f->max_size)
         f->windex = 0;
+    int size;
     SDL_LockMutex(f->mutex);
-    f->size++;
+    size = ++f->size;
     SDL_CondSignal(f->cond);
     SDL_UnlockMutex(f->mutex);
+    return size;
 }
 
 void frame_queue_next(FrameQueue *f)

@@ -20,7 +20,6 @@
 #import "IJKMetalOffscreenRendering.h"
 
 #import "ijksdl_vout_ios_gles2.h"
-#import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 
 #if TARGET_OS_IPHONE
@@ -40,13 +39,6 @@ typedef CGRect NSRect;
 @property (atomic, strong) IJKMetalSubtitlePipeline *subPipeline;
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
 @property (atomic, strong) IJKOverlayAttach *currentAttach;
-@property(atomic) BOOL subtitlePreferenceChanged;
-//display window size / video size
-@property(atomic) float displayVideoScale;
-//display window size / screen size
-@property(atomic) float subtitleExtScale;
-//window's backingScaleFactor
-@property(atomic) float backingScaleFactor;
 @property(assign) int hdrAnimationFrameCount;
 
 @end
@@ -54,11 +46,9 @@ typedef CGRect NSRect;
 @implementation IJKMetalView
 
 @synthesize scalingMode = _scalingMode;
-// subtitle preference
-@synthesize subtitlePreference = _subtitlePreference;
 // rotate preference
 @synthesize rotatePreference = _rotatePreference;
-// color conversion perference
+// color conversion preference
 @synthesize colorPreference = _colorPreference;
 // user defined display aspect ratio
 @synthesize darPreference = _darPreference;
@@ -69,20 +59,6 @@ typedef CGRect NSRect;
 #endif
 @synthesize showHdrAnimation = _showHdrAnimation;
 
-- (CGSize)screenSize
-{
-    static CGSize screenSize;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-    #if TARGET_OS_OSX
-        screenSize = [[[NSScreen screens] firstObject]frame].size;
-    #else
-        screenSize = [[UIScreen mainScreen]bounds].size;
-    #endif
-    });
-    return screenSize;
-}
-
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -91,12 +67,9 @@ typedef CGRect NSRect;
 
 - (BOOL)prepareMetal
 {
-    _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
     _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     _darPreference      = (IJKSDLDARPreference){0.0};
-    _displayVideoScale  = 1.0;
-    _subtitleExtScale = 1.0;
     
     self.device = MTLCreateSystemDefaultDevice();
     if (!self.device) {
@@ -151,22 +124,6 @@ typedef CGRect NSRect;
     if (_showHdrAnimation != showHdrAnimation) {
         _showHdrAnimation = showHdrAnimation;
         self.hdrAnimationFrameCount = 0;
-    }
-}
-
-- (void)videoNaturalSizeChanged:(CGSize)size
-{
-    CGSize viewSize = [self bounds].size;
-    self.displayVideoScale = FFMIN(1.0 * viewSize.width / size.width, 1.0 * viewSize.height / size.height);
-}
-
-- (void)cleanSubtitle
-{
-    IJKOverlayAttach * attach = self.currentAttach;
-    if (attach && attach.subTexture) {
-        attach.sub = nil;
-        attach.subTexture = nil;
-        [self setNeedsRefreshCurrentPic];
     }
 }
 
@@ -231,7 +188,7 @@ typedef CGRect NSRect;
 - (BOOL)setupSubPipelineIfNeed
 {
     if (!self.subPipeline) {
-        self.subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
+        self.subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:self.device outFormat:IJKMetalSubtitleOutFormatDIRECT];
     }
     
     if ([self.subPipeline createRenderPipelineIfNeed]) {
@@ -294,16 +251,28 @@ typedef CGRect NSRect;
 
 - (void)encodeSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder
               viewport:(CGSize)viewport
-               texture:(id)subTexture
-                  rect:(CGRect)subRect
+               texture:(id<MTLTexture>)subTexture
 {
     [self.subPipeline lock];
     // Set the region of the drawable to draw into.
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
     //upload textures
-    [self.subPipeline uploadTextureWithEncoder:renderEncoder
-                                       texture:subTexture
-                                          rect:subRect];
+    
+    float wRatio = viewport.width / subTexture.width;
+    float hRatio = viewport.height / subTexture.height;
+    
+    CGRect subRect;
+    //aspect fit
+    if (wRatio < hRatio) {
+        float nH = (subTexture.height * wRatio / viewport.height);
+        subRect = CGRectMake(-1, -nH, 2.0, 2.0 * nH);
+    } else {
+        float nW = (subTexture.width * hRatio / viewport.width);
+        subRect = CGRectMake(-nW, -1, 2.0 * nW, 2.0);
+    }
+
+    [self.subPipeline updateSubtitleVertexIfNeed:subRect];
+    [self.subPipeline drawTexture:subTexture encoder:renderEncoder];
     [self.subPipeline unlock];
 }
 
@@ -363,25 +332,9 @@ typedef CGRect NSRect;
           hdrPercentage:hdrPer];
     
     if (attach.subTexture) {
-        float subScale = 1.0;
-        if (attach.sub.pixels) {
-            subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-        }
-        //保证 Retina 屏幕显示的大小和非 Retina 屏幕上一样大
-        /*
-         为何，截图时有的乘以 backingScaleFactor ，有的不乘？
-         当 viewport 是 retina 之后的像素值时，就需要乘，使得字幕也跟着变大；
-         反之，单倍屏上，直接显示就可以了。
-         */
-        subScale *= self.backingScaleFactor;
-        //实现，窗口放大，字幕放大效果
-        subScale *= self.subtitleExtScale;
-        CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale viewport:viewport];
-        
         [self encodeSubtitle:renderEncoder
                     viewport:viewport
-                     texture:attach.subTexture
-                        rect:rect];
+                     texture:attach.subTexture];
     }
     [renderEncoder popDebugGroup];
     [renderEncoder endEncoding];
@@ -455,25 +408,9 @@ typedef CGRect NSRect;
               hdrPercentage:1.0];
         
         if (drawSub && attach.subTexture) {
-            float subScale = 1.0;
-            
-            if (attach.sub.pixels) {
-                subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-            }
-            
-            {
-                CGSize screenSize = [self screenSize];
-                CGSize viewSize = viewport;
-                //当前显示窗口相对屏幕的比例;实际上全屏时是1，非全屏小于1;
-                float subtitleExtScale =  FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
-                subScale *= subtitleExtScale;
-            }
-            
-            CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale viewport:viewport];
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
-                         texture:attach.subTexture
-                            rect:rect];
+                         texture:attach.subTexture];
         }
     }];
 }
@@ -534,23 +471,9 @@ typedef CGRect NSRect;
         }
         
         if (attach.subTexture) {
-            float subScale = 1.0;
-            if (attach.sub.pixels) {
-                subScale = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-            }
-            
-            float subtitleExtScale = [self computeSubtitleExtSacle];
-            subScale *= subtitleExtScale;
-            
-            //viewport 取的是 retina 相关的，字幕需要等比例放大。
-            subScale *= self.backingScaleFactor;
-            
-            CGRect rect = [self subTextureTargetRect:attach.subTexture scale:subScale viewport:viewport];
-
             [self encodeSubtitle:renderEncoder
                         viewport:viewport
-                         texture:attach.subTexture
-                            rect:rect];
+                         texture:attach.subTexture];
         }
     }];
 }
@@ -569,24 +492,6 @@ typedef CGRect NSRect;
     }
 }
 
-- (float)computeSubtitleExtSacle
-{
-    CGSize screenSize = [self screenSize];
-    CGSize viewSize = [self bounds].size;
-    //当前显示窗口相对屏幕的比例;实际上全屏时是1，非全屏小于1;
-    return FFMIN(1.0 * viewSize.width / screenSize.width, 1.0 * viewSize.height / screenSize.height);
-}
-
-- (void)refreshSubtitleExtSacle
-{
-#if TARGET_OS_IOS
-    self.backingScaleFactor = self.window.contentScaleFactor;
-#else
-    self.backingScaleFactor = self.window.backingScaleFactor;
-#endif
-    self.subtitleExtScale = [self computeSubtitleExtSacle];
-}
-
 #if TARGET_OS_IOS
 - (UIImage *)snapshot
 {
@@ -594,17 +499,10 @@ typedef CGRect NSRect;
     return [[UIImage alloc]initWithCGImage:cgImg];
 }
 
-- (void)didMoveToWindow
-{
-    [super didMoveToWindow];
-    [self refreshSubtitleExtSacle];
-}
-
 #else
 
 - (void)windowDidEndLiveResize:(NSNotification *)notifi
 {
-    [self refreshSubtitleExtSacle];
     if (notifi.object == self.window) {
         [self setNeedsRefreshCurrentPic];
     }
@@ -614,7 +512,6 @@ typedef CGRect NSRect;
 {
     //call super is needed, otherwise some device [self bounds] is not right.
     [super resizeWithOldSuperviewSize:oldSize];
-    [self refreshSubtitleExtSacle];
     if (!self.window.inLiveResize) {
         [self setNeedsRefreshCurrentPic];
     }
@@ -625,103 +522,13 @@ typedef CGRect NSRect;
     [super viewDidChangeBackingProperties];
     //多显示器间切换，drawable还没来得及自动改变，因此先手动调整好；避免由于viewport不对导致字幕显示过大或过小。
     self.drawableSize = [self convertSizeToBacking:self.bounds.size];
-    [self refreshSubtitleExtSacle];
     [self setNeedsRefreshCurrentPic];
 }
 #endif
 
 - (void)setNeedsRefreshCurrentPic
 {
-    if (self.subtitlePreferenceChanged) {
-        self.subtitlePreferenceChanged = NO;
-        [self generateSubTexture:self.currentAttach];
-    }
     [self draw];
-}
-
-- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle videoDegrees:(int)degrees
-{
-    if (subtitle.length == 0) {
-        return NULL;
-    }
-    
-    IJKSDLSubtitlePreference sp = self.subtitlePreference;
-    
-    float ratio = sp.ratio;
-    int32_t bgrValue = sp.color;
-    //以800为标准，定义出字幕字体默认大小为30pt
-    float scale = 1.0;
-    CGSize screenSize = [self screenSize];
-    if (degrees / 90 % 2 == 1) {
-        scale = screenSize.height / 800.0;
-    } else {
-        scale = screenSize.width / 800.0;
-    }
-    //字幕默认配置
-    NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
-    
-    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 30];
-    [attributes setObject:subtitleFont forKey:NSFontAttributeName];
-    
-    NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
-    
-    [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
-    
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes];
-    
-    return [textureString createPixelBuffer];
-}
-
-- (CVPixelBufferRef)_generateSubtitlePixelFromPicture:(IJKSDLSubtitle*)pict
-{
-    CVPixelBufferRef pixelBuffer = NULL;
-    NSDictionary *options = @{
-        (__bridge NSString*)kCVPixelBufferMetalCompatibilityKey : @YES,
-        (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
-    };
-    
-    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict.w, pict.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
-    
-    if (ret != kCVReturnSuccess || pixelBuffer == NULL) {
-        ALOGE("CVPixelBufferCreate subtitle failed:%d",ret);
-        return NULL;
-    }
-    
-    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
-    
-    uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
-    int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
-    
-    uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
-    int dst_linesizes[4] = {linesize,0,0,0};
-    
-    const uint8_t *src_data[4] = {pict.pixels,NULL,NULL,NULL};
-    const int src_linesizes[4] = {pict.w * 4,0,0,0};
-    
-    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict.w, pict.h);
-    
-    CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
-    
-    if (kCVReturnSuccess == ret) {
-        return pixelBuffer;
-    } else {
-        return NULL;
-    }
-}
-
-- (void)generateSubTexture:(IJKOverlayAttach *)attach
-{
-    CVPixelBufferRef subRef = NULL;
-    IJKSDLSubtitle *sub = attach.sub;
-    if (sub) {
-        if (sub.text.length > 0) {
-            subRef = [self _generateSubtitlePixel:sub.text videoDegrees:attach.autoZRotate];
-        } else if (sub.pixels != NULL) {
-            subRef = [self _generateSubtitlePixelFromPicture:sub];
-        }
-    }
-    attach.subTexture = [[self class] doGenerateSubTexture:subRef device:self.device];
-    CVPixelBufferRelease(subRef);
 }
 
 mp_format * mp_get_metal_format(uint32_t cvpixfmt);
@@ -766,106 +573,25 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     return result;
 }
 
-+ (id<MTLTexture>)doGenerateSubTexture:(CVPixelBufferRef)pixelBuff
-                                device:(id<MTLDevice>)device
-{
-    if (!pixelBuff) {
-        return nil;
-    }
-    
-    OSType type = CVPixelBufferGetPixelFormatType(pixelBuff);
-    if (type != kCVPixelFormatType_32BGRA) {
-        ALOGE("generate subtitle texture must use 32BGRA pixelBuff");
-        return nil;
-    }
-    
-    CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-    void *src = CVPixelBufferGetBaseAddress(pixelBuff);
-    
-    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
-
-    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
-    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
-    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
-    
-    // Set the pixel dimensions of the texture
-    
-    textureDescriptor.width  = CVPixelBufferGetWidth(pixelBuff);
-    textureDescriptor.height = CVPixelBufferGetHeight(pixelBuff);
-    
-    // Create the texture from the device by using the descriptor
-    id<MTLTexture> subTexture = [device newTextureWithDescriptor:textureDescriptor];
-    
-    MTLRegion region = {
-        { 0, 0, 0 },                   // MTLOrigin
-        {CVPixelBufferGetWidth(pixelBuff), CVPixelBufferGetHeight(pixelBuff), 1} // MTLSize
-    };
-    
-    NSUInteger bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuff);
-    
-    [subTexture replaceRegion:region
-                   mipmapLevel:0
-                     withBytes:src
-                   bytesPerRow:bytesPerRow];
-    
-    CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-    
-    return subTexture;
-}
-
-- (CGRect)subTextureTargetRect:(id<MTLTexture>)subTexture
-                         scale:(float)scale
-                      viewport:(CGSize)viewport
-{
-    float bottomMargin = self.subtitlePreference.bottomMargin;
-    
-    //没有这个scale的话，字幕可能会超出画面，位置跟观看时不一致。
-    float swidth  = subTexture.width  * scale;
-    float sheight = subTexture.height * scale;
-    
-    float width  = viewport.width;
-    float height = viewport.height;
-    //转化到 [-1,1] 的区间
-    float y = bottomMargin * (height - sheight) / height * 2.0 - 1.0;
-    
-    if (width != 0 && height != 0) {
-        return (CGRect){
-            - 1.0 * swidth / width,
-            y,
-            2.0 * (swidth / width),
-            2.0 * (sheight / height)
-        };
-    }
-    return CGRectZero;
-}
-
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach
 {
-    if (!attach) {
-        ALOGW("IJKMetalView: overlay is nil\n");
+    //hold the attach as current.
+    self.currentAttach = attach;
+    
+    if (!attach.videoPicture) {
+        ALOGW("IJKMetalView: videiPicture is nil\n");
         return NO;
     }
     
-    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub) {
-        [self generateSubTexture:attach];
-    } else if (self.currentAttach.sub) {
-        //reuse the expensive texture.
-        attach.subTexture = self.currentAttach.subTexture;
-    }
-    
-    if (self.subtitlePreferenceChanged) {
-        self.subtitlePreferenceChanged = NO;
-    }
-    
-    //hold the attach as current.
-    self.currentAttach = attach;
+    attach.videoTextures = [[self class] doGenerateTexture:attach.videoPicture textureCache:_pictureTextureCache];
     
     if (self.preventDisplay) {
         return YES;
     }
     
-    attach.videoTextures = [[self class] doGenerateTexture:attach.videoPicture textureCache:_pictureTextureCache];
-    
+    if (CGSizeEqualToSize(CGSizeZero, self.drawableSize)) {
+        return NO;
+    }
     //not dispatch to main thread, use current sub thread (ff_vout) draw
     [self draw];
     
@@ -902,20 +628,15 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     }
 }
 
-- (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
-{
-    if (_subtitlePreference.ratio != subtitlePreference.ratio ||
-        _subtitlePreference.color != subtitlePreference.color ||
-        _subtitlePreference.bottomMargin != subtitlePreference.bottomMargin) {
-        _subtitlePreference = subtitlePreference;
-        self.subtitlePreferenceChanged = YES;
-    }
-}
-
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b
 {
     self.clearColor = (MTLClearColor){r/255.0, g/255.0, b/255.0, 1.0f};
     //renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0f);
+}
+
+- (id)context
+{
+    return self.device;
 }
 
 - (NSString *)name
@@ -927,6 +648,13 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 
 - (NSView *)hitTest:(NSPoint)point
 {
+    for (NSView *sub in [self subviews]) {
+        NSPoint pointInSelf = [self convertPoint:point fromView:self.superview];
+        NSPoint pointInSub = [self convertPoint:pointInSelf toView:sub];
+        if (NSPointInRect(pointInSub, sub.bounds)) {
+            return sub;
+        }
+    }
     return nil;
 }
 

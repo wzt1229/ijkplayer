@@ -28,12 +28,11 @@
 #include "../ijksdl_stdinc.h"
 #include "../ijksdl_vout.h"
 #include "ijksdl_inc_ffmpeg.h"
-#include "internal.h"
 
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
 
-SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int src_format, int cvpixelbufferpool, SDL_Vout *vout);
+SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height, int src_format, SDL_Vout *vout);
 CVPixelBufferRef SDL_VoutFFmpeg_GetCVPixelBufferRef(SDL_VoutOverlay *overlay);
 
 #endif

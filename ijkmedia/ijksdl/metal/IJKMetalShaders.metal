@@ -59,19 +59,30 @@ struct RasterizerData
 //    }
 //}
 
-/// @brief subtitle bgra fragment shader
+/// @brief subtitle direct output fragment shader
 /// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
 /// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
-fragment float4 subtileFragmentShader(RasterizerData input [[stage_in]],
+fragment float4 subtileDIRECTFragment(RasterizerData input [[stage_in]],
                                       texture2d<float> textureY [[ texture(IJKFragmentTextureIndexTextureY) ]])
 {
     // sampler是采样器
     constexpr sampler textureSampler (mag_filter::linear,
                                       min_filter::linear);
-    //auto converted bgra -> rgba
-    float4 rgba = textureY.sample(textureSampler, input.textureCoordinate);
-    return rgba;
+    return textureY.sample(textureSampler, input.textureCoordinate);
 }
+
+/// @brief subtitle swap r g fragment shader
+/// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
+/// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引
+fragment float4 subtileSWAPRGFragment(RasterizerData input [[stage_in]],
+                                      texture2d<float> textureY [[ texture(IJKFragmentTextureIndexTextureY) ]])
+{
+    // sampler是采样器
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    return textureY.sample(textureSampler, input.textureCoordinate).bgra;
+}
+
 
 #if __METAL_VERSION__ >= 200
 

@@ -20,6 +20,7 @@
 #import "MRBaseView.h"
 #import "MultiRenderSample.h"
 #import "NSString+Ex.h"
+#import "MRCocoaBindingUserDefault.h"
 
 static NSString* lastPlayedKey = @"__lastPlayedKey";
 static BOOL hdrAnimationShown = 0;
@@ -95,7 +96,7 @@ static BOOL hdrAnimationShown = 0;
     //for debug
     //[self.view setWantsLayer:YES];
     //self.view.layer.backgroundColor = [[NSColor redColor] CGColor];
-    
+    self.title = @"AutoTest";
     [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
         NSLog(@"[%@] [%d] %@",tag,level,msg);
 //        printf("[%s] %s\n",[tag UTF8String],[msg UTF8String]);
@@ -617,7 +618,7 @@ static BOOL hdrAnimationShown = 0;
 //    [options setPlayerOptionIntValue:1 forKey:@"an"];
 //    [options setPlayerOptionIntValue:1 forKey:@"nodisp"];
     
-    [options setPlayerOptionIntValue:[MRUtil boolForKey:@"values.copy_hw_frame"] forKey:@"copy_hw_frame"];
+    [options setPlayerOptionIntValue:[MRCocoaBindingUserDefault copy_hw_frame] forKey:@"copy_hw_frame"];
     if ([url isFileURL]) {
         //图片不使用 cvpixelbufferpool
         NSString *ext = [[[url path] pathExtension] lowercaseString];
@@ -689,7 +690,7 @@ static BOOL hdrAnimationShown = 0;
     rect.origin = CGPointZero;
     playerView.frame = rect;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:nil];
+    [self.view addSubview:playerView positioned:NSWindowBelow relativeTo:self.playerCtrlPanel];
     
     playerView.showHdrAnimation = !hdrAnimationShown;
     //playerView.preventDisplay = YES;
@@ -965,12 +966,6 @@ static BOOL hdrAnimationShown = 0;
     [self onReset:nil];
     self.playCtrlBtn.state = NSControlStateValueOn;
     
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.bottomMargin = self.subtitleMargin;
-    NSNumber *number = [[NSUserDefaultsController sharedUserDefaultsController] valueForKeyPath:@"values.subtitleFontRatio"];
-    p.ratio = [number floatValue];
-    self.player.view.subtitlePreference = p;
-    
     [self.player prepareToPlay];
     
     if ([self.subtitles count] > 0) {
@@ -1048,14 +1043,46 @@ static BOOL hdrAnimationShown = 0;
 
 - (void)appendToPlayList:(NSArray *)bookmarkArr reset:(BOOL)reset
 {
+    NSMutableArray *videos = [NSMutableArray array];
+    NSMutableArray *subtitles = [NSMutableArray array];
+    
     for (NSDictionary *dic in bookmarkArr) {
         NSURL *url = dic[@"url"];
+        
+        if ([self existTaskForUrl:url]) {
+            continue;
+        }
         if ([[[url pathExtension] lowercaseString] isEqualToString:@"xlist"]) {
             if (reset) {
                 [self.playList removeAllObjects];
             }
             [self loadNASPlayList:url];
+            continue;
         }
+        if ([dic[@"type"] intValue] == 0) {
+            [videos addObject:url];
+        } else if ([dic[@"type"] intValue] == 1) {
+            [subtitles addObject:url];
+        } else {
+            NSAssert(NO, @"没有处理的文件:%@",url);
+        }
+    }
+    
+    if ([videos count] > 0) {
+        if (reset) {
+            [self.playList removeAllObjects];
+        }
+        [self.playList addObjectsFromArray:videos];
+        [self playFirstIfNeed];
+    }
+    
+    if ([subtitles count] > 0) {
+        [self.subtitles addObjectsFromArray:subtitles];
+        
+        NSURL *firstUrl = [subtitles firstObject];
+        [subtitles removeObjectAtIndex:0];
+        [self.player loadThenActiveSubtitle:firstUrl];
+        [self.player loadSubtitlesOnly:subtitles];
     }
 }
 
@@ -1102,6 +1129,8 @@ static BOOL hdrAnimationShown = 0;
                 } else {
                     NSString *pathExtension = [[url pathExtension] lowercaseString];
                     if ([@"xlist" isEqualToString:pathExtension]) {
+                        return NSDragOperationCopy;
+                    } else if ([[MRUtil acceptMediaType] containsObject:pathExtension]) {
                         return NSDragOperationCopy;
                     }
                 }
@@ -1156,7 +1185,7 @@ static BOOL hdrAnimationShown = 0;
 
 - (BOOL)preferHW
 {
-    return [MRUtil boolForKey:@"values.hw"];
+    return [MRCocoaBindingUserDefault use_hw];
 }
 
 - (void)retry
@@ -1321,22 +1350,16 @@ static BOOL hdrAnimationShown = 0;
 {
     NSMenuItem *item = [sender selectedItem];
     int bgrValue = (int)item.tag;
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    IJKSDLSubtitlePreference p = self.player.subtitlePreference;
     p.color = bgrValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+    self.player.subtitlePreference = p;
 }
 
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
 {
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
-    p.ratio = sender.floatValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+    IJKSDLSubtitlePreference p = self.player.subtitlePreference;
+    p.scale = sender.floatValue / 50;
+    self.player.subtitlePreference = p;
 }
 
 - (IBAction)onSelectSubtitle:(NSPopUpButton*)sender
@@ -1360,12 +1383,9 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender
 {
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    IJKSDLSubtitlePreference p = self.player.subtitlePreference;
     p.bottomMargin = sender.floatValue;
-    self.player.view.subtitlePreference = p;
-    if (!self.player.isPlaying) {
-        [self.player.view setNeedsRefreshCurrentPic];
-    }
+    self.player.subtitlePreference = p;
 }
 
 #pragma mark 画面设置

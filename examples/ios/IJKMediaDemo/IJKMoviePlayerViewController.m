@@ -113,9 +113,9 @@
     self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
     self.player.shouldAutoplay = YES;
     
-    IJKSDLSubtitlePreference p = self.player.view.subtitlePreference;
+    IJKSDLSubtitlePreference p = self.player.subtitlePreference;
     p.color = 16776960;
-    self.player.view.subtitlePreference = p;
+    self.player.subtitlePreference = p;
     self.view.autoresizesSubviews = YES;
     [self.view addSubview:self.player.view];
     [self.view addSubview:self.mediaControl];

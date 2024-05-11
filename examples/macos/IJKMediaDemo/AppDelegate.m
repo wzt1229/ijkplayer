@@ -17,6 +17,7 @@
 #import "MRActionKit.h"
 #import "MRTextInfoViewController.h"
 #import <IOKit/pwr_mgt/IOPMLib.h>
+#import "MRCocoaBindingUserDefault.h"
 
 @interface AppDelegate ()
 
@@ -46,7 +47,7 @@
         [NSApp activateIgnoringOtherApps:YES];
     } forPath:@"/play"];
     
-    [MRUtil initUserDefaults];
+    [MRCocoaBindingUserDefault initUserDefaults];
     [MRActionManager registerProcessor:processor];
 }
 
@@ -66,8 +67,68 @@
     [self prepareActionProcessor];
 }
 
+#pragma mark 日志级别
+
+- (int)levelWithString:(NSString *)str
+{
+    str = [str lowercaseString];
+    if ([str isEqualToString:@"default"]) {
+        return k_IJK_LOG_DEFAULT;
+    } else if ([str isEqualToString:@"verbose"]) {
+        return k_IJK_LOG_VERBOSE;
+    } else if ([str isEqualToString:@"debug"]) {
+        return k_IJK_LOG_DEBUG;
+    } else if ([str isEqualToString:@"info"]) {
+        return k_IJK_LOG_INFO;
+    } else if ([str isEqualToString:@"warn"]) {
+        return k_IJK_LOG_WARN;
+    } else if ([str isEqualToString:@"error"]) {
+        return k_IJK_LOG_ERROR;
+    } else if ([str isEqualToString:@"fatal"]) {
+        return k_IJK_LOG_FATAL;
+    } else if ([str isEqualToString:@"silent"]) {
+        return k_IJK_LOG_SILENT;
+    } else {
+        return k_IJK_LOG_UNKNOWN;
+    }
+}
+
+- (void)reSetLoglevel
+{
+    NSString *loglevel = [MRCocoaBindingUserDefault log_level];
+    NSLog(@"IJK LogLevel set:%@",loglevel);
+    int level = [self levelWithString:loglevel];
+    [IJKFFMoviePlayerController setLogLevel:level];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+#if DEBUG
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints"];
+#endif
+    
+    __weakSelf__
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull value,BOOL *removed) {
+        __strongSelf__
+        [self reSetLoglevel];
+    } forKey:@"log_level"];
+    
+    static NSDateFormatter *df;
+    if (!df) {
+        df = [[NSDateFormatter alloc]init];
+#if DEBUG
+        df.dateFormat = @"HH:mm:ss SSS";
+#else
+        df.dateFormat = @"yyyy-MM-dd HH:mm:ss S";
+#endif
+    }
+
+    [IJKFFMoviePlayerController setLogHandler:^(IJKLogLevel level, NSString *tag, NSString *msg) {
+        NSString *dateStr = [df stringFromDate:[NSDate date]];
+        NSLog(@"[%@] [%@] %@", dateStr, tag, msg);
+    }];
+    
+    [self reSetLoglevel];
     // Insert code here to initialize your application
     NSWindowStyleMask mask = NSWindowStyleMaskBorderless | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView;
     
@@ -76,7 +137,9 @@
     window.contentViewController = [[MRRootViewController alloc] init];
 //    window.contentViewController = [[MRAutoTestViewController alloc] init];
 //    window.contentViewController = [[MRStatisticalViewController alloc] init];
-    
+    if (window.contentViewController.title) {
+        window.title = window.contentViewController.title;
+    }
     window.movableByWindowBackground = YES;
     
     self.windowCtrl = [[WindowController alloc] init];
@@ -140,8 +203,7 @@
 
 - (IBAction)showPreferencesPanel:(id)sender
 {
-    NSStoryboard *sb = [NSStoryboard storyboardWithName:@"Setting" bundle:nil];
-    [self.windowCtrl.window.contentViewController presentViewControllerAsModalWindow:[sb instantiateInitialController]];
+    
 }
 
 - (IBAction)showSupportedDecoder:(id)sender

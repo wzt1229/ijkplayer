@@ -12,7 +12,7 @@
 @interface IJKMetalSubtitlePipeline()
 {
     id<MTLDevice> _device;
-    MTLPixelFormat _colorPixelFormat;
+    IJKMetalSubtitleOutFormat _outFormat;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
@@ -27,13 +27,13 @@
 @implementation IJKMetalSubtitlePipeline
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
-              colorPixelFormat:(MTLPixelFormat)colorPixelFormat
+                     outFormat:(IJKMetalSubtitleOutFormat)outFormat
 {
     self = [super init];
     if (self) {
         NSAssert(device, @"device can't be nil!");
         _device = device;
-        _colorPixelFormat = colorPixelFormat;
+        _outFormat = outFormat;
         _pilelineLock = [[NSLock alloc] init];
     }
     return self;
@@ -67,19 +67,28 @@
     //id<MTLLibrary> defaultLibrary = [device newDefaultLibrary];
     id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"subVertexShader"];
     NSAssert(vertexFunction, @"can't find subVertexShader Function!");
-    id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"subtileFragmentShader"];
-    NSAssert(vertexFunction, @"can't find subtileFragmentShader Function!");
+    NSString *fsh = nil;
+    if (_outFormat == IJKMetalSubtitleOutFormatDIRECT) {
+        fsh = @"subtileDIRECTFragment";
+    } else if (_outFormat == IJKMetalSubtitleOutFormatSWAP_RB) {
+        fsh = @"subtileSWAPRGFragment";
+    } else {
+        NSAssert(fsh, @"IJKMetalSubtitleOutFormat is wrong!");
+    }
+    id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:fsh];
+    NSAssert(vertexFunction, @"can't find subtileRGBAFragment Function!");
     
     // Configure a pipeline descriptor that is used to create a pipeline state.
     MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
     pipelineStateDescriptor.vertexFunction = vertexFunction;
     pipelineStateDescriptor.fragmentFunction = fragmentFunction;
-    pipelineStateDescriptor.colorAttachments[0].pixelFormat = _colorPixelFormat;
+    pipelineStateDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
     
     //important! set subtitle need blending.
     //https://developer.apple.com/documentation/metal/mtlblendfactor/oneminussourcealpha
     pipelineStateDescriptor.colorAttachments[0].blendingEnabled = YES;
-    pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+    //ass字幕已经做了预乘，所以这里选择 MTLBlendFactorOne，而不是 MTLBlendFactorSourceAlpha
+    pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorOne;
     pipelineStateDescriptor.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
     pipelineStateDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
@@ -130,13 +139,10 @@
                                         options:MTLResourceStorageModeShared]; // 创建顶点缓存
 }
 
-- (void)uploadTextureWithEncoder:(id<MTLRenderCommandEncoder>)encoder
-                         texture:(id)subTexture
-                            rect:(CGRect)subRect
+- (void)drawTexture:(id)subTexture encoder:(id<MTLRenderCommandEncoder>)encoder
 {
     [encoder setFragmentTexture:subTexture atIndex:IJKFragmentTextureIndexTextureY];
 
-    [self updateSubtitleVertexIfNeed:subRect];
     // Pass in the parameter data.
     [encoder setVertexBuffer:self.vertices
                       offset:0

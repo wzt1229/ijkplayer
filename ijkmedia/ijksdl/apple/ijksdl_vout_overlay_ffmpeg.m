@@ -369,7 +369,7 @@ struct SDL_Vout_Opaque {
     int cv_format;
 };
 
-SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_format, int cvpixelbufferpool, SDL_Vout *display)
+SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_format, SDL_Vout *display)
 {
     enum AVPixelFormat const format = src_format;
     if(format == AV_PIX_FMT_NONE) {
@@ -400,7 +400,7 @@ SDL_VoutOverlay *SDL_VoutFFmpeg_CreateOverlay(int width, int height,int src_form
     overlay->func_fill_frame    = func_fill_avframe_to_cvpixelbuffer;
     
     SDL_Vout_Opaque * voutOpaque = display->opaque;
-    if (cvpixelbufferpool && !voutOpaque->cvPixelBufferPool) {
+    if (display->cvpixelbufferpool && !voutOpaque->cvPixelBufferPool) {
         CVPixelBufferPoolRef cvPixelBufferPool = NULL;
         createCVPixelBufferPoolFromAVFrame(&cvPixelBufferPool, width, height, format);
         voutOpaque->cvPixelBufferPool = cvPixelBufferPool;

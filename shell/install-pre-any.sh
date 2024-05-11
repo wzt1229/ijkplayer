@@ -29,7 +29,13 @@ MAC_BLURAY_TAG='bluray-1.3.4-240108180408'
 DAV1D_TAG='dav1d-1.3.0-231127183948'
 OPENSSL_TAG='openssl-1.1.1w-231127183927'
 DVDREAD_TAG='dvdread-6.1.3-240108102425'
-FFMPEG_TAG='ffmpeg-5.1.4-240108181435'
+FFMPEG_TAG='ffmpeg-5.1.4-240510145103'
+
+FREETYPE_TAG='freetype-2.13.2-240320173506'
+UNIBREAK_TAG='unibreak-5.1-231229171455'
+FRIBIDI_TAG='fribidi-1.0.13-240320172504'
+HARFBUZZ_TAG='harfbuzz-8.3.0-240320182151'
+ASS_TAG='ass-0.17.1-240320183602'
 #----------------------------------------------------------
 
 set -e
@@ -55,7 +61,7 @@ function install_lib ()
 function usage() {
     echo "=== useage ===================="
     echo "Download pre-compiled libs from github:"
-    echo " $0 [ios,macos,all] [all|ffmpeg|libyuv|openssl|opus|bluray|dav1d]"
+    echo " $0 [ios,macos,all] [all|ffmpeg|libyuv|openssl|opus|bluray|dav1d|freetype|fribidi|harfbuzz|unibreak|ass]"
     exit 1
 }
 
@@ -100,6 +106,21 @@ if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' || "$PLAT" == 'all' ]]; then
             ;;
             'dvdread')
                 TAG=$DVDREAD_TAG
+            ;;
+            'freetype')
+                TAG=$FREETYPE_TAG
+            ;;
+            'harfbuzz')
+                TAG=$HARFBUZZ_TAG
+            ;;
+            'fribidi')
+                TAG=$FRIBIDI_TAG
+            ;;
+            'unibreak')
+                TAG=$UNIBREAK_TAG
+            ;;
+            'ass')
+                TAG=$ASS_TAG
             ;;
             *)
                 echo "wrong lib name:$lib"

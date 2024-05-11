@@ -45,6 +45,14 @@
  macos 10.14 later use global single thread not smooth when create multil glview.
  */
 
+/*
+ 2024.4.25
+ when create multiple glview,flushBuffer will present contenxt to screen in multiple thread, but
+ on low macOS (below 10.13) CGLLock is no effect for multiple NSOpenGLContext even though shared one context!
+ so on low macOS we use global NSLock.
+ every glview hold a render thread.
+ */
+
 #import "IJKSDLGLView.h"
 #import <AVFoundation/AVFoundation.h>
 #import <CoreVideo/CoreVideo.h>
@@ -53,24 +61,13 @@
 #import "ijksdl_timer.h"
 #import "ijksdl_gles2.h"
 #import "ijksdl_vout_overlay_ffmpeg_hw.h"
-#import "IJKSDLTextureString.h"
 #import "IJKMediaPlayback.h"
 #import "IJKSDLThread.h"
 #import "../gles2/internal.h"
+#import "ijksdl_vout_ios_gles2.h"
+#import "ijksdl_gpu_opengl_fbo_macos.h"
 
 #define kHDRAnimationMaxCount 90
-
-static IJKSDLThread *__ijk_global_thread;
-
-static IJKSDLThread * _globalThread_(void)
-{
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        __ijk_global_thread = [[IJKSDLThread alloc] initWithName:@"ijk_global_render"];
-        [__ijk_global_thread start];
-    });
-    return __ijk_global_thread;
-}
 
 // greather than 10.14 no need dispatch to global.
 static bool _is_low_os_version(void)
@@ -84,177 +81,44 @@ static bool _is_low_os_version(void)
     return true;
 }
 
-static bool _is_need_dispath_to_global(void)
+static NSLock *_gl_lock;
+
+static void lock_gl(NSOpenGLContext *ctx)
 {
     bool low_os = _is_low_os_version();
     if (low_os) {
-        return true;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            _gl_lock = [[NSLock alloc] init];
+        });
+        [_gl_lock lock];
     } else {
-        return false;
+        CGLLockContext([ctx CGLContextObj]);
     }
 }
 
-//for snapshot.
-
-@interface _IJKSDLFBO : NSObject
-
-@property(nonatomic) CGSize textureSize;
-@property(nonatomic) GLuint fbo;
-@property(nonatomic) GLuint colorTexture;
-
-@end
-
-@implementation _IJKSDLFBO
-
-- (void)dealloc
+static void unlock_gl(NSOpenGLContext *ctx)
 {
-    if (_fbo) {
-        glDeleteFramebuffers(1, &_fbo);
-    }
-    
-    if (_colorTexture) {
-        glDeleteTextures(1, &_colorTexture);
-    }
-    
-    _textureSize = CGSizeZero;
-}
-
-// Create texture and framebuffer objects to render and snapshot.
-- (BOOL)canReuse:(CGSize)size
-{
-    if (CGSizeEqualToSize(CGSizeZero, size)) {
-        return NO;
-    }
-    
-    if (CGSizeEqualToSize(_textureSize, size) && _fbo && _colorTexture) {
-        return YES;
+    bool low_os = _is_low_os_version();
+    if (low_os) {
+        [_gl_lock unlock];
     } else {
-        return NO;
+        CGLUnlockContext([ctx CGLContextObj]);
     }
 }
-
-- (instancetype)initWithSize:(CGSize)size
-{
-    self = [super init];
-    if (self) {
-        // Create a texture object that you apply to the model.
-        glGenTextures(1, &_colorTexture);
-        glBindTexture(GL_TEXTURE_2D, _colorTexture);
-
-        // Set up filter and wrap modes for the texture object.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-        // Allocate a texture image to which you can render to. Pass `NULL` for the data parameter
-        // becuase you don't need to load image data. You generate the image by rendering to the texture.
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.width, size.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-        glGenFramebuffers(1, &_fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _colorTexture, 0);
-
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
-            _textureSize = size;
-            return self;
-        } else {
-        #if DEBUG
-            NSAssert(NO, @"Failed to make complete framebuffer object %x.",  glCheckFramebufferStatus(GL_FRAMEBUFFER));
-        #endif
-            _textureSize = CGSizeZero;
-            return nil;
-        }
-    }
-    return nil;
-}
-
-- (void)bind
-{
-    // Bind the snapshot FBO and render the scene.
-    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-}
-
-@end
-
-@interface _IJKSDLSubTexture : NSObject
-
-@property(nonatomic) GLuint texture;
-@property(nonatomic) int w;
-@property(nonatomic) int h;
-
-@end
-
-@implementation _IJKSDLSubTexture
-
-- (void)dealloc
-{
-    if (_texture) {
-        glDeleteTextures(1, &_texture);
-    }
-}
-
-- (GLuint)texture
-{
-    return _texture;
-}
-
-- (instancetype)initWithCVPixelBuffer:(CVPixelBufferRef)pixelBuff
-{
-    self = [super init];
-    if (self) {
-        
-        self.w = (int)CVPixelBufferGetWidth(pixelBuff);
-        self.h = (int)CVPixelBufferGetHeight(pixelBuff);
-        
-        // Create a texture object that you apply to the model.
-        glGenTextures(1, &_texture);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_RECTANGLE, _texture);
-        
-        int texutres[3] = {_texture,0,0};
-        ijk_upload_texture_with_cvpixelbuffer(pixelBuff, texutres);
-// glTexImage2D 不能处理字节对齐问题！会找成字幕倾斜显示，实际上有多余的padding填充，读取有误产生错行导致的
-//        // Set up filter and wrap modes for the texture object.
-//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//
-//        GLsizei width  = (GLsizei)CVPixelBufferGetWidth(pixelBuff);
-//        GLsizei height = (GLsizei)CVPixelBufferGetHeight(pixelBuff);
-//        CVPixelBufferLockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-//        void *src = CVPixelBufferGetBaseAddress(pixelBuff);
-//        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, src);
-//        CVPixelBufferUnlockBaseAddress(pixelBuff, kCVPixelBufferLock_ReadOnly);
-        glBindTexture(GL_TEXTURE_RECTANGLE, 0);
-    }
-    return self;
-}
-
-+ (instancetype)generate:(CVPixelBufferRef)pixel
-{
-    return [[self alloc] initWithCVPixelBuffer:pixel];
-}
-
-@end
 
 @interface IJKSDLGLView()
 
 @property(atomic) IJKOverlayAttach *currentAttach;
-
-@property(nonatomic) NSInteger videoDegrees;
-@property(nonatomic) CGSize videoNaturalSize;
-//display window size / screen
-@property(atomic) float displayScreenScale;
-//display window size / video size
-@property(atomic) float displayVideoScale;
+//view size
+@property(assign) CGSize viewSize;
 @property(atomic) GLint backingWidth;
 @property(atomic) GLint backingHeight;
-@property(atomic) BOOL subtitlePreferenceChanged;
-@property(atomic) _IJKSDLFBO * fbo;
+@property(atomic) IJKSDLOpenGLFBO * fbo;
 @property(atomic) IJKSDLThread *renderThread;
 @property(assign) int hdrAnimationFrameCount;
+@property(nonatomic) NSOpenGLContext *sharedContext;
+@property(nonatomic) NSArray *bgColor;
 
 @end
 
@@ -265,52 +129,47 @@ static bool _is_need_dispath_to_global(void)
 }
 
 @synthesize scalingMode = _scalingMode;
-// subtitle preference
-@synthesize subtitlePreference = _subtitlePreference;
 // rotate preference
 @synthesize rotatePreference = _rotatePreference;
-// color conversion perference
+// color conversion preference
 @synthesize colorPreference = _colorPreference;
 // user defined display aspect ratio
 @synthesize darPreference = _darPreference;
 @synthesize preventDisplay;
 @synthesize showHdrAnimation = _showHdrAnimation;
 
+- (void)destroyRender
+{
+    self.fbo = nil;
+    IJK_GLES2_Renderer_freeP(&_renderer);
+}
+
 - (void)dealloc
 {
-    [self.renderThread performSelector:@selector(setFbo:)
-                            withTarget:self
-                            withObject:nil
-                         waitUntilDone:YES];
-    
     if (_renderer) {
-        IJK_GLES2_Renderer_freeP(&_renderer);
+        if (self.renderThread && [NSThread currentThread] != self.renderThread.thread) {
+            [self.renderThread performSelector:@selector(destroyRender) withTarget:self withObject:nil waitUntilDone:YES];
+        } else {
+            [self destroyRender];
+        }
     }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    if (self.renderThread != __ijk_global_thread) {
-        [self.renderThread stop];
-    }
+    [self.renderThread stop];
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
     if (self) {
-        if (_is_need_dispath_to_global()) {
-            self.renderThread = _globalThread_();
-        } else {
-            self.renderThread = [[IJKSDLThread alloc] initWithName:@"ijk_renderer"];
-            [self.renderThread start];
-        }
+        self.renderThread = [[IJKSDLThread alloc] initWithName:@"ijk_renderer"];
+        [self.renderThread start];
         [self setup];
-        _subtitlePreference = (IJKSDLSubtitlePreference){1.0, 0xFFFFFF, 0.1};
+
         _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
         _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
         _darPreference      = (IJKSDLDARPreference){0.0};
-        _displayScreenScale = 1.0;
-        _displayVideoScale  = 1.0;
         _rendererGravity    = IJK_GLES2_GRAVITY_RESIZE_ASPECT;
     }
     return self;
@@ -339,7 +198,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
-    NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil];
+    NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:[self sharedContext]];
     
 #if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3 && defined(DEBUG)
     // When we're using a CoreProfile context, crash if we call a legacy OpenGL function
@@ -353,43 +212,37 @@ static bool _is_need_dispath_to_global(void)
     [self setPixelFormat:pf];
     [self setOpenGLContext:context];
     [self setWantsBestResolutionOpenGLSurface:YES];
-//    [self setWantsExtendedDynamicRangeOpenGLSurface:YES];
-    
-    ///Fix the default red background color on the Intel platform
-    [[self openGLContext] makeCurrentContext];
-    glClear(GL_COLOR_BUFFER_BIT);
-    [[self openGLContext]flushBuffer];
+    // Synchronize buffer swaps with vertical refresh rate
+    GLint swapInt = 1;
+    [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
+    //Fix the default red background color on the Intel platform
+    self.bgColor = @[@(0.0),@(0.0),@(0.0),@(1.0)];
 }
 
+- (void)applyClearColor
+{
+    if ([self.bgColor count] != 4) {
+        return;
+    }
+    if (self.backingWidth == 0 || self.backingHeight == 0) {
+        return;
+    }
+    NSArray *rgb = self.bgColor;
+    lock_gl([self openGLContext]);
+    [[self openGLContext] makeCurrentContext];
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, self.backingWidth, self.backingHeight);
+    glClearColor([rgb[0] floatValue], [rgb[2] floatValue], [rgb[2] floatValue], [rgb[3] floatValue]);
+    glClear(GL_COLOR_BUFFER_BIT);
+    [[self openGLContext]flushBuffer];
+    unlock_gl([self openGLContext]);
+}
 
 - (void)setShowHdrAnimation:(BOOL)showHdrAnimation
 {
     if (_showHdrAnimation != showHdrAnimation) {
         _showHdrAnimation = showHdrAnimation;
         self.hdrAnimationFrameCount = 0;
-    }
-}
-
-- (void)videoZRotateDegrees:(NSInteger)degrees
-{
-    self.videoDegrees = degrees;
-}
-
-- (void)videoNaturalSizeChanged:(CGSize)size
-{
-    self.videoNaturalSize = size;
-    CGRect viewBounds = [self bounds];
-    if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
-        self.displayVideoScale = FFMIN(1.0 * viewBounds.size.width / self.videoNaturalSize.width, 1.0 * viewBounds.size.height / self.videoNaturalSize.height);
-    }
-}
-
-- (void)cleanSubtitle
-{
-    if (self.currentAttach.sub) {
-        self.currentAttach.sub = nil;
-        self.currentAttach.subTexture = nil;
-        [self setNeedsRefreshCurrentPic];
     }
 }
 
@@ -414,7 +267,7 @@ static bool _is_need_dispath_to_global(void)
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
         
-        if (!IJK_GLES2_Renderer_use(_renderer))
+        if (!IJK_GLES2_Renderer_init(_renderer))
             return NO;
         
         IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
@@ -423,11 +276,12 @@ static bool _is_need_dispath_to_global(void)
         
         IJK_GLES2_Renderer_updateAutoZRotate(_renderer, attach.autoZRotate);
         
-        IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
-        
         IJK_GLES2_Renderer_updateColorConversion(_renderer, _colorPreference.brightness, _colorPreference.saturation,_colorPreference.contrast);
         
         IJK_GLES2_Renderer_updateUserDefinedDAR(_renderer, _darPreference.ratio);
+    } else {
+        if (!IJK_GLES2_Renderer_useProgram(_renderer))
+            return NO;
     }
     return YES;
 }
@@ -443,122 +297,37 @@ static bool _is_need_dispath_to_global(void)
     [self resetViewPort];
 }
 
+- (void)viewDidChangeBackingProperties
+{
+    [super viewDidChangeBackingProperties];
+    //here need a delay,wait intenal right, otherwise display wrong picture size.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self resetViewPort];
+    });
+}
+
 - (void)resetViewPort
 {
     CGSize viewSize = [self bounds].size;
     CGSize viewSizePixels = [self convertSizeToBacking:viewSize];
-    
+    if (CGSizeEqualToSize(CGSizeZero, viewSize)) {
+        return;
+    }
     if (self.backingWidth != viewSizePixels.width || self.backingHeight != viewSizePixels.height) {
         self.backingWidth  = viewSizePixels.width;
         self.backingHeight = viewSizePixels.height;
-        
-        CGSize screenSize = [[[NSScreen screens] firstObject]frame].size;
-        self.displayScreenScale = FFMIN(1.0 * viewSize.width / screenSize.width,1.0 * viewSize.height / screenSize.height);
-        if (!CGSizeEqualToSize(CGSizeZero, self.videoNaturalSize)) {
-            self.displayVideoScale = FFMIN(1.0 * viewSize.width / self.videoNaturalSize.width,1.0 * viewSize.height / self.videoNaturalSize.height);
-        }
-        
-        if (IJK_GLES2_Renderer_isValid(_renderer)) {
-            IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
-        }
-        
+        self.viewSize = viewSize;
         [self setNeedsRefreshCurrentPic];
     }
 }
 
-- (void)viewDidChangeBackingProperties
+- (void)doUploadSubtitle:(IJKOverlayAttach *)attach viewport:(CGSize)viewport
 {
-    [super viewDidChangeBackingProperties];
-    [self resetViewPort];
-}
-
-- (CVPixelBufferRef)_generateSubtitlePixel:(NSString *)subtitle
-{
-    if (subtitle.length == 0) {
-        return NULL;
-    }
-    
-    IJKSDLSubtitlePreference sp = self.subtitlePreference;
-        
-    float ratio = sp.ratio;
-    int32_t bgrValue = sp.color;
-    //以800为标准，定义出字幕字体默认大小为30pt
-    float scale = 1.0;
-    CGSize screenSize = [[[NSScreen screens] firstObject]frame].size;
-    
-    NSInteger degrees = self.videoDegrees;
-    if (degrees / 90 % 2 == 1) {
-        scale = screenSize.height / 800.0;
-    } else {
-        scale = screenSize.width / 800.0;
-    }
-    //字幕默认配置
-    NSMutableDictionary * attributes = [[NSMutableDictionary alloc] init];
-    
-    UIFont *subtitleFont = [UIFont systemFontOfSize:ratio * scale * 60];
-    [attributes setObject:subtitleFont forKey:NSFontAttributeName];
-    
-    NSColor *subtitleColor = [NSColor colorWithRed:((float)(bgrValue & 0xFF)) / 255.0 green:((float)((bgrValue & 0xFF00) >> 8)) / 255.0 blue:(float)(((bgrValue & 0xFF0000) >> 16)) / 255.0 alpha:1.0];
-    
-    [attributes setObject:subtitleColor forKey:NSForegroundColorAttributeName];
-    
-    IJKSDLTextureString *textureString = [[IJKSDLTextureString alloc] initWithString:subtitle withAttributes:attributes];
-    
-    return [textureString createPixelBuffer];
-}
-
-- (CVPixelBufferRef)_generateSubtitlePixelFromPicture:(IJKSDLSubtitle*)pict
-{
-    CVPixelBufferRef pixelBuffer = NULL;
-    NSDictionary *options = @{
-        (__bridge NSString*)kCVPixelBufferOpenGLCompatibilityKey : @YES,
-        (__bridge NSString*)kCVPixelBufferIOSurfacePropertiesKey : [NSDictionary dictionary]
-    };
-    
-    CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, pict.w, pict.h, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pixelBuffer);
-    
-    if (ret != kCVReturnSuccess || pixelBuffer == NULL) {
-        ALOGE("CVPixelBufferCreate subtitle failed:%d",ret);
-        return NULL;
-    }
-    
-    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
-    
-    uint8_t *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
-    int linesize = (int)CVPixelBufferGetBytesPerRow(pixelBuffer);
-
-    uint8_t *dst_data[4] = {baseAddress,NULL,NULL,NULL};
-    int dst_linesizes[4] = {linesize,0,0,0};
-
-    const uint8_t *src_data[4] = {pict.pixels,NULL,NULL,NULL};
-    const int src_linesizes[4] = {pict.w * 4,0,0,0};
-
-    av_image_copy(dst_data, dst_linesizes, src_data, src_linesizes, AV_PIX_FMT_BGRA, pict.w, pict.h);
-    
-    CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
-    
-    if (kCVReturnSuccess == ret) {
-        return pixelBuffer;
-    } else {
-        return NULL;
-    }
-}
-
-- (void)doUploadSubtitle:(IJKOverlayAttach *)attach
-{
-    _IJKSDLSubTexture * subTexture = attach.subTexture;
+    id<IJKSDLSubtitleTextureWrapper>subTexture = attach.subTexture;
     if (subTexture) {
-        float ratio = 1.0;
-        if (attach.sub.pixels) {
-            ratio = self.subtitlePreference.ratio * self.displayVideoScale * 1.5;
-        }
-        ratio *= self.displayScreenScale;
-        
         IJK_GLES2_Renderer_beginDrawSubtitle(_renderer);
-        
-        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, ratio * subTexture.w, ratio * subTexture.h);
-        
-        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture,subTexture.w,subTexture.h)) {
+        IJK_GLES2_Renderer_updateSubtitleVertex(_renderer, subTexture.w, subTexture.h);
+        if (IJK_GLES2_Renderer_uploadSubtitleTexture(_renderer, subTexture.texture, subTexture.w, subTexture.h)) {
             IJK_GLES2_Renderer_drawArrays();
         } else {
             ALOGE("[GL] GLES2 Render Subtitle failed\n");
@@ -599,19 +368,9 @@ static bool _is_need_dispath_to_global(void)
 - (void)doRefreshCurrentAttach:(IJKOverlayAttach *)currentAttach
 {
     if (!currentAttach) {
+        [self applyClearColor];
         return;
     }
-    
-    //update subtitle if need
-    if (self.subtitlePreferenceChanged) {
-        if (currentAttach.sub.text) {
-            CVPixelBufferRef subPicture = [self _generateSubtitlePixel:currentAttach.sub.text];
-            currentAttach.subTexture = [_IJKSDLSubTexture generate:subPicture];
-            CVPixelBufferRelease(subPicture);
-        }
-        self.subtitlePreferenceChanged = NO;
-    }
-    
     [self doDisplayVideoPicAndSubtitle:currentAttach];
 }
 
@@ -621,7 +380,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
-    CGLLockContext([[self openGLContext] CGLContextObj]);
+    lock_gl([self openGLContext]);
     [[self openGLContext] makeCurrentContext];
 
     if ([self setupRendererIfNeed:attach] && IJK_GLES2_Renderer_isValid(_renderer)) {
@@ -630,70 +389,47 @@ static bool _is_need_dispath_to_global(void)
         glViewport(0, 0, self.backingWidth, self.backingHeight);
         glClear(GL_COLOR_BUFFER_BIT);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        
+        IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, self.backingWidth, self.backingHeight);
         //for video
         [self doUploadVideoPicture:attach];
         //for subtitle
-        [self doUploadSubtitle:attach];
+        [self doUploadSubtitle:attach viewport:CGSizeMake(self.backingWidth, self.backingHeight)];
     } else {
         ALOGW("IJKSDLGLView: Renderer not ok.\n");
     }
     
-    [[self openGLContext]flushBuffer];
-    CGLUnlockContext([[self openGLContext] CGLContextObj]);
+    if (self.inLiveResize) {
+        glFlush();
+    } else {
+        [[self openGLContext]flushBuffer];
+    }
+    unlock_gl([self openGLContext]);
 }
 
 - (void)setNeedsRefreshCurrentPic
 {
-    //use single global thread!
     [self.renderThread performSelector:@selector(doRefreshCurrentAttach:)
                             withTarget:self
                             withObject:self.currentAttach
                          waitUntilDone:NO];
 }
 
-- (void)generateSubTexture:(IJKOverlayAttach *)attach
-{
-    IJKSDLSubtitle *sub = attach.sub;
-    CVPixelBufferRef subRef = NULL;
-    if (sub.text.length > 0) {
-        subRef = [self _generateSubtitlePixel:sub.text];
-    } else if (sub.pixels != NULL) {
-        subRef = [self _generateSubtitlePixelFromPicture:sub];
-    }
-    if (subRef) {
-        CGLLockContext([[self openGLContext] CGLContextObj]);
-        [[self openGLContext] makeCurrentContext];
-        attach.subTexture = [_IJKSDLSubTexture generate:subRef];
-        CGLUnlockContext([[self openGLContext] CGLContextObj]);
-        CVPixelBufferRelease(subRef);
-    }
-}
-
 - (BOOL)displayAttach:(IJKOverlayAttach *)attach
 {
-    if (!attach) {
-        ALOGW("IJKSDLGLView: overlay is nil\n");
+    //in vout thread hold the attach,let currentAttach dealloc in vout thread,because it's texture overlay was created in vout thread,must keep same thread in macOS 10.12 is so important!
+    self.currentAttach = attach;
+    
+    if (!attach.videoPicture) {
+        ALOGW("IJKSDLGLView: videiPicture is nil\n");
         return NO;
     }
-    //overlay is not thread safe, maybe need dispatch from sub thread to main thread,so hold overlay's property to GLView.
-    
-    //generate current subtitle.
-    if (self.subtitlePreferenceChanged || self.currentAttach.sub != attach.sub) {
-        [self generateSubTexture:attach];
-    } else if (self.currentAttach.sub) {
-        //reuse the expensive texture.
-        attach.subTexture = self.currentAttach.subTexture;
-    }
-    
-    if (self.subtitlePreferenceChanged) {
-        self.subtitlePreferenceChanged = NO;
-    }
-    //hold the attach as current.
-    self.currentAttach = attach;
     
     if (self.preventDisplay) {
         return YES;
+    }
+    
+    if (self.backingWidth == 0 || self.backingHeight == 0) {
+        return NO;
     }
     
     [self.renderThread performSelector:@selector(doDisplayVideoPicAndSubtitle:)
@@ -701,39 +437,6 @@ static bool _is_need_dispath_to_global(void)
                             withObject:attach
                          waitUntilDone:NO];
     return YES;
-}
-
-- (void)initGL
-{
-    // The reshape function may have changed the thread to which our OpenGL
-    // context is attached before prepareOpenGL and initGL are called.  So call
-    // makeCurrentContext to ensure that our OpenGL context current to this
-    // thread (i.e. makeCurrentContext directs all OpenGL calls on this thread
-    // to [self openGLContext])
-    [[self openGLContext] makeCurrentContext];
-    
-    // Synchronize buffer swaps with vertical refresh rate
-    GLint swapInt = 1;
-    [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
-    
-    glClearColor(0.0, 0.0, 0.0, 1.0f);
-}
-
-- (void)prepareOpenGL
-{
-    [super prepareOpenGL];
-
-    // Make all the OpenGL calls to setup rendering
-    //  and build the necessary rendering objects
-    [self initGL];
-}
-
-- (void)windowWillClose:(NSNotification*)notification
-{
-    // Stop the display link when the window is closing because default
-    // OpenGL render buffers will be destroyed.  If display link continues to
-    // fire without renderbuffers, OpenGL draw calls will set errors.
-    // todo
 }
 
 #pragma mark - for snapshot
@@ -751,7 +454,7 @@ static bool _is_need_dispath_to_global(void)
         return;
     }
     
-    CGLLockContext([[self openGLContext] CGLContextObj]);
+    lock_gl([self openGLContext]);
     [[self openGLContext] makeCurrentContext];
     //[self setupRendererIfNeed:attach];
     CGImageRef img = NULL;
@@ -763,12 +466,7 @@ static bool _is_need_dispath_to_global(void)
         CGSize picSize = CGSizeMake(CVPixelBufferGetWidth(attach.videoPicture) * videoSar, CVPixelBufferGetHeight(attach.videoPicture));
         //视频带有旋转 90 度倍数时需要将显示宽高交换后计算
         if (IJK_GLES2_Renderer_isZRotate90oddMultiple(_renderer)) {
-            float pic_width = picSize.width;
-            float pic_height = picSize.height;
-            float tmp = pic_width;
-            pic_width = pic_height;
-            pic_height = tmp;
-            picSize = CGSizeMake(pic_width, pic_height);
+            picSize = CGSizeMake(picSize.height, picSize.width);
         }
         
         //保持用户定义宽高比
@@ -785,7 +483,7 @@ static bool _is_need_dispath_to_global(void)
         }
         
         if (![self.fbo canReuse:picSize]) {
-            self.fbo = [[_IJKSDLFBO alloc] initWithSize:picSize];
+            self.fbo = [[IJKSDLOpenGLFBO alloc] initWithSize:picSize];
         }
         
         if (self.fbo) {
@@ -793,7 +491,7 @@ static bool _is_need_dispath_to_global(void)
                 [self.fbo bind];
                 glViewport(0, 0, picSize.width, picSize.height);
                 glClear(GL_COLOR_BUFFER_BIT);
-                
+                IJK_GLES2_Renderer_setGravity(_renderer, _rendererGravity, picSize.width, picSize.height);
                 if (!IJK_GLES2_Renderer_resetVao(_renderer))
                     ALOGE("[GL] Renderer_resetVao failed\n");
                 
@@ -804,7 +502,7 @@ static bool _is_need_dispath_to_global(void)
             }
             
             if (containSub) {
-                [self doUploadSubtitle:attach];
+                [self doUploadSubtitle:attach viewport:picSize];
             }
             img = [self _snapshotTheContextWithSize:picSize];
         } else {
@@ -812,8 +510,7 @@ static bool _is_need_dispath_to_global(void)
         }
         [[self openGLContext]flushBuffer];
     }
-    CGLUnlockContext([[self openGLContext] CGLContextObj]);
-    
+    unlock_gl([self openGLContext]);
     if (outImg && img) {
         *outImg = CGImageRetain(img);
     }
@@ -893,7 +590,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     
     GLint bytesPerRow = width * 4;
     const GLint bitsPerPixel = 32;
-    CGContextRef ctx = _CreateCGBitmapContext(width, height, 8, 32, bytesPerRow, kCGBitmapByteOrderDefault |kCGImageAlphaNoneSkipLast);
+    CGContextRef ctx = _CreateCGBitmapContext(width, height, 8, 32, bytesPerRow, kCGBitmapByteOrderDefault | kCGImageAlphaNoneSkipLast);
     if (ctx) {
         void * bitmapData = CGBitmapContextGetData(ctx);
         if (bitmapData) {
@@ -933,6 +630,7 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     
     CGLLockContext([openGLContext CGLContextObj]);
     [openGLContext makeCurrentContext];
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     CGImageRef img = [self _snapshotTheContextWithSize:size];
     CGLUnlockContext([openGLContext CGLContextObj]);
     
@@ -1045,25 +743,44 @@ static CGImageRef _FlipCGImage(CGImageRef src)
     }
 }
 
-- (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference
+- (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b
 {
-    if (_subtitlePreference.bottomMargin != subtitlePreference.bottomMargin) {
-        _subtitlePreference = subtitlePreference;
-        if (IJK_GLES2_Renderer_isValid(_renderer)) {
-            IJK_GLES2_Renderer_updateSubtitleBottomMargin(_renderer, _subtitlePreference.bottomMargin);
-        }
-    }
-    
-    if (_subtitlePreference.ratio != subtitlePreference.ratio || _subtitlePreference.color != subtitlePreference.color) {
-        _subtitlePreference = subtitlePreference;
-        self.subtitlePreferenceChanged = YES;
+    self.bgColor = @[@(r/255.0),@(g/255.0),@(b/255.0),@(1.0)];
+    if (!self.currentAttach) {
+        [self doRefreshCurrentAttach:self.currentAttach];
     }
 }
 
-- (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b
+- (NSOpenGLContext *)sharedContext
 {
-    [[self openGLContext] makeCurrentContext];
-    glClearColor(r/255.0, g/255.0, b/255.0, 1.0f);
+    if (!_sharedContext) {
+        NSOpenGLPixelFormatAttribute attrs[] =
+        {
+            NSOpenGLPFAAccelerated,
+            NSOpenGLPFANoRecovery,
+            NSOpenGLPFADoubleBuffer,
+            NSOpenGLPFADepthSize, 24,
+    #if ! USE_LEGACY_OPENGL
+            NSOpenGLPFAOpenGLProfile,NSOpenGLProfileVersion3_2Core,
+    #endif
+    //        NSOpenGLPFAAllowOfflineRenderers, 1,
+            0
+        };
+       
+        NSOpenGLPixelFormat *pf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+        
+        if (pf) {
+            _sharedContext = [[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil];
+        } else {
+            ALOGE("No OpenGL pixel format");
+        }
+    }
+    return _sharedContext;
+}
+
+- (id)context
+{
+    return [self sharedContext];
 }
 
 - (NSString *)name
@@ -1073,6 +790,13 @@ static CGImageRef _FlipCGImage(CGImageRef src)
 
 - (NSView *)hitTest:(NSPoint)point
 {
+    for (NSView *sub in [self subviews]) {
+        NSPoint pointInSelf = [self convertPoint:point fromView:self.superview];
+        NSPoint pointInSub = [self convertPoint:pointInSelf toView:sub];
+        if (NSPointInRect(pointInSub, sub.bounds)) {
+            return sub;
+        }
+    }
     return nil;
 }
 

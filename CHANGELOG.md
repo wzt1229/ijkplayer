@@ -1,3 +1,16 @@
+tag k0.11.0
+--------------------------------
+
+- support ass subtitle effects, and adjust position and scale in real time
+- support display multiple pgs bitmap subtitle at the same moment, and adjust position and scale in real time
+- dropped old subtitle renderer (text->image(Core Graphics)->CVPixelBuffer->Texture)
+- subtitle preference move to player from view
+- dropped iOS OpenGL renderer
+- support http gzip and deflate use headers
+- restore ijk dns cache and http event hook
+- enable microdvd subtitle decoder
+- meta add chapter info
+
 tag k0.10.5
 --------------------------------
 
@@ -10,7 +23,7 @@ tag k0.10.4
 - support install third pre-compiled libs
 - external subtitle support GBK、BIG5-2003 character set
 - fix subtitle display more bigger bug on non-retina screen using metal
-- support render P216，YUV422P16，P416，YUV444P16，AYUV64，YUVA444P16 pixel format directly
+- support render P216、YUV422P16、P416、YUV444P16、AYUV64、YUVA444P16 pixel format directly
 - upgrade ffmpeg to 5.1.4，openssl to 1.1.1w，opus to 1.4，dav1d to 1.3.0，bluray to 1.3.4
 
 tag k0.10.3

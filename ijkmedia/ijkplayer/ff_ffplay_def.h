@@ -66,6 +66,7 @@
 #include "ff_ffpipenode.h"
 #include "ijkmeta.h"
 #include "ijkavformat/ijklas.h"
+#include "ff_subtitle_def.h"
 
 #define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (256 * 1024)
 #define SALTATION_RETURN_VALUE 1000
@@ -160,8 +161,6 @@ typedef struct PacketQueue {
     SDL_cond *cond;
     MyAVPacketList *recycle_pkt;
     int recycle_count;
-    int alloc_count;
-
     int is_buffer_indicator;
 } PacketQueue;
 
@@ -169,9 +168,9 @@ typedef struct PacketQueue {
 #define VIDEO_PICTURE_QUEUE_SIZE_MIN        (3)
 #define VIDEO_PICTURE_QUEUE_SIZE_MAX        (16)
 #define VIDEO_PICTURE_QUEUE_SIZE_DEFAULT    (VIDEO_PICTURE_QUEUE_SIZE_MIN)
-#define SUBPICTURE_QUEUE_SIZE 16
+#define SUBPICTURE_QUEUE_SIZE 32
 #define SAMPLE_QUEUE_SIZE 9
-#define FRAME_QUEUE_SIZE FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE_MAX, SUBPICTURE_QUEUE_SIZE))
+#define FRAME_QUEUE_SIZE FFMAX(SAMPLE_QUEUE_SIZE, VIDEO_PICTURE_QUEUE_SIZE_MAX)
 
 #define VIDEO_MAX_FPS_DEFAULT 30
 
@@ -198,6 +197,7 @@ typedef struct Clock {
 typedef struct Frame {
     AVFrame *frame;
     AVSubtitle sub;
+    FFSubtitleBuffer *sub_list[SUB_REF_MAX_LEN];
     int serial;
     double pts;           /* presentation timestamp for the frame */
     double duration;      /* estimated duration of the frame */
@@ -212,7 +212,7 @@ typedef struct Frame {
     int height;
     int format;
     AVRational sar;
-    int uploaded;
+    int shown;
 } Frame;
 
 typedef struct FrameQueue {
@@ -268,6 +268,7 @@ typedef struct VideoState {
     SDL_Thread _read_tid;
     const AVInputFormat *iformat;
     int abort_request;
+    int force_refresh_sub_changed;//changed sub prefercence or close sub.
     int force_refresh;
     int paused;
     int last_paused;
@@ -368,8 +369,6 @@ typedef struct VideoState {
     AVFilterContext *out_audio_filter;  // the last filter in the audio chain
     AVFilterGraph *agraph;              // audio filter graph
 #endif
-
-    int last_video_stream, last_audio_stream, last_subtitle_stream;
 
     SDL_cond *continue_read_thread;
 
@@ -595,7 +594,6 @@ typedef struct FFPlayer {
     int infinite_buffer;
     enum ShowMode show_mode;
     char *audio_codec_name;
-    char *subtitle_codec_name;
     char *video_codec_name;
     double rdftspeed;
 #ifdef FFP_MERGE
@@ -624,6 +622,7 @@ typedef struct FFPlayer {
     /* extra fields */
     SDL_Aout *aout;
     SDL_Vout *vout;
+    struct SDL_GPU  *gpu;
     struct IJKFF_Pipeline *pipeline;
     struct IJKFF_Pipenode *node_vdec;
 
@@ -710,6 +709,8 @@ typedef struct FFPlayer {
     LasPlayerStatistic las_player_statistic;
 
     ijk_audio_samples_callback audio_samples_callback;
+    
+    IJKSDLSubtitlePreference sp;
 } FFPlayer;
 
 #define fftime_to_seconds(ts)      (av_rescale(ts, 1, AV_TIME_BASE))

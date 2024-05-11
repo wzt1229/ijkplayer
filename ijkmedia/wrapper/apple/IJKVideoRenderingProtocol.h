@@ -34,7 +34,7 @@ typedef NSView UIView;
 #else
 #import <UIKit/UIKit.h>
 #endif
-
+#import "ff_subtitle_def.h"
 
 typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeAspectFit,  // Uniform scale until one dimension fits
@@ -42,16 +42,7 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
     IJKMPMovieScalingModeFill        // Non-uniform scale. Both render dimensions will exactly match the visible bounds
 };
 
-@interface IJKSDLSubtitle : NSObject
-
-@property(nonatomic, copy) NSString * text;
-//bitmap
-@property(nonatomic) int w;
-@property(nonatomic) int h;
-@property(nonatomic) uint8_t *pixels; //pixels with length w * h, in BGRA pixel format
-
-@end
-
+typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 @interface IJKOverlayAttach : NSObject
 
 //video frame normal size not alignmetn,maybe not equal to currentVideoPic's size.
@@ -69,17 +60,42 @@ typedef NS_ENUM(NSInteger, IJKMPMovieScalingMode) {
 //degrees
 @property(nonatomic) int autoZRotate;
 @property(nonatomic) CVPixelBufferRef videoPicture;
-@property(nonatomic) IJKSDLSubtitle *sub;
 @property(nonatomic) NSArray *videoTextures;
+
+@property(nonatomic) SDL_TextureOverlay *overlay;
 @property(nonatomic) id subTexture;
+
 @end
 
-typedef struct _IJKSDLSubtitlePreference IJKSDLSubtitlePreference;
-struct _IJKSDLSubtitlePreference {
-    float ratio;//scale
-    int32_t color;
-    float bottomMargin;//[0.0,1.0]
-};
+static inline uint32_t color2int(UIColor *color) {
+#if TARGET_OS_OSX
+    if (@available(macOS 10.13, *)) {
+        if (color.type != NSColorSpaceModelRGB) {
+            
+        }
+    }
+    if (![color.colorSpaceName isEqualToString:NSDeviceRGBColorSpace] && ![color.colorSpaceName isEqualToString:NSCalibratedRGBColorSpace]) {
+        color = [color colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+    }
+#endif
+    CGFloat r,g,b,a;
+    [color getRed:&r green:&g blue:&b alpha:&a];
+    
+    r *= 255;
+    g *= 255;
+    b *= 255;
+    a *= 255;
+    return (uint32_t)a + ((uint32_t)b << 8) + ((uint32_t)g << 16) + ((uint32_t)r << 24);
+}
+
+static inline UIColor * int2color(uint32_t abgr) {
+    CGFloat r,g,b,a;
+    a = ((float)(abgr & 0xFF)) / 255.0;
+    b = ((float)((abgr & 0xFF00) >> 8)) / 255.0;
+    g = (float)(((abgr & 0xFF0000) >> 16)) / 255.0;
+    r = ((float)((abgr & 0xFF000000) >> 24)) / 255.0;
+    return [UIColor colorWithRed:r green:g blue:b alpha:a];
+}
 
 typedef enum _IJKSDLRotateType {
     IJKSDLRotateNone,
@@ -124,11 +140,9 @@ typedef enum : NSUInteger {
  if you update these preference blow, when player paused,
  you can call -[setNeedsRefreshCurrentPic] method let current picture refresh right now.
  */
-// subtitle preference
-@property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
 // rotate preference
 @property(nonatomic) IJKSDLRotatePreference rotatePreference;
-// color conversion perference
+// color conversion preference
 @property(nonatomic) IJKSDLColorConversionPreference colorPreference;
 // user defined display aspect ratio
 @property(nonatomic) IJKSDLDARPreference darPreference;
@@ -148,14 +162,10 @@ typedef enum : NSUInteger {
 - (CGImageRef)snapshot:(IJKSDLSnapshotType)aType;
 #endif
 - (NSString *)name;
+- (id)context;
+
 @optional;
-//when video size changed will call videoNaturalSizeChanged.
-- (void)videoNaturalSizeChanged:(CGSize)size;
-//when video z rotate degrees changed will call videoZRotateDegrees.
-- (void)videoZRotateDegrees:(NSInteger)degrees;
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b;
-//when palyer paused,close subtile stream will call this method.
-- (void)cleanSubtitle;
 
 @end
 
