@@ -456,7 +456,6 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
         
         if (sp->duration > 0) {
             if (pts > sp->pts + sp->duration) {
-                av_log(NULL, AV_LOG_ERROR,"sub stream drop overtime1 frame:%f\n",sp->pts);
                 frame_queue_next(com->frameq);
                 continue;
             }
