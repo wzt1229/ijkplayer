@@ -18,6 +18,7 @@ typedef struct FFExSubtitle {
     int stream_id;//ic 里的
     int eof;
     int64_t seek_req;
+    float startTime;
 }FFExSubtitle;
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -86,7 +87,7 @@ int exSub_seek_to(FFExSubtitle *sub, float sec)
     if (sec < 0) {
         sec = 0;
     }
-    sub->seek_req = seconds_to_fftime(sec);
+    sub->seek_req = seconds_to_fftime(sec) - sub->startTime;
     return 0;
 }
 
@@ -165,7 +166,7 @@ static int exSub_create(FFExSubtitle **subp, PacketQueue * pktq)
     return 0;
 }
 
-int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_name)
+int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_name, float startTime)
 {
     if (!subp) {
         return -1;
@@ -180,7 +181,7 @@ int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_n
         exSub_close_input(&mySub);
         return -3;
     }
-    
+    mySub->startTime = startTime;
     *subp = mySub;
     return 0;
 }

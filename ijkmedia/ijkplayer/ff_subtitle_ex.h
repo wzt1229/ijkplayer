@@ -14,7 +14,7 @@ typedef struct FFExSubtitle FFExSubtitle;
 typedef struct PacketQueue PacketQueue;
 typedef struct AVStream AVStream;
 
-int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_name);
+int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_name, float startTime);
 void exSub_start_read(FFExSubtitle *sub);
 void exSub_close_input(FFExSubtitle **sub);
 AVStream * exSub_get_stream(FFExSubtitle *sub);

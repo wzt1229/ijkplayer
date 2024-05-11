@@ -33,6 +33,7 @@ typedef struct FFSubComponent{
     int sp_changed;
     float current_pts;
     float pre_load_pts;
+    float startTime;
 }FFSubComponent;
 
 static void apply_preference(FFSubComponent *com)
@@ -345,7 +346,7 @@ static int subtitle_thread(void *arg)
                 
                 double pts = 0;
                 if (sub.pts != AV_NOPTS_VALUE)
-                    pts = sub.pts / (double)AV_TIME_BASE;
+                    pts = sub.pts / (double)AV_TIME_BASE + com->startTime;
                 
                 int count = 0;
                 FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
@@ -593,7 +594,7 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
     }
 }
 
-int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, PacketQueue* packetq, FrameQueue* frameq, const char *enc, subComponent_retry_callback callback, void *opaque, int vw, int vh)
+int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, PacketQueue* packetq, FrameQueue* frameq, const char *enc, subComponent_retry_callback callback, void *opaque, int vw, int vh, float startTime)
 {
     assert(frameq);
     assert(packetq);
@@ -627,12 +628,12 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     const AVCodec* codec = avcodec_find_decoder(stream->codecpar->codec_id);
     
     if (!codec) {
-        av_log(NULL, AV_LOG_ERROR, "can't find [%s] subtitle decoder!",avcodec_get_name(stream->codecpar->codec_id));
+        av_log(NULL, AV_LOG_ERROR, "can't find [%s] subtitle decoder!", avcodec_get_name(stream->codecpar->codec_id));
         return -100;
     }
     
     if (avcodec_open2(avctx, codec, NULL) < 0) {
-        av_log(NULL, AV_LOG_ERROR, "can't open [%s] subtitle decoder!",avcodec_get_name(stream->codecpar->codec_id));
+        av_log(NULL, AV_LOG_ERROR, "can't open [%s] subtitle decoder!", avcodec_get_name(stream->codecpar->codec_id));
         return -6;
     }
     
@@ -652,6 +653,7 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     com->sp = ijk_subtitle_default_preference();
     com->current_pts = -1;
     com->pre_load_pts = -1;
+    com->startTime = startTime;
     
     int ret = decoder_init(&com->decoder, avctx, com->packetq, NULL);
     

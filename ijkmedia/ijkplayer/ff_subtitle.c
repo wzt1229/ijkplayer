@@ -40,7 +40,7 @@ typedef struct FFSubtitle {
     float current_pts;
     AVFormatContext* ic_internal;
     int maxStream_internal;
-    int streamStartTime;//ic start_time (s)
+    float streamStartTime;//ic start_time (s)
     
     FFExSubtitle* exSub;
     char* pathArr[IJK_EX_SUBTITLE_STREAM_MAX_COUNT];
@@ -321,7 +321,7 @@ void ff_sub_stream_ic_ready(FFSubtitle *sub, AVFormatContext* ic, int video_w, i
     }
     sub->video_w = video_w;
     sub->video_h = video_h;
-    sub->streamStartTime = (int)fftime_to_seconds(ic->start_time);
+    sub->streamStartTime = fftime_to_milliseconds(ic->start_time)/1000.0;
     sub->maxStream_internal = ic->nb_streams;
     sub->ic_internal = ic;
 }
@@ -417,7 +417,7 @@ static int open_any_stream(FFSubtitle *sub, int stream, const char *enc)
     if (stream < sub->ic_internal->nb_streams) {
         //open internal
         AVStream *st = sub->ic_internal->streams[sub->need_update_stream];
-        int r = subComponent_open(&sub->com, stream, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h);
+        int r = subComponent_open(&sub->com, stream, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h, 0.0);
         if (!r) {
             subComponent_update_preference(sub->com, &sub->sp);
             move_backup_to_normal(sub, stream);
@@ -426,10 +426,10 @@ static int open_any_stream(FFSubtitle *sub, int stream, const char *enc)
     } else {
         const char *file = ext_file_path_for_idx(sub, stream);
         if (file) {
-            if (!exSub_open_input(&sub->exSub, &sub->packetq, file)) {
+            if (!exSub_open_input(&sub->exSub, &sub->packetq, file, sub->streamStartTime)) {
                 AVStream *st = exSub_get_stream(sub->exSub);
                 int st_id = exSub_get_stream_id(sub->exSub);
-                int r = subComponent_open(&sub->com, st_id, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h);
+                int r = subComponent_open(&sub->com, st_id, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h, sub->streamStartTime);
                 if (!r) {
                     subComponent_update_preference(sub->com, &sub->sp);
                     exSub_start_read(sub->exSub);
@@ -623,7 +623,6 @@ int ff_sub_put_packet_backup(FFSubtitle *sub, AVPacket *pkt)
 void ff_sub_seek_to(FFSubtitle *sub, float delay, float v_pts)
 {
     if (ff_sub_current_stream_type(sub) == 2) {
-        v_pts -= sub->streamStartTime;
         float wantDisplay = v_pts - delay;
         SDL_LockMutex(sub->mutex);
         exSub_seek_to(sub->exSub, wantDisplay);
@@ -636,8 +635,6 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
     if (!sub) {
         return -1;
     }
-    
-    v_pts -= sub->streamStartTime;
     
     float wantDisplay = v_pts - delay;
     //subtile's frame queue greater than can display pts
