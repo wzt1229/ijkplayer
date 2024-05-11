@@ -1,7 +1,7 @@
 From ad70425a954678c0cbcb779b15d2bc3cd0d36f0f Mon Sep 17 00:00:00 2001
 From: qianlongxu <qianlongxu@gmail.com>
 Date: Mon, 12 Jun 2023 16:15:15 +0800
-Subject: [PATCH 05/15] hls support discontinuity
+Subject: [PATCH 05/17] hls support discontinuity
 
 ---
  libavformat/hls.c | 60 +++++++++++++++++++++++++++++++++++++++++------
