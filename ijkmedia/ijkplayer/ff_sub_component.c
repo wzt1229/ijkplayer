@@ -15,7 +15,7 @@
 #define SUB_MAX_KEEP_DU 3.0
 #define ASS_USE_PRE_RENDER 1
 #define CACHE_ASS_IMG_COUNT 6
-#define A_ASS_IMG_DURATION 0.03
+#define A_ASS_IMG_DURATION 0.05
 
 typedef struct FFSubComponent{
     int st_idx;
@@ -32,6 +32,7 @@ typedef struct FFSubComponent{
     IJKSDLSubtitlePreference sp;
     int sp_changed;
     float current_pts;
+    float pkt_pts;
     float pre_load_pts;
     float startTime;
 }FFSubComponent;
@@ -83,13 +84,24 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
         return -1;
     }
     
+    //pre load need limit range
+    if (com->pre_load_pts - com->current_pts > (SUB_MAX_KEEP_DU * CACHE_ASS_IMG_COUNT) || com->pre_load_pts > com->pkt_pts) {
+        return -1;
+    }
     FFSubtitleBuffer *pre_buffer = NULL;
     FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
     int result = 0;
     while (com->packetq->abort_request == 0) {
         FFSubtitleBuffer *buffer = NULL;
+        float delta = com->current_pts - com->pre_load_pts;
+        if (delta > A_ASS_IMG_DURATION) {
+            //subtitle is slower than video, so need fast forward
+            com->pre_load_pts = com->current_pts + 0.2;
+            Frame *sp = frame_queue_peek_offset(com->frameq, 0);
+            double pts = sp ? sp->pts : -1;
+            av_log(NULL, AV_LOG_WARNING, "subtitle is slower than video:%fs,cache:%d,%f",delta,frame_queue_nb_remaining(com->frameq),pts);
+        }
         double pts = com->pre_load_pts;
-        
         int r = ff_ass_upload_buffer(com->assRenderer, pts, &buffer, 0);
         if (r == 0) {
             //no change, reuse pre frame
@@ -122,15 +134,6 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             com->pre_load_pts += A_ASS_IMG_DURATION;
             result = -1;
             break;
-        }
-        
-        float delta = com->current_pts - pts;
-        if (delta > A_ASS_IMG_DURATION) {
-            ff_subtitle_buffer_release(&buffer);
-            //subtitle is slower than video, so need fast forward
-            com->pre_load_pts = com->current_pts + 0.2;
-            av_log(NULL, AV_LOG_WARNING, "subtitle is slower than video:%fs",delta);
-            continue;
         }
         
         Frame *sp = frame_queue_peek_writable_noblock(com->frameq);
@@ -207,6 +210,7 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
                 }
                 com->pre_load_pts = -1;
                 com->current_pts = -1;
+                com->pkt_pts = -1;
                 av_log(NULL, AV_LOG_INFO, "sub flush serial:%d\n",d->pkt_serial);
             }
         }
@@ -374,6 +378,7 @@ static int subtitle_thread(void *arg)
                             const float begin = pts + (float)sub.start_display_time / 1000.0;
                             float end = sub.end_display_time - sub.start_display_time;
                             ff_ass_process_chunk(com->assRenderer, ass_line, begin * 1000, end);
+                            com->pkt_pts = begin;
                             count++;
                         }
                     }
