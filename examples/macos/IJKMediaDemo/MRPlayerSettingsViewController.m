@@ -9,14 +9,12 @@
 #import "MRPlayerSettingsViewController.h"
 #import <IJKMediaPlayerKit/IJKFFMoviePlayerController.h>
 #import "MRCocoaBindingUserDefault.h"
+#import "MRPlayerSettingsView.h"
 
 @interface MRPlayerSettingsViewController ()
 
 @property (weak) IBOutlet NSScrollView *scrollView;
-
-@property (nonatomic, weak) IBOutlet NSPopUpButton *subtitlePopUpBtn;
-@property (nonatomic, weak) IBOutlet NSPopUpButton *audioPopUpBtn;
-@property (nonatomic, weak) IBOutlet NSPopUpButton *videoPopUpBtn;
+@property (weak) IBOutlet MRPlayerSettingsView *settingsView;
 
 @property (nonatomic, assign) BOOL use_openGL;
 @property (nonatomic, copy) NSString *fcc;
@@ -34,16 +32,6 @@
 
 @implementation MRPlayerSettingsViewController
 
-+ (float)viewWidth
-{
-    return 300;
-}
-
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    // Do view setup here.
-}
-
 - (void)viewDidAppear
 {
     [super viewDidAppear];
@@ -51,28 +39,9 @@
     [self.scrollView.contentView scrollToPoint:newOrigin];
 }
 
-- (void)onCloseCurrentStream:(MRPlayerSettingsCloseStreamBlock)block
-{
-    self.closeCurrentStream = block;
-}
-
-- (void)onExchangeSelectedStream:(MRPlayerSettingsExchangeStreamBlock)block
-{
-    self.exchangeSelectedStream = block;
-}
-
 - (void)exchangeToNextSubtitle
 {
-    NSInteger idx = [self.subtitlePopUpBtn indexOfSelectedItem];
-    idx ++;
-    if (idx >= [self.subtitlePopUpBtn numberOfItems]) {
-        idx = 0;
-    }
-    NSMenuItem *item = [self.subtitlePopUpBtn itemAtIndex:idx];
-    if (item) {
-        [self.subtitlePopUpBtn selectItem:item];
-        [self.subtitlePopUpBtn.target performSelector:self.subtitlePopUpBtn.action withObject:self.subtitlePopUpBtn];
-    }
+    [self.settingsView exchangeToNextSubtitle];
 }
 
 - (void)updateTracks:(NSDictionary *)mediaMeta
@@ -84,17 +53,14 @@
     int subtitleIdx = [mediaMeta[k_IJKM_VAL_TYPE__SUBTITLE] intValue];
     NSLog(@"当前字幕：%d",subtitleIdx);
     
-    [self.subtitlePopUpBtn removeAllItems];
-    NSString *currentTitle = @"选择字幕";
-    [self.subtitlePopUpBtn addItemWithTitle:currentTitle];
+    [self.settingsView removeAllItems];
     
-    [self.audioPopUpBtn removeAllItems];
+    NSString *currentSubtitle = @"选择字幕";
+    [self.settingsView addSubtitleItemWithTitle:currentSubtitle];
     NSString *currentAudio = @"选择音轨";
-    [self.audioPopUpBtn addItemWithTitle:currentAudio];
-    
-    [self.videoPopUpBtn removeAllItems];
+    [self.settingsView addAudioItemWithTitle:currentAudio];
     NSString *currentVideo = @"选择视轨";
-    [self.videoPopUpBtn addItemWithTitle:currentVideo];
+    [self.settingsView addVideoItemWithTitle:currentVideo];
     
     for (NSDictionary *stream in mediaMeta[kk_IJKM_KEY_STREAMS]) {
         NSString *type = stream[k_IJKM_KEY_TYPE];
@@ -116,9 +82,9 @@
             }
             title = [NSString stringWithFormat:@"%@-%d",title,streamIdx];
             if ([mediaMeta[k_IJKM_VAL_TYPE__SUBTITLE] intValue] == streamIdx) {
-                currentTitle = title;
+                currentSubtitle = title;
             }
-            [self.subtitlePopUpBtn addItemWithTitle:title];
+            [self.settingsView addSubtitleItemWithTitle:title];
         } else if ([type isEqualToString:k_IJKM_VAL_TYPE__AUDIO]) {
             NSLog(@"audio meta:%@",stream);
             NSString *title = stream[k_IJKM_KEY_TITLE];
@@ -132,7 +98,7 @@
             if ([mediaMeta[k_IJKM_VAL_TYPE__AUDIO] intValue] == streamIdx) {
                 currentAudio = title;
             }
-            [self.audioPopUpBtn addItemWithTitle:title];
+            [self.settingsView addAudioItemWithTitle:title];
         } else if ([type isEqualToString:k_IJKM_VAL_TYPE__VIDEO]) {
             NSLog(@"video meta:%@",stream);
             NSString *title = stream[k_IJKM_KEY_TITLE];
@@ -146,17 +112,32 @@
             if ([mediaMeta[k_IJKM_VAL_TYPE__VIDEO] intValue] == streamIdx) {
                 currentVideo = title;
             }
-            [self.videoPopUpBtn addItemWithTitle:title];
+            [self.settingsView addVideoItemWithTitle:title];
         }
     }
-    [self.subtitlePopUpBtn selectItemWithTitle:currentTitle];
-    [self.audioPopUpBtn selectItemWithTitle:currentAudio];
-    [self.videoPopUpBtn selectItemWithTitle:currentVideo];
+    [self.settingsView selectAudioItemWithTitle:currentAudio];
+    [self.settingsView selectVideoItemWithTitle:currentVideo];
+    [self.settingsView selectSubtitleItemWithTitle:currentSubtitle];
+}
+
+- (void)onCloseCurrentStream:(MRPlayerSettingsCloseStreamBlock)block
+{
+    self.closeCurrentStream = block;
+}
+
+- (void)onExchangeSelectedStream:(MRPlayerSettingsExchangeStreamBlock)block
+{
+    self.exchangeSelectedStream = block;
+}
+
+- (void)onCaptureShot:(dispatch_block_t)block
+{
+    self.captureShot = block;
 }
 
 #pragma mark 音轨设置
 
-- (IBAction)onSelectTrack:(NSPopUpButton*)sender
+- (void)onSelectTrack:(NSPopUpButton*)sender
 {
     if (sender.indexOfSelectedItem == 0) {
         if (self.closeCurrentStream) {
@@ -186,7 +167,7 @@
     }
 }
 
-- (IBAction)onResetColorAdjust:(NSButton *)sender
+- (void)onResetColorAdjust:(NSButton *)sender
 {
     int tag = (int)sender.tag;
     NSString *key = nil;
@@ -202,7 +183,14 @@
     }
 }
 
-- (IBAction)onSelectFont:(NSButton *)sender
+- (void)changeFont:(NSFontManager *)sender
+{
+    self.font = [[NSFontPanel sharedFontPanel] panelConvertFont:self.font];
+    [MRCocoaBindingUserDefault setSubtitle_font_name:self.font.fontName];
+    [MRCocoaBindingUserDefault setSubtitle_font_size:self.font.pointSize];
+}
+
+- (void)onSelectFont:(NSButton *)sender
 {
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
     [fontManager setTarget:self];
@@ -218,28 +206,15 @@
     [panel orderFront:self];
 }
 
-- (void)changeFont:(NSFontManager *)sender
-{
-    self.font = [[NSFontPanel sharedFontPanel] panelConvertFont:self.font];
-    [MRCocoaBindingUserDefault setSubtitle_font_name:self.font.fontName];
-    [MRCocoaBindingUserDefault setSubtitle_font_size:self.font.pointSize];
-}
-
-- (void)onCaptureShot:(dispatch_block_t)block
-{
-    self.captureShot = block;
-}
-
-- (IBAction)onSnapshot:(NSButton *)sender
+- (void)onSnapshot:(NSButton *)sender
 {
     if (self.captureShot) {
         self.captureShot();
     }
 }
 
-- (IBAction)onRestAllSettings:(NSButton *)sender 
+- (void)onRestAllSettings:(NSButton *)sender
 {
     [MRCocoaBindingUserDefault resetAll];
 }
-
 @end

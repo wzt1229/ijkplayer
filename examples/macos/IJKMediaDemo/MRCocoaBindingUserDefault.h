@@ -58,6 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (float)subtitle_scale;
 + (void)setSubtitle_font_size:(float)font_size;
 + (int)subtitle_bottom_margin;
++ (float)subtitle_delay;
 + (float)subtitle_stroke_size;
 + (NSColor *)subtitle_text_color;
 + (NSColor *)subtitle_bg_color;

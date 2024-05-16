@@ -15,8 +15,6 @@ typedef void(^MRPlayerSettingsCloseStreamBlock)(NSString *);
 
 @interface MRPlayerSettingsViewController : NSViewController
 
-+ (float)viewWidth;
-
 - (void)exchangeToNextSubtitle;
 - (void)updateTracks:(NSDictionary *)dic;
 - (void)onCloseCurrentStream:(MRPlayerSettingsCloseStreamBlock)block;
