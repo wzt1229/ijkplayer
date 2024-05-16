@@ -225,10 +225,10 @@ int             ijkmp_add_active_external_subtitle(IjkMediaPlayer* mp, const cha
 int             ijkmp_addOnly_external_subtitle(IjkMediaPlayer* mp, const char* file_name);
 /* add only ex-subtitle */
 int             ijkmp_addOnly_external_subtitles(IjkMediaPlayer* mp, const char* file_names [], int count);
-/* get video frame queue cache remaining count*/
-int             ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp);
-/* get audio frame queue cache remaining count*/
-int             ijkmp_get_audio_frame_cache_remaining(IjkMediaPlayer *mp);
+/* get frame queue cache remaining count;
+ audio type is 1,video type is 2,subtitle type is 3
+ */
+int             ijkmp_get_frame_cache_remaining(IjkMediaPlayer *mp, int type);
 /* register audio samples observer*/
 void            ijkmp_set_audio_sample_observer(IjkMediaPlayer *mp, ijk_audio_samples_callback cb);
 /* toggle accurate seek */

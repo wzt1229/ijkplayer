@@ -827,17 +827,10 @@ int ijkmp_addOnly_external_subtitles(IjkMediaPlayer* mp, const char* file_names 
     return retval;
 }
 
-int ijkmp_get_video_frame_cache_remaining(IjkMediaPlayer *mp)
+int ijkmp_get_frame_cache_remaining(IjkMediaPlayer *mp, int type)
 {
     assert(mp);
-    int retval = ffp_get_video_frame_cache_remaining(mp->ffplayer);
-    return retval;
-}
-
-int ijkmp_get_audio_frame_cache_remaining(IjkMediaPlayer *mp)
-{
-    assert(mp);
-    int retval = ffp_get_audio_frame_cache_remaining(mp->ffplayer);
+    int retval = ffp_get_frame_cache_remaining(mp->ffplayer, type);
     return retval;
 }
 

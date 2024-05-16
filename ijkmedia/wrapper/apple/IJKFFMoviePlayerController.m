@@ -955,10 +955,11 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     float vdps = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VIDEO_DECODE_FRAMES_PER_SECOND, .0f);
     float vfps = ijkmp_get_property_float(_mediaPlayer, FFP_PROP_FLOAT_VIDEO_OUTPUT_FRAMES_PER_SECOND, .0f);
     [self setHudValue:[NSString stringWithFormat:@"%.2f / %.2f / %.2f", vdps, vfps, self.fpsInMeta] forKey:@"fps(d/o/f)"];
-    int pic_remaining = ijkmp_get_video_frame_cache_remaining(_mediaPlayer);
-    int sam_remaining = ijkmp_get_audio_frame_cache_remaining(_mediaPlayer);
-    [self setHudValue:[NSString stringWithFormat:@"%d", pic_remaining] forKey:@"pictures"];
-    [self setHudValue:[NSString stringWithFormat:@"%d", sam_remaining] forKey:@"samples"];
+    
+    int sam_remaining = ijkmp_get_frame_cache_remaining(_mediaPlayer, 1);
+    int pic_remaining = ijkmp_get_frame_cache_remaining(_mediaPlayer, 2);
+    int sub_remaining = ijkmp_get_frame_cache_remaining(_mediaPlayer, 3);
+    [self setHudValue:[NSString stringWithFormat:@"%d,%d,%d", sam_remaining, pic_remaining, sub_remaining] forKey:@"frames(a,v,s)"];
     
     int64_t vcacheb = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_CACHED_BYTES, 0);
     int64_t acacheb = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_AUDIO_CACHED_BYTES, 0);

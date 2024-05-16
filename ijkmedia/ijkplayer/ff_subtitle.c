@@ -499,7 +499,8 @@ static int ff_sub_close_current(FFSubtitle *sub)
     if (sub->com) {
         r = subComponent_close(&sub->com);
     }
-    
+    //clean frame queue right now.
+    ff_sub_drop_old_frames(sub);
     return r;
 }
 
@@ -577,10 +578,10 @@ int ff_sub_current_stream_type(FFSubtitle *sub)
     return r;
 }
 
-int ff_sub_frame_queue_size(FFSubtitle *sub)
+int ff_sub_frame_cache_remaining(FFSubtitle *sub)
 {
     if (sub) {
-        return sub->frameq.size;
+        return frame_queue_nb_remaining(&sub->frameq);
     }
     return 0;
 }

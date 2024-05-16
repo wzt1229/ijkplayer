@@ -40,7 +40,7 @@ int ff_sub_current_stream_type(FFSubtitle *sub);
 
 int ff_sub_get_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOverlay **texture);
 int ff_sub_drop_old_frames(FFSubtitle *sub);
-int ff_sub_frame_queue_size(FFSubtitle *sub);
+int ff_sub_frame_cache_remaining(FFSubtitle *sub);
 
 int ff_sub_has_enough_packets(FFSubtitle *sub, int min_frames);
 int ff_sub_put_null_packet(FFSubtitle *sub, AVPacket *pkt, int st_idx);

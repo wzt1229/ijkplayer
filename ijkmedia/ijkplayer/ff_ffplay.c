@@ -3660,7 +3660,7 @@ static int read_thread(void *arg)
 #ifdef FFP_MERGE
               (is->audioq.size + is->videoq.size + is->subtitleq.size > MAX_QUEUE_SIZE)
 #else
-               (is->audioq.size + is->videoq.size + ff_sub_frame_queue_size(is->ffSub) > ffp->dcc.max_buffer_size
+               (is->audioq.size + is->videoq.size + ff_sub_frame_cache_remaining(is->ffSub) > ffp->dcc.max_buffer_size
 #endif
             || (   stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq, MIN_FRAMES)
                 && stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq, MIN_FRAMES)
@@ -5379,20 +5379,19 @@ int ffp_addOnly_external_subtitles(FFPlayer *ffp, const char *file_names [], int
     return ret;
 }
 
-int ffp_get_video_frame_cache_remaining(FFPlayer *ffp)
+int ffp_get_frame_cache_remaining(FFPlayer *ffp, int type)
 {
     if (!ffp || !ffp->is) {
         return 0;
     }
-    return frame_queue_nb_remaining(&ffp->is->pictq);
-}
-
-int ffp_get_audio_frame_cache_remaining(FFPlayer *ffp)
-{
-    if (!ffp || !ffp->is) {
-        return 0;
+    if (type == 1) {
+        return frame_queue_nb_remaining(&ffp->is->sampq);
+    } else if (type == 2) {
+        return frame_queue_nb_remaining(&ffp->is->pictq);
+    } else if (type == 3) {
+        return ff_sub_frame_cache_remaining(ffp->is->ffSub);
     }
-    return frame_queue_nb_remaining(&ffp->is->sampq);
+    return 0;
 }
 
 void *ffp_set_inject_opaque(FFPlayer *ffp, void *opaque);
