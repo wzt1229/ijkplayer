@@ -78,7 +78,7 @@
         @"subtitle_text_color" : text_color_data,
         @"subtitle_bg_color" : subtitle_bg_color_data,
         @"subtitle_stroke_color" : subtitle_stroke_color_data,
-
+        @"audio_delay" : @(0),
         @"snapshot_type" : @(3),
         @"accurate_seek" : @(1),
         @"seek_step" : @(15),
@@ -303,6 +303,11 @@
 + (float)subtitle_delay
 {
     return [self floatForKey:@"subtitle_delay"];
+}
+
++ (float)audio_delay
+{
+    return [self floatForKey:@"audio_delay"];
 }
 
 + (float)subtitle_stroke_size

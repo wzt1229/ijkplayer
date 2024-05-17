@@ -53,6 +53,8 @@ static BOOL hdrAnimationShown = 0;
 @property (nonatomic, strong) IJKFFMoviePlayerController * player;
 @property (nonatomic, strong) NSMutableArray *playList;
 @property (nonatomic, strong) NSMutableArray *subtitles;
+@property (nonatomic, assign) int lastSubIdx;
+
 @property (nonatomic, copy) NSURL *playingUrl;
 @property (nonatomic, weak) NSTimer *tickTimer;
 @property (nonatomic, assign, getter=isUsingHardwareAccelerate) BOOL usingHardwareAccelerate;
@@ -88,7 +90,8 @@ static BOOL hdrAnimationShown = 0;
     self.title = @"Root";
     self.seekCostLb.stringValue = @"";
     self.loop = 0;
-        
+    self.lastSubIdx = -1;
+    
     if ([self.view isKindOfClass:[SHBaseView class]]) {
         SHBaseView *baseView = (SHBaseView *)self.view;
         baseView.delegate = self;
@@ -930,37 +933,6 @@ static BOOL hdrAnimationShown = 0;
     [self updateStreams];
 }
 
-- (void)playURL:(NSURL *)url
-{
-    if (!url) {
-        return;
-    }
-    [self destroyPlayer];
-    [self perpareIJKPlayer:url hwaccel:self.isUsingHardwareAccelerate];
-    NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
-    
-    NSInteger idx = [self.playList indexOfObject:self.playingUrl] + 1;
-    
-    [[NSUserDefaults standardUserDefaults] setObject:videoName forKey:lastPlayedKey];
-    
-    NSString *title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],videoName];
-    [self.view.window setTitle:title];
-    
-    self.playCtrlBtn.state = NSControlStateValueOn;
-    
-    int startTime = (int)([self readCurrentPlayRecord] * 1000);
-    [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
-    [self.player prepareToPlay];
-    
-    if ([self.subtitles count] > 0) {
-        NSURL *firstUrl = [self.subtitles firstObject];
-        [self.player loadThenActiveSubtitle:firstUrl];
-        [self.player loadSubtitlesOnly:[self.subtitles subarrayWithRange:NSMakeRange(1, self.subtitles.count - 1)]];
-    }
-    
-    [self onTick:nil];
-}
-
 - (void)enableComputerSleep:(BOOL)enable
 {
     AppDelegate *delegate = NSApp.delegate;
@@ -987,6 +959,41 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
+- (void)playURL:(NSURL *)url
+{
+    if (!url) {
+        return;
+    }
+    [self destroyPlayer];
+    [self perpareIJKPlayer:url hwaccel:self.isUsingHardwareAccelerate];
+    
+    NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
+    
+    NSInteger idx = [self.playList indexOfObject:self.playingUrl] + 1;
+    
+    [[NSUserDefaults standardUserDefaults] setObject:videoName forKey:lastPlayedKey];
+    
+    NSString *title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],videoName];
+    [self.view.window setTitle:title];
+    
+    self.playCtrlBtn.state = NSControlStateValueOn;
+    
+    int startTime = (int)([self readCurrentPlayRecord] * 1000);
+    [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
+    [self.player prepareToPlay];
+    
+    if ([self.subtitles count] > 0) {
+        if (self.lastSubIdx < 0 || self.lastSubIdx >= [self.subtitles count]) {
+            self.lastSubIdx = 0;
+        }
+        NSURL *subUrl = [self.subtitles objectAtIndex:self.lastSubIdx];
+        [self.player loadThenActiveSubtitle:subUrl];
+        [self.player loadSubtitlesOnly:[self.subtitles subarrayWithRange:NSMakeRange(1, self.subtitles.count - 1)]];
+    }
+    
+    [self onTick:nil];
+}
+
 - (NSURL *)existTaskForUrl:(NSURL *)url
 {
     NSURL *t = nil;
@@ -997,63 +1004,6 @@ static BOOL hdrAnimationShown = 0;
         }
     }
     return t;
-}
-
-+ (NSArray *)parseXPlayList:(NSURL*)url
-{
-    NSString *str = [[NSString alloc] initWithContentsOfFile:[url path] encoding:NSUTF8StringEncoding error:nil];
-    str = [str stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    NSArray *lines = [str componentsSeparatedByString:@"\n"];
-    NSMutableArray *preLines = [NSMutableArray array];
-    int begin = -1;
-    int end = -1;
-    
-    for (int i = 0; i < lines.count; i++) {
-        NSString *path = lines[i];
-        if (!path || [path length] == 0) {
-            continue;
-        } else if ([path hasPrefix:@"#"]) {
-            continue;
-        } else if ([path hasPrefix:@"--break"]) {
-            break;
-        } else if ([path hasPrefix:@"--begin"]) {
-            begin = (int)preLines.count;
-            continue;
-        } else if ([path hasPrefix:@"--end"]) {
-            end = (int)preLines.count;
-            continue;
-        }
-        [preLines addObject:path];
-    }
-    
-    if (begin == -1) {
-        begin = 0;
-    }
-    if (end == -1) {
-        end = (int)[preLines count] - 1;
-    }
-    if (begin >= end) {
-        NSLog(@"请检查XList文件里的begin位置");
-        return nil;
-    }
-    NSArray *preLines2 = [preLines subarrayWithRange:NSMakeRange(begin, end - begin)];
-    NSMutableArray *playList = [NSMutableArray array];
-    for (int i = 0; i < preLines2.count; i++) {
-        NSString *path = preLines2[i];
-        if (!path || [path length] == 0) {
-            continue;
-        }
-        if ([path hasPrefix:@"#"]) {
-            continue;
-        }
-        if ([path hasPrefix:@"--break"]) {
-            break;
-        }
-        NSURL *url = [NSURL URLWithString:path];
-        [playList addObject:url];
-    }
-    NSLog(@"从XList读取到：%lu个视频文件",(unsigned long)playList.count);
-    return [playList copy];
 }
 
 - (void)appendToPlayList:(NSArray *)bookmarkArr reset:(BOOL)reset
@@ -1067,15 +1017,10 @@ static BOOL hdrAnimationShown = 0;
         if ([self existTaskForUrl:url]) {
             continue;
         }
+        
         if ([[[url pathExtension] lowercaseString] isEqualToString:@"xlist"]) {
-            if (reset) {
-                [self.playList removeAllObjects];
-            }
-            [self.playList addObjectsFromArray:[[self class] parseXPlayList:url]];
-            [self playFirstIfNeed];
-            continue;
-        }
-        if ([dic[@"type"] intValue] == 0) {
+            [videos addObjectsFromArray:[MRUtil parseXPlayList:url]];
+        } else if ([dic[@"type"] intValue] == 0) {
             [videos addObject:url];
         } else if ([dic[@"type"] intValue] == 1) {
             [subtitles addObject:url];
@@ -1084,22 +1029,16 @@ static BOOL hdrAnimationShown = 0;
         }
     }
     
-    if ([videos count] > 0) {
-        if (reset) {
-            [self.playList removeAllObjects];
-        }
-        [self.playList addObjectsFromArray:videos];
-        [self playFirstIfNeed];
+    if (reset) {
+        self.lastSubIdx = -1;
+        [self doStopPlay];
+        [self.subtitles removeAllObjects];
+        [self.playList removeAllObjects];
     }
     
-    if ([subtitles count] > 0) {
-        [self.subtitles addObjectsFromArray:subtitles];
-        
-        NSURL *firstUrl = [subtitles firstObject];
-        [subtitles removeObjectAtIndex:0];
-        [self.player loadThenActiveSubtitle:firstUrl];
-        [self.player loadSubtitlesOnly:subtitles];
-    }
+    [self.subtitles addObjectsFromArray:subtitles];
+    [self.playList addObjectsFromArray:videos];
+    [self playFirstIfNeed];
 }
 
 #pragma mark - 拖拽
@@ -1116,20 +1055,15 @@ static BOOL hdrAnimationShown = 0;
     }
     
     //拖拽进来视频文件时先清空原先的列表
-    BOOL needPlay = NO;
+    BOOL reset = NO;
     for (NSDictionary *dic in bookmarkArr) {
         if ([dic[@"type"] intValue] == 0) {
-            needPlay = YES;
+            reset = YES;
             break;
         }
     }
     
-    if (needPlay) {
-        [self.playList removeAllObjects];
-        [self doStopPlay];
-    }
-    
-    [self appendToPlayList:bookmarkArr reset:YES];
+    [self appendToPlayList:bookmarkArr reset:reset];
 }
 
 - (NSDragOperation)acceptDragOperation:(NSArray<NSURL *> *)list
@@ -1218,20 +1152,22 @@ static BOOL hdrAnimationShown = 0;
     [self doStopPlay];
 }
 
-- (void)destroyPlayer
+- (BOOL)destroyPlayer
 {
     if (self.player) {
+        NSLog(@"destroy play");
         [[NSNotificationCenter defaultCenter] removeObserver:self name:nil object:self.player];
         [self.player.view removeFromSuperview];
         [self.player pause];
         [self.player shutdown];
         self.player = nil;
+        return YES;
     }
+    return NO;
 }
 
 - (void)doStopPlay
 {
-    NSLog(@"stop play");
     [self destroyPlayer];
     
     if (self.tickTimer) {
@@ -1249,6 +1185,15 @@ static BOOL hdrAnimationShown = 0;
     self.durationTimeLb.stringValue = @"--:--";
     [self enableComputerSleep:YES];
     self.playCtrlBtn.state = NSControlStateValueOff;
+}
+
+- (void)resetPreferenceEachPlay
+{
+    self.usingHardwareAccelerate = [self preferHW];
+    
+    [MRCocoaBindingUserDefault setValue:@(0.0) forKey:@"subtitle_delay"];
+    
+    [MRCocoaBindingUserDefault setValue:@(0.0) forKey:@"audio_delay"];
 }
 
 - (IBAction)playPrevious:(NSButton *)sender
@@ -1269,7 +1214,7 @@ static BOOL hdrAnimationShown = 0;
     }
     
     NSURL *url = self.playList[idx];
-    self.usingHardwareAccelerate = [self preferHW];
+    [self resetPreferenceEachPlay];
     [self playURL:url];
 }
 
@@ -1292,7 +1237,7 @@ static BOOL hdrAnimationShown = 0;
     }
     
     NSURL *url = self.playList[idx];
-    self.usingHardwareAccelerate = [self preferHW];
+    [self resetPreferenceEachPlay];
     [self playURL:url];
 }
 
@@ -1545,6 +1490,14 @@ static BOOL hdrAnimationShown = 0;
         p.strokeSize = [v intValue];
         self.player.subtitlePreference = p;
     } forKey:@"subtitle_stroke_size"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
+        __strongSelf__
+    } forKey:@"subtitle_delay"];
+    
+    [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
+        __strongSelf__
+    } forKey:@"audio_delay"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {
         __strongSelf__

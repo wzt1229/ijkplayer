@@ -63,6 +63,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSColor *)subtitle_text_color;
 + (NSColor *)subtitle_bg_color;
 + (NSColor *)subtitle_stroke_color;
++ (float)audio_delay;
 
 + (NSString *)overlay_format;
 + (BOOL)use_opengl;

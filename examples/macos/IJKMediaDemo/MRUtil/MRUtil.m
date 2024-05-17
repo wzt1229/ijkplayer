@@ -146,4 +146,62 @@
     }
 }
 
++ (NSArray *)parseXPlayList:(NSURL*)url
+{
+    NSString *str = [[NSString alloc] initWithContentsOfFile:[url path] encoding:NSUTF8StringEncoding error:nil];
+    str = [str stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *lines = [str componentsSeparatedByString:@"\n"];
+    NSMutableArray *preLines = [NSMutableArray array];
+    int begin = -1;
+    int end = -1;
+    
+    for (int i = 0; i < lines.count; i++) {
+        NSString *path = lines[i];
+        if (!path || [path length] == 0) {
+            continue;
+        } else if ([path hasPrefix:@"#"]) {
+            continue;
+        } else if ([path hasPrefix:@"--break"]) {
+            break;
+        } else if ([path hasPrefix:@"--begin"]) {
+            begin = (int)preLines.count;
+            continue;
+        } else if ([path hasPrefix:@"--end"]) {
+            end = (int)preLines.count;
+            continue;
+        }
+        path = [path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        [preLines addObject:path];
+    }
+    
+    if (begin == -1) {
+        begin = 0;
+    }
+    if (end == -1) {
+        end = (int)[preLines count] - 1;
+    }
+    if (begin >= end) {
+        NSLog(@"请检查XList文件里的begin位置");
+        return nil;
+    }
+    NSArray *preLines2 = [preLines subarrayWithRange:NSMakeRange(begin, end - begin)];
+    NSMutableArray *playList = [NSMutableArray array];
+    for (int i = 0; i < preLines2.count; i++) {
+        NSString *path = preLines2[i];
+        if (!path || [path length] == 0) {
+            continue;
+        }
+        if ([path hasPrefix:@"#"]) {
+            continue;
+        }
+        if ([path hasPrefix:@"--break"]) {
+            break;
+        }
+        NSURL *url = [NSURL URLWithString:path];
+        [playList addObject:url];
+    }
+    NSLog(@"从XList读取到：%lu个视频文件",(unsigned long)playList.count);
+    return [playList copy];
+}
+
 @end
