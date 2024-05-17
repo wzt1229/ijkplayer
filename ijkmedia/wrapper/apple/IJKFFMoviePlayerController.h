@@ -159,6 +159,7 @@ typedef enum IJKLogLevel {
 - (void)exchangeSelectedStream:(int)streamIdx;
 // k_IJKM_VAL_TYPE__VIDEO, k_IJKM_VAL_TYPE__AUDIO, k_IJKM_VAL_TYPE__SUBTITLE
 - (void)closeCurrentStream:(NSString *)streamType;
+- (void)updateAudioExtraDelay:(const float)delay;
 - (void)updateSubtitleExtraDelay:(const float)delay;
 - (float)currentSubtitleExtraDelay;
 - (void)enableAccurateSeek:(BOOL)open;

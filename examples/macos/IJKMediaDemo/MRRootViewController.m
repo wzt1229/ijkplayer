@@ -1493,10 +1493,12 @@ static BOOL hdrAnimationShown = 0;
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
         __strongSelf__
+        [self.player updateSubtitleExtraDelay:[v floatValue]];
     } forKey:@"subtitle_delay"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
         __strongSelf__
+        [self.player updateAudioExtraDelay:[v floatValue]];
     } forKey:@"audio_delay"];
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull r) {

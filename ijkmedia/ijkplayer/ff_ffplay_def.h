@@ -191,6 +191,7 @@ typedef struct Clock {
     int serial;           /* clock is based on a packet with this serial */
     int paused;
     int *queue_serial;    /* pointer to the current packet queue serial, used for obsolete clock detection */
+    float extra_delay;   /* user can set the delay*/
 } Clock;
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */

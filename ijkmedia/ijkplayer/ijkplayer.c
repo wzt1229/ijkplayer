@@ -788,6 +788,12 @@ int ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block)
     return -1;
 }
 
+void ijkmp_set_audio_extra_delay(IjkMediaPlayer* mp, const float delay)
+{
+    assert(mp);
+    ffp_set_audio_extra_delay(mp->ffplayer, delay);
+}
+
 void ijkmp_set_subtitle_extra_delay(IjkMediaPlayer* mp, const float delay)
 {
     assert(mp);

@@ -136,6 +136,7 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1,
 static void free_picture(Frame *vp);
 static double consume_audio_buffer(FFPlayer *ffp, double diff);
 static void update_sample_display(FFPlayer *ffp, uint8_t *samples, int samples_size);
+static long ffp_get_current_position(FFPlayer *ffp);
 
 static int packet_queue_get_or_buffering(FFPlayer *ffp, PacketQueue *q, AVPacket *pkt, int *serial, int *finished)
 {
@@ -420,7 +421,7 @@ static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
         int type = ff_sub_current_stream_type(is->ffSub);
         if (type == 2) {
             //seek the extra subtitle
-            float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
+            float sec = ffp_get_current_position(ffp) / 1000 - 1;
             float delay = ff_sub_get_delay(is->ffSub);
             //when exchang stream force seek stream instead of ff_sub_set_delay
             ff_sub_seek_to(is->ffSub, delay, sec);
@@ -622,16 +623,21 @@ static void video_display2(FFPlayer *ffp)
         video_image_display2(ffp);
 }
 
-static double get_clock(Clock *c)
+static double get_clock_ignore_delay(Clock *c, int ignore)
 {
     if (*c->queue_serial != c->serial)
         return NAN;
     if (c->paused) {
-        return c->pts;
+        return c->pts + (ignore ? 0 : c->extra_delay);
     } else {
         double time = av_gettime_relative() / 1000000.0;
-        return c->pts_drift + time - (time - c->last_updated) * (1.0 - c->speed);
+        return c->pts_drift + time - (time - c->last_updated) * (1.0 - c->speed) + (ignore ? 0 : c->extra_delay);
     }
+}
+
+static double get_clock(Clock *c)
+{
+    return get_clock_ignore_delay(c, 0);
 }
 
 static void set_clock_at(Clock *c, double pts, int serial, double time)
@@ -649,6 +655,11 @@ static void set_clock(Clock *c, double pts, int serial)
 {
     double time = av_gettime_relative() / 1000000.0;
     set_clock_at(c, pts, serial, time);
+}
+
+static void set_clock_extral_delay(Clock *c, float delay)
+{
+    c->extra_delay = delay;
 }
 
 static void set_clock_speed(Clock *c, double speed)
@@ -690,23 +701,28 @@ static int get_master_sync_type(VideoState *is) {
     }
 }
 
-/* get the current master clock value */
-static double get_master_clock(VideoState *is)
+static double get_master_clock_ignore_delay(VideoState *is, int ignore)
 {
     double val;
 
     switch (get_master_sync_type(is)) {
         case AV_SYNC_VIDEO_MASTER:
-            val = get_clock(&is->vidclk);
+            val = get_clock_ignore_delay(&is->vidclk, ignore);
             break;
         case AV_SYNC_AUDIO_MASTER:
-            val = get_clock(&is->audclk);
+            val = get_clock_ignore_delay(&is->audclk, ignore);
             break;
         default:
-            val = get_clock(&is->extclk);
+            val = get_clock_ignore_delay(&is->extclk, ignore);
             break;
     }
     return val;
+}
+
+/* get the current master clock value */
+static double get_master_clock(VideoState *is)
+{
+    return get_master_clock_ignore_delay(is, 0);
 }
 
 static void check_external_clock_speed(VideoState *is) {
@@ -2527,11 +2543,10 @@ static double consume_audio_buffer(FFPlayer *ffp, double diff)
         
         //when use step play mode,we use video pts sync audio,so drop the behind audio.
         double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
-        //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
-        double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
-        
         if (!isnan(video_pts)) {
-            double delta = video_pts - pts;
+            //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
+            double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
+            double delta = video_pts - get_clock(&is->audclk);
             if (delta > threshold) {
                 av_log(NULL, AV_LOG_INFO, "audio is behind:%0.3f\n", delta);
                 return delta;
@@ -2578,7 +2593,8 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
            if (audio_size < 0) {
                 /* if error, just output silence */
                is->audio_buf = NULL;
-               is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
+               is->audio_buf_size = 0;
+               break;
            } else {
                gotFrame = 1;
                is->audio_buf_size = audio_size;
@@ -2614,26 +2630,28 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
     /* Let's assume the audio driver that is used by SDL has two periods. */
     if (!isnan(is->audio_clock)) {
         double pts = 0.0;
-        if (!gotFrame && rest_len == 0) {
+        if (len_want - len == 0) {
             if (!isnan(is->audclk.pts)) {
                 //none audio frame,already used out. is->audio_clock is the lastest audio frame pts and audio_write_buf_size is audio_buf_size(512 = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size).
                 //use last pts and increase by audio callback eated bytes.
                 pts = is->audclk.pts + (double)(len_want) / is->audio_tgt.bytes_per_sec;
+                set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
+                sync_clock_to_slave(&is->extclk, &is->audclk);
             }
         } else {
             int audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
             pts = is->audio_clock - (double)(audio_write_buf_size) / is->audio_tgt.bytes_per_sec - SDL_AoutGetLatencySeconds(ffp->aout);
+            
+            set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
+            sync_clock_to_slave(&is->extclk, &is->audclk);
             
             if (is->video_stream >= 0 && is->viddec.finished != is->videoq.serial && is->auddec.finished != is->audioq.serial && 0 == is->audio_accurate_seek_req) {
                 //when use step play mode,we use video pts sync audio,so drop the behind audio.
                 double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
                 //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
                 double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
-                double diff = video_pts - pts;
+                double diff = video_pts - get_clock(&is->audclk);
                 if (!isnan(video_pts) && diff > threshold) {
-                    set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
-                    sync_clock_to_slave(&is->extclk, &is->audclk);
-                    
                     int counter = 3;
                     while (counter--) {
                         if (diff >= 0.01) {
@@ -2648,9 +2666,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
                 }
             }
         }
-        set_clock_at(&is->audclk, pts, is->audio_clock_serial, ffp->audio_callback_time / 1000000.0);
-        sync_clock_to_slave(&is->extclk, &is->audclk);
-        
+
         if (gotFrame) {
             if (!ffp->first_audio_frame_rendered) {
                 ffp->first_audio_frame_rendered = 1;
@@ -4633,7 +4649,7 @@ int ffp_seek_to_l(FFPlayer *ffp, long msec)
     return 0;
 }
 
-long ffp_get_current_position_l(FFPlayer *ffp)
+static long get_current_position(FFPlayer *ffp, int ignore_delay)
 {
     assert(ffp);
     VideoState *is = ffp->is;
@@ -4646,7 +4662,7 @@ long ffp_get_current_position_l(FFPlayer *ffp)
         start_diff = fftime_to_milliseconds(start_time);
 
     int64_t pos = 0;
-    double pos_clock = get_master_clock(is);
+    double pos_clock = get_master_clock_ignore_delay(is, ignore_delay);
     if (isnan(pos_clock)) {
         pos = fftime_to_milliseconds(is->seek_pos);
     } else {
@@ -4666,6 +4682,16 @@ long ffp_get_current_position_l(FFPlayer *ffp)
 
     int64_t adjust_pos = pos - start_diff;
     return (long)adjust_pos;
+}
+
+static long ffp_get_current_position(FFPlayer *ffp)
+{
+    return get_current_position(ffp, 0);
+}
+
+long ffp_get_current_position_l(FFPlayer *ffp)
+{
+    return get_current_position(ffp, 1);
 }
 
 long ffp_get_duration_l(FFPlayer *ffp)
@@ -4855,7 +4881,7 @@ void ffp_check_buffering_l(FFPlayer *ffp)
         }
 
         if (cached_duration_in_ms >= 0) {
-            buf_time_position = ffp_get_current_position_l(ffp) + cached_duration_in_ms;
+            buf_time_position = ffp_get_current_position(ffp) + cached_duration_in_ms;
             ffp->playable_duration_ms = buf_time_position;
 
             buf_time_percent = (int)av_rescale(cached_duration_in_ms, 1005, hwm_in_ms * 10);
@@ -5290,11 +5316,17 @@ IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp)
     return ffp->meta;
 }
 
+void ffp_set_audio_extra_delay(FFPlayer *ffp, const float delay)
+{
+    VideoState *is = ffp->is;
+    set_clock_extral_delay(&is->audclk, delay);
+}
+
 void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)
 {
     SDL_LockMutex(ffp->is->play_mutex);
     VideoState *is = ffp->is;
-    int64_t ms = ffp_get_current_position_l(ffp);
+    int64_t ms = ffp_get_current_position(ffp);
     int r = ff_sub_set_delay(is->ffSub, delay, ms/1000.0);
     SDL_UnlockMutex(ffp->is->play_mutex);
     if (r == 1) {

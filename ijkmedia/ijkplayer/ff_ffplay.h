@@ -105,6 +105,7 @@ void      ffp_set_property_int64(FFPlayer *ffp, int id, int64_t value);
 
 /* must be freed with free(); */
 struct IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp);
+void ffp_set_audio_extra_delay(FFPlayer *ffp, const float delay);
 
 //when get or set extra delay,make sure already added external subtitle.
 void      ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay);
