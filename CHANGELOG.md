@@ -1,3 +1,10 @@
+tag k0.11.1
+--------------------------------
+
+- hud show subtitle frame cache remaining
+- fix some scenarios ass subtitle not show bug
+- fix external subtitle present at wrong position which start_time is not zero
+
 tag k0.11.0
 --------------------------------
 
