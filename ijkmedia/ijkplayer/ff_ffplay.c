@@ -3451,7 +3451,7 @@ static int read_thread(void *arg)
                 buffer_size += ic->bit_rate/1000000 * 1024 * 1024;
             } else {
                 buffer_size += 10 * 1024 * 1024;
-                int rate = (int)(ic->bit_rate / 10000000);
+                int rate = (int)(ic->bit_rate / 1000000);
                 buffer_size += rate * 1024 * 1024;
             }
             ffp->dcc.max_buffer_size = FFMIN(MAX_QUEUE_SIZE, buffer_size);

@@ -85,7 +85,7 @@
 #define MAX_RETRY_CONVERT_IMAGE                 (3)
 
 #define DEFAULT_QUEUE_SIZE (5 * 1024 * 1024)
-#define MAX_QUEUE_SIZE     (25 * 1024 * 1024)
+#define MAX_QUEUE_SIZE     (50 * 1024 * 1024)
 #define MAX_ACCURATE_SEEK_TIMEOUT (5000)
 #ifdef FFP_MERGE
 #define MIN_FRAMES 25
