@@ -755,8 +755,10 @@ static BOOL hdrAnimationShown = 0;
 {
     if (self.player == notifi.object) {
         int stream = [notifi.userInfo[IJKMoviePlayerSelectingStreamIDUserInfoKey] intValue];
+        int preStream = [notifi.userInfo[IJKMoviePlayerPreSelectingStreamIDUserInfoKey] intValue];
+        
         int code = [notifi.userInfo[IJKMoviePlayerSelectingStreamErrUserInfoKey] intValue];
-        NSLog(@"Selecting Stream Did Failed:%d,%d",stream,code);
+        NSLog(@"Selecting Stream Did Failed:%d, pre selected stream is %d,Err Code:%d",stream,preStream,code);
     }
 }
 

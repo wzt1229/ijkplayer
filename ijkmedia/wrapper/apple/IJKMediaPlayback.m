@@ -71,6 +71,8 @@ NSString *const IJKMoviePlayerHDRAnimationStateChanged = @"IJKMoviePlayerHDRAnim
 
 NSString *const IJKMoviePlayerSelectingStreamIDUserInfoKey =
     @"stream-id";
+NSString *const IJKMoviePlayerPreSelectingStreamIDUserInfoKey =
+@"pre-stream-id";
 NSString *const IJKMoviePlayerSelectingStreamErrUserInfoKey =
     @"err-code";
 NSString *const IJKMoviePlayerSelectingStreamDidFailed = @"IJKMoviePlayerSelectingStreamDidFailed";

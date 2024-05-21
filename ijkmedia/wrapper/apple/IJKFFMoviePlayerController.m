@@ -1386,7 +1386,8 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_SELECTING_STREAM_FAILED:  {//select stream failed
-            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerSelectingStreamDidFailed object:self userInfo:@{IJKMoviePlayerSelectingStreamIDUserInfoKey : @(avmsg->arg1), IJKMoviePlayerSelectingStreamErrUserInfoKey : @(avmsg->arg2)}];
+            int *code = avmsg->obj;
+            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerSelectingStreamDidFailed object:self userInfo:@{IJKMoviePlayerSelectingStreamIDUserInfoKey : @(avmsg->arg1),IJKMoviePlayerPreSelectingStreamIDUserInfoKey : @(avmsg->arg2), IJKMoviePlayerSelectingStreamErrUserInfoKey : @(*code)}];
             break;
         }
         case FFP_MSG_PREPARED: {
