@@ -2,7 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22689"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22690"/>
         <capability name="Image references" minToolsVersion="12.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -61,7 +61,7 @@
                                                         <binding destination="OCk-Q5-1dK" name="value" keyPath="values.volume" id="1Nd-cY-qY3"/>
                                                     </connections>
                                                 </slider>
-                                                <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F43-uk-XPX" userLabel="seek cost">
+                                                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F43-uk-XPX" userLabel="seek cost">
                                                     <rect key="frame" x="575" y="19" width="33" height="16"/>
                                                     <textFieldCell key="cell" lineBreakMode="clipping" title="seek" id="dyo-UA-0rK">
                                                         <font key="font" usesAppearanceFont="YES"/>
@@ -88,11 +88,10 @@
                                                 </button>
                                                 <button autoresizesSubviews="NO" wantsLayer="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0Ir-lY-KBW">
                                                     <rect key="frame" x="728" y="1" width="52" height="52"/>
-                                                    <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="C8e-NX-d9x">
-                                                        <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                                    <buttonCell key="cell" type="bevel" bezelStyle="regularSquare" imagePosition="only" alignment="center" state="on" imageScaling="proportionallyDown" inset="2" id="C8e-NX-d9x">
+                                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES" changeBackground="YES" changeGray="YES"/>
                                                         <font key="font" metaFont="system"/>
                                                         <imageReference key="image" image="play" symbolScale="large"/>
-                                                        <imageReference key="alternateImage" image="pause" symbolScale="large"/>
                                                     </buttonCell>
                                                     <connections>
                                                         <action selector="pauseOrPlay:" target="-2" id="nb2-1J-sh0"/>
@@ -162,7 +161,7 @@
                                         <stackView distribution="fillProportionally" orientation="horizontal" alignment="centerY" spacing="5" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vbZ-O1-33f">
                                             <rect key="frame" x="0.0" y="0.0" width="1507" height="20"/>
                                             <subviews>
-                                                <textField horizontalHuggingPriority="750" verticalHuggingPriority="750" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lHe-K3-Qqv">
+                                                <textField focusRingType="none" horizontalHuggingPriority="750" verticalHuggingPriority="750" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lHe-K3-Qqv">
                                                     <rect key="frame" x="8" y="2" width="44" height="16"/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="40" id="eVi-UB-yod"/>
@@ -179,7 +178,7 @@
                                                         <constraint firstAttribute="height" constant="20" id="DmD-lr-GN1"/>
                                                     </constraints>
                                                 </customView>
-                                                <textField horizontalHuggingPriority="750" verticalHuggingPriority="750" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Lzk-4D-4ek">
+                                                <textField focusRingType="none" horizontalHuggingPriority="750" verticalHuggingPriority="750" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Lzk-4D-4ek">
                                                     <rect key="frame" x="1455" y="2" width="44" height="16"/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="40" id="moD-6P-cmd"/>
@@ -267,7 +266,6 @@
         <image name="chevron.forward.2" catalog="system" width="20" height="17"/>
         <image name="info.circle.fill" catalog="system" width="20" height="20"/>
         <image name="next" width="52" height="52"/>
-        <image name="pause" width="52" height="52"/>
         <image name="play" width="52" height="52"/>
         <image name="previous" width="52" height="52"/>
         <image name="volume.3.fill" catalog="system" width="22" height="15"/>
