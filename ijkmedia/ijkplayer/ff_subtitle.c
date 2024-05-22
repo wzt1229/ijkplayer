@@ -254,11 +254,12 @@ static int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_T
     
     FFSubtitleBufferPacket packet = {0};
     int r = ff_sub_upload_buffer(sub, pts, &packet);
-    if (r <= 0) {
+    //if has no pre texture,need build texture!
+    if (r < 0 || (r == 0 && sub->preTexture != NULL)) {
         *texture = NULL;
         return r;
     }
-    
+
     if (packet.isAss) {
         if (sub->assTexture && (sub->assTexture->w != packet.width || sub->assTexture->h != packet.height)) {
             SDL_TextureOverlay_Release(&sub->assTexture);
@@ -308,6 +309,9 @@ int ff_sub_get_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOver
         SDL_TextureOverlay_Release(&sub->preTexture);
     } else {
         //keep current
+        if (!sub->preTexture) {
+            sub->preTexture = sub_overlay;
+        }
     }
     
     *texture = SDL_TextureOverlay_Retain(sub->preTexture);

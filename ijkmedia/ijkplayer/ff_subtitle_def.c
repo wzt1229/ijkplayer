@@ -63,7 +63,8 @@ int isFFSubtitleBufferArrayDiff(FFSubtitleBufferPacket *a1, FFSubtitleBufferPack
         return 1;
     }
     
-    for (int i = 0; i < a1->len; i++) {
+    int len = a1->len > a2->len ? a1->len : a2->len;
+    for (int i = 0; i < len; i++) {
         FFSubtitleBuffer *h1 = a1->e[i];
         FFSubtitleBuffer *h2 = a2->e[i];
         if (h1 != h2) {
