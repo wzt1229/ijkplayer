@@ -380,7 +380,7 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
     }
 abort_end:
     if (d->queue->abort_request && status == -1) {
-        av_log(NULL, AV_LOG_INFO, "will destroy avcodec:%d,flush buffers.\n",d->avctx->codec_type);
+        av_log(NULL, AV_LOG_INFO, "will destroy avcodec:%s,flush buffers.\n",avcodec_get_name(d->avctx->codec_id));
         avcodec_send_packet(d->avctx, NULL);
         avcodec_flush_buffers(d->avctx);
     }

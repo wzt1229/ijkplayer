@@ -31,7 +31,7 @@ int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *name)
 {
     packet_queue_start(d->queue);
     if (d->pkt_serial != d->queue->serial) {
-        av_log(NULL, AV_LOG_INFO, "correct decoder serial from %d to %d\n",d->pkt_serial,d->queue->serial);
+        av_log(NULL, AV_LOG_INFO, "correct %s serial from %d to %d\n", name, d->pkt_serial, d->queue->serial);
         d->pkt_serial = d->queue->serial;
     }
     
