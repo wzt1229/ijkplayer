@@ -159,7 +159,7 @@ static BOOL hdrAnimationShown = 0;
             } else {
                 [menu addItemWithTitle:@"播放" action:@selector(pauseOrPlay:)keyEquivalent:@""];
             }
-            [menu addItemWithTitle:@"停止" action:@selector(doStopPlay) keyEquivalent:@"."];
+            [menu addItemWithTitle:@"停止" action:@selector(onStop) keyEquivalent:@"."];
             [menu addItemWithTitle:@"下一集" action:@selector(playNext:)keyEquivalent:@""];
             [menu addItemWithTitle:@"上一集" action:@selector(playPrevious:)keyEquivalent:@""];
             
@@ -229,7 +229,7 @@ static BOOL hdrAnimationShown = 0;
         // 开始播放
         [self.playList removeAllObjects];
         [self.playList addObjectsFromArray:videos];
-        [self doStopPlay];
+        [self onStop];
         [self playFirstIfNeed];
     }
 }
@@ -409,7 +409,7 @@ static BOOL hdrAnimationShown = 0;
                 break;
             case kVK_ANSI_Period:
             {
-                [self doStopPlay];
+                [self onStop];
             }
                 break;
             case kVK_ANSI_H:
@@ -758,8 +758,10 @@ static BOOL hdrAnimationShown = 0;
 {
     if (self.player == notifi.object) {
         int stream = [notifi.userInfo[IJKMoviePlayerSelectingStreamIDUserInfoKey] intValue];
+        int preStream = [notifi.userInfo[IJKMoviePlayerPreSelectingStreamIDUserInfoKey] intValue];
+        
         int code = [notifi.userInfo[IJKMoviePlayerSelectingStreamErrUserInfoKey] intValue];
-        NSLog(@"Selecting Stream Did Failed:%d,%d",stream,code);
+        NSLog(@"Selecting Stream Did Failed:%d, pre selected stream is %d,Err Code:%d",stream,preStream,code);
     }
 }
 
@@ -778,7 +780,7 @@ static BOOL hdrAnimationShown = 0;
             self.usingHardwareAccelerate = NO;
             NSLog(@"decoder fatal:%@;close videotoolbox hwaccel.",notifi.userInfo);
             NSURL *playingUrl = self.playingUrl;
-            [self doStopPlay];
+            [self onStop];
             [self playURL:playingUrl];
             return;
         }
@@ -792,7 +794,7 @@ static BOOL hdrAnimationShown = 0;
 //    self.seeking = NO;
     self.seekCostLb.stringValue = [NSString stringWithFormat:@"%@ms",notifi.userInfo[@"du"]];
 //    //seek 完毕后仍旧是播放状态就开始播放
-//    if (self.playCtrlBtn.state == NSControlStateValueOn) {
+//    if (self.playCtrlBtn.state == NSControlStateValueOff) {
 //        [self.player play];
 //    }
 }
@@ -966,7 +968,6 @@ static BOOL hdrAnimationShown = 0;
     }
     [self destroyPlayer];
     [self perpareIJKPlayer:url hwaccel:self.isUsingHardwareAccelerate];
-    
     NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     
     NSInteger idx = [self.playList indexOfObject:self.playingUrl] + 1;
@@ -976,18 +977,15 @@ static BOOL hdrAnimationShown = 0;
     NSString *title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],videoName];
     [self.view.window setTitle:title];
     
-    self.playCtrlBtn.state = NSControlStateValueOn;
+    self.playCtrlBtn.state = NSControlStateValueOff;
     
     int startTime = (int)([self readCurrentPlayRecord] * 1000);
     [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
     [self.player prepareToPlay];
     
     if ([self.subtitles count] > 0) {
-        if (self.lastSubIdx < 0 || self.lastSubIdx >= [self.subtitles count]) {
-            self.lastSubIdx = 0;
-        }
-        NSURL *subUrl = [self.subtitles objectAtIndex:self.lastSubIdx];
-        [self.player loadThenActiveSubtitle:subUrl];
+        NSURL *firstUrl = [self.subtitles firstObject];
+        [self.player loadThenActiveSubtitle:firstUrl];
         [self.player loadSubtitlesOnly:[self.subtitles subarrayWithRange:NSMakeRange(1, self.subtitles.count - 1)]];
     }
     
@@ -1031,7 +1029,7 @@ static BOOL hdrAnimationShown = 0;
     
     if (reset) {
         self.lastSubIdx = -1;
-        [self doStopPlay];
+        [self onStop];
         [self.subtitles removeAllObjects];
         [self.playList removeAllObjects];
     }
@@ -1101,23 +1099,30 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)pauseOrPlay:(NSButton *)sender
 {
+    if ([self.playList count] == 0) {
+        self.playCtrlBtn.state = NSControlStateValueOn;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self openFile:nil];
+        });
+        return;
+    }
+
     if (!sender) {
-        if (self.playCtrlBtn.state == NSControlStateValueOff) {
-            self.playCtrlBtn.state = NSControlStateValueOn;
-        } else {
-            self.playCtrlBtn.state = NSControlStateValueOff;
-        }
+        self.playCtrlBtn.state = !self.playCtrlBtn.state;
     }
     
     if (self.playingUrl) {
-        if (self.playCtrlBtn.state == NSControlStateValueOff) {
+        if (self.playCtrlBtn.state == NSControlStateValueOn) {
             [self enableComputerSleep:YES];
             [self.player pause];
             [self toggleTitleBar:YES];
+            self.playCtrlBtn.image = [NSImage imageNamed:@"play"];
         } else {
             [self.player play];
+            self.playCtrlBtn.image = [NSImage imageNamed:@"pause"];
         }
     } else {
+        self.playCtrlBtn.image = [NSImage imageNamed:@"pause"];
         [self playNext:nil];
     }
 }
@@ -1141,7 +1146,7 @@ static BOOL hdrAnimationShown = 0;
 - (void)retry
 {
     NSURL *url = self.playingUrl;
-    [self doStopPlay];
+    [self onStop];
     self.usingHardwareAccelerate = [self preferHW];
     [self playURL:url];
 }
@@ -1184,7 +1189,8 @@ static BOOL hdrAnimationShown = 0;
     self.playedTimeLb.stringValue = @"--:--";
     self.durationTimeLb.stringValue = @"--:--";
     [self enableComputerSleep:YES];
-    self.playCtrlBtn.state = NSControlStateValueOff;
+    self.playCtrlBtn.state = NSControlStateValueOn;
+    self.playCtrlBtn.image = [NSImage imageNamed:@"play"];
 }
 
 - (void)resetPreferenceEachPlay
@@ -1201,7 +1207,6 @@ static BOOL hdrAnimationShown = 0;
     if ([self.playList count] == 0) {
         return;
     }
-    
     [self saveCurrentPlayRecord];
     
     NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
@@ -1220,12 +1225,11 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)playNext:(NSButton *)sender
 {
-    [self saveCurrentPlayRecord];
     if ([self.playList count] == 0) {
-        [self doStopPlay];
         return;
     }
-
+    [self saveCurrentPlayRecord];
+    
     NSUInteger idx = [self.playList indexOfObject:self.playingUrl];
     
     if (idx == NSNotFound) {

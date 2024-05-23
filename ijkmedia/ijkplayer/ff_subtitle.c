@@ -254,11 +254,12 @@ static int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_T
     
     FFSubtitleBufferPacket packet = {0};
     int r = ff_sub_upload_buffer(sub, pts, &packet);
-    if (r <= 0) {
+    //if has no pre texture,need build texture!
+    if (r < 0 || (r == 0 && sub->preTexture != NULL)) {
         *texture = NULL;
         return r;
     }
-    
+
     if (packet.isAss) {
         if (sub->assTexture && (sub->assTexture->w != packet.width || sub->assTexture->h != packet.height)) {
             SDL_TextureOverlay_Release(&sub->assTexture);
@@ -308,6 +309,9 @@ int ff_sub_get_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_TextureOver
         SDL_TextureOverlay_Release(&sub->preTexture);
     } else {
         //keep current
+        if (!sub->preTexture) {
+            sub->preTexture = sub_overlay;
+        }
     }
     
     *texture = SDL_TextureOverlay_Retain(sub->preTexture);
@@ -505,29 +509,38 @@ static int ff_sub_close_current(FFSubtitle *sub)
 }
 
 //-1: no change. 0:close current. 1:opened new, less than -1 means open failed
-int ff_sub_update_stream_if_need(FFSubtitle *sub, int *update_stream)
+int ff_sub_update_stream_if_need(FFSubtitle *sub, int *update_stream, int *pre_stream)
 {
     int r = -1;
     SDL_LockMutex(sub->mutex);
+    if (update_stream) {
+        *update_stream = IJK_SUBTITLE_STREAM_NONE;
+    }
+    if (pre_stream) {
+        *pre_stream = IJK_SUBTITLE_STREAM_NONE;
+    }
     if (sub->need_update_stream != IJK_SUBTITLE_STREAM_UNDEF) {
         //close current
         if (sub->last_stream != IJK_SUBTITLE_STREAM_UNDEF) {
+            if (pre_stream) {
+                *pre_stream = sub->last_stream;
+            }
             //close
             ff_sub_close_current(sub);
-            sub->last_stream = IJK_SUBTITLE_STREAM_UNDEF;
             r = 0;
         }
         
-        if (update_stream) {
-            *update_stream = sub->need_update_stream;
-        }
         //open new
         if (sub->need_update_stream != IJK_SUBTITLE_STREAM_NONE) {
+            if (update_stream) {
+                *update_stream = sub->need_update_stream;
+            }
             //reset to 0
             sub->backup_charenc_idx = 0;
             int err = open_any_stream(sub, sub->need_update_stream, NULL);
             if (err) {
                 r = err;
+                sub->last_stream = IJK_SUBTITLE_STREAM_UNDEF;
             } else {
                 sub->last_stream = sub->need_update_stream;
                 r = 1;

@@ -14,8 +14,8 @@
 
 #define SUB_MAX_KEEP_DU 3.0
 #define ASS_USE_PRE_RENDER 1
-#define CACHE_ASS_IMG_COUNT 6
-#define A_ASS_IMG_DURATION 0.05
+#define CACHE_ASS_IMG_COUNT 16
+#define A_ASS_IMG_DURATION 0.03
 
 typedef struct FFSubComponent{
     int st_idx;
@@ -99,7 +99,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             com->pre_load_pts = com->current_pts + 0.2;
             Frame *sp = frame_queue_peek_offset(com->frameq, 0);
             double pts = sp ? sp->pts : -1;
-            av_log(NULL, AV_LOG_WARNING, "subtitle is slower than video:%fs,cache:%d,%f",delta,frame_queue_nb_remaining(com->frameq),pts);
+            av_log(NULL, AV_LOG_WARNING, "subtitle is slower than video:%0.3fs,cached frame:%d,pts:%f",delta,frame_queue_nb_remaining(com->frameq),pts);
         }
         double pts = com->pre_load_pts;
         int r = ff_ass_upload_buffer(com->assRenderer, pts, &buffer, 0);
@@ -470,7 +470,7 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
             if (next) {
                 float du = next->pts - sp->pts;
                 if (du <= 0) {
-                    av_log(NULL, AV_LOG_ERROR,"sub stream drop overtime2 frame:%f\n",sp->pts);
+                    av_log(NULL, AV_LOG_ERROR,"sub stream drop overtime2 frame:%0.3f\n",sp->pts);
                     frame_queue_next(com->frameq);
                     continue;
                 } else if (du > 0) {
@@ -493,7 +493,7 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
         }
         
         //已经开始
-        if (pts > sp->pts) {
+        if (pts >= sp->pts) {
             for (int j = 0; j < sizeof(sp->sub_list)/sizeof(sp->sub_list[0]); j++) {
                 FFSubtitleBuffer *sb = sp->sub_list[j];
                 if (sb) {
@@ -520,7 +520,6 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
         ResetSubtitleBufferArray(&com->sub_buffer_array, packet);
         return 1;
     } else {
-        FreeSubtitleBufferArray(packet);
         return 0;
     }
 }
@@ -576,7 +575,7 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
         myPacket.isAss = 1;
         
         int r = subComponent_packet_for_ass(com, pts, &myPacket);
-        if (r > 0) {
+        if (r >= 0) {
             *packet = myPacket;
         }
         return r;
@@ -589,7 +588,7 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
         myPacket.isAss = 0;
         
         int r = subComponent_packet_from_frame_queue(com, pts, &myPacket, com->sp_changed);
-        if (r > 0) {
+        if (r >= 0) {
             com->sp_changed = 0;
             *packet = myPacket;
         }

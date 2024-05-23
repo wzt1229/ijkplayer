@@ -381,7 +381,7 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
     }
 abort_end:
     if (d->queue->abort_request && status == -1) {
-        av_log(NULL, AV_LOG_INFO, "will destroy avcodec:%d,flush buffers.\n",d->avctx->codec_type);
+        av_log(NULL, AV_LOG_INFO, "will destroy avcodec:%s,flush buffers.\n",avcodec_get_name(d->avctx->codec_id));
         avcodec_send_packet(d->avctx, NULL);
         avcodec_flush_buffers(d->avctx);
     }
@@ -410,12 +410,12 @@ static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
     int update_stream;
-    int r = ff_sub_update_stream_if_need(is->ffSub, &update_stream);
+    int pre_stream;
+    int r = ff_sub_update_stream_if_need(is->ffSub, &update_stream, &pre_stream);
     if (r > 0) {
         AVCodecContext * avctx = ff_sub_get_avctx(is->ffSub);
         ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, avcodec_get_name(avctx->codec_id));
-        int stream = ff_sub_get_current_stream(is->ffSub, NULL);
-        ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, stream);
+        ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, update_stream);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
         
         int type = ff_sub_current_stream_type(is->ffSub);
@@ -431,10 +431,14 @@ static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
         ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
         ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
     } else if (r < -1) {
-        ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, "");
-        ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
-        ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
-        ffp_notify_msg3(ffp, FFP_MSG_SELECTING_STREAM_FAILED, update_stream, r);
+        //when closed pre stream,need send stream changed msg.
+        if (pre_stream >= 0) {
+            ffp_set_subtitle_codec_info(ffp, AVCODEC_MODULE_NAME, "");
+            ijkmeta_set_int64_l(ffp->meta, IJKM_KEY_TIMEDTEXT_STREAM, -1);
+            ffp_notify_msg1(ffp, FFP_MSG_SELECTED_STREAM_CHANGED);
+        }
+        //send selecting new stream failed msg.
+        ffp_notify_msg4(ffp, FFP_MSG_SELECTING_STREAM_FAILED, update_stream, pre_stream, &r, sizeof(r));
     }
     return r;
 }
@@ -3467,7 +3471,7 @@ static int read_thread(void *arg)
                 buffer_size += ic->bit_rate/1000000 * 1024 * 1024;
             } else {
                 buffer_size += 10 * 1024 * 1024;
-                int rate = (int)(ic->bit_rate / 10000000);
+                int rate = (int)(ic->bit_rate / 1000000);
                 buffer_size += rate * 1024 * 1024;
             }
             ffp->dcc.max_buffer_size = FFMIN(MAX_QUEUE_SIZE, buffer_size);
