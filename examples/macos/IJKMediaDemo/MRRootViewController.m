@@ -977,6 +977,7 @@ static BOOL hdrAnimationShown = 0;
     NSString *title = [NSString stringWithFormat:@"(%ld/%ld)%@",(long)idx,[[self playList] count],videoName];
     [self.view.window setTitle:title];
     
+    self.playCtrlBtn.image = [NSImage imageNamed:@"pause"];
     self.playCtrlBtn.state = NSControlStateValueOff;
     
     int startTime = (int)([self readCurrentPlayRecord] * 1000);
@@ -1025,6 +1026,12 @@ static BOOL hdrAnimationShown = 0;
         } else {
             NSAssert(NO, @"没有处理的文件:%@",url);
         }
+    }
+    
+    if ([videos count] == 0) {
+        [self.subtitles addObjectsFromArray:subtitles];
+        [self playFirstIfNeed];
+        return;
     }
     
     if (reset) {
@@ -1106,12 +1113,11 @@ static BOOL hdrAnimationShown = 0;
         });
         return;
     }
-
-    if (!sender) {
-        self.playCtrlBtn.state = !self.playCtrlBtn.state;
-    }
     
     if (self.playingUrl) {
+        if (!sender) {
+            self.playCtrlBtn.state = !self.playCtrlBtn.state;
+        }
         if (self.playCtrlBtn.state == NSControlStateValueOn) {
             [self enableComputerSleep:YES];
             [self.player pause];
@@ -1122,7 +1128,6 @@ static BOOL hdrAnimationShown = 0;
             self.playCtrlBtn.image = [NSImage imageNamed:@"pause"];
         }
     } else {
-        self.playCtrlBtn.image = [NSImage imageNamed:@"pause"];
         [self playNext:nil];
     }
 }
