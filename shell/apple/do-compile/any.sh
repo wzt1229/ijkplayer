@@ -147,7 +147,7 @@ function main() {
         'build')
             resolve_dep
             for arch in $archs; do
-                init_env $arch
+                init_arch_env $arch
                 do_compile $arch
                 echo
             done
