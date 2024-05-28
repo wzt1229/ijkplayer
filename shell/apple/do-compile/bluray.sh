@@ -30,9 +30,15 @@ env_assert "XC_DEPLOYMENT_TARGET"
 env_assert "XCRUN_SDK_PATH"
 env_assert "XCRUN_CC"
 env_assert "THREAD_COUNT"
-env_assert "XC_OTHER_CFLAGS"
+echo "XC_OTHER_CFLAGS:$XC_OTHER_CFLAGS"
 echo "XC_OPTS:$XC_OPTS"
 echo "===check env end==="
+
+if [[ "$XC_OPTS" == "debug" ]];then
+    export XC_OTHER_CFLAGS="${XC_OTHER_CFLAGS} -g"
+else
+    export XC_OTHER_CFLAGS="${XC_OTHER_CFLAGS} -Os"
+fi
 
 # prepare build config
 CFG_FLAGS="--prefix=$XC_BUILD_PREFIX --disable-shared --disable-dependency-tracking --disable-silent-rules --disable-bdjava-jar --without-freetype --without-fontconfig --disable-doxygen-doc"

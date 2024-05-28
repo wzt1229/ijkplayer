@@ -70,21 +70,13 @@ function init_arch_env () {
             ;;
         esac
         
-        if [[ "$XC_OPTS" == "debug" ]];then
-            export XC_OTHER_CFLAGS="-fembed-bitcode -Og"
-        else
-            export XC_OTHER_CFLAGS="-fembed-bitcode -Os"
-        fi
+        export XC_OTHER_CFLAGS="-fembed-bitcode"
+
     else
         export XCRUN_PLATFORM='MacOSX'
         export MACOSX_DEPLOYMENT_TARGET=10.11
         export XC_DEPLOYMENT_TARGET="-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
-
-        if [[ "$XC_OPTS" == "debug" ]];then
-            export XC_OTHER_CFLAGS="-g"
-        else
-            export XC_OTHER_CFLAGS="-Os"
-        fi
+        export XC_OTHER_CFLAGS=""
     fi
     
     #common xcode configuration
