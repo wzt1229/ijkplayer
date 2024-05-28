@@ -148,7 +148,7 @@
     [self.windowCtrl showWindow:nil];
     BOOL match = [IJKFFMoviePlayerController checkIfFFmpegVersionMatch:YES];
     NSLog(@"==FFmpegVersionMatch:%d",match);
-
+    
     if ([self.waitHandleArr count] > 0) {
         [self application:NSApp openURLs:self.waitHandleArr];
         self.waitHandleArr = nil;
@@ -224,7 +224,11 @@
 {
     NSMutableArray *urlArr = [NSMutableArray array];
     for (NSString *file in filenames) {
-        [urlArr addObject:[NSURL fileURLWithPath:file]];
+        if ([file hasPrefix:@"/"]) {
+            [urlArr addObject:[NSURL fileURLWithPath:file]];
+        } else {
+            [urlArr addObject:[NSURL URLWithString:file]];
+        }
     }
     
     [self application:sender openURLs:urlArr];

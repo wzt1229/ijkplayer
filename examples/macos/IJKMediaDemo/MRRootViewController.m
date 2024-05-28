@@ -202,9 +202,6 @@ static BOOL hdrAnimationShown = 0;
 
 - (void)_playExplorerMovies:(NSNotification *)notifi
 {
-    if (!self.view.window.isKeyWindow) {
-        return;
-    }
     NSDictionary *info = notifi.userInfo;
     NSArray *movies = info[@"obj"];
     
@@ -695,6 +692,8 @@ static BOOL hdrAnimationShown = 0;
     //test
     [playerView setBackgroundColor:0 g:0 b:0];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerOpenInput:) name:IJKMPMoviePlayerOpenInputNotification object:self.player];
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerFirstVideoFrameRendered:) name:IJKMPMoviePlayerFirstVideoFrameRenderedNotification object:self.player];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:self.player];
@@ -762,6 +761,13 @@ static BOOL hdrAnimationShown = 0;
         
         int code = [notifi.userInfo[IJKMoviePlayerSelectingStreamErrUserInfoKey] intValue];
         NSLog(@"Selecting Stream Did Failed:%d, pre selected stream is %d,Err Code:%d",stream,preStream,code);
+    }
+}
+
+- (void)ijkPlayerOpenInput:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        NSLog(@"stream opened:%@",notifi.userInfo[@"name"]);
     }
 }
 

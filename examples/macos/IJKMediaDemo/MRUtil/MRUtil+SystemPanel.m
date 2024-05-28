@@ -12,18 +12,28 @@
 
 @implementation MRUtil (SystemPanel)
 
-+ (NSDictionary *)makeBookmarkWithURL:(NSURL *)url {
-    
-    NSString *pathExtension = [[url pathExtension] lowercaseString];
-    [NSDocumentController.sharedDocumentController noteNewRecentDocumentURL:url];
-    NSError *error = nil;
-    NSData *bookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
-                        | NSURLBookmarkCreationSecurityScopeAllowOnlyReadAccess includingResourceValuesForKeys:nil relativeToURL:nil error:&error];
-    if (bookmark) {
++ (NSDictionary *)makeBookmarkWithURL:(NSURL *)url
+{
+    if ([url isFileURL]) {
+        NSString *pathExtension = [[url pathExtension] lowercaseString];
+        NSError *error = nil;
+        NSData *bookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
+                            | NSURLBookmarkCreationSecurityScopeAllowOnlyReadAccess includingResourceValuesForKeys:nil relativeToURL:nil error:&error];
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         [dic setObject:url forKey:@"url"];
-        [dic setObject:bookmark forKey:@"bookmark"];
-        
+        if (bookmark) {
+            [dic setObject:bookmark forKey:@"bookmark"];
+        }
+        if ([[self subtitleType] containsObject:pathExtension]) {
+            [dic setObject:@(1) forKey:@"type"];
+        } else {
+            [dic setObject:@(0) forKey:@"type"];
+        }
+        return [dic copy];
+    } else {
+        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+        [dic setObject:url forKey:@"url"];
+        NSString *pathExtension = [[url pathExtension] lowercaseString];
         if ([[self subtitleType] containsObject:pathExtension]) {
             [dic setObject:@(1) forKey:@"type"];
         } else {
