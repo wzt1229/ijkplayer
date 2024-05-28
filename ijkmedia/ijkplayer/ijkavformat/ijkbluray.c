@@ -20,6 +20,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+/*
+ 2024.05.28 the "House.of.the.Dragon.S01E01.2022.UHD.BluRay.2160p.HEVC.Atmos.TrueHD7.1-TAG.iso" bluray disc after seek read first frame is not key,eventhough mpegts.c mpegts_get_dts handled seek_flag_keyframe problem. therefore,the hw decode failed.
+ so use bluray open and find the right m2ts,then read\seek it direactly instread bluray logic.
+ */
+
 #include <libbluray/bluray.h>
 
 #include "libavutil/avstring.h"
@@ -41,6 +46,7 @@ typedef struct {
     int chapter;
     /*int region;*/
     int title_idx;
+    int stream_opened;
 } BlurayContext;
 
 #define OFFSET(x) offsetof(BlurayContext, x)
@@ -113,6 +119,7 @@ static int bluray_close(URLContext *h)
     return 0;
 }
 
+#define DEBUG_BLURAY
 #ifdef DEBUG_BLURAY
 #include <libbluray/log_control.h>
 #define BLURAY_DEBUG_MASK 0xFFFFF //(0xFFFFF & ~DBG_STREAM)
@@ -121,7 +128,7 @@ static void bluray_DebugHandler(const char *psz)
 {
     size_t len = strlen(psz);
     if(len < 1) return;
-    av_log(NULL, AV_LOG_DEBUG, "[bluray] %s\n",psz);
+    av_log(NULL, AV_LOG_INFO, "[bluray] %s\n",psz);
 }
 #endif
 
@@ -184,7 +191,7 @@ static int bluray_open(URLContext *h, const char *path, int flags)
 
             bd_free_title_info(info);
         }
-        av_log(h, AV_LOG_INFO, "selected %05d.mpls\n", bd->playlist);
+        av_log(h, AV_LOG_INFO, "select longest playlist: %05d.mpls\n", bd->playlist);
     }
 
     /* select playlist */
@@ -202,7 +209,7 @@ static int bluray_open(URLContext *h, const char *path, int flags)
     if (bd->chapter > 1) {
         bd_seek_chapter(bd->bd, bd->chapter - 1);
     }
-
+    bd->stream_opened = 1;
     return 0;
 }
 
@@ -214,7 +221,13 @@ static int bluray_read(URLContext *h, unsigned char *buf, int size)
     if (!bd || !bd->bd) {
         return AVERROR(EFAULT);
     }
-
+    if (bd->stream_opened) {
+        int read = (int)bd_file_read(bd->bd, buf, size);
+        if (read == 0) {
+            return AVERROR_EOF;
+        }
+        return read;
+    }
     len = bd_read(bd->bd, buf, size);
 
     return len == 0 ? AVERROR_EOF : len;
@@ -232,10 +245,17 @@ static int64_t bluray_seek(URLContext *h, int64_t pos, int whence)
     case SEEK_SET:
     case SEEK_CUR:
     case SEEK_END:
-        return bd_seek(bd->bd, pos);
-
+        if (bd->stream_opened) {
+            return (int)bd_file_seek(bd->bd, pos, whence);
+        } else {
+            return bd_seek(bd->bd, pos);
+        }
     case AVSEEK_SIZE:
-        return bd_get_title_size(bd->bd);
+        if (bd->stream_opened) {
+            return bd_file_size(bd->bd);
+        } else {
+            return bd_get_title_size(bd->bd);
+        }
     }
 
     av_log(h, AV_LOG_ERROR, "Unsupported whence operation %d\n", whence);
@@ -310,7 +330,7 @@ const URLProtocol ijkimp_ff_ijkbluray_protocol = {
     .url_open        = bluray_open,
     .url_read        = bluray_read,
     .url_seek        = bluray_seek,
-    .url_parse_priv  = bluray_parse_priv,
+    //.url_parse_priv  = bluray_parse_priv,
     .priv_data_size  = sizeof(BlurayContext),
     .priv_data_class = &bluray_context_class,
 };
