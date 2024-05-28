@@ -152,7 +152,7 @@ function main() {
                 echo
             done
             
-            do_lipo_all "$XC_ALL_ARCHS"
+            do_lipo_all "$archs"
         ;;
         'rebuild')
             echo '---clean for rebuild-----------------'
