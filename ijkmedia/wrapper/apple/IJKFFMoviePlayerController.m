@@ -90,7 +90,6 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 }
 
 @synthesize view = _view;
-@synthesize currentPlaybackTime;
 @synthesize duration;
 @synthesize playableDuration;
 @synthesize bufferingProgress = _bufferingProgress;
@@ -761,6 +760,26 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
         return -1;
 
     return ret / 1000;
+}
+
+- (void)setCurrentAudioExtraDelay:(float)delay
+{
+    ijkmp_set_audio_extra_delay(_mediaPlayer, delay);
+}
+
+- (float)currentAudioExtraDelay
+{
+    return ijkmp_get_audio_extra_delay(_mediaPlayer);
+}
+
+- (void)setCurrentSubtitleExtraDelay:(float)delay
+{
+    ijkmp_set_subtitle_extra_delay(_mediaPlayer, delay);
+}
+
+- (float)currentSubtitleExtraDelay
+{
+    return ijkmp_get_subtitle_extra_delay(_mediaPlayer);
 }
 
 - (NSTimeInterval)duration
@@ -2123,26 +2142,6 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
              ijkmp_set_stream_selected(_mediaPlayer,streamIdx,0);
         }
     }
-}
-
-- (void)updateAudioExtraDelay:(const float)delay
-{
-    ijkmp_set_audio_extra_delay(_mediaPlayer, delay);
-}
-
-- (float)currentAudioExtraDelay
-{
-    return ijkmp_get_audio_extra_delay(_mediaPlayer);
-}
-
-- (void)updateSubtitleExtraDelay:(const float)delay
-{
-    ijkmp_set_subtitle_extra_delay(_mediaPlayer, delay);
-}
-
-- (float)currentSubtitleExtraDelay
-{
-    return ijkmp_get_subtitle_extra_delay(_mediaPlayer);
 }
 
 - (void)setSubtitlePreference:(IJKSDLSubtitlePreference)subtitlePreference

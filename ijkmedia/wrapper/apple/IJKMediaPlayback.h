@@ -68,19 +68,27 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 
 - (NSURL *)contentURL;
 - (void)prepareToPlay;
-- (BOOL)loadThenActiveSubtitle:(NSURL*)url;
-- (BOOL)loadSubtitleOnly:(NSURL*)url;
-//最多512个字幕
-- (BOOL)loadSubtitlesOnly:(NSArray<NSURL*>*)urlArr;
+
 - (void)play;
 - (void)pause;
 - (void)stop;
 - (BOOL)isPlaying;
 - (void)shutdown;
 - (void)setPauseInBackground:(BOOL)pause;
+//PS:外挂字幕，最多可挂载512个。
+//挂载并激活字幕；本地网络均可
+- (BOOL)loadThenActiveSubtitle:(NSURL*)url;
+//仅挂载不激活字幕；本地网络均可
+- (BOOL)loadSubtitleOnly:(NSURL*)url;
+//批量挂载不激活字幕；本地网络均可
+- (BOOL)loadSubtitlesOnly:(NSArray<NSURL*>*)urlArr;
 
 @property(nonatomic, readonly)  UIView <IJKVideoRenderingProtocol>*view;
 @property(nonatomic)            NSTimeInterval currentPlaybackTime;
+//音频额外延迟，供用户调整
+@property(nonatomic)            float currentAudioExtraDelay;
+//字幕额外延迟，供用户调整
+@property(nonatomic)            float currentSubtitleExtraDelay;
 @property(nonatomic, readonly)  NSTimeInterval duration;
 @property(nonatomic, readonly)  NSTimeInterval playableDuration;
 @property(nonatomic, readonly)  NSInteger bufferingProgress;

@@ -472,21 +472,19 @@ static BOOL hdrAnimationShown = 0;
             case kVK_ANSI_Minus:
             {
                 if (self.player) {
-                    float delay = [self.player currentSubtitleExtraDelay];
+                    float delay = self.player.currentSubtitleExtraDelay;
                     delay -= 2;
                     self.subtitleDelay = delay;
-                    [self.player updateSubtitleExtraDelay:delay];
+                    self.player.currentSubtitleExtraDelay = delay;
                 }
             }
                 break;
             case kVK_ANSI_Equal:
             {
-                if (self.player) {
-                    float delay = [self.player currentSubtitleExtraDelay];
-                    delay += 2;
-                    self.subtitleDelay = delay;
-                    [self.player updateSubtitleExtraDelay:delay];
-                }
+                float delay = self.player.currentSubtitleExtraDelay;
+                delay += 2;
+                self.subtitleDelay = delay;
+                self.player.currentSubtitleExtraDelay = delay;
             }
                 break;
             case kVK_Escape:
@@ -1312,8 +1310,7 @@ static BOOL hdrAnimationShown = 0;
 
 - (IBAction)onChangeSubtitleDelay:(NSStepper *)sender
 {
-    float delay = sender.floatValue;
-    [self.player updateSubtitleExtraDelay:delay];
+    self.player.currentSubtitleExtraDelay = sender.floatValue;
 }
 
 - (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender

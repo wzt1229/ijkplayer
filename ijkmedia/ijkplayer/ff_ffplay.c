@@ -5328,13 +5328,21 @@ IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp)
 
 void ffp_set_audio_extra_delay(FFPlayer *ffp, const float delay)
 {
+    if (!ffp)
+        return;
     VideoState *is = ffp->is;
+    if (!is)
+        return;
     set_clock_extral_delay(&is->audclk, delay);
 }
 
 float ffp_get_audio_extra_delay(FFPlayer *ffp)
 {
+    if (!ffp)
+        return 0.0f;
     VideoState *is = ffp->is;
+    if (!is)
+        return 0.0f;
     return get_clock_extral_delay(&is->audclk);
 }
 
@@ -5352,7 +5360,11 @@ void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)
 
 float ffp_get_subtitle_extra_delay(FFPlayer *ffp)
 {
+    if (!ffp)
+        return 0.0f;
     VideoState *is = ffp->is;
+    if (!is)
+        return 0.0f;
     return ff_sub_get_delay(is->ffSub);
 }
 
