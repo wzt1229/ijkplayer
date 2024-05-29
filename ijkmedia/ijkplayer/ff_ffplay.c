@@ -666,6 +666,11 @@ static void set_clock_extral_delay(Clock *c, float delay)
     c->extra_delay = delay;
 }
 
+float get_clock_extral_delay(Clock *c)
+{
+    return c ? c->extra_delay : 0.0;
+}
+
 static void set_clock_speed(Clock *c, double speed)
 {
     set_clock(c, get_clock(c), c->serial);
@@ -5325,6 +5330,12 @@ void ffp_set_audio_extra_delay(FFPlayer *ffp, const float delay)
 {
     VideoState *is = ffp->is;
     set_clock_extral_delay(&is->audclk, delay);
+}
+
+float ffp_get_audio_extra_delay(FFPlayer *ffp)
+{
+    VideoState *is = ffp->is;
+    return get_clock_extral_delay(&is->audclk);
 }
 
 void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)

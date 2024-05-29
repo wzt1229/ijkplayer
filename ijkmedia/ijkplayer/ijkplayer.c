@@ -794,6 +794,12 @@ void ijkmp_set_audio_extra_delay(IjkMediaPlayer* mp, const float delay)
     ffp_set_audio_extra_delay(mp->ffplayer, delay);
 }
 
+float ijkmp_get_audio_extra_delay(IjkMediaPlayer *mp)
+{
+    assert(mp);
+    return ffp_get_audio_extra_delay(mp->ffplayer);
+}
+
 void ijkmp_set_subtitle_extra_delay(IjkMediaPlayer* mp, const float delay)
 {
     assert(mp);

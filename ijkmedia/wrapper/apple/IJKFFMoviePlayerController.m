@@ -2130,6 +2130,11 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
     ijkmp_set_audio_extra_delay(_mediaPlayer, delay);
 }
 
+- (float)currentAudioExtraDelay
+{
+    return ijkmp_get_audio_extra_delay(_mediaPlayer);
+}
+
 - (void)updateSubtitleExtraDelay:(const float)delay
 {
     ijkmp_set_subtitle_extra_delay(_mediaPlayer, delay);

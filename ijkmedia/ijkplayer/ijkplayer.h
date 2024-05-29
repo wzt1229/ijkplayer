@@ -218,6 +218,7 @@ void           *ijkmp_set_weak_thiz(IjkMediaPlayer *mp, void *weak_thiz);
 /* need to call msg_free_res for freeing the resouce obtained in msg */
 int             ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block);
 void            ijkmp_set_audio_extra_delay(IjkMediaPlayer* mp, const float delay);
+float           ijkmp_get_audio_extra_delay(IjkMediaPlayer *mp);
 void            ijkmp_set_subtitle_extra_delay(IjkMediaPlayer *mp,const float delay);
 float           ijkmp_get_subtitle_extra_delay(IjkMediaPlayer *mp);
 /* add + active ex-subtitle */
