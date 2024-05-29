@@ -2967,26 +2967,27 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
         av_dict_set_int(&opts, "lowres", stream_lowres, 0);
     
 #ifdef __APPLE__
-    if (ffp->videotoolbox_hwaccel && avctx->codec_type == AVMEDIA_TYPE_VIDEO && !(st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
-        enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");
-        const AVCodecHWConfig *config = NULL;
-        for (int i = 0;; i++) {
-            const AVCodecHWConfig *node = avcodec_get_hw_config(codec, i);
-            if (!node) {
-                ALOGE("avdec %s does not support device type %s.\n",
-                        codec->name, av_hwdevice_get_type_name(type));
-                break;
+    if (avctx->codec_type == AVMEDIA_TYPE_VIDEO && !(st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
+        ALOGI("videotoolbox hwaccel switch:%s\n",ffp->videotoolbox_hwaccel ? "on" : "off");
+        if (ffp->videotoolbox_hwaccel) {
+            enum AVHWDeviceType type = av_hwdevice_find_type_by_name("videotoolbox");
+            const AVCodecHWConfig *config = NULL;
+            for (int i = 0;; i++) {
+                const AVCodecHWConfig *node = avcodec_get_hw_config(codec, i);
+                if (!node) {
+                    ALOGE("avdec %s does not support device type %s.\n",
+                            codec->name, av_hwdevice_get_type_name(type));
+                    break;
+                }
+                if (node->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX && node->device_type == type) {
+                    config = node;
+                    break;
+                }
             }
-            if (node->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX && node->device_type == type) {
-                config = node;
-                break;
+            
+            if (config && hw_decoder_init(avctx, config) == 0) {
+                ALOGI("try use videotoolbox accel\n");
             }
-        }
-        
-        if (config && hw_decoder_init(avctx, config) == 0) {
-            ALOGI("try use videotoolbox accel\n");
-        } else {
-            ALOGW("not try use videotoolbox accel\n");
         }
     }
 #endif
@@ -3280,7 +3281,7 @@ static int read_thread(void *arg)
 #endif
     }
     is->ic = ic;
-
+    //ic->debug |= FF_FDEBUG_TS;
     if (ffp->genpts)
         ic->flags |= AVFMT_FLAG_GENPTS;
 
