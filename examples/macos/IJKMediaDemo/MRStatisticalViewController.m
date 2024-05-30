@@ -1284,14 +1284,14 @@ static BOOL hdrAnimationShown = 0;
     NSMenuItem *item = [sender selectedItem];
     int bgrValue = (int)item.tag;
     IJKSDLSubtitlePreference p = self.player.subtitlePreference;
-    p.color = bgrValue;
+    p.PrimaryColour = bgrValue;
     self.player.subtitlePreference = p;
 }
 
 - (IBAction)onChangeSubtitleSize:(NSStepper *)sender
 {
     IJKSDLSubtitlePreference p = self.player.subtitlePreference;
-    p.scale = sender.floatValue / 50;
+    p.Scale = sender.floatValue / 50;
     self.player.subtitlePreference = p;
 }
 
@@ -1316,7 +1316,7 @@ static BOOL hdrAnimationShown = 0;
 - (IBAction)onChangeSubtitleBottomMargin:(NSSlider *)sender
 {
     IJKSDLSubtitlePreference p = self.player.subtitlePreference;
-    p.bottomMargin = sender.floatValue;
+    p.BottomMargin = sender.floatValue;
     self.player.subtitlePreference = p;
 }
 

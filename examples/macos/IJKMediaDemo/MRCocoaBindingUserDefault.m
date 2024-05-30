@@ -45,11 +45,14 @@
     NSColor *text_color = [NSColor whiteColor];
     NSData *text_color_data = [NSKeyedArchiver archivedDataWithRootObject:text_color];
     
-    NSColor *subtitle_bg_color = [NSColor clearColor];
-    NSData *subtitle_bg_color_data = [NSKeyedArchiver archivedDataWithRootObject:subtitle_bg_color];
+    NSColor *SecondaryColour = [NSColor clearColor];
+    NSData *subtitle_bg_color_data = [NSKeyedArchiver archivedDataWithRootObject:SecondaryColour];
     
-    NSColor *subtitle_stroke_color = [NSColor blackColor];
-    NSData *subtitle_stroke_color_data = [NSKeyedArchiver archivedDataWithRootObject:subtitle_stroke_color];
+    NSColor *OutlineColour = [NSColor blackColor];
+    NSData *subtitle_stroke_color_data = [NSKeyedArchiver archivedDataWithRootObject:OutlineColour];
+    
+    NSColor *BackColour = [NSColor grayColor];
+    NSData *subtitle_shadow_color_data = [NSKeyedArchiver archivedDataWithRootObject:BackColour];
     
     NSDictionary *initValues = @{
         @"volume" : @(0.4),
@@ -70,14 +73,18 @@
         @"open_hdr" : @(1),
         @"overlay_format" : @"fcc-_es2",
         
-        @"subtitle_font_name" : @"STSongti-SC-Regular",
+        @"force_override" : @(1),
+        @"FontName" : @"STSongti-SC-Regular",
         @"subtitle_scale" : @(1.0),
         @"subtitle_bottom_margin":@(20),
         @"subtitle_delay" : @(0),
-        @"subtitle_stroke_size" : @(5),
-        @"subtitle_text_color" : text_color_data,
-        @"subtitle_bg_color" : subtitle_bg_color_data,
-        @"subtitle_stroke_color" : subtitle_stroke_color_data,
+        @"Outline" : @(5),
+        @"PrimaryColour" : text_color_data,
+        @"SecondaryColour" : subtitle_bg_color_data,
+        @"OutlineColour" : subtitle_stroke_color_data,
+        @"BackColour" : subtitle_shadow_color_data,
+        @"custom_style" : @"",
+        
         @"audio_delay" : @(0),
         @"snapshot_type" : @(3),
         @"accurate_seek" : @(1),
@@ -275,14 +282,14 @@
     return [self boolForKey:@"use_hw"];
 }
 
-+ (NSString *)subtitle_font_name
++ (NSString *)FontName
 {
-    return [self stringForKey:@"subtitle_font_name"];
+    return [self stringForKey:@"FontName"];
 }
 
-+ (void)setSubtitle_font_name:(NSString *)font_name
++ (void)setFontName:(NSString *)font_name
 {
-    return [self setValue:font_name forKey:@"subtitle_font_name"];
+    return [self setValue:font_name forKey:@"FontName"];
 }
 
 + (float)subtitle_scale
@@ -290,14 +297,60 @@
     return [self floatForKey:@"subtitle_scale"];
 }
 
-+ (void)setSubtitle_font_size:(float)font_size
-{
-    return [self setValue:@(font_size) forKey:@"subtitle_font_size"];
-}
-
 + (int)subtitle_bottom_margin
 {
     return [self intForKey:@"subtitle_bottom_margin"];
+}
+
++ (float)Outline
+{
+    return [self floatForKey:@"Outline"];
+}
+
++ (NSColor *)PrimaryColour
+{
+    NSData *data = [self anyForKey:@"PrimaryColour"];
+    if (data) {
+        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    }
+    return nil;
+}
+
++ (NSColor *)SecondaryColour
+{
+    NSData *data = [self anyForKey:@"SecondaryColour"];
+    if (data) {
+        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    }
+    return nil;
+}
+
++ (NSColor *)BackColour
+{
+    NSData *data = [self anyForKey:@"BackColour"];
+    if (data) {
+        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    }
+    return nil;
+}
+
++ (NSColor *)OutlineColour
+{
+    NSData *data = [self anyForKey:@"OutlineColour"];
+    if (data) {
+        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    }
+    return nil;
+}
+
++ (int)force_override
+{
+    return [self intForKey:@"force_override"];
+}
+
++ (NSString *)custom_style
+{
+    return [self stringForKey:@"custom_style"];
 }
 
 + (float)subtitle_delay
@@ -308,38 +361,6 @@
 + (float)audio_delay
 {
     return [self floatForKey:@"audio_delay"];
-}
-
-+ (float)subtitle_stroke_size
-{
-    return [self floatForKey:@"subtitle_stroke_size"];
-}
-
-+ (NSColor *)subtitle_text_color
-{
-    NSData *data = [self anyForKey:@"subtitle_text_color"];
-    if (data) {
-        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
-    }
-    return nil;
-}
-
-+ (NSColor *)subtitle_bg_color
-{
-    NSData *data = [self anyForKey:@"subtitle_bg_color"];
-    if (data) {
-        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
-    }
-    return nil;
-}
-
-+ (NSColor *)subtitle_stroke_color
-{
-    NSData *data = [self anyForKey:@"subtitle_stroke_color"];
-    if (data) {
-        return [NSKeyedUnarchiver unarchiveObjectWithData:data];
-    }
-    return nil;
 }
 
 + (float)volume

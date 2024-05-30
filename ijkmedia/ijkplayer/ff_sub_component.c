@@ -40,9 +40,23 @@ typedef struct FFSubComponent{
 static void apply_preference(FFSubComponent *com)
 {
     if (com->assRenderer) {
-        int b = com->sp.bottomMargin * com->sub_height;
+        int b = com->sp.BottomMargin * com->sub_height;
         com->assRenderer->iformat->update_bottom_margin(com->assRenderer, b);
-        com->assRenderer->iformat->set_font_scale(com->assRenderer, com->sp.scale);
+        com->assRenderer->iformat->set_font_scale(com->assRenderer, com->sp.Scale);
+        //abgr
+        //com->sp.PrimaryColour = 0x000000FF;
+        //com->sp.SecondaryColour = 0x000F701F;
+        //com->sp.BackColour = 0x0000FF00;
+        //com->sp.OutlineColour = 0x00FF0000;
+        
+        if (com->sp.ForceOverride) {
+            char style[1024] = {0};
+            sprintf(style, "FontName=%s,PrimaryColour=&H%08X,SecondaryColour=&H%08X,BackColour=&H%08X,OutlineColour=&H%08X,Outline=%d",com->sp.FontName,com->sp.PrimaryColour,com->sp.SecondaryColour,com->sp.BackColour,com->sp.OutlineColour,com->sp.Outline);
+            com->assRenderer->iformat->set_force_style(com->assRenderer, style);
+        } else {
+            com->assRenderer->iformat->set_force_style(com->assRenderer, NULL);
+        }
+        
         com->sp_changed = 0;
     }
 }
@@ -581,10 +595,10 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
         return r;
     } else if (com->bitmapRenderer) {
         FFSubtitleBufferPacket myPacket = { 0 };
-        myPacket.scale = com->sp.scale;
+        myPacket.scale = com->sp.Scale;
         myPacket.width = com->sub_width;
         myPacket.height = com->sub_height;
-        myPacket.bottom_margin = com->sp.bottomMargin * com->sub_height;
+        myPacket.bottom_margin = com->sp.BottomMargin * com->sub_height;
         myPacket.isAss = 0;
         
         int r = subComponent_packet_from_frame_queue(com, pts, &myPacket, com->sp_changed);

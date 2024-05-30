@@ -186,8 +186,7 @@
 - (void)changeFont:(NSFontManager *)sender
 {
     self.font = [[NSFontPanel sharedFontPanel] panelConvertFont:self.font];
-    [MRCocoaBindingUserDefault setSubtitle_font_name:self.font.fontName];
-    [MRCocoaBindingUserDefault setSubtitle_font_size:self.font.pointSize];
+    [MRCocoaBindingUserDefault setFontName:self.font.fontName];
 }
 
 - (void)onSelectFont:(NSButton *)sender
@@ -196,7 +195,7 @@
     [fontManager setTarget:self];
     NSFontPanel *panel = [fontManager fontPanel:YES];
     int fontSize = [MRCocoaBindingUserDefault subtitle_scale] * 50;
-    NSFont *font = [NSFont fontWithName:[MRCocoaBindingUserDefault subtitle_font_name] size:fontSize];
+    NSFont *font = [NSFont fontWithName:[MRCocoaBindingUserDefault FontName] size:fontSize];
     if (!font) {
         font = [NSFont systemFontOfSize:fontSize];
     }

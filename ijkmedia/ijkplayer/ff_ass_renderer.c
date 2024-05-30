@@ -60,7 +60,7 @@ static void ass_log(int ass_level, const char *fmt, va_list args, void *ctx)
     const int ass_level_clip = av_clip(ass_level, 0,
         FF_ARRAY_ELEMS(ass_libavfilter_log_level_map) - 1);
     int level = ass_libavfilter_log_level_map[ass_level_clip];
-    //level = AV_LOG_ERROR;
+    level = AV_LOG_ERROR;
     const char *prefix = "[ass] ";
     char *tmp = av_asprintf("%s%s", prefix, fmt);
     av_vlog(ctx, level, tmp, args);
@@ -176,8 +176,6 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
     }
     
     SDL_LockMutex(ass->mutex);
-    //update scale before render_frame;can't in other thread otherwise in find cache frame cause assert
-    ass_set_font_scale(ass->renderer, ass->scale);
     int changed;
     ASS_Image *imgs = ass_render_frame(ass->renderer, ass->track, time_ms, &changed);
     
@@ -317,28 +315,7 @@ static int set_subtitle_header(FF_ASS_Renderer *s, uint8_t *subtitle_header, int
     ass_set_hinting( ass->renderer, ASS_HINTING_NONE );
     
     int ret = 0;
-    //ass->force_style = "MarginV=50";
-    if (ass->force_style) {
-        char **list = NULL;
-        char *temp = NULL;
-        char *ptr = av_strtok(ass->force_style, ",", &temp);
-        int i = 0;
-        while (ptr) {
-            av_dynarray_add(&list, &i, ptr);
-            if (!list) {
-                ret = AVERROR(ENOMEM);
-                goto end;
-            }
-            ptr = av_strtok(NULL, ",", &temp);
-        }
-        av_dynarray_add(&list, &i, NULL);
-        if (!list) {
-            ret = AVERROR(ENOMEM);
-            goto end;
-        }
-        ass_set_style_overrides(ass->library, list);
-        av_free(list);
-    }
+    
     /* Decode subtitles and push them into the renderer (libass) */
     if (subtitle_header && subtitle_header_size > 0)
         ass_process_codec_private(ass->track,
@@ -391,8 +368,10 @@ static void update_bottom_margin(FF_ASS_Renderer *s, int b)
     //设置后字体会被压缩变形
     //ass_set_margins(ass->renderer, 0, b, 0, 0);
     SDL_LockMutex(ass->mutex);
-    ass->bottom_margin = b;
-    ass->force_changed = 1;
+    if (ass->bottom_margin != b) {
+        ass->bottom_margin = b;
+        ass->force_changed = 1;
+    }
     SDL_UnlockMutex(ass->mutex);
 }
 
@@ -403,8 +382,50 @@ static void set_font_scale(FF_ASS_Renderer *s, double scale)
         return;
     }
     SDL_LockMutex(ass->mutex);
-    ass->scale = scale;
+    if (ass->scale != scale) {
+        ass->scale = scale;
+        ass_set_font_scale(ass->renderer, ass->scale);
+        ass->force_changed = 1;
+    }
     SDL_UnlockMutex(ass->mutex);
+}
+
+static void set_force_style(FF_ASS_Renderer *s, char * style)
+{
+    FF_ASS_Context *ass = s->priv_data;
+    if (!ass) {
+        return;
+    }
+
+    if (style != ass->force_style || (style && ass->force_style && !strcmp(style, ass->force_style))) {
+        if (style && strlen(style) > 0) {
+            ass->force_style = av_strdup(style);
+            
+            char **list = NULL;
+            char *temp = NULL;
+            char *ptr = av_strtok(style, ",", &temp);
+            int i = 0;
+            while (ptr) {
+                av_dynarray_add(&list, &i, ptr);
+                if (!list) {
+                    return;
+                }
+                ptr = av_strtok(NULL, ",", &temp);
+            }
+            av_dynarray_add(&list, &i, NULL);
+            if (!list) {
+                return;
+            }
+            SDL_LockMutex(ass->mutex);
+            ass_set_style_overrides(ass->library, list);
+            ass_process_force_style(ass->track);
+            ass->force_changed = 1;
+            SDL_UnlockMutex(ass->mutex);
+            av_free(list);
+        } else {
+            //todo clean force style.
+        }
+    }
 }
 
 static void uninit(FF_ASS_Renderer *s)
@@ -450,6 +471,7 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .upload_buffer      = upload_buffer,
     .update_bottom_margin= update_bottom_margin,
     .set_font_scale     = set_font_scale,
+    .set_force_style    = set_force_style,
     .uninit             = uninit,
 };
 

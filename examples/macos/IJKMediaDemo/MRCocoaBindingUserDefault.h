@@ -53,18 +53,20 @@ NS_ASSUME_NONNULL_BEGIN
 + (int)use_dns_cache;
 + (int)dns_cache_period;
 
-+ (NSString *)subtitle_font_name;
-+ (void)setSubtitle_font_name:(NSString *)font_name;
++ (NSString *)FontName;
++ (void)setFontName:(NSString *)font_name;
 + (float)subtitle_scale;
-+ (void)setSubtitle_font_size:(float)font_size;
 + (int)subtitle_bottom_margin;
 + (float)subtitle_delay;
-+ (float)subtitle_stroke_size;
-+ (NSColor *)subtitle_text_color;
-+ (NSColor *)subtitle_bg_color;
-+ (NSColor *)subtitle_stroke_color;
-+ (float)audio_delay;
++ (float)Outline;
++ (NSColor *)PrimaryColour;
++ (NSColor *)SecondaryColour;
++ (NSColor *)BackColour;
++ (NSColor *)OutlineColour;
++ (int)force_override;
++ (NSString *)custom_style;
 
++ (float)audio_delay;
 + (NSString *)overlay_format;
 + (BOOL)use_opengl;
 + (int)snapshot_type;

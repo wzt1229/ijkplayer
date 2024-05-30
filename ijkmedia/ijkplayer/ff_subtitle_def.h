@@ -22,18 +22,22 @@ FFSubtitleBuffer * ff_subtitle_buffer_retain(FFSubtitleBuffer *);
 void ff_subtitle_buffer_release(FFSubtitleBuffer **);
 
 typedef struct IJKSDLSubtitlePreference {
-    char name[256];//font name
-    float scale; //font scale,default 1.0
-    uint32_t color;//text color
-    uint32_t bgColor;//text bg color
-    uint32_t strokeColor;//border color
-    int strokeSize;//stroke size
-    float bottomMargin;//[0.0,1.0]
+    float Scale; //字体缩放,默认 1.0
+    float BottomMargin;//距离底部距离[0.0, 1.0]
+    
+    int ForceOverride;//强制使用以下样式
+    char FontName[256];//字体名称
+    uint32_t PrimaryColour;//主要填充颜色
+    uint32_t SecondaryColour;//卡拉OK模式下的预填充
+    uint32_t BackColour;//字体阴影色
+    uint32_t OutlineColour;//字体边框颜色
+    int Outline;//Outline 边框宽度
+    char *otherStyles;//除上述定义的样式外，需要其他样式时使用该字段,格式：k1=v1,k2=v2
 } IJKSDLSubtitlePreference;
 
 static inline IJKSDLSubtitlePreference ijk_subtitle_default_preference(void)
 {
-    return (IJKSDLSubtitlePreference){"", 1.0, 4294967295, 0, 255, 5, 0.025};
+    return (IJKSDLSubtitlePreference){1.0, 0.025, 0, "", 4294967295, 0, 255, 5};
 }
 
 static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,IJKSDLSubtitlePreference* p2)
@@ -41,13 +45,15 @@ static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,I
     if (!p1 || !p2) {
         return 0;
     }
-    if (p1->scale != p2->scale ||
-        p1->color != p2->color ||
-        p1->bgColor != p2->bgColor ||
-        p1->strokeColor != p2->strokeColor ||
-        p1->strokeSize != p2->strokeSize ||
-        p1->bottomMargin != p2->bottomMargin ||
-        strcmp(p1->name, p2->name)
+    if (p1->ForceOverride != p2->ForceOverride ||
+        p1->Scale != p2->Scale ||
+        p1->PrimaryColour != p2->PrimaryColour ||
+        p1->SecondaryColour != p2->SecondaryColour ||
+        p1->BackColour != p2->BackColour ||
+        p1->OutlineColour != p2->OutlineColour ||
+        p1->Outline != p2->Outline ||
+        p1->BottomMargin != p2->BottomMargin ||
+        strcmp(p1->FontName, p2->FontName)
         ) {
         return 0;
     }
