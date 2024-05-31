@@ -1550,12 +1550,9 @@ static BOOL hdrAnimationShown = 0;
         if (!v) {
             v = @"";
         }
-        
-        p.otherStyles = [v UTF8String];
+        //p.otherStyles = [v UTF8String];
         self.player.subtitlePreference = p;
     } forKey:@"custom_style"];
-    
-    
     
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
         __strongSelf__

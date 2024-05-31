@@ -26,7 +26,6 @@ typedef struct FF_ASS_Context {
     
     char *fontsdir;
     char *charenc;
-    char *force_style;
     int original_w, original_h;
     int bottom_margin;
     int force_changed;
@@ -39,7 +38,6 @@ typedef struct FF_ASS_Context {
 const AVOption ff_ass_options[] = {
     {"fontsdir",       "set the directory containing the fonts to read",           OFFSET(fontsdir),   AV_OPT_TYPE_STRING,     {.str = NULL},  0, 0, FLAGS },
     {"charenc",      "set input character encoding", OFFSET(charenc),      AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, FLAGS},
-    {"force_style",  "force subtitle style",         OFFSET(force_style),  AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, FLAGS},
     {NULL},
 };
 
@@ -390,42 +388,78 @@ static void set_font_scale(FF_ASS_Renderer *s, double scale)
     SDL_UnlockMutex(ass->mutex);
 }
 
-static void set_force_style(FF_ASS_Renderer *s, char * style)
+static inline uint32_t str_to_uint32_color(char *token)
+{
+    char *sep = strrchr(token,'H');
+    if (sep) {
+        char *color = sep + 1;
+        if (color) {
+            return (uint32_t)strtol(color, NULL, 16);
+        }
+    }
+    return 0;
+}
+
+static void set_style(ASS_Style *style, char *overrides)
+{
+    char *temp = NULL;
+    char *ptr = av_strtok(overrides, ",", &temp);
+    while (ptr) {
+        char *fs=ptr,*token;
+        char *eq = strrchr(fs, '=');
+        if (!eq)
+            continue;
+        *eq = '\0';
+        token = eq + 1;
+        if (!av_strcasecmp(fs, "FontName")) {
+            style->FontName = strdup(token);
+        } else if (!av_strcasecmp(fs, "PrimaryColour")) {
+            style->PrimaryColour = str_to_uint32_color(token);
+        } else if (!av_strcasecmp(fs, "SecondaryColour")) {
+            style->SecondaryColour = str_to_uint32_color(token);
+        } else if (!av_strcasecmp(fs, "OutlineColour")) {
+            style->OutlineColour = str_to_uint32_color(token);
+        } else if (!av_strcasecmp(fs, "BackColour")) {
+            style->BackColour = str_to_uint32_color(token);
+        } else if (!av_strcasecmp(fs, "Outline")) {
+            style->Outline = strtof(token,NULL);
+        } else {
+            av_log(NULL, AV_LOG_WARNING, "todo force style:%s=%s\n",fs,token);
+        }
+        ptr = av_strtok(NULL, ",", &temp);
+    }
+
+}
+
+static void set_force_style(FF_ASS_Renderer *s, char * overrides, int level)
 {
     FF_ASS_Context *ass = s->priv_data;
     if (!ass) {
         return;
     }
-
-    if (style != ass->force_style || (style && ass->force_style && !strcmp(style, ass->force_style))) {
-        if (style && strlen(style) > 0) {
-            ass->force_style = av_strdup(style);
-            
-            char **list = NULL;
-            char *temp = NULL;
-            char *ptr = av_strtok(style, ",", &temp);
-            int i = 0;
-            while (ptr) {
-                av_dynarray_add(&list, &i, ptr);
-                if (!list) {
-                    return;
-                }
-                ptr = av_strtok(NULL, ",", &temp);
-            }
-            av_dynarray_add(&list, &i, NULL);
-            if (!list) {
-                return;
-            }
-            SDL_LockMutex(ass->mutex);
-            ass_set_style_overrides(ass->library, list);
-            ass_process_force_style(ass->track);
-            ass->force_changed = 1;
-            SDL_UnlockMutex(ass->mutex);
-            av_free(list);
-        } else {
-            //todo clean force style.
+    
+    if (level > 0) {
+        ASS_Style style = { 0 };
+        style.FontSize = 18;
+        style.ScaleX = 1.;
+        style.ScaleY = 1.;
+        style.Spacing = 0;
+        set_style(&style, overrides);
+        SDL_LockMutex(ass->mutex);
+        ass_set_selective_style_override(ass->renderer, &style);
+        int set_force_flags = 0;
+        set_force_flags |= ASS_OVERRIDE_BIT_STYLE | ASS_OVERRIDE_BIT_SELECTIVE_FONT_SCALE;
+        ass_set_selective_style_override_enabled(ass->renderer, set_force_flags);
+        ass_process_force_style(ass->track);
+    } else {
+        SDL_LockMutex(ass->mutex);
+        ASS_Style *defaultStyle = ass->track->styles + ass->track->default_style;
+        if (!av_strcasecmp(defaultStyle->Name, "Default")) {
+            set_style(defaultStyle, overrides);
         }
+        ass_set_selective_style_override_enabled(ass->renderer, ASS_OVERRIDE_DEFAULT);
     }
+    SDL_UnlockMutex(ass->mutex);
 }
 
 static void uninit(FF_ASS_Renderer *s)

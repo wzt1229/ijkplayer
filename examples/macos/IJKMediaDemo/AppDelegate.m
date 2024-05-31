@@ -30,6 +30,31 @@
 
 - (void)prepareActionProcessor
 {
+    char *color = "ACBD1C2F";
+
+    char a[3] = { 0 };
+    char b[3] = { 0 };
+    char g[3] = { 0 };
+    char r[3] = { 0 };
+    
+    memcpy(a, color + 0, 2);
+    memcpy(b, color + 2, 2);
+    memcpy(g, color + 4, 2);
+    memcpy(r, color + 6, 2);
+    
+    int _r = (int)strtol(r, NULL, 16);
+    int _g = (int)strtol(g, NULL, 16);
+    int _b = (int)strtol(b, NULL, 16);
+    int _a = (int)strtol(a, NULL, 16);
+    
+    uint32_t value = _r + (_g << 8) + (_b << 16) + (_a << 24);
+    uint32_t value2 = (uint32_t)strtol(color, NULL, 16);
+    
+    char aColor[9] = {0};
+    sprintf(aColor, "%08X", value);
+    
+    printf("%s\n",aColor);
+    
     MRActionProcessor *processor = [[MRActionProcessor alloc] initWithScheme:@"ijkplayer"];
     
     __weakSelf__

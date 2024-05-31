@@ -32,7 +32,6 @@ typedef struct IJKSDLSubtitlePreference {
     uint32_t BackColour;//字体阴影色
     uint32_t OutlineColour;//字体边框颜色
     int Outline;//Outline 边框宽度
-    char *otherStyles;//除上述定义的样式外，需要其他样式时使用该字段,格式：k1=v1,k2=v2
 } IJKSDLSubtitlePreference;
 
 static inline IJKSDLSubtitlePreference ijk_subtitle_default_preference(void)

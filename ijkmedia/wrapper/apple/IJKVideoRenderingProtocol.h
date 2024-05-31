@@ -88,15 +88,15 @@ static inline uint32_t ijk_ass_color_to_int(UIColor *color) {
     //in ass,0 means opaque
     a = 1-a;
     a *= 255;
-    return (uint32_t)r + ((uint32_t)g << 8) + ((uint32_t)b << 16) + ((uint32_t)a << 24);
+    return (uint32_t)a + ((uint32_t)b << 8) + ((uint32_t)g << 16) + ((uint32_t)r << 24);
 }
 
 static inline UIColor * ijk_ass_int_to_color(uint32_t abgr) {
     CGFloat r,g,b,a;
-    r = ((float)(abgr & 0xFF)) / 255.0;
-    g = ((float)((abgr & 0xFF00) >> 8)) / 255.0;
-    b = (float)(((abgr & 0xFF0000) >> 16)) / 255.0;
-    a = (255 - (float)((abgr & 0xFF000000) >> 24)) / 255.0;
+    a = ((float)(abgr & 0xFF)) / 255.0;
+    b = ((float)((abgr & 0xFF00) >> 8)) / 255.0;
+    g = (float)(((abgr & 0xFF0000) >> 16)) / 255.0;
+    r = (255 - (float)((abgr & 0xFF000000) >> 24)) / 255.0;
     return [UIColor colorWithRed:r green:g blue:b alpha:a];
 }
 
