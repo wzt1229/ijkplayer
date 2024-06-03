@@ -1313,6 +1313,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
                     } else if (0 == strcmp(type, IJKM_VAL_TYPE__AUDIO)) {
                         fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_SAMPLE_RATE, nil);
                         fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_LANGUAGE, nil);
+                        fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_DESCRIBE, nil);
                         fillMetaInternal(streamMeta, streamRawMeta, IJKM_KEY_TITLE, nil);
                         if (audio_stream == i) {
                             _monitor.audioMeta = streamMeta;
