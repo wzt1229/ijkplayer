@@ -43,14 +43,9 @@ static void apply_preference(FFSubComponent *com)
         int b = com->sp.BottomMargin * com->sub_height;
         com->assRenderer->iformat->update_bottom_margin(com->assRenderer, b);
         com->assRenderer->iformat->set_font_scale(com->assRenderer, com->sp.Scale);
-        //abgr
-        //com->sp.PrimaryColour = 0x000000FF;
-        //com->sp.SecondaryColour = 0x000F701F;
-        //com->sp.BackColour = 0x0000FF00;
-        //com->sp.OutlineColour = 0x00FF0000;
         
         char style[256] = {0};
-        sprintf(style, "FontName=%s,PrimaryColour=&H%08X,SecondaryColour=&H%08X,BackColour=&H%08X,OutlineColour=&H%08X,Outline=%d",com->sp.FontName,com->sp.PrimaryColour,com->sp.SecondaryColour,com->sp.BackColour,com->sp.OutlineColour,com->sp.Outline);
+        sprintf(style, "FontName=%s,PrimaryColour=&H%08X,SecondaryColour=&H%08X,BackColour=&H%08X,OutlineColour=&H%08X,Outline=%f",com->sp.FontName,com->sp.PrimaryColour,com->sp.SecondaryColour,com->sp.BackColour,com->sp.OutlineColour,com->sp.Outline);
         com->assRenderer->iformat->set_force_style(com->assRenderer, style, com->sp.ForceOverride);
         com->sp_changed = 0;
     }

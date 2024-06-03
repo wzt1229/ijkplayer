@@ -12,6 +12,8 @@
 #import "MRCocoaBindingUserDefault.h"
 #import <AppKit/NSUserDefaultsController.h>
 #import <AppKit/NSColor.h>
+#import <IJKMediaPlayerKit/ff_subtitle_def.h>
+#import <IJKMediaPlayerKit/IJKMediaPlayback.h>
 
 @interface MRCocoaBindingUserDefault()
 
@@ -42,16 +44,18 @@
 
 + (NSDictionary *)initValues 
 {
-    NSColor *text_color = [NSColor whiteColor];
+    IJKSDLSubtitlePreference sp = ijk_subtitle_default_preference();
+    
+    NSColor *text_color = ijk_ass_int_to_color(sp.PrimaryColour);
     NSData *text_color_data = [NSKeyedArchiver archivedDataWithRootObject:text_color];
     
-    NSColor *SecondaryColour = [NSColor clearColor];
+    NSColor *SecondaryColour = ijk_ass_int_to_color(sp.SecondaryColour);
     NSData *subtitle_bg_color_data = [NSKeyedArchiver archivedDataWithRootObject:SecondaryColour];
     
-    NSColor *OutlineColour = [NSColor blackColor];
+    NSColor *OutlineColour = ijk_ass_int_to_color(sp.OutlineColour);
     NSData *subtitle_stroke_color_data = [NSKeyedArchiver archivedDataWithRootObject:OutlineColour];
     
-    NSColor *BackColour = [NSColor grayColor];
+    NSColor *BackColour = ijk_ass_int_to_color(sp.BackColour);
     NSData *subtitle_shadow_color_data = [NSKeyedArchiver archivedDataWithRootObject:BackColour];
     
     NSDictionary *initValues = @{
@@ -78,7 +82,7 @@
         @"subtitle_scale" : @(1.0),
         @"subtitle_bottom_margin":@(20),
         @"subtitle_delay" : @(0),
-        @"Outline" : @(5),
+        @"Outline" : @(1),
         @"PrimaryColour" : text_color_data,
         @"SecondaryColour" : subtitle_bg_color_data,
         @"OutlineColour" : subtitle_stroke_color_data,

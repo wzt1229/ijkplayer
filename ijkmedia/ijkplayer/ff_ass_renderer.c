@@ -388,18 +388,6 @@ static void set_font_scale(FF_ASS_Renderer *s, double scale)
     SDL_UnlockMutex(ass->mutex);
 }
 
-static inline uint32_t str_to_uint32_color(char *token)
-{
-    char *sep = strrchr(token,'H');
-    if (sep) {
-        char *color = sep + 1;
-        if (color) {
-            return (uint32_t)strtol(color, NULL, 16);
-        }
-    }
-    return 0;
-}
-
 static void set_style(ASS_Style *style, char *overrides)
 {
     char *temp = NULL;
@@ -422,7 +410,7 @@ static void set_style(ASS_Style *style, char *overrides)
         } else if (!av_strcasecmp(fs, "BackColour")) {
             style->BackColour = str_to_uint32_color(token);
         } else if (!av_strcasecmp(fs, "Outline")) {
-            style->Outline = strtof(token,NULL);
+            style->Outline = strtof(token, NULL);
         } else {
             av_log(NULL, AV_LOG_WARNING, "todo force style:%s=%s\n",fs,token);
         }

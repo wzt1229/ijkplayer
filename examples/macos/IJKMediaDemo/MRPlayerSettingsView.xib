@@ -565,7 +565,7 @@
                                 <rect key="frame" x="10" y="174" width="44" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="主颜色：" id="DRq-4J-Luw">
-                                    <font key="font" size="11" name=".PingFangSC-Regular"/>
+                                    <font key="font" metaFont="smallSystem"/>
                                     <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
@@ -586,7 +586,7 @@
                                 <rect key="frame" x="10" y="142" width="44" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="副颜色：" id="tuc-d1-8Pl">
-                                    <font key="font" size="11" name=".PingFangSC-Regular"/>
+                                    <font key="font" metaFont="smallSystem"/>
                                     <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
@@ -607,7 +607,7 @@
                                 <rect key="frame" x="10" y="109" width="44" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="阴影色：" id="ZA6-VL-b2A">
-                                    <font key="font" size="11" name=".PingFangSC-Regular"/>
+                                    <font key="font" metaFont="smallSystem"/>
                                     <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
@@ -639,7 +639,7 @@
                                 <rect key="frame" x="10" y="48" width="53" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="边框大小:" id="dPY-vK-tLQ">
-                                    <font key="font" size="11" name=".PingFangSC-Regular"/>
+                                    <font key="font" metaFont="smallSystem"/>
                                     <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
@@ -648,7 +648,7 @@
                                 <rect key="frame" x="10" y="22" width="53" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="自定义:" id="cKx-Im-Ozv">
-                                    <font key="font" size="11" name=".PingFangSC-Regular"/>
+                                    <font key="font" metaFont="smallSystem"/>
                                     <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
@@ -670,7 +670,7 @@
                                 <rect key="frame" x="10" y="78" width="44" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="边框色：" id="UPc-C0-Tui">
-                                    <font key="font" size="11" name=".PingFangSC-Regular"/>
+                                    <font key="font" metaFont="smallSystem"/>
                                     <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>

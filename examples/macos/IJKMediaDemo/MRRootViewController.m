@@ -1533,7 +1533,7 @@ static BOOL hdrAnimationShown = 0;
     [[MRCocoaBindingUserDefault sharedDefault] onChange:^(id _Nonnull v, BOOL * _Nonnull rm) {
         __strongSelf__
         IJKSDLSubtitlePreference p = self.player.subtitlePreference;
-        p.Outline = [v intValue];
+        p.Outline = [v floatValue];
         self.player.subtitlePreference = p;
     } forKey:@"Outline"];
     
