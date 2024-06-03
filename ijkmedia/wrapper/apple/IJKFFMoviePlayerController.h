@@ -63,6 +63,7 @@
 #define k_IJKM_KEY_SAR_DEN        @"sar_den"
 // stream: audio
 #define k_IJKM_KEY_SAMPLE_RATE    @"sample_rate"
+#define k_IJKM_KEY_DESCRIBE       @"describe"
 //audio meta also has "title" and "language" key
 //#define k_IJKM_KEY_TITLE          @"title"
 //#define k_IJKM_KEY_LANGUAGE       @"language"

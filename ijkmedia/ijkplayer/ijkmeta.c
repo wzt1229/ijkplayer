@@ -293,7 +293,6 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_SAR_NUM, codecpar->sample_aspect_ratio.num);
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_SAR_DEN, codecpar->sample_aspect_ratio.den);
                 }
-
                 if (st->avg_frame_rate.num > 0 && st->avg_frame_rate.den > 0) {
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_FPS_NUM, st->avg_frame_rate.num);
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_FPS_DEN, st->avg_frame_rate.den);
@@ -313,7 +312,10 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
                 AVDictionaryEntry *lang = av_dict_get(st->metadata, IJKM_KEY_LANGUAGE, NULL, 0);
                 if (lang && lang->value)
                     ijkmeta_set_string_l(stream_meta, IJKM_KEY_LANGUAGE, lang->value);
-                
+                char describe[64];
+                if (av_channel_layout_describe(&codecpar->ch_layout, describe, sizeof(describe)) > 0) {
+                    ijkmeta_set_string_l(stream_meta, IJKM_KEY_DESCRIBE, describe);
+                }
                 AVDictionaryEntry *title = av_dict_get(st->metadata, IJKM_KEY_TITLE, NULL, 0);
                 if (title && title->value)
                     ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title->value);
