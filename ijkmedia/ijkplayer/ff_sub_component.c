@@ -297,14 +297,8 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
         return 0;
     }
     
-    int ratio = 1;
-#ifdef __APPLE__
-    //文本字幕放大两倍，使得 retina 屏显示清楚
-    ratio = 2;
-    com->sub_width  = com->video_width  * ratio;
-    com->sub_height = com->video_height * ratio;
-#endif
-    
+    com->sub_width  = com->video_width;
+    com->sub_height = com->video_height;
     com->assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->sub_width, com->sub_height, NULL);
     
     apply_preference(com);
