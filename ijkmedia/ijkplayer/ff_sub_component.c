@@ -14,7 +14,7 @@
 
 #define SUB_MAX_KEEP_DU 3.0
 #define ASS_USE_PRE_RENDER 1
-#define CACHE_ASS_IMG_COUNT 16
+#define CACHE_ASS_IMG_COUNT 6
 #define A_ASS_IMG_DURATION 0.03
 
 typedef struct FFSubComponent{
@@ -92,11 +92,11 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
     if (com->pre_load_pts - com->current_pts > (SUB_MAX_KEEP_DU * CACHE_ASS_IMG_COUNT) || com->pre_load_pts > com->pkt_pts) {
         return -1;
     }
+    
     FFSubtitleBuffer *pre_buffer = NULL;
     FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
     int result = 0;
     while (com->packetq->abort_request == 0) {
-        FFSubtitleBuffer *buffer = NULL;
         float delta = com->current_pts - com->pre_load_pts;
         if (delta > A_ASS_IMG_DURATION) {
             //subtitle is slower than video, so need fast forward
@@ -106,19 +106,24 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             av_log(NULL, AV_LOG_WARNING, "subtitle is slower than video:%0.3fs,cached frame:%d,pts:%f",delta,frame_queue_nb_remaining(com->frameq),pts);
         }
         double pts = com->pre_load_pts;
+        FFSubtitleBuffer *buffer = NULL;
         int r = ff_ass_upload_buffer(com->assRenderer, pts, &buffer, 0);
         if (r == 0) {
             //no change, reuse pre frame
-            if (!pre_buffer) {
-                Frame *lastFrame = frame_queue_peek_pre_writable(com->frameq);
-                if (lastFrame) {
-                    pre_buffer = ff_subtitle_buffer_retain(lastFrame->sub_list[0]);
+            Frame *preFrame = frame_queue_peek_pre_writable(com->frameq);
+            if (preFrame) {
+                if (preFrame->sub_list[0]) {
+                    com->pre_load_pts  += A_ASS_IMG_DURATION;
+                    preFrame->duration += A_ASS_IMG_DURATION;
+                    preFrame->shown = 0;
+                    continue;
                 }
-                if (!pre_buffer) {
-                    ff_ass_upload_buffer(com->assRenderer, pts, &pre_buffer, 1);
-                    if (pre_buffer) {
-                        av_log(NULL, AV_LOG_DEBUG, "pre frame is nil, uploaded from ass render.\n");
-                    }
+            }
+            
+            if (!pre_buffer) {
+                ff_ass_upload_buffer(com->assRenderer, pts, &pre_buffer, 1);
+                if (pre_buffer) {
+                    av_log(NULL, AV_LOG_DEBUG, "pre frame is nil, uploaded from ass render.\n");
                 }
             }
             buffer = ff_subtitle_buffer_retain(pre_buffer);

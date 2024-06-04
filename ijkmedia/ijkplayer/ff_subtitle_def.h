@@ -90,7 +90,7 @@ static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,I
     return 1;
 }
 
-#define SUB_REF_MAX_LEN 32
+#define SUB_REF_MAX_LEN 6
 
 typedef struct FFSubtitleBufferPacket {
     FFSubtitleBuffer *e[SUB_REF_MAX_LEN];

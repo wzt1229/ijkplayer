@@ -58,7 +58,7 @@ static void ass_log(int ass_level, const char *fmt, va_list args, void *ctx)
     const int ass_level_clip = av_clip(ass_level, 0,
         FF_ARRAY_ELEMS(ass_libavfilter_log_level_map) - 1);
     int level = ass_libavfilter_log_level_map[ass_level_clip];
-    level = AV_LOG_ERROR;
+    //level = AV_LOG_ERROR;
     const char *prefix = "[ass] ";
     char *tmp = av_asprintf("%s%s", prefix, fmt);
     av_vlog(ctx, level, tmp, args);
