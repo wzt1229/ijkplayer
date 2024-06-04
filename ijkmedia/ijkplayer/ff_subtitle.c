@@ -257,7 +257,7 @@ static int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_T
     //if has no pre texture,need build texture!
     if (r < 0 || (r == 0 && sub->preTexture != NULL)) {
         *texture = NULL;
-        return r;
+        goto end;
     }
 
     if (packet.isAss) {
