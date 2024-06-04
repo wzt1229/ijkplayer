@@ -75,7 +75,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
         }
         if (com->current_pts >= 0) {
             //let the pts can display right now.
-            com->pre_load_pts = com->current_pts - A_ASS_IMG_DURATION;
+            com->pre_load_pts = com->current_pts;
         }
         apply_preference(com);
     }
@@ -504,7 +504,6 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
             continue;
         } else {
             //还没已经开始
-            i++;
             break;
         }
     }
