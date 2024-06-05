@@ -34,6 +34,7 @@ enum
     /// 顶点对象
     GLuint _vbo;
     GLuint _vao;
+    GLuint _ubo;
 }
 
 @property (nonatomic) IJKSDLOpenGLCompiler * openglCompiler;
@@ -47,6 +48,7 @@ enum
 {
     glDeleteBuffers(1, &_vbo);
     glDeleteVertexArrays(1, &_vao);
+    glDeleteBuffers(1, &_ubo);
 }
 
 #define SDL_STRINGIZE(x)   #x
@@ -73,7 +75,7 @@ void main()
 - (NSString *)fsh
 {
     return @"#"SDL_STRING(
-version 330\n
+version 330 core\n
 
 uniform sampler2DRect SamplerS;
 uniform vec2 textureDimensionS;
@@ -89,10 +91,58 @@ void main()
                       );
 }
 
+- (NSString *)fsh2
+{
+    return @"#"SDL_STRING(
+version 330 core\n
+
+uniform sampler2D SamplerS;
+layout (std140) uniform ColorBlock {
+    ivec4 colors[64];
+    uint width;
+    uint height;
+};
+in vec2 texCoordVarying;
+out vec4 fragColor;
+
+void main()
+{
+    //No matching function for call to texelFetch(sampler2D, vec2, int)
+    ivec2 position = ivec2(texCoordVarying * ivec2(width,height));
+
+    uint loc = uint(texelFetch(SamplerS, position, 0).r * 255);
+    uint idx = loc >> 2u;
+    uint offset = loc % 4u;
+    ivec4 color = colors[idx];
+    uint c;
+    if (offset == 0u) {
+        c = uint(color.x);
+    } else if (offset == 1u) {
+        c = uint(color.y);
+    } else if (offset == 2u) {
+        c = uint(color.z);
+    } else if (offset == 3u) {
+        c = uint(color.w);
+    }
+    
+    //'&' does not operate on 'unsigned int' and 'int'
+    //'+' does not operate on 'unsigned int' and 'int'
+    uint mask = uint(0xFFu);
+    uint b = c & mask;
+    uint g = (c >> 8) & mask;
+    uint r = (c >> 16) & mask;
+    uint a = (c >> 24) & mask;
+
+    fragColor = vec4(b, g, r, a) / 255.0;
+}
+
+                      );
+}
+
 - (void)setupOpenGLProgramIfNeed
 {
     if (!self.openglCompiler) {
-        self.openglCompiler = [[IJKSDLOpenGLCompiler alloc] initWithvsh:[self commonVSH] fsh:[self fsh]];
+        self.openglCompiler = [[IJKSDLOpenGLCompiler alloc] initWithvsh:[self commonVSH] fsh:[self fsh2]];
         
         if ([self.openglCompiler compileIfNeed]) {
             // Get uniform locations.
@@ -105,9 +155,43 @@ void main()
             glGenVertexArrays(1, &_vao);
             // 创建顶点缓存对象
             glGenBuffers(1, &_vbo);
+            
+            [self.openglCompiler active];
+            
+            GLint maxSize;
+            glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &maxSize);
+            glGetIntegerv(GL_UNIFORM_BUFFER_SIZE, &maxSize);
+            
+            //ubo
+            glGenBuffers(1, &_ubo);
+            glBindBuffer(GL_UNIFORM_BUFFER, _ubo);
+            glBufferData(GL_UNIFORM_BUFFER, 16*257, NULL, GL_DYNAMIC_DRAW);
+            GLuint program = self.openglCompiler.program;
+            GLuint block_index = glGetUniformBlockIndex(program, "ColorBlock");
+            GLuint binding_point_index = 2;
+            glBindBufferBase(GL_UNIFORM_BUFFER, binding_point_index, _ubo);
+            glUniformBlockBinding(program, block_index, binding_point_index);
+            IJK_GLES2_checkError_TRACE("glUniformBlockBinding(setupOpenGLProgramIfNeed)");
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
         }
     }
     [self.openglCompiler active];
+}
+
+- (void)clean
+{
+    glClearColor(0.0,0.0,0.0,0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+}
+
+- (void)bindFBO:(IJKSDLOpenGLFBO *)fbo
+{
+    // Bind the FBO
+    [fbo bind];
+    CGSize viewport = [fbo size];
+    glViewport(0, 0, viewport.width, viewport.height);
 }
 
 - (void)updateSubtitleVertexIfNeed:(CGRect)rect
@@ -175,41 +259,45 @@ void main()
     IJK_GLES2_checkError_TRACE("glVertexAttribPointer(av2_texcoord)");
 }
 
-- (void)clean
+- (void)updateColors:(void *)colors w:(GLuint)w h:(GLuint)h
 {
-    glClearColor(0.0,0.0,0.0,0.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glBindBuffer(GL_UNIFORM_BUFFER, _ubo);
+    
+    int offset = 0;
+    glBufferSubData(GL_UNIFORM_BUFFER, offset, 256*sizeof(GLuint), colors);
+    offset += 256*sizeof(GLuint);
+    glBufferSubData(GL_UNIFORM_BUFFER, offset, 4, &w);
+    offset += 4;
+    glBufferSubData(GL_UNIFORM_BUFFER, offset, 4, &h);
+    
+    IJK_GLES2_checkError_TRACE("glBufferSubData(updateColors)");
 }
 
-- (void)bindFBO:(IJKSDLOpenGLFBO *)fbo
+- (void)drawTexture:(id<IJKSDLSubtitleTextureWrapper>)subTexture colors:(void *)colors
 {
-    // Bind the FBO
-    [fbo bind];
-    CGSize viewport = [fbo size];
-    glViewport(0, 0, viewport.width, viewport.height);
-}
-
-- (void)drawTexture:(id<IJKSDLSubtitleTextureWrapper>)subTexture
-{
+//    glEnable(GL_BLEND);
+//    //ass字幕已经做了预乘，所以这里选择 GL_ONE，而不是 GL_SRC_ALPHA
+//    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    
     //设置采样器位置，保证了每个uniform采样器对应着正确的纹理单元
     glUniform1i(_uniforms[UNIFORM_S_AI], 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_RECTANGLE, [subTexture texture]);
-    glUniform2f(_uniforms[DIMENSION_S_AI], subTexture.w, subTexture.h);
+    glBindTexture(GL_TEXTURE_2D, [subTexture texture]);
     
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
     glBindVertexArray(_vao);
+    [self updateColors:colors w:subTexture.w h:subTexture.h];
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+    //unbind
+    glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
-    
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     IJK_GLES2_checkError("subtitle renderer draw");
+    glFlush();
 }
 
 @end

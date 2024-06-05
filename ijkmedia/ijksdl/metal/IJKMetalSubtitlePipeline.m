@@ -13,6 +13,7 @@
 {
     id<MTLDevice> _device;
     IJKMetalSubtitleOutFormat _outFormat;
+    IJKMetalSubtitleInFormat _inFormat;
 }
 
 // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
@@ -27,12 +28,14 @@
 @implementation IJKMetalSubtitlePipeline
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
+                     inFormat:(IJKMetalSubtitleInFormat)inFormat
                      outFormat:(IJKMetalSubtitleOutFormat)outFormat
 {
     self = [super init];
     if (self) {
         NSAssert(device, @"device can't be nil!");
         _device = device;
+        _inFormat = inFormat;
         _outFormat = outFormat;
         _pilelineLock = [[NSLock alloc] init];
     }
@@ -68,13 +71,20 @@
     id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"subVertexShader"];
     NSAssert(vertexFunction, @"can't find subVertexShader Function!");
     NSString *fsh = nil;
-    if (_outFormat == IJKMetalSubtitleOutFormatDIRECT) {
-        fsh = @"subtileDIRECTFragment";
-    } else if (_outFormat == IJKMetalSubtitleOutFormatSWAP_RB) {
-        fsh = @"subtileSWAPRGFragment";
+    if (_inFormat == IJKMetalSubtitleInFormatBRGA) {
+        if (_outFormat == IJKMetalSubtitleOutFormatDIRECT) {
+            fsh = @"subtileDIRECTFragment";
+        } else if (_outFormat == IJKMetalSubtitleOutFormatSWAP_RB) {
+            fsh = @"subtileSWAPRGFragment";
+        } else {
+            NSAssert(fsh, @"IJKMetalSubtitleOutFormat is wrong!");
+        }
+    } else if (_inFormat == IJKMetalSubtitleInFormatA8){
+        fsh = @"subtilePaletteA8Fragment";
     } else {
-        NSAssert(fsh, @"IJKMetalSubtitleOutFormat is wrong!");
+        NSAssert(fsh, @"IJKMetalSubtitle OutFormat or InFormat is wrong!");
     }
+    
     id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:fsh];
     NSAssert(vertexFunction, @"can't find subtileRGBAFragment Function!");
     
@@ -155,6 +165,26 @@
     [encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip
                 vertexStart:0
                 vertexCount:4]; // 绘制
+}
+
+- (void)drawTexture:(id<MTLTexture>)subTexture encoder:(id<MTLRenderCommandEncoder>)encoder colors:(nonnull void *)colors
+{
+    if (colors) {
+        struct SubtitlePaletteFragmentData data = {0};
+        data.w = (uint32_t)subTexture.width;
+        data.h = (uint32_t)subTexture.height;
+        memcpy(data.colors, colors, sizeof(uint32) * 256);
+        
+        id <MTLBuffer>buffer = [_device newBufferWithBytes:&data
+                                                    length:sizeof(data)
+                                                   options:MTLResourceStorageModeShared];
+        buffer.label = @"colors";
+        [encoder setFragmentBuffer:buffer
+                            offset:0
+                           atIndex:1];
+    }
+    
+    [self drawTexture:subTexture encoder:encoder];
 }
 
 @end

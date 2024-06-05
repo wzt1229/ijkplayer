@@ -95,43 +95,48 @@ static void dealloc_texture(SDL_TextureOverlay *overlay)
     }
 }
 
-static SDL_TextureOverlay * create_textureOverlay_with_mtlTexture(id<MTLTexture> subTexture)
+static SDL_TextureOverlay * create_textureOverlay_with_mtlTexture(id<MTLTexture> texture)
 {
-    if (!subTexture) {
+    if (!texture) {
         return NULL;
     }
     
-    SDL_TextureOverlay *texture = (SDL_TextureOverlay*) calloc(1, sizeof(SDL_TextureOverlay));
-    if (!texture)
+    SDL_TextureOverlay *overlay = (SDL_TextureOverlay*) calloc(1, sizeof(SDL_TextureOverlay));
+    if (!overlay)
         return NULL;
     
     SDL_TextureOverlay_Opaque_Metal *opaque = (SDL_TextureOverlay_Opaque_Metal*) calloc(1, sizeof(SDL_TextureOverlay_Opaque_Metal));
     if (!opaque) {
-        free(texture);
+        free(overlay);
         return NULL;
     }
     
-    opaque->texture = subTexture;
-    texture->opaque = opaque;
-    texture->w = (int)subTexture.width;
-    texture->h = (int)subTexture.height;
-    texture->refCount = 1;
+    opaque->texture = texture;
+    overlay->opaque = opaque;
+    overlay->w = (int)texture.width;
+    overlay->h = (int)texture.height;
+    overlay->refCount = 1;
+    bzero(overlay->palette, sizeof(overlay->palette));
     
-    texture->replaceRegion = replaceRegion;
-    texture->getTexture = getTexture;
-    texture->clearDirtyRect = clearMetalRegion;
-    texture->dealloc = dealloc_texture;
+    overlay->replaceRegion = replaceRegion;
+    overlay->getTexture = getTexture;
+    overlay->clearDirtyRect = clearMetalRegion;
+    overlay->dealloc = dealloc_texture;
     
-    return texture;
+    return overlay;
 }
 
 static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h, SDL_TEXTURE_FMT fmt)
 {
     MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 
-    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
-    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
-    textureDescriptor.pixelFormat = fmt == SDL_TEXTURE_FMT_A8 ? MTLPixelFormatA8Unorm : MTLPixelFormatBGRA8Unorm;
+    if (fmt == SDL_TEXTURE_FMT_A8) {
+        textureDescriptor.pixelFormat = MTLPixelFormatA8Unorm;
+    } else if (fmt == SDL_TEXTURE_FMT_BRGA) {
+        textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    } else {
+        assert(0);
+    }
     
     // Set the pixel dimensions of the texture
     
@@ -211,9 +216,13 @@ static void beginDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
         
     } else {
         if (!fop->subPipeline) {
-            IJKMetalSubtitlePipeline *subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:gop->device outFormat:IJKMetalSubtitleOutFormatDIRECT];
-            if ([subPipeline createRenderPipelineIfNeed]) {
-                fop->subPipeline = subPipeline;
+            if (@available(macOS 10.13, *)) {
+                IJKMetalSubtitlePipeline *subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:gop->device inFormat:IJKMetalSubtitleInFormatA8 outFormat:IJKMetalSubtitleOutFormatDIRECT];
+                if ([subPipeline createRenderPipelineIfNeed]) {
+                    fop->subPipeline = subPipeline;
+                }
+            } else {
+                // Fallback on earlier versions
             }
         }
         
@@ -232,25 +241,18 @@ static void beginDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
     }
 }
 
-static void metalDraw(SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay, SDL_Rectangle frame)
-{
-    if (!foverlay || !toverlay || !foverlay->opaque) {
-        return;
-    }
-    SDL_FBOOverlay_Opaque_Metal *fop = foverlay->opaque;
-    CGSize viewport = [fop->fbo size];
-    CGRect rect = IJKSDL_make_metal_NDC(frame, toverlay->scale, viewport);
-    [fop->subPipeline updateSubtitleVertexIfNeed:rect];
-    id<MTLTexture>texture = (__bridge id<MTLTexture>)toverlay->getTexture(toverlay);
-    [fop->subPipeline drawTexture:texture encoder:fop->renderEncoder];
-}
-
 static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureOverlay *toverlay, SDL_Rectangle frame)
 {
     if (!foverlay || !toverlay) {
         return;
     }
-    metalDraw(foverlay, toverlay, frame);
+    
+    SDL_FBOOverlay_Opaque_Metal *fop = foverlay->opaque;
+    CGSize viewport = [fop->fbo size];
+    CGRect rect = IJKSDL_make_metal_NDC(frame, toverlay->scale, viewport);
+    [fop->subPipeline updateSubtitleVertexIfNeed:rect];
+    id<MTLTexture>texture = (__bridge id<MTLTexture>)toverlay->getTexture(toverlay);
+    [fop->subPipeline drawTexture:texture encoder:fop->renderEncoder colors:toverlay->palette];
 }
 
 static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)

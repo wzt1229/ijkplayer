@@ -14,10 +14,16 @@ typedef enum : NSUInteger {
     IJKMetalSubtitleOutFormatSWAP_RB
 } IJKMetalSubtitleOutFormat;
 
+typedef enum : NSUInteger {
+    IJKMetalSubtitleInFormatBRGA,
+    IJKMetalSubtitleInFormatA8,
+} IJKMetalSubtitleInFormat;
+
 NS_CLASS_AVAILABLE(10_13, 11_0)
 @interface IJKMetalSubtitlePipeline : NSObject
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
+                      inFormat:(IJKMetalSubtitleInFormat)inFormat
                      outFormat:(IJKMetalSubtitleOutFormat)outFormat;
 - (void)lock;
 - (void)unlock;
@@ -25,6 +31,7 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 - (BOOL)createRenderPipelineIfNeed;
 - (void)updateSubtitleVertexIfNeed:(CGRect)rect;
 - (void)drawTexture:(id)subTexture encoder:(id<MTLRenderCommandEncoder>)encoder;
+- (void)drawTexture:(id)subTexture encoder:(id<MTLRenderCommandEncoder>)encoder colors:(void *)colors;
 
 @end
 

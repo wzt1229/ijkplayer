@@ -36,7 +36,7 @@
         uint32_t t;
         // Create a texture object that you apply to the model.
         glGenTextures(1, &t);
-        GLenum target = GL_TEXTURE_RECTANGLE;//GL_TEXTURE_2D
+        GLenum target = GL_TEXTURE_RECTANGLE;
         glBindTexture(target, t);
 
         // Set up filter and wrap modes for the texture object.

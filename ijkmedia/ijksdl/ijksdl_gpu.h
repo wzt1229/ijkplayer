@@ -10,15 +10,22 @@
 
 #include "ijksdl_rectangle.h"
 
+typedef enum : int {
+    SDL_TEXTURE_FMT_BRGA = 1,   //for normal texture, is a rectangle texture.
+    SDL_TEXTURE_FMT_A8          //just for palettized RGB (PIX_FMT_PAL8), is a texture2D.
+} SDL_TEXTURE_FMT;
+
 typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 typedef struct SDL_TextureOverlay {
     void *opaque;
     int w;
     int h;
+    SDL_TEXTURE_FMT fmt;
     float scale;
     SDL_Rectangle dirtyRect;
     int changed;
     int refCount;
+    uint32_t palette[256];//for SDL_TEXTURE_FMT_A8 fmt
     void (*replaceRegion)(SDL_TextureOverlay *overlay, SDL_Rectangle r, void *pixels);
     void*(*getTexture)(SDL_TextureOverlay *overlay);
     void (*clearDirtyRect)(SDL_TextureOverlay *overlay);
@@ -44,11 +51,6 @@ typedef struct SDL_FBOOverlay {
 } SDL_FBOOverlay;
 
 void SDL_FBOOverlayFreeP(SDL_FBOOverlay **poverlay);
-
-typedef enum : int {
-    SDL_TEXTURE_FMT_BRGA,
-    SDL_TEXTURE_FMT_A8
-} SDL_TEXTURE_FMT;
 
 typedef struct SDL_GPU {
     void *opaque;

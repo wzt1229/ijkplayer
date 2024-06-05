@@ -16,6 +16,6 @@
 - (void)clean;
 - (void)bindFBO:(IJKSDLOpenGLFBO *)fbo;
 - (void)updateSubtitleVertexIfNeed:(CGRect)rect;
-- (void)drawTexture:(id<IJKSDLSubtitleTextureWrapper>)subTexture;
+- (void)drawTexture:(id<IJKSDLSubtitleTextureWrapper>)subTexture colors:(void *)colors;
 
 @end

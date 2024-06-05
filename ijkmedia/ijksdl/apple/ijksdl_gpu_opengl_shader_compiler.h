@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithvsh:(NSString *)vshName
                         fsh:(NSString *)fshName;
 - (BOOL)compileIfNeed;
+- (uint32_t)program;
 - (void)active;
 - (int)getUniformLocation:(const char *)name;
 - (int)getAttribLocation:(const char *)name;

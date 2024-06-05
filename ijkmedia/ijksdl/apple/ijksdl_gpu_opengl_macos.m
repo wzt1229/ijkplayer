@@ -53,12 +53,25 @@ static void replaceRegion(SDL_TextureOverlay *overlay, SDL_Rectangle rect, void 
         
         CGLLockContext([op->glContext CGLContextObj]);
         [op->glContext makeCurrentContext];
-        glBindTexture(GL_TEXTURE_RECTANGLE, t.texture);
-        glTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, rect.x, rect.y, (GLsizei)rect.w, (GLsizei)rect.h, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid *)pixels);
+        
+        
+        GLenum format;
+        GLenum target;
+        if (overlay->fmt == SDL_TEXTURE_FMT_BRGA) {
+            format = GL_RGBA;
+            target = GL_TEXTURE_RECTANGLE;
+        } else if (overlay->fmt == SDL_TEXTURE_FMT_A8) {
+            format = GL_RED;
+            target = GL_TEXTURE_2D;
+        } else {
+            assert(0);
+        }
+        glBindTexture(target, t.texture);
+        glTexSubImage2D(target, 0, rect.x, rect.y, (GLsizei)rect.w, (GLsizei)rect.h, format, GL_UNSIGNED_BYTE, (const GLvoid *)pixels);
         //macOS 10.14及以下系统，需要glFlush操作，多线程共享该纹理，否者导致出现多个拖影，或者只有一部分被替换的奇怪bug。
         glFlush();
         IJK_GLES2_checkError("replaceOpenGlRegion");
-        glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+        glBindTexture(target, 0);
         CGLUnlockContext([op->glContext CGLContextObj]);
     }
 }
@@ -110,6 +123,7 @@ static SDL_TextureOverlay * create_textureOverlay_with_glTexture(NSOpenGLContext
     overlay->w = subTexture.w;
     overlay->h = subTexture.h;
     overlay->refCount = 1;
+    bzero(overlay->palette, sizeof(overlay->palette));
     
     overlay->replaceRegion = replaceRegion;
     overlay->getTexture = getTexture;
@@ -126,19 +140,31 @@ static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, 
     uint32_t texture;
     // Create a texture object that you apply to the model.
     glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_RECTANGLE, texture);
-    glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
     
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   
-    glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+    if (fmt == SDL_TEXTURE_FMT_BRGA) {
+        glBindTexture(GL_TEXTURE_RECTANGLE, texture);
+        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+    } else if (fmt == SDL_TEXTURE_FMT_A8) {
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    } else {
+        assert(0);
+    }
+    
     CGLUnlockContext([context CGLContextObj]);
     IJK_GLES2_checkError("create OpenGL Texture");
     id<IJKSDLSubtitleTextureWrapper> t = IJKSDL_crate_openglTextureWrapper(texture, w, h);
-    return create_textureOverlay_with_glTexture(context, t);
+    SDL_TextureOverlay *toverlay = create_textureOverlay_with_glTexture(context, t);
+    if (toverlay) {
+        toverlay->fmt = fmt;
+    }
+    return toverlay;
 }
 
 static void* getTexture(SDL_TextureOverlay *overlay)
@@ -227,7 +253,7 @@ static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureO
     CGRect rect = IJKSDL_make_openGL_NDC(frame, toverlay->scale, viewport);
     [fop->renderer updateSubtitleVertexIfNeed:rect];
     id<IJKSDLSubtitleTextureWrapper> texture = (__bridge id<IJKSDLSubtitleTextureWrapper>)toverlay->getTexture(toverlay);
-    [fop->renderer drawTexture:texture];
+    [fop->renderer drawTexture:texture colors:toverlay->palette];
 }
 
 static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)

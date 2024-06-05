@@ -71,6 +71,24 @@ fragment float4 subtileDIRECTFragment(RasterizerData input [[stage_in]],
     return textureY.sample(textureSampler, input.textureCoordinate);
 }
 
+fragment float4 subtilePaletteA8Fragment(RasterizerData input [[stage_in]],
+                                      texture2d<float, access::read> textureY [[ texture(IJKFragmentTextureIndexTextureY) ]],
+                                        constant SubtitlePaletteFragmentData &data [[buffer(1)]])
+{
+    uint2 position = uint2(input.textureCoordinate * float2(data.w, data.h));
+    
+    int loc = int(textureY.read(position, 0).a * 255);
+    uint c = data.colors[loc];
+    uint mask = uint(0xFFu);
+    uint b = c & mask;
+    uint g = (c >> 8) & mask;
+    uint r = (c >> 16) & mask;
+    uint a = (c >> 24) & mask;
+
+    // from straight to pre-multiplied alpha
+    return float4(r, g, b, 255.0) * a / 65025.0;
+}
+
 /// @brief subtitle swap r g fragment shader
 /// @param stage_in表示这个数据来自光栅化。（光栅化是顶点处理之后的步骤，业务层无法修改）
 /// @param texture表明是纹理数据，IJKFragmentTextureIndexTextureY 是索引

@@ -223,11 +223,12 @@ static SDL_TextureOverlay * subtitle_upload_fbo(SDL_GPU *gpu, SDL_FBOOverlay *fb
     fbo->clear(fbo);
     int water_mark = fbo->h * SUBTITLE_MOVE_WATERMARK;
     int bottom_offset = packet->bottom_margin;
+    
     for (int i = 0; i < packet->len; i++) {
         FFSubtitleBuffer *sub = packet->e[i];
-        
-        SDL_TextureOverlay *texture = gpu->createTexture(gpu, sub->rect.w, sub->rect.h, SDL_TEXTURE_FMT_BRGA);
+        SDL_TextureOverlay *texture = gpu->createTexture(gpu, sub->rect.w, sub->rect.h, SDL_TEXTURE_FMT_A8);
         texture->scale = packet->scale;
+        memcpy(texture->palette, sub->palette, sizeof(sub->palette));
         
         SDL_Rectangle bounds = sub->rect;
         bounds.x = 0;

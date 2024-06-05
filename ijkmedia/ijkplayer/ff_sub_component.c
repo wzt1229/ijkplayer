@@ -271,28 +271,16 @@ static void convert_pal_bgra(uint32_t *colors, size_t count, bool gray)
     }
 }
 
-/// the graphic subtitles' bitmap with pixel format AV_PIX_FMT_PAL8,
-/// https://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5
-/// need to be converted to RGBA32 before use
-
-static FFSubtitleBuffer* convert_pal8_to_bgra(const AVSubtitleRect* rect)
+static FFSubtitleBuffer* packet_pal8(const AVSubtitleRect* sub)
 {
-    uint32_t pal[256] = {0};
-    memcpy(pal, rect->data[1], rect->nb_colors * 4);
-    convert_pal_bgra(pal, rect->nb_colors, 0);
-    
-    SDL_Rectangle r = (SDL_Rectangle){rect->x, rect->y, rect->w, rect->h, rect->linesize[0]};
-    FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_rgba32(r);
+    SDL_Rectangle r = (SDL_Rectangle){sub->x, sub->y, sub->w, sub->h, sub->linesize[0]};
+    FFSubtitleBuffer *frame = ff_subtitle_buffer_alloc_r8(r);
     if (!frame) {
         return NULL;
     }
-    
-    for (int y = 0; y < rect->h; y++) {
-        uint8_t *in = rect->data[0] + y * rect->linesize[0];
-        uint32_t *out = (uint32_t *)(frame->data + y * frame->rect.stride);
-        for (int x = 0; x < rect->w; x++)
-            *out++ = pal[*in++];
-    }
+    memcpy(frame->palette, sub->data[1], sub->nb_colors * 4);
+
+    av_image_copy_plane(frame->data, frame->rect.stride, sub->data[0], sub->linesize[0], sub->w, sub->h);
     return frame;
 }
 
@@ -366,7 +354,7 @@ static int subtitle_thread(void *arg)
                             continue;
                         }
                         if (!create_bitmap_renderer_if_need(com)) {
-                            FFSubtitleBuffer* sb = convert_pal8_to_bgra(rect);
+                            FFSubtitleBuffer* sb = packet_pal8(rect);
                             if (sb) {
                                 buffers[count++] = sb;
                             } else {

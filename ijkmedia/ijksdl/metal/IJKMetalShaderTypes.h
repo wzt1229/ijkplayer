@@ -69,6 +69,13 @@ typedef enum IJKFragmentBufferLocation
     IJKFragmentBufferLocation0,
 } IJKFragmentBufferLocation;
 
+struct SubtitlePaletteFragmentData
+{
+    uint32_t w;
+    uint32_t h;
+    uint32_t colors[256];
+};
+
 typedef struct mp_format {
     uint32_t cvpixfmt;
     int planes;
