@@ -17,10 +17,6 @@
 
 set -e
 
-export THREAD_COUNT=$(sysctl -n machdep.cpu.thread_count)
-
-echo "support thread count:$THREAD_COUNT"
-
 XCRUN_DEVELOPER=`xcode-select -print-path`
 if [ ! -d "$XCRUN_DEVELOPER" ]; then
     echo "xcode path is not set correctly $XCRUN_DEVELOPER does not exist (most likely because of xcode > 4.3)"
@@ -51,6 +47,87 @@ function install_depends() {
     fi
 }
 
+function init_plat_env() {
+    
+    if [[ -z "$XC_PLAT" ]]; then
+        echo "init_plat_env must be with plat parameter."
+        exit 1
+    fi
+    
+    if [[ "$XC_PLAT" != 'macos' ]]; then
+        export XC_FORCE_CROSS=true
+        export PKG_CONFIG=$(which pkg-config)
+    fi
+    
+    if [[ "$XC_PLAT" == 'ios' ]]; then
+        export XC_OTHER_CFLAGS="-fembed-bitcode"
+        ALL_ARCHS="arm64 x86_64_simulator"
+    elif [[ "$XC_PLAT" == 'macos' ]]; then
+        export XC_OTHER_CFLAGS=""
+        ALL_ARCHS="x86_64 arm64"
+    elif [[ "$XC_PLAT" == 'tvos' ]]; then
+        export XC_OTHER_CFLAGS=''
+        ALL_ARCHS="arm64 arm64_simulator"
+    fi
+
+    if [[ -z "$XC_ALL_ARCHS" ]];then
+        export XC_ALL_ARCHS=$ALL_ARCHS
+    else
+        for arch in $XC_ALL_ARCHS
+        do
+            validate=0
+            for arch2 in $ALL_ARCHS
+            do
+                if [[ $arch == $arch2 ]];then
+                    validate=1
+                fi
+            done
+            if [[ $validate -eq 0 ]];then
+                echo "the $arch is not validate on ${XC_PLAT},you can use [$ALL_ARCHS]"
+                exit 1
+            fi
+        done
+    fi
+    
+    export XC_SRC_ROOT="${THIS_DIR}/../build/src/${XC_PLAT}"
+    export XC_PRODUCT_ROOT="${THIS_DIR}/../build/product/${XC_PLAT}"
+    export XC_UNI_PROD_DIR="${XC_PRODUCT_ROOT}/universal"
+    export XC_UNI_SIM_PROD_DIR="${XC_PRODUCT_ROOT}/universal-simulator"
+
+    export XC_IOS_PRODUCT_ROOT="${THIS_DIR}/../build/product/ios"
+    export XC_MACOS_PRODUCT_ROOT="${THIS_DIR}/../build/product/macos"
+    export XC_TVOS_PRODUCT_ROOT="${THIS_DIR}/../build/product/tvos"
+    export XC_XCFRMK_DIR="${THIS_DIR}/../build/product/xcframework"
+
+    #common xcode configuration
+    export XC_TAGET_OS="darwin"
+    export DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
+}
+
+function init_libs_pkg_config_path() {
+    
+    universal_dir=
+    if [[ "$XC_IS_SIMULATOR" ]];then
+        universal_dir="${XC_UNI_SIM_PROD_DIR}"
+    else
+        universal_dir="${XC_UNI_PROD_DIR}"
+    fi
+    
+    pkg_cfg_dir=
+    for lib in $(ls "$universal_dir"); do
+        if [[ $pkg_cfg_dir ]];then
+            pkg_cfg_dir="${pkg_cfg_dir}:${universal_dir}/${lib}/lib/pkgconfig"
+        else
+            pkg_cfg_dir="${universal_dir}/${lib}/lib/pkgconfig"
+        fi
+    done
+
+    # disabling pkg-config-path
+    # https://gstreamer-devel.narkive.com/TeNagSKN/gst-devel-disabling-pkg-config-path
+    # export PKG_CONFIG_LIBDIR=${sysroot}/lib/pkgconfig
+    export PKG_CONFIG_LIBDIR="$pkg_cfg_dir"
+}
+
 function init_arch_env () {
     
     if [[ -z "$XC_PLAT" ]]; then
@@ -58,30 +135,37 @@ function init_arch_env () {
         exit 1
     fi
     
+    export _XC_ARCH="$1"
+
     if [[ "$XC_PLAT" == 'ios' ]]; then
-        case $1 in
-            'x86_64')
+        case $_XC_ARCH in
+            'x86_64_simulator')
                 export XCRUN_PLATFORM='iPhoneSimulator'
                 export XC_DEPLOYMENT_TARGET='-mios-simulator-version-min=11.0'
+                export XC_IS_SIMULATOR=1
             ;;
             'arm64')
                 export XCRUN_PLATFORM='iPhoneOS'
                 export XC_DEPLOYMENT_TARGET='-miphoneos-version-min=11.0'
             ;;
         esac
-        
-        export XC_OTHER_CFLAGS="-fembed-bitcode"
-
-    else
+    elif [[ "$XC_PLAT" == 'macos' ]]; then
         export XCRUN_PLATFORM='MacOSX'
         export MACOSX_DEPLOYMENT_TARGET=10.11
         export XC_DEPLOYMENT_TARGET="-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
-        export XC_OTHER_CFLAGS=""
+    elif [[ "$XC_PLAT" == 'tvos' ]]; then
+        case $_XC_ARCH in
+            'arm64_simulator')
+                export XCRUN_PLATFORM='AppleTVSimulator'
+                export XC_DEPLOYMENT_TARGET="-mtvos-simulator-version-min=12.0"
+                export XC_IS_SIMULATOR=1
+            ;;
+            'arm64')
+                export XCRUN_PLATFORM='AppleTVOS'
+                export XC_DEPLOYMENT_TARGET="-mtvos-version-min=12.0"
+            ;;
+        esac
     fi
-    
-    #common xcode configuration
-    export XC_TAGET_OS="darwin"
-    export DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
     
     # macosx
     export XCRUN_SDK=`echo $XCRUN_PLATFORM | tr '[:upper:]' '[:lower:]'`
@@ -94,8 +178,19 @@ function init_arch_env () {
     # xcrun -sdk macosx --show-sdk-path
     # /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk
     export XCRUN_SDK_PATH=`xcrun -sdk $XCRUN_SDK --show-sdk-path`
+
+    # x86_64
+    export XC_ARCH="${_XC_ARCH/_simulator/}"
+    # ffmpeg-x86_64
+    export XC_BUILD_NAME="${LIB_NAME}-${_XC_ARCH}"
+    # ios/ffmpeg-x86_64
+    export XC_BUILD_SOURCE="${XC_SRC_ROOT}/${XC_BUILD_NAME}"
+    # ios/ffmpeg-x86_64
+    export XC_BUILD_PREFIX="${XC_PRODUCT_ROOT}/${XC_BUILD_NAME}"
+    init_libs_pkg_config_path
 }
 
+export -f init_libs_pkg_config_path
 export -f install_depends
+export -f init_plat_env
 export -f init_arch_env
-export XC_ALL_ARCHS="x86_64 arm64"

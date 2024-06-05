@@ -20,30 +20,60 @@ set -e
 
 source $1
 
+iOS_ARCHS="arm64 x86_64_simulator"
+macOS_ARCHS="x86_64 arm64"
+tvOS_ARCHS="arm64 arm64_simulator"
+
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 source ${THIS_DIR}/env_assert.sh
 
-echo "===check env begin==="
-echo "argv:[$*]"
-env_assert "GIT_UPSTREAM"
-env_assert "GIT_LOCAL_REPO"
-env_assert "GIT_COMMIT"
-env_assert "REPO_DIR"
-echo "===check env end==="
-
-PLAT=$2
+PLAT=`echo $2 | tr '[:upper:]' '[:lower:]'`
 ARCH=$3
 
-if [[ "$ARCH" == 'all' || "x$ARCH" == 'x' ]]; then
-    iOS_ARCHS="x86_64 arm64"
-    macOS_ARCHS="x86_64 arm64"
-elif [[ "$ARCH" == 'x86_64' || "$ARCH" == 'arm64' ]]; then
-    iOS_ARCHS="$ARCH"
-    macOS_ARCHS="$ARCH"
-else
-    echo "wrong arch:[$ARCH], can't init repo."
-    exit -1
+if [[ "$ARCH" == 'all' ]]; then
+    ARCH=
 fi
+
+echo "===check env begin==="
+env_assert "REPO_DIR"
+env_assert "GIT_COMMIT"
+env_assert "GIT_LOCAL_REPO"
+env_assert "GIT_UPSTREAM"
+echo "===check env end==="
+
+
+function init_arch_for_plat()
+{
+    if [[ "$PLAT" == 'ios' ]]; then
+        ALL_ARCHS="$iOS_ARCHS"
+    elif [[ "$PLAT" == 'macos' ]]; then
+        ALL_ARCHS="$macOS_ARCHS"
+    elif [[ "$PLAT" == 'tvos' ]]; then
+        ALL_ARCHS="$tvOS_ARCHS"
+    else
+        echo "wrong plat:$PLAT"
+        exit 1
+    fi
+
+    if [[ ! -z "$ARCH" ]];then
+
+        for arch in $ARCH
+        do
+            validate=0
+            for arch2 in $ALL_ARCHS
+            do
+                if [[ $arch == $arch2 ]];then
+                    validate=1
+                fi
+            done
+            if [[ $validate -eq 0 ]];then
+                echo "the $arch is not validate on ${PLAT},you can use [$ALL_ARCHS]"
+                exit 1
+            fi
+        done
+        ALL_ARCHS="$ARCH"
+    fi
+}
 
 function pull_common() {
     echo "== pull $REPO_DIR base =="
@@ -51,7 +81,7 @@ function pull_common() {
         cd "$GIT_LOCAL_REPO"
         [[ -d .git/rebase-apply ]] && git am --skip
         git reset --hard
-
+        
         local origin=$(git remote get-url origin)
         if [[ "$origin" != "$GIT_UPSTREAM" ]]; then
             git remote remove origin
@@ -73,7 +103,7 @@ function pull_common() {
             cd "$GIT_LOCAL_REPO"
         fi
     fi
-
+    
     # fix fatal: 'stable' is not a commit and a branch 'localBranch' cannot be created from it
     git checkout ${GIT_COMMIT} -B localBranch
     cd - >/dev/null
@@ -84,10 +114,10 @@ function apply_patches() {
         echo "skip apply $REPO_DIR patches,because you set SKIP_FFMPEG_PATHCHES env."
         return
     fi
-
+    
     local plat="$1"
     local patch_dir="${THIS_DIR}/../patches/$REPO_DIR"
-
+    
     if [[ -d "${patch_dir}_${plat}" ]]; then
         patch_dir="${patch_dir}_${plat}"
     fi
@@ -124,58 +154,38 @@ function make_arch_repo() {
 
 function usage() {
     echo "usage:"
-    echo "$0 ios|macos|all [arm64|x86_64]"
+    echo "$0 ios|macos|tvos|all [arm64|x86_64]"
 }
 
 function main() {
-    case "$1" in
-    iOS | ios)
-        pull_common
-        found=0
-        for arch in $iOS_ARCHS; do
-            if [[ "$2" == "$arch" || "x$2" == "x" || "$2" == "all" ]]; then
-                found=1
+    case "$PLAT" in
+        ios | macos | tvos)
+            init_arch_for_plat
+            pull_common
+            for arch in $ALL_ARCHS; do
+                make_arch_repo "$PLAT" $arch
+            done
+        ;;
+        all)
+            pull_common
+            for arch in $iOS_ARCHS; do
                 make_arch_repo 'ios' $arch
-            fi
-        done
-
-        if [[ found -eq 0 ]]; then
-            echo "unknown arch:$2 for $1"
-        fi
-        ;;
-
-    macOS | macos)
-
-        pull_common
-        found=0
-        for arch in $macOS_ARCHS; do
-            if [[ "$2" == "$arch" || "x$2" == "x" || "$2" == "all" ]]; then
-                found=1
+            done
+            
+            for arch in $macOS_ARCHS; do
                 make_arch_repo 'macos' $arch
-            fi
-        done
-
-        if [[ found -eq 0 ]]; then
-            echo "unknown arch:$2 for $1"
-        fi
+            done
+            
+            for arch in $tvOS_ARCHS; do
+                make_arch_repo 'tvos' $arch
+            done
         ;;
-
-    all)
-        pull_common
-        for arch in $iOS_ARCHS; do
-            make_arch_repo 'ios' $arch
-        done
-
-        for arch in $macOS_ARCHS; do
-            make_arch_repo 'macos' $arch
-        done
-        ;;
-
-    *)
-        usage
-        exit 1
+        
+        *)
+            usage
+            exit 1
         ;;
     esac
 }
 
-main $PLAT $ARCH
+main
