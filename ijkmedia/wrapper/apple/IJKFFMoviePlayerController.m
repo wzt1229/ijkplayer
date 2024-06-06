@@ -32,7 +32,7 @@
 #import "ijkioapplication.h"
 #import "IJKISOTools.h"
 #include "string.h"
-#if TARGET_OS_IOS
+#if TARGET_OS_IOS || TARGET_OS_TV
 #import "IJKAudioKit.h"
 #else
 #import "IJKSDLGLView.h"
@@ -246,7 +246,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if (self) {
         // init video sink
         UIView<IJKVideoRenderingProtocol> *glView = nil;
-    #if TARGET_OS_IOS
+    #if TARGET_OS_IOS || TARGET_OS_TV
         CGRect rect = [[UIScreen mainScreen] bounds];
         rect.origin = CGPointZero;
         glView = [[IJKMetalView alloc] initWithFrame:rect];
@@ -832,7 +832,7 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
         [self willChangeValueForKey:@"naturalSize"];
         self->_naturalSize = naturalSize;
         [self didChangeValueForKey:@"naturalSize"];
-#if TARGET_OS_IOS
+#if TARGET_OS_IOS || TARGET_OS_TV
         [[NSNotificationCenter defaultCenter]
          postNotificationName:IJKMPMovieNaturalSizeAvailableNotification
          object:self userInfo:@{@"size":NSStringFromCGSize(self->_naturalSize)}];
@@ -1047,7 +1047,7 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         UIView *hudView = [_hudCtrl contentView];
         [hudView setHidden:NO];
         CGRect rect = self.view.bounds;
-#if TARGET_OS_IOS
+#if TARGET_OS_IOS || TARGET_OS_TV
         hudView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin;
         CGFloat screenWidth = [[UIScreen mainScreen]bounds].size.width;
 #else

@@ -173,7 +173,7 @@
         struct SubtitlePaletteFragmentData data = {0};
         data.w = (uint32_t)subTexture.width;
         data.h = (uint32_t)subTexture.height;
-        memcpy(data.colors, colors, sizeof(uint32) * 256);
+        memcpy(data.colors, colors, sizeof(uint32_t) * 256);
         
         id <MTLBuffer>buffer = [_device newBufferWithBytes:&data
                                                     length:sizeof(data)

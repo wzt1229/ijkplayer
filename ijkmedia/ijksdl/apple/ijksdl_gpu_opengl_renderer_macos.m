@@ -158,14 +158,13 @@ void main()
             
             [self.openglCompiler active];
             
-            GLint maxSize;
-            glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &maxSize);
-            glGetIntegerv(GL_UNIFORM_BUFFER_SIZE, &maxSize);
+            IJK_GLES2_checkError_TRACE("glUniformBlockBinding(setupOpenGLProgramIfNeed)111");
             
             //ubo
             glGenBuffers(1, &_ubo);
             glBindBuffer(GL_UNIFORM_BUFFER, _ubo);
             glBufferData(GL_UNIFORM_BUFFER, 16*257, NULL, GL_DYNAMIC_DRAW);
+            
             GLuint program = self.openglCompiler.program;
             GLuint block_index = glGetUniformBlockIndex(program, "ColorBlock");
             GLuint binding_point_index = 2;

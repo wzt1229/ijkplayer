@@ -180,8 +180,9 @@ typedef UITableView HudContentView;
     tableView.dataSource = self;
     tableView.delegate = self;
     tableView.backgroundColor = [[UIColor alloc] initWithRed:.5f green:.5f blue:.5f alpha:.5f];
+#if TARGET_OS_IOS
     tableView.separatorStyle  = UITableViewCellSeparatorStyleNone;
-    
+#endif
     return tableView;
 }
 

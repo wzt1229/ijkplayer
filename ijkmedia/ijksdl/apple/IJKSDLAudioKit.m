@@ -30,8 +30,10 @@ extern void IJKSDLGetAudioComponentDescriptionFromSpec(const SDL_AudioSpec *spec
     desc->componentType = kAudioUnitType_Output;
 #if TARGET_OS_IOS
     desc->componentSubType = kAudioUnitSubType_RemoteIO;
-#else
+#elif TARGET_OS_OSX
     desc->componentSubType = kAudioUnitSubType_DefaultOutput;
+#else
+    desc->componentSubType = kAudioUnitSubType_GenericOutput;
 #endif
     desc->componentManufacturer = kAudioUnitManufacturer_Apple;
     desc->componentFlags = 0;

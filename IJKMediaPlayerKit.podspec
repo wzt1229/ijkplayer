@@ -8,8 +8,8 @@
 
 Pod::Spec.new do |s|
   s.name             = 'IJKMediaPlayerKit'
-  s.version          = '0.11.1'
-  s.summary          = 'IJKMediaPlayerKit for ios/macOS.'
+  s.version          = '0.11.2'
+  s.summary          = 'IJKMediaPlayerKit for ios/macOS/tvOS.'
   
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -29,6 +29,7 @@ TODO: Add long description of the pod here.
   #metal 2.0 required
   s.osx.deployment_target = '10.11'
   s.ios.deployment_target = '11.0'
+  s.tvos.deployment_target = '12.0'
 
   s.osx.pod_target_xcconfig = {
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',
@@ -47,16 +48,26 @@ TODO: Add long description of the pod here.
 
   s.ios.pod_target_xcconfig = {
     'ALWAYS_SEARCH_USER_PATHS' => 'YES',
-    'HEADER_SEARCH_PATHS' => [
-      '$(inherited)',
-      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include',
-      '${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/dvdread/include',
-      '${PODS_TARGET_SRCROOT}/shell/build/product/macos/universal/ass/include',
-      '${PODS_TARGET_SRCROOT}/ijkmedia'
-    ],
+    'HEADER_SEARCH_PATHS[sdk=iphoneos*]' => '$(inherited) ${PODS_TARGET_SRCROOT}/ijkmedia ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/include ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/dvdread/include ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ass/include',
+    'HEADER_SEARCH_PATHS[sdk=iphonesimulator*]' => '$(inherited) ${PODS_TARGET_SRCROOT}/ijkmedia ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/ffmpeg/include ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/dvdread/include ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/ass/include',
+    'LIBRARY_SEARCH_PATHS[sdk=iphoneos*]' => '$(inherited) ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ass/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/dav1d/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/dvdread/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/ffmpeg/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/freetype/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/fribidi/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/harfbuzz/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/openssl/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/opus/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal/unibreak/lib',
+    'LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*]' => '$(inherited) ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/ass/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/dav1d/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/dvdread/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/ffmpeg/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/freetype/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/fribidi/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/harfbuzz/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/openssl/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/opus/lib ${PODS_TARGET_SRCROOT}/shell/build/product/ios/universal-simulator/unibreak/lib',
+    'OTHER_LDFLAGS' => '$(inherited) -l"opus" -l"crypto" -l"ssl" -l"dav1d" -l"dvdread" -l"freetype" -l"fribidi" -l"harfbuzz" -l"harfbuzz-subset" -l"unibreak" -l"ass" -l"avcodec" -l"avdevice" -l"avfilter" -l"avformat" -l"avutil" -l"swresample" -l"swscale"',
     'EXCLUDED_ARCHS' => 'armv7',
     # fix apple m1 building iOS Simulator platform,linking xxx built
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64',
+    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_USE_METAL_2=1',
+    'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework',
+    'MTL_LANGUAGE_REVISION' => 'Metal20'
+  }
+
+  s.tvos.pod_target_xcconfig = {
+    'ALWAYS_SEARCH_USER_PATHS' => 'YES',
+    'HEADER_SEARCH_PATHS[sdk=appletvos*]' => '$(inherited) ${PODS_TARGET_SRCROOT}/ijkmedia ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/ffmpeg/include ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/dvdread/include ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/ass/include',
+    'HEADER_SEARCH_PATHS[sdk=appletvsimulator*]' => '$(inherited) ${PODS_TARGET_SRCROOT}/ijkmedia ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/ffmpeg/include ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/dvdread/include ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/ass/include',
+    'LIBRARY_SEARCH_PATHS[sdk=appletvos*]' => '$(inherited) ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/ass/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/dav1d/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/dvdread/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/ffmpeg/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/freetype/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/fribidi/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/harfbuzz/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/openssl/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/opus/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal/unibreak/lib',
+    'LIBRARY_SEARCH_PATHS[sdk=appletvsimulator*]' => '$(inherited) ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/ass/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/dav1d/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/dvdread/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/ffmpeg/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/freetype/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/fribidi/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/harfbuzz/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/openssl/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/opus/lib ${PODS_TARGET_SRCROOT}/shell/build/product/tvos/universal-simulator/unibreak/lib',
+    'OTHER_LDFLAGS' => '$(inherited) -l"opus" -l"crypto" -l"ssl" -l"dav1d" -l"dvdread" -l"freetype" -l"fribidi" -l"harfbuzz" -l"harfbuzz-subset" -l"unibreak" -l"ass" -l"avcodec" -l"avdevice" -l"avfilter" -l"avformat" -l"avutil" -l"swresample" -l"swscale"',
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) IJK_USE_METAL_2=1',
     'METAL_LIBRARY_OUTPUT_DIR' => '${CONFIGURATION_BUILD_DIR}/IJKMediaPlayerKit.framework',
     'MTL_LANGUAGE_REVISION' => 'Metal20'
@@ -118,10 +129,19 @@ TODO: Add long description of the pod here.
     'ijkmedia/ijksdl/gles2/**/*.*',
     'ijkmedia/ijksdl/ijksdl_gles2.h'
 
+  s.tvos.exclude_files = 
+  'ijkmedia/ijksdl/mac/*.*',
+  'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_macos.{h,m}',
+  'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_fbo_macos.{h,m}',
+  'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_renderer_macos.{h,m}',
+  'ijkmedia/ijksdl/apple/ijksdl_gpu_opengl_shader_compiler.{h,m}',
+  'ijkmedia/ijksdl/gles2/**/*.*',
+  'ijkmedia/ijksdl/ijksdl_gles2.h'
+
   s.osx.vendored_libraries = 'shell/build/product/macos/universal/**/*.a'
-  s.ios.vendored_libraries = 'shell/build/product/ios/universal/**/*.a'
   s.osx.frameworks = 'Cocoa', 'AudioUnit', 'OpenGL', 'GLKit', 'CoreImage'
   s.ios.frameworks = 'UIKit', 'OpenGLES'
+  s.tvos.frameworks = 'UIKit', 'OpenGLES'
 
   s.library = 'z', 'iconv', 'xml2', 'bz2', 'c++', 'lzma'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreMedia', 'CoreVideo', 'VideoToolbox', 'Metal'

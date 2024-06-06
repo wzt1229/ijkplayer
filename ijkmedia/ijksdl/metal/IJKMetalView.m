@@ -492,7 +492,7 @@ typedef CGRect NSRect;
     }
 }
 
-#if TARGET_OS_IOS
+#if TARGET_OS_IOS || TARGET_OS_TV
 - (UIImage *)snapshot
 {
     CGImageRef cgImg = [self snapshot:IJKSDLSnapshot_Screen];

@@ -1,0 +1,424 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		600A32B68E254B033C0BBBBC /* Pods_IJKMediaTVDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C23D0AABCBBED6C7000829 /* Pods_IJKMediaTVDemo.framework */; };
+		C9B5A9622BFEDC7900F87720 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B5A9612BFEDC7900F87720 /* AppDelegate.m */; };
+		C9B5A9652BFEDC7900F87720 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B5A9642BFEDC7900F87720 /* ViewController.m */; };
+		C9B5A9682BFEDC7900F87720 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = C9B5A9672BFEDC7900F87720 /* Base */; };
+		C9B5A96A2BFEDC7A00F87720 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C9B5A9692BFEDC7A00F87720 /* Assets.xcassets */; };
+		C9B5A96D2BFEDC7A00F87720 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = C9B5A96C2BFEDC7A00F87720 /* Base */; };
+		C9B5A96F2BFEDC7A00F87720 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B5A96E2BFEDC7A00F87720 /* main.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		00C23D0AABCBBED6C7000829 /* Pods_IJKMediaTVDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IJKMediaTVDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		775B5BFA8B79F5FEE5D33FFA /* Pods-IJKMediaTVDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaTVDemo.debug.xcconfig"; path = "Target Support Files/Pods-IJKMediaTVDemo/Pods-IJKMediaTVDemo.debug.xcconfig"; sourceTree = "<group>"; };
+		86D8446CCC0EE44D97B5AE0B /* Pods-IJKMediaTVDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IJKMediaTVDemo.release.xcconfig"; path = "Target Support Files/Pods-IJKMediaTVDemo/Pods-IJKMediaTVDemo.release.xcconfig"; sourceTree = "<group>"; };
+		C9B5A95D2BFEDC7900F87720 /* IJKMediaTVDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJKMediaTVDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9B5A9602BFEDC7900F87720 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		C9B5A9612BFEDC7900F87720 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		C9B5A9632BFEDC7900F87720 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		C9B5A9642BFEDC7900F87720 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		C9B5A9672BFEDC7900F87720 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C9B5A9692BFEDC7A00F87720 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C9B5A96C2BFEDC7A00F87720 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		C9B5A96E2BFEDC7A00F87720 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C9B5A95A2BFEDC7900F87720 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				600A32B68E254B033C0BBBBC /* Pods_IJKMediaTVDemo.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		687EDAE7B86A86F05D28968F /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				775B5BFA8B79F5FEE5D33FFA /* Pods-IJKMediaTVDemo.debug.xcconfig */,
+				86D8446CCC0EE44D97B5AE0B /* Pods-IJKMediaTVDemo.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		C9B5A9542BFEDC7900F87720 = {
+			isa = PBXGroup;
+			children = (
+				C9B5A95F2BFEDC7900F87720 /* IJKMediaTVDemo */,
+				C9B5A95E2BFEDC7900F87720 /* Products */,
+				687EDAE7B86A86F05D28968F /* Pods */,
+				CE2CF4B6A9566391BB036476 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		C9B5A95E2BFEDC7900F87720 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C9B5A95D2BFEDC7900F87720 /* IJKMediaTVDemo.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C9B5A95F2BFEDC7900F87720 /* IJKMediaTVDemo */ = {
+			isa = PBXGroup;
+			children = (
+				C9B5A9602BFEDC7900F87720 /* AppDelegate.h */,
+				C9B5A9612BFEDC7900F87720 /* AppDelegate.m */,
+				C9B5A9632BFEDC7900F87720 /* ViewController.h */,
+				C9B5A9642BFEDC7900F87720 /* ViewController.m */,
+				C9B5A9662BFEDC7900F87720 /* Main.storyboard */,
+				C9B5A9692BFEDC7A00F87720 /* Assets.xcassets */,
+				C9B5A96B2BFEDC7A00F87720 /* LaunchScreen.storyboard */,
+				C9B5A96E2BFEDC7A00F87720 /* main.m */,
+			);
+			path = IJKMediaTVDemo;
+			sourceTree = "<group>";
+		};
+		CE2CF4B6A9566391BB036476 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				00C23D0AABCBBED6C7000829 /* Pods_IJKMediaTVDemo.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C9B5A95C2BFEDC7900F87720 /* IJKMediaTVDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C9B5A9722BFEDC7A00F87720 /* Build configuration list for PBXNativeTarget "IJKMediaTVDemo" */;
+			buildPhases = (
+				AD4E2BD757FB3168F882B6F1 /* [CP] Check Pods Manifest.lock */,
+				C9B5A9592BFEDC7900F87720 /* Sources */,
+				C9B5A95A2BFEDC7900F87720 /* Frameworks */,
+				C9B5A95B2BFEDC7900F87720 /* Resources */,
+				25F569BFF952A34EEA9B6711 /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IJKMediaTVDemo;
+			productName = IJKMediaTVDemo;
+			productReference = C9B5A95D2BFEDC7900F87720 /* IJKMediaTVDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C9B5A9552BFEDC7900F87720 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					C9B5A95C2BFEDC7900F87720 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+				};
+			};
+			buildConfigurationList = C9B5A9582BFEDC7900F87720 /* Build configuration list for PBXProject "IJKMediaTVDemo" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C9B5A9542BFEDC7900F87720;
+			productRefGroup = C9B5A95E2BFEDC7900F87720 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C9B5A95C2BFEDC7900F87720 /* IJKMediaTVDemo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C9B5A95B2BFEDC7900F87720 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9B5A96A2BFEDC7A00F87720 /* Assets.xcassets in Resources */,
+				C9B5A96D2BFEDC7A00F87720 /* Base in Resources */,
+				C9B5A9682BFEDC7900F87720 /* Base in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		25F569BFF952A34EEA9B6711 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaTVDemo/Pods-IJKMediaTVDemo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IJKMediaTVDemo/Pods-IJKMediaTVDemo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IJKMediaTVDemo/Pods-IJKMediaTVDemo-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		AD4E2BD757FB3168F882B6F1 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-IJKMediaTVDemo-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C9B5A9592BFEDC7900F87720 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9B5A9652BFEDC7900F87720 /* ViewController.m in Sources */,
+				C9B5A96F2BFEDC7A00F87720 /* main.m in Sources */,
+				C9B5A9622BFEDC7900F87720 /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		C9B5A9662BFEDC7900F87720 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C9B5A9672BFEDC7900F87720 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C9B5A96B2BFEDC7A00F87720 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C9B5A96C2BFEDC7A00F87720 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		C9B5A9702BFEDC7A00F87720 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = appletvos;
+				TVOS_DEPLOYMENT_TARGET = 17.5;
+			};
+			name = Debug;
+		};
+		C9B5A9712BFEDC7A00F87720 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = appletvos;
+				TVOS_DEPLOYMENT_TARGET = 17.5;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C9B5A9732BFEDC7A00F87720 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 775B5BFA8B79F5FEE5D33FFA /* Pods-IJKMediaTVDemo.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debugly.IJKMediaTVDemo.${DEVELOPMENT_TEAM}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Debug;
+		};
+		C9B5A9742BFEDC7A00F87720 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 86D8446CCC0EE44D97B5AE0B /* Pods-IJKMediaTVDemo.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debugly.IJKMediaTVDemo.${DEVELOPMENT_TEAM}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C9B5A9582BFEDC7900F87720 /* Build configuration list for PBXProject "IJKMediaTVDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9B5A9702BFEDC7A00F87720 /* Debug */,
+				C9B5A9712BFEDC7A00F87720 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C9B5A9722BFEDC7A00F87720 /* Build configuration list for PBXNativeTarget "IJKMediaTVDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9B5A9732BFEDC7A00F87720 /* Debug */,
+				C9B5A9742BFEDC7A00F87720 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C9B5A9552BFEDC7900F87720 /* Project object */;
+}
