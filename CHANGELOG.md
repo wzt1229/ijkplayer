@@ -1,10 +1,20 @@
+tag k0.11.2
+--------------------------------
+
+- support tvOS plat
+- ass subtitle support force style
+- fix subtitle memory leak
+- improve ass frame cache logic
+- audio meta add human describe string
+- fix blu-ray iso after seek video frame is not keyframe bug
+
 tag k0.11.1
 --------------------------------
 
 - hud show subtitle frame cache remaining
 - fix some scenarios ass subtitle not show bug
 - fix external subtitle present at wrong position which start_time is not zero
-- fix after seek,subtitle maybe disappear quickly bug
+- fix after seek, subtitle maybe disappear quickly bug
 
 tag k0.11.0
 --------------------------------
