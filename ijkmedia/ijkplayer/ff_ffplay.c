@@ -462,7 +462,7 @@ static void video_image_display2(FFPlayer *ffp)
             if (ffp->subtitle && ff_sub_get_current_stream(is->ffSub, NULL) >= 0) {
                 int got = ff_sub_get_texture(is->ffSub, vp->pts, ffp->gpu, &sub_overlay);
                 //when got equal to -100 means the ass subtitle frame not ready,need retry!
-                if (!sub_overlay && (r > 0 || got == -100) && is->pause_req) {
+                if (!sub_overlay && (r > 0 || got == FF_SUB_PENDING) && is->pause_req) {
                     //give one more chance
                     is->force_refresh_sub_changed = 1;
                     av_usleep(3*1000);

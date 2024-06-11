@@ -54,7 +54,7 @@ static void apply_preference(FFSubComponent *com)
 #if ASS_USE_PRE_RENDER
 static int pre_render_ass_frame(FFSubComponent *com, int serial)
 {
-    if (com->bitmapRenderer) {
+    if (com->bitmapRenderer || com->current_pts < 0) {
         return -1;
     }
     
@@ -218,7 +218,6 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
                     }
                 }
                 com->pre_load_pts = -1;
-                com->current_pts = -1;
                 com->pkt_pts = -1;
                 av_log(NULL, AV_LOG_INFO, "sub flush serial:%d\n",d->pkt_serial);
             }
@@ -503,7 +502,7 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
     
     if (packet->len == 0) {
         //i > 0 means the frame queue is not empty
-        return i > 0 ? -1 : -100;
+        return i > 0 ? -1 : FF_SUB_PENDING;
     }
     
     if (ignore_cache || isFFSubtitleBufferArrayDiff(&com->sub_buffer_array, packet)) {
@@ -535,7 +534,7 @@ static int subComponent_packet_from_ass_render(FFSubComponent *com, float pts, F
 static int subComponent_packet_ass_from_frame_queue(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
     if (com->sp_changed) {
-        return -100;
+        return FF_SUB_PENDING;
     }
     return subComponent_packet_from_frame_queue(com, pts, packet, 0);
 }
@@ -584,7 +583,7 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
         }
         return r;
     } else {
-        return -2;
+        return FF_SUB_PENDING;
     }
 }
 
@@ -623,7 +622,7 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     
     if (!codec) {
         av_log(NULL, AV_LOG_ERROR, "can't find [%s] subtitle decoder!", avcodec_get_name(stream->codecpar->codec_id));
-        return -100;
+        return -1000;
     }
     
     if (avcodec_open2(avctx, codec, NULL) < 0) {
