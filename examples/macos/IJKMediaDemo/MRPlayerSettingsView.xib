@@ -739,14 +739,6 @@
                         </subviews>
                     </view>
                 </box>
-                <box verticalHuggingPriority="750" boxType="separator" id="kvN-WY-Eqx">
-                    <rect key="frame" x="4" y="398" width="277" height="5"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                </box>
-                <box verticalHuggingPriority="750" boxType="separator" id="CRV-YC-54c">
-                    <rect key="frame" x="4" y="317" width="277" height="5"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                </box>
                 <box title="延迟" id="ecl-30-pKe" userLabel="字幕延迟">
                     <rect key="frame" x="85" y="410" width="204" height="50"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -764,6 +756,10 @@
                             </slider>
                         </subviews>
                     </view>
+                </box>
+                <box verticalHuggingPriority="750" boxType="separator" id="kvN-WY-Eqx">
+                    <rect key="frame" x="4" y="398" width="277" height="5"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="ArP-Gw-W6j">
                     <rect key="frame" x="6" y="373" width="64" height="16"/>
@@ -791,6 +787,10 @@
                             </slider>
                         </subviews>
                     </view>
+                </box>
+                <box verticalHuggingPriority="750" boxType="separator" id="CRV-YC-54c">
+                    <rect key="frame" x="4" y="317" width="277" height="5"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="73Z-vL-tK5">
                     <rect key="frame" x="5" y="283" width="64" height="16"/>
