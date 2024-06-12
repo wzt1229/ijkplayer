@@ -1235,9 +1235,11 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
      */
     if (ffp->enable_accurate_seek && is->video_accurate_seek_req && !is->seek_req) {
         if (!isnan(pts)) {
-            int64_t target_pos = is->seek_pos;
-            is->accurate_seek_vframe_pts = pts * 1000 * 1000;
+            double audio_dealy = is->audio_st ? get_clock_extral_delay(&is->audclk) : 0;
+            int64_t target_pos = is->seek_pos + audio_dealy * 1000 * 1000;
             int64_t deviation = target_pos - (int64_t)(pts * 1000 * 1000);
+            is->accurate_seek_vframe_pts = pts * 1000 * 1000;
+            
             if (deviation > MAX_DEVIATION) {
                 now = av_gettime_relative() / 1000;
                 /*
