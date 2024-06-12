@@ -2127,9 +2127,9 @@ static int ijkff_audio_samples_callback(void *opaque, int16_t *samples, int samp
     if (_mediaPlayer) {
         //通过seek解决切换内嵌字幕，内嵌音轨后不能立马生效问题
         long pst = ijkmp_get_current_position(_mediaPlayer);
-        int r = ijkmp_set_stream_selected(_mediaPlayer,streamIdx,1);
+        int r = ijkmp_set_stream_selected(_mediaPlayer, streamIdx, 1);
         if (r > 0) {
-            ijkmp_seek_to(_mediaPlayer, pst-200);
+            ijkmp_seek_to(_mediaPlayer, pst);
         }
     }
 }
