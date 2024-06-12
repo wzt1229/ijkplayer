@@ -1953,7 +1953,7 @@ static int audio_thread(void *arg)
  decode audio stream is faster, audio accurate seek finished in a flash.
  some video stream decode is slow, accurate seek maybe timeout, thus video picture display in a flash, because video clock is later, so dropping frames need keep a safe distance.
  */
-                            while (is->video_accurate_seek_req && !is->abort_request) {
+                            while (audio_dealy == 0 && is->video_accurate_seek_req && !is->abort_request) {
                                 int64_t vpts = is->accurate_seek_vframe_pts;
                                 int64_t deviation2 = vpts - audio_clock * 1000 * 1000;
                                 int64_t deviation3 = vpts - is->seek_pos;
@@ -1970,16 +1970,12 @@ static int audio_thread(void *arg)
                                 }
                             }
 
-                            if(!is->video_accurate_seek_req && is->video_stream >= 0 && audio_clock * 1000 * 1000 > is->accurate_seek_vframe_pts) {
-                                audio_accurate_seek_fail = 1;
+                            now = av_gettime_relative() / 1000;
+                            if ((now - is->accurate_seek_start_time) <= ffp->accurate_seek_timeout) {
+                                av_frame_unref(frame);
+                                continue;  //continue drop more old frame
                             } else {
-                                now = av_gettime_relative() / 1000;
-                                if ((now - is->accurate_seek_start_time) <= ffp->accurate_seek_timeout) {
-                                    av_frame_unref(frame);
-                                    continue;  //continue drop more old frame
-                                } else {
-                                    audio_accurate_seek_fail = 2;
-                                }
+                                audio_accurate_seek_fail = 2;
                             }
                         } else {
                             SDL_LockMutex(is->accurate_seek_mutex);
