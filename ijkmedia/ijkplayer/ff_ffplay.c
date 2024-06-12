@@ -3599,7 +3599,17 @@ static int read_thread(void *arg)
         }
 #endif
         if (is->seek_req) {
+            int64_t seek_target_origin = is->seek_pos;
             int64_t seek_target = is->seek_pos;
+            double audio_delay = is->audio_st ? get_clock_extral_delay(&is->audclk) : 0;
+            //当音轨提前时，为了显示视频画面，所以比正常时间点往前偏移 audio_delay
+            if (audio_delay < 0) {
+                seek_target += audio_delay * AV_TIME_BASE;
+                if (seek_target < 0) {
+                    seek_target = 0;
+                }
+            }
+            
             int64_t seek_min    = is->seek_rel > 0 ? seek_target - is->seek_rel + 2: INT64_MIN;
             int64_t seek_max    = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
 // FIXME the +-2 is due to rounding being not done in the correct direction in generation
@@ -3635,7 +3645,7 @@ static int read_thread(void *arg)
             }
             
             //seek the extra subtitle
-            int sec = (int)fftime_to_seconds(seek_target);
+            int sec = (int)fftime_to_seconds(seek_target_origin);
             float delay = ff_sub_get_delay(is->ffSub);
             ff_sub_seek_to(is->ffSub, delay, sec);
             //ff_sub_set_delay(is->ffSub, delay, sec);
@@ -3697,7 +3707,7 @@ static int read_thread(void *arg)
                 SDL_UnlockMutex(is->accurate_seek_mutex);
             }
 
-            ffp_notify_msg3(ffp, FFP_MSG_SEEK_COMPLETE, (int)fftime_to_milliseconds(seek_target), ret);
+            ffp_notify_msg3(ffp, FFP_MSG_SEEK_COMPLETE, (int)fftime_to_milliseconds(seek_target_origin), ret);
             ffp_toggle_buffering(ffp, 1);
             
             if (is->show_mode != SHOW_MODE_VIDEO) {
