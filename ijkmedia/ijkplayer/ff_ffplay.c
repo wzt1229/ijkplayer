@@ -1022,6 +1022,27 @@ retry:
             /* compute nominal last_duration */
             last_duration = vp_duration(is, lastvp, vp);
             delay = compute_target_delay(ffp, last_duration, is);
+            //video is later,so use drop frame instead of dispaly quickly
+            if (ffp->stat.vmdiff < -AV_SYNC_THRESHOLD_MAX && delay < 0.001) {
+                av_log(NULL,AV_LOG_INFO,"video is later,drop video:%0.3f,audio clk:%0.3f\n", vp->pts, get_clock_with_delay(&is->audclk));
+                SDL_LockMutex(is->pictq.mutex);
+                if (!isnan(vp->pts))
+                    update_video_pts(is, vp->pts, vp->pos, vp->serial);
+                SDL_UnlockMutex(is->pictq.mutex);
+                frame_queue_next(&is->pictq);
+                goto retry;
+            }
+            
+            //audio is later, so keep current frame for waiting
+            else if (ffp->stat.vmdiff > AV_SYNC_THRESHOLD_MIN*2) {
+                SDL_LockMutex(is->pictq.mutex);
+                if (!isnan(vp->pts))
+                    update_video_pts(is, lastvp->pts, lastvp->pos, lastvp->serial);
+                SDL_UnlockMutex(is->pictq.mutex);
+                
+                av_log(NULL,AV_LOG_DEBUG,"vmdiff is %0.3f, repeat video:%0.3f,audio clk:%0.3f\n", ffp->stat.vmdiff, lastvp->pts, get_clock_with_delay(&is->audclk));
+                goto display;
+            }
 
             time= av_gettime_relative() / 1000000.0;
             if (isnan(is->frame_timer) || time < is->frame_timer)
