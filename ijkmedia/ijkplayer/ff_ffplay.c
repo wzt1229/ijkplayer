@@ -1092,7 +1092,7 @@ retry:
             if (is->step) {
                 if (is->audio_st) {
                     //when use step play mode,we use video pts sync audio,so drop the behind audio.
-                    //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
+                    //audio pts is behind,need fast forwad,otherwise cause video picture delay and not smoothly!
                     double diff = 0.01;
                     int counter = 3;
                     while (counter--) {
@@ -1919,9 +1919,7 @@ static int audio_thread(void *arg)
                         audio_clock = frame_pts + samples_duration;
                         is->accurate_seek_aframe_pts = audio_clock * 1000 * 1000;
                         int64_t deviation = is->seek_pos - (int64_t)(audio_clock * 1000 * 1000);
-                        
-                        monkey_log("audio accurate_seek deviation:%lld\n", deviation);
-                        
+                        double audio_dealy = is->audio_st ? get_clock_extral_delay(&is->audclk) : 0;
                         if (deviation > MAX_DEVIATION) {
                             /*
                              fix fast rewind and fast forward continually,however accurate seek may not ended,cause accurate seek timeout.
@@ -1946,7 +1944,7 @@ static int audio_thread(void *arg)
                                 double fps = 1.0 / samples_duration;
                                 int need_drop = ceil(delta * fps / 1000 / 1000);
                                 
-                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, target_pos=%0.3f, audio_clock=%0.3f, dealy:%0.3f, estimate drop=%d, is->accurate_seek_start_time=%lld\n", is->seek_pos/1000000.0, audio_clock, audio_dealy, need_drop, is->accurate_seek_start_time);
+                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, target_pos=%0.3f, audio_clock=%0.3f, delay:%0.3f, estimate drop=%d, is->accurate_seek_start_time=%lld\n", is->seek_pos/1000000.0, audio_clock, audio_dealy, need_drop, is->accurate_seek_start_time);
                             }
                             is->drop_aframe_count++;
 /*
@@ -1985,13 +1983,13 @@ static int audio_thread(void *arg)
 
                             if (is->accurate_seek_start_time > 0) {
                                 int wd = (int)(is->accurate_seek_start_time + ffp->accurate_seek_timeout - av_gettime_relative() / 1000);
-                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek is ok, is->drop_aframe_count =%d, is->seek_pos=%0.3f, audio_clock=%0.3f, will wait video:%dms\n", is->drop_aframe_count, is->seek_pos/1000000.0, audio_clock, wd);
+                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek is ok, drop frame=%d, target diff=%0.3f, will wait video:%dms\n", is->drop_aframe_count, is->seek_pos/1000000.0 - audio_clock, wd);
                                 while (wd > 0 && is->video_accurate_seek_req && !is->abort_request && audio_seek_pos == is->seek_pos) {
                                     SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, 10);
                                     wd -= 10;
                                 }
                             } else {
-                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek is ok, is->drop_aframe_count =%d, is->seek_pos=%0.3f, audio_clock=%0.3f\n", is->drop_vframe_count, is->seek_pos/1000000.0, audio_clock);
+                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek is ok, drop frame=%d, target diff=%0.3f\n", is->drop_vframe_count, is->seek_pos/1000000.0 - audio_clock);
                             }
                             
                             is->drop_aframe_count = 0;
@@ -2014,17 +2012,17 @@ static int audio_thread(void *arg)
                         SDL_CondSignal(is->video_accurate_seek_cond);
                         
                         if (audio_accurate_seek_fail == 2) {
-                            av_log(NULL, AV_LOG_WARNING, "audio accurate_seek is timeout, is->drop_aframe_count=%d, now = %lld, audio_clock = %lf\n", is->drop_aframe_count, now, audio_clock);
+                            av_log(NULL, AV_LOG_WARNING, "audio accurate_seek is timeout, drop frame=%d, audio_clock=%lf\n", is->drop_aframe_count, audio_clock);
                         } else {
                             if (is->accurate_seek_start_time > 0) {
                                 int wd = (int)(is->accurate_seek_start_time + ffp->accurate_seek_timeout - av_gettime_relative() / 1000);
-                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek is error, is->drop_aframe_count=%d, now = %lld, audio_clock = %lf,wait vido:%dms\n", is->drop_aframe_count, now, audio_clock, wd);
+                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek is error, drop frame=%d, audio_clock=%lf, wait vido:%dms\n", is->drop_aframe_count, audio_clock, wd);
                                 while (wd > 0 && is->video_accurate_seek_req && !is->abort_request) {
                                     SDL_CondWaitTimeout(is->audio_accurate_seek_cond, is->accurate_seek_mutex, 10);
                                     wd -= 10;
                                 }
                             } else {
-                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek is error, is->drop_aframe_count=%d, now = %lld, audio_clock = %lf\n", is->drop_aframe_count, now, audio_clock);
+                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek is error, drop frame=%d, audio_clock=%lf\n", is->drop_aframe_count, audio_clock);
                             }
                         }
                         
@@ -2586,7 +2584,7 @@ static double consume_audio_buffer(FFPlayer *ffp, double diff)
         //when use step play mode,we use video pts sync audio,so drop the behind audio.
         double video_pts = is->step ? is->vidclk.pts : get_clock_with_delay(&is->vidclk);
         if (!isnan(video_pts)) {
-            //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
+            //audio pts is behind,need fast forwad,otherwise cause video picture delay and not smoothly!
             double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
             double delta = video_pts - pts - get_clock_extral_delay(&is->audclk);
             if (delta > threshold) {
@@ -2691,7 +2689,7 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
             if (is->video_stream >= 0 && is->viddec.finished != is->videoq.serial && is->auddec.finished != is->audioq.serial && 0 == is->audio_accurate_seek_req) {
                 //when use step play mode,we use video pts sync audio,so drop the behind audio.
                 double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
-                //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
+                //audio pts is behind,need fast forwad,otherwise cause video picture delay and not smoothly!
                 double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
                 double diff = video_pts - get_clock(&is->audclk) - get_clock_extral_delay(&is->audclk);
                 //when set audio delay, can not drop audio, because the diff will be handle by video repeat or drop.
@@ -3651,7 +3649,7 @@ static int read_thread(void *arg)
                 if (is->seek_flags & AVSEEK_FLAG_BYTE) {
                    set_clock(&is->extclk, NAN, 0);
                 } else {
-                   set_clock(&is->extclk, seek_target / (double)AV_TIME_BASE, 0);
+                   set_clock(&is->extclk, seek_target_origin / (double)AV_TIME_BASE, 0);
                 }
 
                 is->latest_video_seek_load_serial = is->videoq.serial;

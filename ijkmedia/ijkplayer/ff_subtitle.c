@@ -659,7 +659,7 @@ int ff_sub_set_delay(FFSubtitle *sub, float delay, float v_pts)
         //need seek to wantDisplay;
         int type = ff_sub_current_stream_type(sub);
         if (type == 1) {
-            //after seek maybe can display want sub,but can't seek every dealy change,so when diff greater than 2s do seek.
+            //after seek maybe can display want sub,but can't seek every delay change,so when diff greater than 2s do seek.
             if (diff > 2) {
                 //return 1 means need seek.
                 return 1;
