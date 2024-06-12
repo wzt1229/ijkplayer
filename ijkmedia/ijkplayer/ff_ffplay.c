@@ -136,7 +136,6 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1,
 static void free_picture(Frame *vp);
 static double consume_audio_buffer(FFPlayer *ffp, double diff);
 static void update_sample_display(FFPlayer *ffp, uint8_t *samples, int samples_size);
-static long ffp_get_current_position(FFPlayer *ffp);
 
 static int packet_queue_get_or_buffering(FFPlayer *ffp, PacketQueue *q, AVPacket *pkt, int *serial, int *finished)
 {
@@ -421,7 +420,7 @@ static int ff_apply_subtitle_stream_change(FFPlayer *ffp)
         int type = ff_sub_current_stream_type(is->ffSub);
         if (type == 2) {
             //seek the extra subtitle
-            float sec = ffp_get_current_position(ffp) / 1000 - 1;
+            float sec = ffp_get_current_position_l(ffp) / 1000 - 1;
             float delay = ff_sub_get_delay(is->ffSub);
             //when exchang stream force seek stream instead of ff_sub_set_delay
             ff_sub_seek_to(is->ffSub, delay, sec);
@@ -627,21 +626,26 @@ static void video_display2(FFPlayer *ffp)
         video_image_display2(ffp);
 }
 
-static double get_clock_ignore_delay(Clock *c, int ignore)
+static double _get_clock_apply_delay(Clock *c, int apply)
 {
     if (*c->queue_serial != c->serial)
         return NAN;
     if (c->paused) {
-        return c->pts + (ignore ? 0 : c->extra_delay);
+        return c->pts + (apply ? c->extra_delay : 0);
     } else {
         double time = av_gettime_relative() / 1000000.0;
-        return c->pts_drift + time - (time - c->last_updated) * (1.0 - c->speed) + (ignore ? 0 : c->extra_delay);
+        return c->pts_drift + time - (time - c->last_updated) * (1.0 - c->speed) + (apply ? c->extra_delay : 0);
     }
 }
 
 static double get_clock(Clock *c)
 {
-    return get_clock_ignore_delay(c, 0);
+    return _get_clock_apply_delay(c, 0);
+}
+
+static double get_clock_with_delay(Clock *c)
+{
+    return _get_clock_apply_delay(c, 1);
 }
 
 static void set_clock_at(Clock *c, double pts, int serial, double time)
@@ -710,19 +714,19 @@ static int get_master_sync_type(VideoState *is) {
     }
 }
 
-static double get_master_clock_ignore_delay(VideoState *is, int ignore)
+static double get_master_clock_with_delay(VideoState *is, int apply)
 {
     double val;
 
     switch (get_master_sync_type(is)) {
         case AV_SYNC_VIDEO_MASTER:
-            val = get_clock_ignore_delay(&is->vidclk, ignore);
+            val = _get_clock_apply_delay(&is->vidclk, apply);
             break;
         case AV_SYNC_AUDIO_MASTER:
-            val = get_clock_ignore_delay(&is->audclk, ignore);
+            val = _get_clock_apply_delay(&is->audclk, apply);
             break;
         default:
-            val = get_clock_ignore_delay(&is->extclk, ignore);
+            val = _get_clock_apply_delay(&is->extclk, apply);
             break;
     }
     return val;
@@ -731,7 +735,7 @@ static double get_master_clock_ignore_delay(VideoState *is, int ignore)
 /* get the current master clock value */
 static double get_master_clock(VideoState *is)
 {
-    return get_master_clock_ignore_delay(is, 0);
+    return get_master_clock_with_delay(is, 0);
 }
 
 static void check_external_clock_speed(VideoState *is) {
@@ -862,7 +866,7 @@ static double compute_target_delay(FFPlayer *ffp, double delay, VideoState *is)
         
         switch (get_master_sync_type(is)) {
             case AV_SYNC_VIDEO_MASTER:
-                diff = get_clock(&is->vidclk) - get_clock(&is->vidclk);
+                diff = 0;
                 break;
             case AV_SYNC_AUDIO_MASTER:
             {
@@ -871,12 +875,12 @@ static double compute_target_delay(FFPlayer *ffp, double delay, VideoState *is)
                     delay = delay / ffp->pf_playback_rate;
                     diff = 0;
                 } else {
-                    diff = get_clock(&is->vidclk) - get_clock(&is->audclk);
+                    diff = get_clock(&is->vidclk) - get_clock_with_delay(&is->audclk);
                 }
             }
                 break;
             default:
-                diff = get_clock(&is->vidclk) - get_clock(&is->extclk);
+                diff = get_clock(&is->vidclk) - get_clock_with_delay(&is->extclk);
                 break;
         }
     
@@ -1010,7 +1014,7 @@ retry:
             if (!is->step_on_seeking && !is->step && get_master_sync_type(is) == AV_SYNC_AUDIO_MASTER && !is->audio_accurate_seek_req) {
                 if (is->audio_stream >= 0 && isnan(get_master_clock(is)) && is->auddec.finished != is->audioq.serial && vp->pts > 0 && is->audioq.duration > 1) {
                     av_usleep(1000);
-                    av_log(NULL,AV_LOG_INFO,"wait master clock,video pts is:%0.3f,serial:%d\n",vp->pts,vp->serial);
+                    av_log(NULL,AV_LOG_DEBUG,"wait master clock,video pts is:%0.3f,serial:%d\n", vp->pts, vp->serial);
                     goto display;
                 }
             }
@@ -1120,11 +1124,11 @@ display:
 #endif
             av_diff = 0;
             if (is->audio_st && is->video_st)
-                av_diff = get_clock(&is->audclk) - get_clock(&is->vidclk);
+                av_diff = get_clock_with_delay(&is->audclk) - get_clock_with_delay(&is->vidclk);
             else if (is->video_st)
-                av_diff = get_master_clock(is) - get_clock(&is->vidclk);
+                av_diff = get_master_clock_with_delay(is, 1) - get_clock_with_delay(&is->vidclk);
             else if (is->audio_st)
-                av_diff = get_master_clock(is) - get_clock(&is->audclk);
+                av_diff = get_master_clock_with_delay(is, 1) - get_clock_with_delay(&is->audclk);
             
             av_bprint_init(&buf, 0, AV_BPRINT_SIZE_AUTOMATIC);
                         av_bprintf(&buf,
@@ -1236,9 +1240,9 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                     
                     int64_t delta = deviation - MAX_DEVIATION;
                     double fps = av_q2d(is->video_st->avg_frame_rate);
-                    int need_drop = ceil(delta * fps / 1000000);
+                    int need_drop = ceil(delta * fps / AV_TIME_BASE);
                     
-                    av_log(NULL, AV_LOG_INFO, "video accurate_seek start, is->seek_pos=%0.3f, first pts=%0.3f,estimate drop=%d is->accurate_seek_start_time = %lld\n", target_pos/1000000.0, pts, need_drop, is->accurate_seek_start_time);
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek start, is->seek_pos=%0.3f, first pts=%0.3f, estimate drop=%d is->accurate_seek_start_time=%lld\n", target_pos/1000000.0, pts, need_drop, is->accurate_seek_start_time);
                 }
                 is->drop_vframe_count++;
 
@@ -1271,13 +1275,13 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                 
                 if (is->accurate_seek_start_time > 0) {
                     int wd = (int)(is->accurate_seek_start_time + ffp->accurate_seek_timeout - av_gettime_relative() / 1000);
-                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is ok, is->drop_vframe_count =%d, is->seek_pos=%0.3f, pts=%0.3f, will wait audio:%dms\n", is->drop_vframe_count, is->seek_pos/1000000.0, pts, wd);
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is ok, drop frame=%d, target diff=%0.3f, will wait audio:%dms\n", is->drop_vframe_count, is->seek_pos/1000000.0 - pts, wd);
                     while (wd > 0 && is->audio_accurate_seek_req && !is->abort_request && video_seek_pos == is->seek_pos) {
                         SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, 10);
                         wd -= 10;
                     }
                 } else {
-                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is ok, is->drop_vframe_count =%d, is->seek_pos=%0.3f, pts=%0.3f\n", is->drop_vframe_count, is->seek_pos/1000000.0, pts);
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is ok, drop frame=%d, target diff=%0.3f\n", is->drop_vframe_count, is->seek_pos/1000000.0 - pts);
                 }
                 
                 is->drop_vframe_count = 0;
@@ -1301,17 +1305,17 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
             SDL_CondSignal(is->audio_accurate_seek_cond);
             
             if (video_accurate_seek_fail == 2) {
-                av_log(NULL, AV_LOG_WARNING, "video accurate_seek is timeout, is->drop_vframe_count=%d, now = %lld, pts = %lf\n", is->drop_vframe_count, now, pts);
+                av_log(NULL, AV_LOG_WARNING, "video accurate_seek is timeout, drop frame=%d, pts=%lf\n", is->drop_vframe_count, pts);
             } else {
                 if (is->accurate_seek_start_time > 0) {
                     int wd = (int)(is->accurate_seek_start_time + ffp->accurate_seek_timeout - av_gettime_relative() / 1000);
-                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is error, is->drop_vframe_count=%d, now = %lld, pts = %lf,wait audio:%dms\n", is->drop_vframe_count, now, pts, wd);
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is error, drop frame=%d, pts=%lf, wait audio:%dms\n", is->drop_vframe_count, pts, wd);
                     while (wd > 0 && is->audio_accurate_seek_req && !is->abort_request) {
                         SDL_CondWaitTimeout(is->video_accurate_seek_cond, is->accurate_seek_mutex, 10);
                         wd -= 10;
                     }
                 } else {
-                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is error, is->drop_vframe_count=%d, now = %lld, pts = %lf\n", is->drop_vframe_count, now, pts);
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is error, drop frame=%d, pts=%lf\n", is->drop_vframe_count, pts);
                 }
             }
             is->drop_vframe_count = 0;
@@ -1332,7 +1336,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
            av_get_picture_type_char(src_frame->pict_type), pts);
 #endif
 
-    monkey_log("will put frame,dropped vframe_count=%d, pts = %lf\n", is->drop_vframe_count, pts);
+    monkey_log("will put frame, dropped vframe_count=%d, pts=%lf\n", is->drop_vframe_count, pts);
     
     if (!(vp = frame_queue_peek_writable(&is->pictq)))
         return -1;
@@ -1919,7 +1923,7 @@ static int audio_thread(void *arg)
                                 double fps = 1.0 / samples_duration;
                                 int need_drop = ceil(delta * fps / 1000 / 1000);
                                 
-                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, is->seek_pos=%0.3f, audio_clock=%0.3f, estimate drop=%d, is->accurate_seek_start_time = %lld\n", is->seek_pos/1000000.0, audio_clock, need_drop, is->accurate_seek_start_time);
+                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, target_pos=%0.3f, audio_clock=%0.3f, dealy:%0.3f, estimate drop=%d, is->accurate_seek_start_time=%lld\n", is->seek_pos/1000000.0, audio_clock, audio_dealy, need_drop, is->accurate_seek_start_time);
                             }
                             is->drop_aframe_count++;
 /*
@@ -2271,7 +2275,7 @@ static int synchronize_audio(VideoState *is, int nb_samples)
         double diff, avg_diff;
         int min_nb_samples, max_nb_samples;
 
-        diff = get_clock(&is->audclk) - get_master_clock(is);
+        diff = get_clock_with_delay(&is->audclk) - get_master_clock_with_delay(is,  1);
 
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
             is->audio_diff_cum = diff + is->audio_diff_avg_coef * is->audio_diff_cum;
@@ -2467,7 +2471,7 @@ reload:
         is->audio_buf = af->frame->data[0];
         resampled_data_size = data_size;
     }
-
+    
     audio_clock0 = is->audio_clock;
     /* update the audio clock with the pts */
     if (!isnan(af->pts))
@@ -2561,11 +2565,11 @@ static double consume_audio_buffer(FFPlayer *ffp, double diff)
         sync_clock_to_slave(&is->extclk, &is->audclk);
         
         //when use step play mode,we use video pts sync audio,so drop the behind audio.
-        double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
+        double video_pts = is->step ? is->vidclk.pts : get_clock_with_delay(&is->vidclk);
         if (!isnan(video_pts)) {
             //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
             double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
-            double delta = video_pts - get_clock(&is->audclk);
+            double delta = video_pts - pts - get_clock_extral_delay(&is->audclk);
             if (delta > threshold) {
                 av_log(NULL, AV_LOG_INFO, "audio is behind:%0.3f\n", delta);
                 return delta;
@@ -3753,7 +3757,7 @@ static int read_thread(void *arg)
         if (ret < 0) {
             int pb_eof = 0;
             int pb_error = 0;
-            monkey_log("av_read_frame failed:%4s\n",av_err2str(ret));
+            //monkey_log("av_read_frame failed:%4s\n",av_err2str(ret));
             if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
                 ffp_check_buffering_l(ffp);
                 pb_eof = 1;
@@ -3839,8 +3843,8 @@ static int read_thread(void *arg)
         pkt_in_play_range = ffp->duration == AV_NOPTS_VALUE ||
                 (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
                 av_q2d(ic->streams[pkt->stream_index]->time_base) -
-                (double)(ffp->start_time != AV_NOPTS_VALUE ? ffp->start_time : 0) / 1000000
-                <= ((double)ffp->duration / 1000000);
+                (double)(ffp->start_time != AV_NOPTS_VALUE ? ffp->start_time : 0) / AV_TIME_BASE
+                <= ((double)ffp->duration / AV_TIME_BASE);
         if (!pkt_in_play_range) {
             av_packet_unref(pkt);
         } else {
@@ -4669,7 +4673,7 @@ int ffp_seek_to_l(FFPlayer *ffp, long msec)
     return 0;
 }
 
-static long get_current_position(FFPlayer *ffp, int ignore_delay)
+long ffp_get_current_position_l(FFPlayer *ffp)
 {
     assert(ffp);
     VideoState *is = ffp->is;
@@ -4682,7 +4686,7 @@ static long get_current_position(FFPlayer *ffp, int ignore_delay)
         start_diff = fftime_to_milliseconds(start_time);
 
     int64_t pos = 0;
-    double pos_clock = get_master_clock_ignore_delay(is, ignore_delay);
+    double pos_clock = get_master_clock_with_delay(is, 0);
     if (isnan(pos_clock)) {
         pos = fftime_to_milliseconds(is->seek_pos);
     } else {
@@ -4702,16 +4706,6 @@ static long get_current_position(FFPlayer *ffp, int ignore_delay)
 
     int64_t adjust_pos = pos - start_diff;
     return (long)adjust_pos;
-}
-
-static long ffp_get_current_position(FFPlayer *ffp)
-{
-    return get_current_position(ffp, 0);
-}
-
-long ffp_get_current_position_l(FFPlayer *ffp)
-{
-    return get_current_position(ffp, 1);
 }
 
 long ffp_get_duration_l(FFPlayer *ffp)
@@ -4901,7 +4895,7 @@ void ffp_check_buffering_l(FFPlayer *ffp)
         }
 
         if (cached_duration_in_ms >= 0) {
-            buf_time_position = ffp_get_current_position(ffp) + cached_duration_in_ms;
+            buf_time_position = ffp_get_current_position_l(ffp) + cached_duration_in_ms;
             ffp->playable_duration_ms = buf_time_position;
 
             buf_time_percent = (int)av_rescale(cached_duration_in_ms, 1005, hwm_in_ms * 10);
@@ -5360,7 +5354,7 @@ void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)
 {
     SDL_LockMutex(ffp->is->play_mutex);
     VideoState *is = ffp->is;
-    int64_t ms = ffp_get_current_position(ffp);
+    int64_t ms = ffp_get_current_position_l(ffp);
     int r = ff_sub_set_delay(is->ffSub, delay, ms/1000.0);
     SDL_UnlockMutex(ffp->is->play_mutex);
     if (r == 1) {
