@@ -3,6 +3,7 @@ tag k0.11.2
 
 - support tvOS plat
 - ass subtitle support force style
+- support set audio delay
 - fix subtitle memory leak
 - improve ass frame cache logic
 - audio meta add human describe string
