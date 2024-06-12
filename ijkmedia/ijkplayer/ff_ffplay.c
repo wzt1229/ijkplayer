@@ -2692,8 +2692,11 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
                 double video_pts = is->step ? is->vidclk.pts : get_clock(&is->vidclk);
                 //audio pts is behind,need fast forwad,otherwise cause video picture dealy and not smoothly!
                 double threshold = is->step ? AV_SYNC_THRESHOLD_MIN : AV_SYNC_THRESHOLD_MAX;
-                double diff = video_pts - get_clock(&is->audclk);
-                if (!isnan(video_pts) && diff > threshold) {
+                double diff = video_pts - get_clock(&is->audclk) - get_clock_extral_delay(&is->audclk);
+                //when set audio delay, can not drop audio, because the diff will be handle by video repeat or drop.
+                int auto_drop = (is->step || get_clock_extral_delay(&is->audclk) == 0) && !isnan(video_pts) && diff > threshold;
+                if (auto_drop) {
+                    av_log(NULL, AV_LOG_INFO, "audio pts is behind,need fast forwad,diff:%f\n", diff);
                     int counter = 3;
                     while (counter--) {
                         if (diff >= 0.01) {
