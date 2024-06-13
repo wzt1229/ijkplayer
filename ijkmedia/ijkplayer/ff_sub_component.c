@@ -219,6 +219,7 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
                 }
                 com->pre_load_pts = -1;
                 com->pkt_pts = -1;
+                com->current_pts = -1;
                 av_log(NULL, AV_LOG_INFO, "sub flush serial:%d\n",d->pkt_serial);
             }
         }
