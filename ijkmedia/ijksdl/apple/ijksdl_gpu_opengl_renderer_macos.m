@@ -274,20 +274,12 @@ void main()
 
 - (void)drawTexture:(id<IJKSDLSubtitleTextureWrapper>)subTexture colors:(void *)colors
 {
-//    glEnable(GL_BLEND);
-//    //ass字幕已经做了预乘，所以这里选择 GL_ONE，而不是 GL_SRC_ALPHA
-//    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //设置采样器位置，保证了每个uniform采样器对应着正确的纹理单元
     glUniform1i(_uniforms[UNIFORM_S_AI], 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, [subTexture texture]);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    
     glBindVertexArray(_vao);
     [self updateColors:colors w:subTexture.w h:subTexture.h];
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

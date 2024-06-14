@@ -79,7 +79,7 @@
         } else {
             NSAssert(fsh, @"IJKMetalSubtitleOutFormat is wrong!");
         }
-    } else if (_inFormat == IJKMetalSubtitleInFormatA8){
+    } else if (_inFormat == IJKMetalSubtitleInFormatA8) {
         fsh = @"subtilePaletteA8Fragment";
     } else {
         NSAssert(fsh, @"IJKMetalSubtitle OutFormat or InFormat is wrong!");
@@ -97,10 +97,12 @@
     //important! set subtitle need blending.
     //https://developer.apple.com/documentation/metal/mtlblendfactor/oneminussourcealpha
     pipelineStateDescriptor.colorAttachments[0].blendingEnabled = YES;
+    MTLBlendFactor bfactor = _inFormat == IJKMetalSubtitleInFormatA8 ? MTLBlendFactorSourceAlpha : MTLBlendFactorOne;
+    bfactor = MTLBlendFactorOne;
     //ass字幕已经做了预乘，所以这里选择 MTLBlendFactorOne，而不是 MTLBlendFactorSourceAlpha
-    pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorOne;
+    pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = bfactor;
     pipelineStateDescriptor.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-    pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+    pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = bfactor;
     pipelineStateDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     
     id<MTLRenderPipelineState> pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
