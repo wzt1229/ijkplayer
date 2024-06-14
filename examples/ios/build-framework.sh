@@ -1,5 +1,21 @@
-#!/bin/sh
-# build ijk framework.
+#! /usr/bin/env bash
+#
+# Copyright (C) 2024 Matt Reach<qianlongxu@gmail.com>
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
+cd "$THIS_DIR"
 
 set -e
 
@@ -9,65 +25,33 @@ if [[ ! -d Pods/IJKMediaPlayerKit.xcodeproj ]]; then
 fi
 
 # 1
-PROJECT_NAME="IJKMediaPlayerKit"
+WORKSPACE_NAME="IJKMediaDemo.xcworkspace"
 TARGET_NAME="IJKMediaPlayerKit"
-WORK_DIR='build'
-OUTPUT_ROOT='Release-ios'
-DEVICE_DIR=${WORK_DIR}/'Release-iphoneos'/${TARGET_NAME}/${TARGET_NAME}'.framework'
-SIMULATOR_DIR=${WORK_DIR}/'Release-iphonesimulator'/${TARGET_NAME}/${TARGET_NAME}'.framework'
-OUTPUT_DIR=${WORK_DIR}/${OUTPUT_ROOT}
-OUTPUT_FMK_DIR=${OUTPUT_DIR}/${TARGET_NAME}.framework
+
+WORK_DIR="Pods/Release/Release-iphoneos"
+SIM_WORK_DIR="Pods/Release/Release-iphonesimulator"
 
 # 2
 if [ -d ${WORK_DIR} ]; then
     rm -rf ${WORK_DIR}
 fi
-# 3 
-# project方式
-# xcodebuild -showsdks
-# Build the framework for device and simulator with all architectures. 编译真机和模拟器支持的所有架构，如果需要module，加上defines_module=yes
-export IPHONEOS_DEPLOYMENT_TARGET=11.0
 
-xcodebuild -project "Pods/${PROJECT_NAME}.xcodeproj" \
-           -target "${TARGET_NAME}"  \
-           -configuration Release  \
-           -arch arm64  \
-           only_active_arch=no  \
-           -sdk iphoneos \
-           >/dev/null
-
-xcodebuild -project "Pods/${PROJECT_NAME}.xcodeproj" \
-           -target "${TARGET_NAME}"  \
-           -configuration Release  \
-           -arch x86_64  \
-           only_active_arch=no  \
-           -sdk iphonesimulator \
-           >/dev/null
-
-# 4
-if [ -d ${OUTPUT_FMK_DIR} ]; then
- rm -rf ${OUTPUT_FMK_DIR}
+if [ -d ${SIM_WORK_DIR} ]; then
+    rm -rf ${SIM_WORK_DIR}
 fi
 
-# 5
-# Create the output file including the folders. 创建目标文件，以及其中包含的文件夹
-mkdir -p ${OUTPUT_FMK_DIR}
- 
-# 6
-# Copy the device version of framework to destination. 先拷贝真机framework到目标文件
-cp -pPR ${DEVICE_DIR}/ ${OUTPUT_FMK_DIR}/
+# 3
+# project方式
+# xcodebuild -showsdks
+# Build the framework for device and simulator with all architectures.
+export IPHONEOS_DEPLOYMENT_TARGET=11.0
 
-# 7
-# Replace the framework executable within the output file framework with
-# a new version created by merging the device and simulator
-# frameworks' executables with lipo. 合并真机和模拟器 .framework 里面的可执行文件FRAMEWORK_NAME 到目标文件.framework 下
-lipo -create -output ${OUTPUT_FMK_DIR}/${TARGET_NAME} ${DEVICE_DIR}/${TARGET_NAME} ${SIMULATOR_DIR}/${TARGET_NAME}
- 
-# 8
-# Copy dSYM files
+xcodebuild -workspace ${WORKSPACE_NAME} -scheme ${TARGET_NAME} \
+-configuration Release  \
+-destination 'generic/platform=iOS' \
+-destination 'generic/platform=iOS Simulator' \
+BUILD_DIR=. \
+clean build >/dev/null
 
-cp -pPR ${DEVICE_DIR}.dSYM ${OUTPUT_DIR}
-# cp -pPR ${SIMULATOR_DIR}.dSYM ${OUTPUT_DIR}/${TARGET_NAME}'-simulator.framework.dSYM'
-
-cd ${OUTPUT_DIR}
-echo "framework dir: $PWD"
+echo "ios framework dir:$WORK_DIR"
+echo "ios simulator framework dir: $SIM_WORK_DIR"

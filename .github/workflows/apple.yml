@@ -42,16 +42,10 @@ jobs:
     - name: Zip Frameworks
       run: |
         dst=IJKMediaPlayerKit-${{ env.TAG }}
-        
-        mkdir -p ${dst}/iOS
-        cp -pPR examples/ios/build/Release-ios/* $dst/iOS
-        mkdir -p ${dst}/macOS
-        cp -pPR examples/macos/build/Release/IJKMediaPlayerKit/* $dst/macOS
-
         cp CHANGELOG.md $dst
         cp README.md $dst
         cp COPYING.LGPLv2.1 $dst
-        
+        cp -pPR examples/xcframewrok/IJKMediaPlayerKit.xcframework $dst
         cd $dst
         mv COPYING.LGPLv2.1 LICENSE
         zip -ryq IJKMediaPlayerKit-${{ env.TAG }}.zip ./*

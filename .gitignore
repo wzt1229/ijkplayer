@@ -59,3 +59,5 @@ examples/macos/Pods
 !/shell/extra/patches/
 
 examples/ios/Pods
+examples/tvos/Pods
+examples/xcframewrok/IJKMediaPlayerKit.xcframework

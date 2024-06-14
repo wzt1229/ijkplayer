@@ -23,17 +23,16 @@
 #----------------------------------------------------------
 # 当发布新版本库时，修改对应的 TAG 值
 #----------------------------------------------------------
-OPUS_TAG='opus-1.4-240605102127'
-MAC_BLURAY_TAG='bluray-1.3.4-240605103055'
-DAV1D_TAG='dav1d-1.3.0-240605103034'
-OPENSSL_TAG='openssl-1.1.1w-240605103006'
-DVDREAD_TAG='dvdread-6.1.3-240605103023'
-FREETYPE_TAG='freetype-2.13.2-240605105138'
-UNIBREAK_TAG='unibreak-5.1-240604145913'
-FRIBIDI_TAG='fribidi-1.0.13-240605105200'
-HARFBUZZ_TAG='harfbuzz-8.3.0-240605110352'
-ASS_TAG='ass-0.17.1-240605112231'
-FFMPEG_TAG='ffmpeg-5.1.4-240605162418'
+OPUS_TAG='opus-1.4-240613155640'
+DAV1D_TAG='dav1d-1.3.0-240613162104'
+OPENSSL_TAG='openssl-1.1.1w-240613155307'
+DVDREAD_TAG='dvdread-6.1.3-240613162057'
+FREETYPE_TAG='freetype-2.13.2-240613162051'
+UNIBREAK_TAG='unibreak-5.1-240613162028'
+FRIBIDI_TAG='fribidi-1.0.13-240613162046'
+HARFBUZZ_TAG='harfbuzz-8.3.0-240613170910'
+ASS_TAG='ass-0.17.1-240613173921'
+FFMPEG_TAG='ffmpeg-5.1.4-240613175211'
 #----------------------------------------------------------
 
 set -e
@@ -67,9 +66,6 @@ do
         'ffmpeg')
             TAG=$FFMPEG_TAG
         ;;
-        'libyuv')
-            TAG=$LIBYUV_TAG
-        ;;
         'openssl')
             TAG=$OPENSSL_TAG
         ;;
@@ -77,7 +73,7 @@ do
             TAG=$OPUS_TAG
         ;;
         'bluray')
-            TAG=$MAC_BLURAY_TAG
+            TAG=
         ;;
         'dav1d')
             TAG=$DAV1D_TAG

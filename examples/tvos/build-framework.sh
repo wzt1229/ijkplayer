@@ -24,25 +24,33 @@ if [[ ! -d Pods/IJKMediaPlayerKit.xcodeproj ]]; then
     pod install
 fi
 
-# 1
-WORKSPACE_NAME="IJKMediaMacDemo.xcworkspace"
+
+WORKSPACE_NAME="IJKMediaTVDemo.xcworkspace"
 TARGET_NAME="IJKMediaPlayerKit"
-WORK_DIR="Pods/Release/${TARGET_NAME}"
+
+WORK_DIR="Pods/Release/Release-appletvos"
+SIM_WORK_DIR="Pods/Release/Release-appletvsimulator"
 
 # 2
 if [ -d ${WORK_DIR} ]; then
     rm -rf ${WORK_DIR}
 fi
 
-# 3
+if [ -d ${SIM_WORK_DIR} ]; then
+    rm -rf ${SIM_WORK_DIR}
+fi
+
+# project方式
 # xcodebuild -showsdks
 # Build the framework for device and simulator with all architectures.
-export MACOSX_DEPLOYMENT_TARGET=10.11
-
+# 
 xcodebuild -workspace ${WORKSPACE_NAME} -scheme ${TARGET_NAME} \
 -configuration Release  \
--destination 'generic/platform=macOS' \
+-destination 'generic/platform=tvOS Simulator' \
+-destination 'generic/platform=tvOS' \
 BUILD_DIR=. \
 clean build >/dev/null
 
-echo "framework dir: ${WORK_DIR}"
+echo "tvos framework dir:$WORK_DIR"
+echo "tvos simulator framework dir: $SIM_WORK_DIR"
+
