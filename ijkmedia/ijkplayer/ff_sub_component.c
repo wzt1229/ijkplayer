@@ -451,6 +451,10 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
             continue;
         }
         
+        if (pts < sp->pts) {
+            break;
+        }
+        
         if (sp->duration > 0) {
             if (pts > sp->pts + sp->duration) {
                 frame_queue_next(com->frameq);
@@ -484,21 +488,16 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
         }
         
         //已经开始
-        if (pts >= sp->pts) {
-            for (int j = 0; j < sizeof(sp->sub_list)/sizeof(sp->sub_list[0]); j++) {
-                FFSubtitleBuffer *sb = sp->sub_list[j];
-                if (sb) {
-                    packet->e[packet->len++] = ff_subtitle_buffer_retain(sb);
-                } else {
-                    break;
-                }
+        for (int j = 0; j < sizeof(sp->sub_list)/sizeof(sp->sub_list[0]); j++) {
+            FFSubtitleBuffer *sb = sp->sub_list[j];
+            if (sb) {
+                packet->e[packet->len++] = ff_subtitle_buffer_retain(sb);
+            } else {
+                break;
             }
-            i++;
-            continue;
-        } else {
-            //还没已经开始
-            break;
         }
+        i++;
+        continue;
     }
     
     if (packet->len == 0) {
