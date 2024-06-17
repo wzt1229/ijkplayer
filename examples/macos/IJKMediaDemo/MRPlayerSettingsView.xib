@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22690"/>
+        <capability name="Image references" minToolsVersion="12.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -196,9 +197,10 @@
                             <button wantsLayer="YES" tag="1" verticalHuggingPriority="750" id="js1-0j-i0f">
                                 <rect key="frame" x="152" y="47" width="42" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <buttonCell key="cell" type="push" bezelStyle="rounded" image="arrow.clockwise" catalog="system" imagePosition="overlaps" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Y4h-eu-NCj">
+                                <buttonCell key="cell" type="push" bezelStyle="rounded" imagePosition="only" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Y4h-eu-NCj">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="smallSystem"/>
+                                    <font key="font" metaFont="system" size="9"/>
+                                    <imageReference key="image" image="arrow.clockwise" catalog="system" symbolScale="medium"/>
                                 </buttonCell>
                                 <connections>
                                     <action selector="onResetColorAdjust:" target="-2" id="QRI-l8-1C3"/>
@@ -224,9 +226,10 @@
                             <button wantsLayer="YES" tag="2" verticalHuggingPriority="750" id="9ZI-4n-gmm">
                                 <rect key="frame" x="152" y="23" width="42" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <buttonCell key="cell" type="push" bezelStyle="rounded" image="arrow.clockwise" catalog="system" imagePosition="overlaps" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ei6-nM-Z7d">
+                                <buttonCell key="cell" type="push" bezelStyle="rounded" imagePosition="only" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ei6-nM-Z7d">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="smallSystem"/>
+                                    <imageReference key="image" image="arrow.clockwise" catalog="system" symbolScale="medium"/>
                                 </buttonCell>
                                 <connections>
                                     <action selector="onResetColorAdjust:" target="-2" id="Lw6-kM-LuT"/>
@@ -252,9 +255,10 @@
                             <button wantsLayer="YES" tag="3" verticalHuggingPriority="750" id="zJ0-JO-Vgb">
                                 <rect key="frame" x="152" y="-1" width="42" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <buttonCell key="cell" type="push" bezelStyle="rounded" image="arrow.clockwise" catalog="system" imagePosition="overlaps" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="iIL-FY-fh2">
+                                <buttonCell key="cell" type="push" bezelStyle="rounded" imagePosition="overlaps" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="iIL-FY-fh2">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="smallSystem"/>
+                                    <imageReference key="image" image="arrow.clockwise" catalog="system" symbolScale="medium"/>
                                 </buttonCell>
                                 <connections>
                                     <action selector="onResetColorAdjust:" target="-2" id="6XZ-6O-Kov"/>
@@ -279,13 +283,17 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="Ff5-Nz-uQ6">
-                                <rect key="frame" x="159" y="11" width="28" height="16"/>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NIL-mS-XUw">
+                                <rect key="frame" x="156" y="7" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="LwJ-EX-PVD">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
                                 <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.use_opengl" id="2fQ-rl-ENU"/>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.use_opengl" id="X8u-jj-yKB"/>
                                 </connections>
-                            </switch>
+                            </button>
                         </subviews>
                     </view>
                 </box>
@@ -392,13 +400,17 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" state="on" translatesAutoresizingMaskIntoConstraints="NO" id="o1G-5n-VlF">
-                                <rect key="frame" x="158" y="108" width="28" height="16"/>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="C5m-iw-JQX">
+                                <rect key="frame" x="159" y="105" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="JB7-rE-EJc">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
                                 <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.use_hw" id="p24-lJ-1EK"/>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.use_hw" id="RL8-JY-iIb"/>
                                 </connections>
-                            </switch>
+                            </button>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="Wms-Dn-q7E">
                                 <rect key="frame" x="5" y="56" width="38" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -408,13 +420,6 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="EYT-iD-3sn">
-                                <rect key="frame" x="158" y="55" width="28" height="16"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.de_interlace" id="dpZ-Bq-syk"/>
-                                </connections>
-                            </switch>
                             <box verticalHuggingPriority="750" boxType="separator" id="SAR-94-gZf">
                                 <rect key="frame" x="8" y="48" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -428,13 +433,17 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="7h6-Ys-Frk">
-                                <rect key="frame" x="158" y="81" width="28" height="16"/>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zpW-a0-VXu">
+                                <rect key="frame" x="158" y="81" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="ns0-e7-NNq">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
                                 <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.copy_hw_frame" id="cog-8y-KCk"/>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.copy_hw_frame" id="DbT-JQ-2u7"/>
                                 </connections>
-                            </switch>
+                            </button>
                             <box verticalHuggingPriority="750" boxType="separator" id="qot-ud-XQ0">
                                 <rect key="frame" x="8" y="74" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -448,13 +457,6 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="A6V-Bj-000">
-                                <rect key="frame" x="158" y="29" width="28" height="16"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.open_hdr" id="kOZ-Ou-ezp"/>
-                                </connections>
-                            </switch>
                             <box verticalHuggingPriority="750" boxType="separator" id="0KZ-vv-SWD">
                                 <rect key="frame" x="7" y="23" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -517,6 +519,28 @@
                                     <binding destination="A8Q-JO-gdn" name="selectedValue" keyPath="values.overlay_format" id="fVU-1X-6Hk"/>
                                 </connections>
                             </popUpButton>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HSO-sE-h9g">
+                                <rect key="frame" x="159" y="51" width="24" height="23"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="vug-W8-GG0">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.de_interlace" id="94r-3H-AgM"/>
+                                </connections>
+                            </button>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q47-mC-P0v">
+                                <rect key="frame" x="159" y="26" width="24" height="23"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="vbl-cK-ASf">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.open_hdr" id="M4J-P2-sXl"/>
+                                </connections>
+                            </button>
                         </subviews>
                     </view>
                 </box>
@@ -868,13 +892,6 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" state="on" translatesAutoresizingMaskIntoConstraints="NO" id="0Yx-LI-eMG">
-                                <rect key="frame" x="158" y="66" width="28" height="16"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.accurate_seek" id="yQw-s4-Sy5"/>
-                                </connections>
-                            </switch>
                             <box verticalHuggingPriority="750" boxType="separator" id="Og8-YB-98V">
                                 <rect key="frame" x="7" y="58" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -905,13 +922,6 @@
                                 <rect key="frame" x="9" y="30" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </box>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" state="on" translatesAutoresizingMaskIntoConstraints="NO" id="Q6f-BP-R2U">
-                                <rect key="frame" x="158" y="8" width="28" height="16"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.lock_screen_ratio" id="eeY-C3-BAk"/>
-                                </connections>
-                            </switch>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="vRr-CB-VVi" userLabel="锁定比例">
                                 <rect key="frame" x="5" y="9" width="49" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -921,6 +931,28 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EJ2-dq-kLZ">
+                                <rect key="frame" x="159" y="62" width="24" height="23"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="LN6-sM-tgo">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.accurate_seek" id="CIe-lD-WYs"/>
+                                </connections>
+                            </button>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IVK-c4-Gcm">
+                                <rect key="frame" x="159" y="4" width="24" height="23"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="pXP-Xc-BXo">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.lock_screen_ratio" id="bE3-bM-zwb"/>
+                                </connections>
+                            </button>
                         </subviews>
                     </view>
                 </box>
@@ -957,6 +989,30 @@
                         <rect key="frame" x="4" y="5" width="196" height="77"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="Qtr-PU-6AI">
+                                <rect key="frame" x="5" y="60" width="54" height="14"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" title="Gzip 压缩" id="YDv-g5-oKO">
+                                    <font key="font" metaFont="smallSystem"/>
+                                    <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MSg-h6-DIL">
+                                <rect key="frame" x="159" y="55" width="24" height="23"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="wQL-7t-5lC">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.open_gzip" id="fbG-GH-ef7"/>
+                                </connections>
+                            </button>
+                            <box verticalHuggingPriority="750" boxType="separator" id="L5c-zY-9zo">
+                                <rect key="frame" x="7" y="52" width="178" height="5"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            </box>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="gaU-GD-Zv3">
                                 <rect key="frame" x="5" y="32" width="54" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -966,13 +1022,17 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" state="on" translatesAutoresizingMaskIntoConstraints="NO" id="73J-8G-1MF">
-                                <rect key="frame" x="158" y="31" width="28" height="16"/>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3Uz-hk-g7Q">
+                                <rect key="frame" x="159" y="28" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="LfH-wr-d8G">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
                                 <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.use_dns_cache" id="Qgt-LA-4vL"/>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.use_dns_cache" id="YwF-ir-hYv"/>
                                 </connections>
-                            </switch>
+                            </button>
                             <box verticalHuggingPriority="750" boxType="separator" id="m5Y-dW-s4V">
                                 <rect key="frame" x="7" y="23" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -1008,26 +1068,6 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="Qtr-PU-6AI">
-                                <rect key="frame" x="5" y="60" width="54" height="14"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Gzip 压缩" id="YDv-g5-oKO">
-                                    <font key="font" metaFont="smallSystem"/>
-                                    <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
-                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                </textFieldCell>
-                            </textField>
-                            <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" state="on" translatesAutoresizingMaskIntoConstraints="NO" id="ilm-pP-VV3">
-                                <rect key="frame" x="158" y="58" width="28" height="16"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.open_gzip" id="F6g-ho-ytb"/>
-                                </connections>
-                            </switch>
-                            <box verticalHuggingPriority="750" boxType="separator" id="L5c-zY-9zo">
-                                <rect key="frame" x="7" y="52" width="178" height="5"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            </box>
                         </subviews>
                     </view>
                 </box>
@@ -1042,18 +1082,24 @@
                         <action selector="onRestAllSettings:" target="-2" id="cnz-3Q-Z8d"/>
                     </connections>
                 </button>
-                <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="mini" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="dkH-k0-gth">
-                    <rect key="frame" x="195" y="806" width="28" height="16"/>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QHP-gf-js6">
+                    <rect key="frame" x="197" y="803" width="24" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="XTC-XY-Ibm">
+                        <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
                     <connections>
-                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.force_override" id="Whd-kq-b7e"/>
+                        <binding destination="A8Q-JO-gdn" name="value" keyPath="values.force_override" id="Em5-zY-Lnc"/>
                     </connections>
-                </switch>
+                </button>
             </subviews>
             <point key="canvasLocation" x="83" y="31.5"/>
         </view>
     </objects>
     <resources>
         <image name="arrow.clockwise" catalog="system" width="14" height="16"/>
+        <image name="switch-off" width="26" height="16"/>
+        <image name="switch-on" width="26" height="16"/>
     </resources>
 </document>

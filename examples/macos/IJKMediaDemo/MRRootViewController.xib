@@ -115,22 +115,21 @@
                                             </middleViews>
                                             <endViews>
                                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PKH-49-No0">
-                                                    <rect key="frame" x="1422" y="17" width="20" height="20"/>
+                                                    <rect key="frame" x="1414" y="15" width="24" height="24"/>
                                                     <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="overlaps" alignment="center" imageScaling="proportionallyDown" inset="2" id="A2G-cL-cJZ">
                                                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                         <font key="font" metaFont="system"/>
-                                                        <imageReference key="image" image="info.circle.fill" catalog="system" symbolScale="large"/>
+                                                        <imageReference key="image" image="info" symbolScale="large"/>
                                                     </buttonCell>
                                                     <connections>
                                                         <action selector="onToggleHUD:" target="-2" id="jaf-71-OJc"/>
                                                     </connections>
                                                 </button>
                                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="db2-qU-bhl">
-                                                    <rect key="frame" x="1477" y="18" width="20.5" height="17"/>
-                                                    <buttonCell key="cell" type="bevel" bezelStyle="rounded" imagePosition="overlaps" alignment="center" imageScaling="proportionallyDown" inset="2" id="tt6-4c-ttp">
-                                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <rect key="frame" x="1473" y="15" width="24" height="24"/>
+                                                    <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="menu" imagePosition="only" alignment="center" alternateImage="menu_hover" imageScaling="proportionallyDown" inset="2" id="tt6-4c-ttp">
+                                                        <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
                                                         <font key="font" metaFont="system"/>
-                                                        <imageReference key="image" image="chevron.forward.2" catalog="system" symbolScale="large"/>
                                                     </buttonCell>
                                                     <connections>
                                                         <action selector="onToggleSiderBar:" target="-2" id="Rqz-DO-V8r"/>
@@ -263,8 +262,9 @@
         <userDefaultsController representsSharedInstance="YES" id="OCk-Q5-1dK"/>
     </objects>
     <resources>
-        <image name="chevron.forward.2" catalog="system" width="20" height="17"/>
-        <image name="info.circle.fill" catalog="system" width="20" height="20"/>
+        <image name="info" width="24" height="24"/>
+        <image name="menu" width="24" height="24"/>
+        <image name="menu_hover" width="24" height="24"/>
         <image name="next" width="52" height="52"/>
         <image name="play" width="52" height="52"/>
         <image name="previous" width="52" height="52"/>
