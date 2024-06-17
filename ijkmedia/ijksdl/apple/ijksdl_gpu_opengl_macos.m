@@ -258,6 +258,7 @@ static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureO
     [fop->renderer updateSubtitleVertexIfNeed:rect];
     id<IJKSDLSubtitleTextureWrapper> texture = (__bridge id<IJKSDLSubtitleTextureWrapper>)toverlay->getTexture(toverlay);
     [fop->renderer drawTexture:texture colors:toverlay->palette];
+    glFlush();
 }
 
 static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
@@ -267,7 +268,6 @@ static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
     }
     
     SDL_GPU_Opaque_GL *gop = gpu->opaque;
-    glFlush();
     CGLUnlockContext([gop->glContext CGLContextObj]);
 }
 

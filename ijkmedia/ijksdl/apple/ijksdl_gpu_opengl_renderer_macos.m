@@ -288,7 +288,6 @@ void main()
     glBindVertexArray(0);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     IJK_GLES2_checkError("subtitle renderer draw");
-    glFlush();
 }
 
 @end
