@@ -1,11 +1,12 @@
 tag k0.11.2
 --------------------------------
 
-- support tvOS plat
+- support tvOS platform
 - ass subtitle support force style
 - support set audio delay
 - fix subtitle memory leak
 - improve ass frame cache logic
+- palettized rgb bitmap subtitle use shader blend
 - audio meta add human describe string
 - fix blu-ray iso after seek video frame is not keyframe bug
 
@@ -157,7 +158,7 @@ tag k0.9.0.5
   - enable some video decoder
   - enable videotoolbox hwaccel for ios and macos
 
-- macos: begin support macOS plat.
+- macos: begin support macOS platform
   
   - subtitle
     - support add external subtitles
