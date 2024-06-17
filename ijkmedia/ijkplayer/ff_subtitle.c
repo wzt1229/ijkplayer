@@ -226,14 +226,9 @@ static SDL_TextureOverlay * subtitle_upload_fbo(SDL_GPU *gpu, SDL_FBOOverlay *fb
     
     for (int i = 0; i < packet->len; i++) {
         FFSubtitleBuffer *sub = packet->e[i];
-        SDL_TextureOverlay *texture = gpu->createTexture(gpu, sub->rect.w, sub->rect.h, SDL_TEXTURE_FMT_A8);
+        SDL_TextureOverlay *texture = gpu->createTexture(gpu, sub->rect.w, sub->rect.h, SDL_TEXTURE_FMT_A8, sub->data);
         texture->scale = packet->scale;
         memcpy(texture->palette, sub->palette, sizeof(sub->palette));
-        
-        SDL_Rectangle bounds = sub->rect;
-        bounds.x = 0;
-        bounds.y = 0;
-        texture->replaceRegion(texture, bounds, sub->data);
         
         int offset = sub->rect.y > water_mark ? bottom_offset : 0;
         SDL_Rectangle frame = sub->rect;
@@ -266,7 +261,7 @@ static int ff_sub_upload_texture(FFSubtitle *sub, float pts, SDL_GPU *gpu, SDL_T
             SDL_TextureOverlay_Release(&sub->assTexture);
         }
         if (!sub->assTexture) {
-            sub->assTexture = gpu->createTexture(gpu, packet.width, packet.height, SDL_TEXTURE_FMT_BRGA);
+            sub->assTexture = gpu->createTexture(gpu, packet.width, packet.height, SDL_TEXTURE_FMT_BRGA, NULL);
         }
         if (!sub->assTexture) {
             r = -1;

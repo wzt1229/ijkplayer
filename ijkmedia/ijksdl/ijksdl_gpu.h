@@ -54,7 +54,7 @@ void SDL_FBOOverlayFreeP(SDL_FBOOverlay **poverlay);
 
 typedef struct SDL_GPU {
     void *opaque;
-    SDL_TextureOverlay *(*createTexture)(SDL_GPU *gpu, int w, int h, SDL_TEXTURE_FMT fmt);
+    SDL_TextureOverlay *(*createTexture)(SDL_GPU *gpu, int w, int h, SDL_TEXTURE_FMT fmt, const void *pixels);
     SDL_FBOOverlay *(*createFBO)(SDL_GPU *gpu, int w, int h);
     void (*dealloc)(SDL_GPU *gpu);
 } SDL_GPU;

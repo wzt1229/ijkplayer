@@ -126,7 +126,7 @@ static SDL_TextureOverlay * create_textureOverlay_with_mtlTexture(id<MTLTexture>
     return overlay;
 }
 
-static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h, SDL_TEXTURE_FMT fmt)
+static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h, SDL_TEXTURE_FMT fmt, const void *pixels)
 {
     MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
 
@@ -145,8 +145,23 @@ static SDL_TextureOverlay *createMetalTexture(id<MTLDevice>device, int w, int h,
     
     // Create the texture from the device by using the descriptor
     id<MTLTexture> subTexture = [device newTextureWithDescriptor:textureDescriptor];
-    
-    return create_textureOverlay_with_mtlTexture(subTexture);
+    if (pixels) {
+        int bpr = w;
+        MTLRegion region = {
+            {0, 0, 0}, // MTLOrigin
+            {w, h, 1} // MTLSize
+        };
+
+        [subTexture replaceRegion:region
+                      mipmapLevel:0
+                        withBytes:pixels
+                      bytesPerRow:bpr];
+    }
+    SDL_TextureOverlay * to = create_textureOverlay_with_mtlTexture(subTexture);
+    if (pixels) {
+        to->dirtyRect = (SDL_Rectangle){0,0,w,h,w};
+    }
+    return to;
 }
 
 #pragma mark - Texture
@@ -160,14 +175,14 @@ static void* getTexture(SDL_TextureOverlay *overlay)
     return NULL;
 }
 
-static SDL_TextureOverlay *createTexture(SDL_GPU *gpu, int w, int h, SDL_TEXTURE_FMT fmt)
+static SDL_TextureOverlay *createTexture(SDL_GPU *gpu, int w, int h, SDL_TEXTURE_FMT fmt, const void *pixels)
 {
     if (!gpu && ! gpu->opaque) {
         return NULL;
     }
     
     SDL_GPU_Opaque_Metal *gop = gpu->opaque;
-    return createMetalTexture(gop->device, w, h, fmt);
+    return createMetalTexture(gop->device, w, h, fmt, pixels);
 }
 
 #pragma mark - FBO Metal

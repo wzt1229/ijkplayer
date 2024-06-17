@@ -133,7 +133,7 @@ static SDL_TextureOverlay * create_textureOverlay_with_glTexture(NSOpenGLContext
     return overlay;
 }
 
-static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, int h, SDL_TEXTURE_FMT fmt)
+static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, int h, SDL_TEXTURE_FMT fmt, const void *pixels)
 {
     CGLLockContext([context CGLContextObj]);
     [context makeCurrentContext];
@@ -143,7 +143,7 @@ static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, 
     
     if (fmt == SDL_TEXTURE_FMT_BRGA) {
         glBindTexture(GL_TEXTURE_RECTANGLE, texture);
-        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -151,7 +151,7 @@ static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, 
         glBindTexture(GL_TEXTURE_RECTANGLE, 0);
     } else if (fmt == SDL_TEXTURE_FMT_A8) {
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, pixels);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -167,6 +167,9 @@ static SDL_TextureOverlay *createOpenGLTexture(NSOpenGLContext *context, int w, 
     SDL_TextureOverlay *toverlay = create_textureOverlay_with_glTexture(context, t);
     if (toverlay) {
         toverlay->fmt = fmt;
+        if (pixels) {
+            toverlay->dirtyRect = (SDL_Rectangle){0,0,w,h,w};
+        }
     }
     return toverlay;
 }
@@ -180,15 +183,14 @@ static void* getTexture(SDL_TextureOverlay *overlay)
     return NULL;
 }
 
-static SDL_TextureOverlay *createTexture(SDL_GPU *gpu, int w, int h, SDL_TEXTURE_FMT fmt)
+static SDL_TextureOverlay *createTexture(SDL_GPU *gpu, int w, int h, SDL_TEXTURE_FMT fmt, const void *pixels)
 {
     if (!gpu && ! gpu->opaque) {
         return NULL;
     }
     
     SDL_GPU_Opaque_GL *gop = gpu->opaque;
-    
-    return createOpenGLTexture(gop->glContext, w, h, fmt);
+    return createOpenGLTexture(gop->glContext, w, h, fmt, pixels);
 }
 
 #pragma mark - FBO OpenGl
