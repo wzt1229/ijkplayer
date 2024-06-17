@@ -1320,16 +1320,16 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         }
 
         if (video_accurate_seek_fail) {
+            int dropped = is->drop_vframe_count;
             if (video_accurate_seek_fail == 2) {
-                av_log(NULL, AV_LOG_WARNING, "video accurate_seek is timeout, drop frame=%d, pts=%lf\n", is->drop_vframe_count, pts);
+                av_log(NULL, AV_LOG_WARNING, "video accurate_seek is timeout, drop frame=%d, pts=%lf\n", dropped, pts);
             } else {
                 if (is->accurate_seek_start_time > 0) {
-                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is error, drop frame=%d, pts=%lf\n", is->drop_vframe_count, pts);
+                    av_log(NULL, AV_LOG_INFO, "video accurate_seek is error, drop frame=%d, pts=%lf\n", dropped, pts);
                 } else {
                     av_log(NULL, AV_LOG_INFO, "video accurate_seek is skipped,pts=%lf\n", pts);
                 }
             }
-            int dropped = is->drop_vframe_count;
             is->drop_vframe_count = 0;
             SDL_LockMutex(is->accurate_seek_mutex);
             is->video_accurate_seek_req = 0;
