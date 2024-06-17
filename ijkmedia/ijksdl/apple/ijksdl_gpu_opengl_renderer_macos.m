@@ -163,7 +163,7 @@ void main()
             //ubo
             glGenBuffers(1, &_ubo);
             glBindBuffer(GL_UNIFORM_BUFFER, _ubo);
-            glBufferData(GL_UNIFORM_BUFFER, 16*257, NULL, GL_DYNAMIC_DRAW);
+            glBufferData(GL_UNIFORM_BUFFER, 64*16+8, NULL, GL_DYNAMIC_DRAW);
             
             GLuint program = self.openglCompiler.program;
             GLuint block_index = glGetUniformBlockIndex(program, "ColorBlock");
@@ -263,8 +263,9 @@ void main()
     glBindBuffer(GL_UNIFORM_BUFFER, _ubo);
     
     int offset = 0;
-    glBufferSubData(GL_UNIFORM_BUFFER, offset, 256*sizeof(GLuint), colors);
-    offset += 256*sizeof(GLuint);
+    
+    glBufferSubData(GL_UNIFORM_BUFFER, offset, 64*16, colors);
+    offset += 64*16;
     glBufferSubData(GL_UNIFORM_BUFFER, offset, 4, &w);
     offset += 4;
     glBufferSubData(GL_UNIFORM_BUFFER, offset, 4, &h);
