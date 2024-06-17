@@ -260,7 +260,6 @@ static void drawTexture_fbo(SDL_GPU *gpu, SDL_FBOOverlay *foverlay, SDL_TextureO
     [fop->renderer updateSubtitleVertexIfNeed:rect];
     id<IJKSDLSubtitleTextureWrapper> texture = (__bridge id<IJKSDLSubtitleTextureWrapper>)toverlay->getTexture(toverlay);
     [fop->renderer drawTexture:texture colors:toverlay->palette];
-    glFlush();
 }
 
 static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
@@ -270,6 +269,8 @@ static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
     }
     
     SDL_GPU_Opaque_GL *gop = gpu->opaque;
+    //macOS 10.15及以下系统，需要glFlush操作，使得此次绘制到FBO的所有操作都生效；否者导致出现下一次的纹理，上一次的顶点坐标的奇怪bug。
+    glFlush();
     CGLUnlockContext([gop->glContext CGLContextObj]);
 }
 

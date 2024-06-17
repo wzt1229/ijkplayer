@@ -219,25 +219,41 @@ static SDL_TextureOverlay * subtitle_ass_upload_texture(SDL_TextureOverlay *text
 
 static SDL_TextureOverlay * subtitle_upload_fbo(SDL_GPU *gpu, SDL_FBOOverlay *fbo, FFSubtitleBufferPacket *packet)
 {
+    //macOS 10.15及以下系统，创建纹理和绘制到FBO需要分开；否者导致出现下一次的纹理，上一次的顶点坐标的奇怪bug。
+    
+    //1. upload texture
+    SDL_TextureOverlay *textures[SUB_REF_MAX_LEN] = {0};
+    int tlen = 0;
+    for (int i = 0; i < packet->len; i++) {
+        FFSubtitleBuffer *sub = packet->e[i];
+        SDL_TextureOverlay *texture = gpu->createTexture(gpu, sub->rect.w, sub->rect.h, SDL_TEXTURE_FMT_A8, sub->data);
+        texture->scale = packet->scale;
+        memcpy(texture->palette, sub->palette, sizeof(sub->palette));
+        textures[tlen++] = texture;
+    }
+    
+    //2.draw texture to fbo
     fbo->beginDraw(gpu, fbo, 0);
     fbo->clear(fbo);
     int water_mark = fbo->h * SUBTITLE_MOVE_WATERMARK;
     int bottom_offset = packet->bottom_margin;
     
     for (int i = 0; i < packet->len; i++) {
+        SDL_TextureOverlay *texture = textures[i];
         FFSubtitleBuffer *sub = packet->e[i];
-        SDL_TextureOverlay *texture = gpu->createTexture(gpu, sub->rect.w, sub->rect.h, SDL_TEXTURE_FMT_A8, sub->data);
-        texture->scale = packet->scale;
-        memcpy(texture->palette, sub->palette, sizeof(sub->palette));
-        
         int offset = sub->rect.y > water_mark ? bottom_offset : 0;
         SDL_Rectangle frame = sub->rect;
         frame.y -= offset;
-        
         fbo->drawTexture(gpu, fbo, texture, frame);
-        SDL_TextureOverlay_Release(&texture);
     }
     fbo->endDraw(gpu, fbo);
+    
+    //3.release texture
+    for (int i = 0; i < packet->len; i++) {
+        SDL_TextureOverlay *texture = textures[i];
+        SDL_TextureOverlay_Release(&texture);
+    }
+    
     return fbo->getTexture(fbo);
 }
 
