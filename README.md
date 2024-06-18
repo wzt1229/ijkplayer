@@ -46,7 +46,7 @@ if you need change source code, you can use git add submodule, then use cocoapod
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.11.1
+git checkout -B latest k0.11.2
 
 ./shell/install-pre-any.sh all
 pod install --project-directory=./examples/macos
