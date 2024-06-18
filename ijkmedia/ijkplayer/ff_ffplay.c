@@ -714,7 +714,7 @@ static int get_master_sync_type(VideoState *is) {
     }
 }
 
-static double get_master_clock_with_delay(VideoState *is, int apply)
+static double _get_master_clock_apply_delay(VideoState *is, int apply)
 {
     double val;
 
@@ -732,10 +732,15 @@ static double get_master_clock_with_delay(VideoState *is, int apply)
     return val;
 }
 
+static double get_master_clock_with_delay(VideoState *is)
+{
+    return _get_master_clock_apply_delay(is, 1);
+}
+
 /* get the current master clock value */
 static double get_master_clock(VideoState *is)
 {
-    return get_master_clock_with_delay(is, 0);
+    return _get_master_clock_apply_delay(is, 0);
 }
 
 static void check_external_clock_speed(VideoState *is) {
@@ -1147,14 +1152,14 @@ display:
             if (is->audio_st && is->video_st)
                 av_diff = get_clock_with_delay(&is->audclk) - get_clock_with_delay(&is->vidclk);
             else if (is->video_st)
-                av_diff = get_master_clock_with_delay(is, 1) - get_clock_with_delay(&is->vidclk);
+                av_diff = get_master_clock_with_delay(is) - get_clock_with_delay(&is->vidclk);
             else if (is->audio_st)
-                av_diff = get_master_clock_with_delay(is, 1) - get_clock_with_delay(&is->audclk);
+                av_diff = get_master_clock_with_delay(is) - get_clock_with_delay(&is->audclk);
             
             av_bprint_init(&buf, 0, AV_BPRINT_SIZE_AUTOMATIC);
                         av_bprintf(&buf,
                                   "%7.2f %s:%7.3f fd=%4d aq=%5dKB vq=%5dKB sq=%5dB f=%"PRId64"/%"PRId64"   \r",
-                                  get_master_clock(is),
+                                  get_master_clock_with_delay(is),
                                   (is->audio_st && is->video_st) ? "A-V" : (is->video_st ? "M-V" : (is->audio_st ? "M-A" : "   ")),
                                   av_diff,
                                   is->frame_drops_early + is->frame_drops_late,
@@ -1597,7 +1602,7 @@ static int get_video_frame(FFPlayer *ffp, AVFrame *frame)
         if (!is->step_on_seeking && (ffp->framedrop > 0 || (ffp->framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER))) {
             ffp->stat.decode_frame_count++;
             if (frame->pts != AV_NOPTS_VALUE) {
-                double diff = dpts - get_master_clock(is);
+                double diff = dpts - get_master_clock_with_delay(is);
                 if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
                     diff - is->frame_last_filter_delay < 0 &&
                     is->viddec.pkt_serial == is->vidclk.serial &&
@@ -2285,7 +2290,7 @@ static int synchronize_audio(VideoState *is, int nb_samples)
         double diff, avg_diff;
         int min_nb_samples, max_nb_samples;
 
-        diff = get_clock_with_delay(&is->audclk) - get_master_clock_with_delay(is,  1);
+        diff = get_clock_with_delay(&is->audclk) - get_master_clock_with_delay(is);
 
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
             is->audio_diff_cum = diff + is->audio_diff_avg_coef * is->audio_diff_cum;
@@ -4725,7 +4730,7 @@ long ffp_get_current_position_l(FFPlayer *ffp)
         start_diff = fftime_to_milliseconds(start_time);
 
     int64_t pos = 0;
-    double pos_clock = get_master_clock_with_delay(is, 0);
+    double pos_clock = get_master_clock(is);
     if (isnan(pos_clock)) {
         pos = fftime_to_milliseconds(is->seek_pos);
     } else {
