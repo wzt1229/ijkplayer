@@ -2,9 +2,9 @@
 
 | Platform    | Archs                                  | Build Status                                                                                                                                                            |
 | ----------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| iOS 11.0    | arm64、arm64_simulator、x86_64_simulator | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml) |
-| macOS 10.11 | arm64、x86_64                           | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml) |
-| tvOS 12.0   | arm64、arm64_simulator、x86_64_simulator | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/ios-macos.yml) |
+| iOS 11.0    | arm64、arm64_simulator、x86_64_simulator | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml) |
+| macOS 10.11 | arm64、x86_64                           | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml) |
+| tvOS 12.0   | arm64、arm64_simulator、x86_64_simulator | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml) |
 
 Video player based on [ffplay](http://ffmpeg.org)
 
