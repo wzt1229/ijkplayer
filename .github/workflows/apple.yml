@@ -39,9 +39,11 @@ jobs:
       run: cd examples/tvos && ./build-framework.sh
     - name: Make xcframework
       run: cd examples/xcframewrok && ./make-xcframework.sh
+    - name: Make podspec
+      run: cd examples/xcframewrok && ./make-podspec.sh
     - name: Zip Frameworks
       run: |
-        dst=IJKMediaPlayerKit-${{ env.TAG }}
+        dst=IJKMediaPlayerKit
         mkdir -p $dst
         cp CHANGELOG.md $dst
         cp README.md $dst
@@ -49,7 +51,7 @@ jobs:
         cp -pPR examples/xcframewrok/IJKMediaPlayerKit.xcframework $dst
         cd $dst
         mv COPYING.LGPLv2.1 LICENSE
-        zip -ryq IJKMediaPlayerKit-${{ env.TAG }}.zip ./*
+        zip -ryq IJKMediaPlayerKit.zip ./*
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -66,10 +68,16 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: IJKMediaPlayerKit-${{ env.TAG }}/IJKMediaPlayerKit-${{ env.TAG }}.zip
-        asset_name: "IJKMediaPlayerKit-${{ env.TAG }}.zip"
+        asset_path: IJKMediaPlayerKit/IJKMediaPlayerKit.zip
+        asset_name: "IJKMediaPlayerKit.zip"
         asset_content_type: application/zip
-    
-
-    
+    - name: Upload PodSpec
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: examples/xcframewrok/IJKMediaPlayerKit.spec.json
+        asset_name: "IJKMediaPlayerKit.spec.json"
+        asset_content_type: application/json
 

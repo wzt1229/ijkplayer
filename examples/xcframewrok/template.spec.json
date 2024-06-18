@@ -1,0 +1,67 @@
+{
+  "name": "IJKMediaPlayerKit",
+  "version": "__VERSION__",
+  "summary": "IJKMediaPlayerKit is a free (as in freedom) media player for iOS and macOS and tvOS apps.",
+  "description": "IJKMediaPlayerKit is a free (as in freedom) media player for iOS and macOS and tvOS apps.\n\nIt supports a wide variety of media file formats, audio and video codecs, and subtitle types.",
+  "homepage": "https://github.com/debugly/ijkplayer",
+  "documentation_url": "https://github.com/debugly/ijkplayer",
+  "social_media_url": "https://github.com/debugly/ijkplayer",
+  "license": {
+    "type": "LGPL",
+    "file": "IJKMediaPlayerKit/LICENSE"
+  },
+  "authors": {
+    "MattReach": "qianlongxu@gmail.com"
+  },
+  "platforms": {
+    "ios": "11.0",
+    "osx": "10.11",
+    "tvos": "12.0"
+  },
+  "source": {
+    "http": "https://github.com/debugly/ijkplayer/releases/download/k__VERSION__/IJKMediaPlayerKit.zip"
+  },
+  "preserve_paths": [
+    "IJKMediaPlayerKit/README.md",
+    "IJKMediaPlayerKit/CHANGELOG.md",
+    "IJKMediaPlayerKit/LICENSE"
+  ],
+  "vendored_frameworks": "IJKMediaPlayerKit/IJKMediaPlayerKit.xcframework",
+  "libraries": [
+    "z",
+    "iconv",
+    "xml2",
+    "bz2",
+    "c++",
+    "lzma"
+  ],
+  "frameworks": [
+    "AVFoundation",
+    "AudioToolbox",
+    "CoreMedia",
+    "CoreVideo",
+    "VideoToolbox",
+    "Metal"
+  ],
+  "osx": {
+    "frameworks": [
+      "Cocoa",
+      "AudioUnit",
+      "OpenGL",
+      "GLKit",
+      "CoreImage"
+    ]
+  },
+  "tvos": {
+    "frameworks": [
+      "UIKit",
+      "OpenGLES"
+    ]
+  },
+  "ios": {
+    "frameworks": [
+      "UIKit",
+      "OpenGLES"
+    ]
+  }
+}
