@@ -42,6 +42,7 @@ jobs:
     - name: Zip Frameworks
       run: |
         dst=IJKMediaPlayerKit-${{ env.TAG }}
+        mkdir -p $dst
         cp CHANGELOG.md $dst
         cp README.md $dst
         cp COPYING.LGPLv2.1 $dst
