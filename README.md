@@ -1,41 +1,50 @@
-# ijkplayer
+<div align="center">
+  <img alt="ijkplayer" src="./primay-wide.jpg">
+  <h1>ijkplayer</h1>
+  <img src="https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg">
+</div>
 
-| Platform    | Archs                                  | Build Status                                                                                                                                                            |
-| ----------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| iOS 11.0    | arm64、arm64_simulator、x86_64_simulator | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml) |
-| macOS 10.11 | arm64、x86_64                           | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml) |
-| tvOS 12.0   | arm64、arm64_simulator、x86_64_simulator | [![Build Status](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg)](https://github.com/debugly/ijkplayer/actions/workflows/apple.yml) |
+ijk media player based on [ffplay](http://ffmpeg.org)
 
-Video player based on [ffplay](http://ffmpeg.org)
+| Platform    | Archs                                   |
+| ----------- | ----------------------------------------|
+| iOS 11.0    | arm64、arm64_simulator、x86_64_simulator |
+| macOS 10.11 | arm64、x86_64                            | 
+| tvOS 12.0   | arm64、arm64_simulator、x86_64_simulator |
 
-### My Build Environment
+## My Build Environment
 
 - macOS Sonoma(14.3)
 - Xcode Version 15.4 (15F31d)
 - cocoapods 1.15.2
 
-### Latest Changes
+## Latest Changes
 
 - [CHANGELOG.md](CHANGELOG.md)
 
-### Features
+## Features
 
 - Common
-  - remove rarely used ffmpeg components to reduce binary size [config/module-lite.sh](config/module-lite.sh)
-  - workaround for some buggy online video.
+  - enabled ffmpeg all decoders and demuxers binary size is bigger [shell/ffconfig/module-full.sh](shell/ffconfig/module-full.sh)
+  - workaround for some buggy online video
 - iOS/macOS/tvOS
-  - api: [MediaPlayer.framework-like](IJKMediaPlayerKit/IJKMediaPlayback.h)
   - video-output: Metal 2/OpenGL ES 2.0/OpenGL 3.3
   - audio-output: AudioQueue, AudioUnit
-  - hw-decoder: auto use VideoToolbox accel by default
-  - subtitle: use libass render text to bitmap then use OpenGL/Metal generate texture
+  - hardware acceleration: auto choose VideoToolbox by default
+  - subtitle:
+    - text subtitle(srt/vtt/ass)/image subtitle(dvbsub/dvdsub/pgssub/idx+sub)
+    - support intenal and external
+    - text subtitle support force style
+    - adjust position y and scale
+  - 4k/HDR/HDR10/HDR10+/Dolby Vision Compatible
+  - set audio or subtitle extra delay
 
-### ON-PLAN
+## ON-PLAN
 
 - upgrade FFmpeg to 6.x
 - exchange video resolution gapless
 
-### Installation
+## Installation
 
 install use cocoapod:
 
@@ -43,7 +52,7 @@ install use cocoapod:
 pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.2/IJKMediaPlayerKit.spec.json'
 ```
 
-### Development
+## Development
 
 if you need change source code, you can use git add submodule, then use cocoapod integrate ijk into your workspace by development pod.
 
@@ -67,12 +76,12 @@ open ./examples/macos/IJKMediaTVDemo.xcworkspace
 
 if you want build your IJKMediaPlayerKit.framework, you need enter examples/{plat} folder, then exec `./build-framework.sh`
 
-### Support (支持)
+## Support (支持)
 
 - Please do not send e-mail to me. Public technical discussion on github is preferred.
 - 请尽量在 github 上公开讨论[技术问题](https://github.com/debugly/ijkplayer/issues)，不要以邮件方式私下询问，恕不一一回复。
 
-### License
+## License
 
 ```
 Copyright (c) 2017 Bilibili
@@ -117,7 +126,7 @@ ijkplayer's build scripts are based on or derives from projects below:
 - [yixia/FFmpeg-Android](https://github.com/yixia/FFmpeg-Android)
 - [kewlbear/FFmpeg-iOS-build-script](https://github.com/kewlbear/FFmpeg-iOS-build-script) 
 
-### Commercial Use
+## Commercial Use
 
 ijkplayer is licensed under LGPLv2.1 or later, so itself is free for commercial use under LGPLv2.1 or later
 
