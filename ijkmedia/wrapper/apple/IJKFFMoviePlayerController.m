@@ -495,24 +495,26 @@ void ffp_apple_log_extra_vprint(int level, const char *tag, const char *fmt, va_
     }
     
     if (_logHandler) {
-        NSString *tagStr = tag ? [[NSString alloc] initWithUTF8String:tag] : @"";
-        NSString *fmtStr = fmt ? [[NSString alloc] initWithUTF8String:fmt] : @"";
-        NSString *msgStr = [[NSString alloc] initWithFormat:fmtStr arguments: ap];
-        _logHandler(level, tagStr, msgStr);
-    } else {
-        size_t len = 0;
-        if (fmt && (len = strlen(fmt)) > 0) {
-            char end = fmt[len - 1];
-            if (end == '\n') {
-                if (len == 1) {
-                    vprintf(fmt, ap);
-                } else {
-                    char new_fmt[1024];
-                    sprintf(new_fmt, "[%s]%s", tag, fmt);
-                    vprintf(new_fmt, ap);
-                }
+        if (fmt) {
+            if (0 == strcmp("\n", fmt)) {
+                //_logHandler(level, @"", @"\n");
             } else {
+                char buffer[1024];
+                vsnprintf(buffer, sizeof(buffer), fmt, ap);
+                
+                NSString *tagStr = tag ? [[NSString alloc] initWithUTF8String:tag] : @"";
+                NSString *msgStr = [[NSString alloc] initWithUTF8String:buffer];
+                _logHandler(level, tagStr, msgStr);
+            }
+        }
+    } else {
+        if (fmt) {
+            if (0 == strcmp("\n", fmt)) {
                 vprintf(fmt, ap);
+            } else {
+                char new_fmt[256];
+                snprintf(new_fmt, sizeof(new_fmt), "[%s]%s", tag, fmt);
+                vprintf(new_fmt, ap);
             }
         }
     }
