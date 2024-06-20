@@ -4172,6 +4172,8 @@ static void ffp_log_callback_report(void *ptr, int level, const char *fmt, va_li
 
 int ijkav_register_all(void);
 
+int jik_log_callback_is_set = 0;
+
 void ffp_global_init(void)
 {
     if (g_ffmpeg_global_inited)
@@ -4184,7 +4186,9 @@ void ffp_global_init(void)
 
     avformat_network_init();
 
-    av_log_set_callback(ffp_log_callback_brief);
+    if (!jik_log_callback_is_set) {
+        av_log_set_callback(ffp_log_callback_brief);
+    }
 
     g_ffmpeg_global_inited = true;
 }
@@ -4203,6 +4207,7 @@ void ffp_global_uninit(void)
 
 void ffp_global_set_log_report(int use_report)
 {
+    jik_log_callback_is_set = 1;
     if (use_report) {
         av_log_set_callback(ffp_log_callback_report);
     } else {
