@@ -1258,6 +1258,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_MINOR_VER, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_COMPATIBLE_BRANDS, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_MAJOR_BRAND, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_LYRICS, nil);
         
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_VIDEO_STREAM, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_AUDIO_STREAM, nil);

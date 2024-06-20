@@ -198,7 +198,7 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         if (tag->value)
             av_log(NULL, AV_LOG_DEBUG, "ic metadata item:%s=%s\n", tag->key, tag->value);
     
-    char *ic_string_val_keys[] = {IJKM_KEY_ARTIST,IJKM_KEY_ALBUM,IJKM_KEY_TYER,IJKM_KEY_MINOR_VER,IJKM_KEY_COMPATIBLE_BRANDS,IJKM_KEY_MAJOR_BRAND,NULL};
+    char *ic_string_val_keys[] = {IJKM_KEY_ARTIST,IJKM_KEY_ALBUM,IJKM_KEY_TYER,IJKM_KEY_MINOR_VER,IJKM_KEY_COMPATIBLE_BRANDS,IJKM_KEY_MAJOR_BRAND,IJKM_KEY_LYRICS,NULL};
     {
         char **ic_key_header = ic_string_val_keys;
         char *ic_key;

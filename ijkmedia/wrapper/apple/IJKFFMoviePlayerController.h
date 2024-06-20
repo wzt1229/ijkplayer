@@ -35,6 +35,7 @@
 #define k_IJKM_KEY_MINOR_VER            @"minor_version"
 #define k_IJKM_KEY_COMPATIBLE_BRANDS    @"compatible_brands"
 #define k_IJKM_KEY_MAJOR_BRAND          @"major_brand"
+#define k_IJKM_KEY_LYRICS               @"LYRICS"
 #define k_IJKM_KEY_ARTIST               @"artist"
 #define k_IJKM_KEY_ALBUM                @"album"
 #define k_IJKM_KEY_TYER                 @"TYER"

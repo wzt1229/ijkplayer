@@ -58,6 +58,7 @@
 #define IJKM_KEY_MINOR_VER          "minor_version"
 #define IJKM_KEY_COMPATIBLE_BRANDS  "compatible_brands"
 #define IJKM_KEY_MAJOR_BRAND        "major_brand"
+#define IJKM_KEY_LYRICS             "LYRICS"
 #define IJKM_KEY_DESCRIBE           "describe"
 #define IJKM_KEY_CODEC_NAME         "codec_name"
 #define IJKM_KEY_CODEC_PROFILE      "codec_profile"

@@ -937,6 +937,16 @@ static BOOL hdrAnimationShown = 0;
 - (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
 {
     [self updateStreams];
+    NSDictionary *dic = self.player.monitor.mediaMeta;
+    NSString *lrc = dic[k_IJKM_KEY_LYRICS];
+    if (lrc.length > 0) {
+        NSString *dir = [self dirForCurrentPlayingUrl];
+        NSString *movieName = [self.playingUrl lastPathComponent];
+        NSString *fileName = [NSString stringWithFormat:@"%@.lrc",movieName];
+        NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+        NSLog(@"保存成LRC文件:%@",filePath);
+        [[lrc dataUsingEncoding:NSUTF8StringEncoding] writeToFile:filePath atomically:YES];
+    }
 }
 
 - (void)enableComputerSleep:(BOOL)enable
