@@ -483,7 +483,7 @@ static BOOL hdrAnimationShown = 0;
                     volume = .0f;
                 }
                 [MRCocoaBindingUserDefault setVolume:volume];
-                [self onVolumeChange:nil];
+                [self onVolumeChange];
             }
                 break;
             case kVK_UpArrow:
@@ -494,7 +494,7 @@ static BOOL hdrAnimationShown = 0;
                     volume = 1.0f;
                 }
                 [MRCocoaBindingUserDefault setValue:@(volume) forKey:@"volume"];
-                [self onVolumeChange:nil];
+                [self onVolumeChange];
             }
                 break;
             case kVK_Space:
@@ -504,22 +504,20 @@ static BOOL hdrAnimationShown = 0;
                 break;
             case kVK_ANSI_Minus:
             {
-//                if (self.player) {
-//                    float delay = [self.player currentSubtitleExtraDelay];
-//                    delay -= 2;
-//                    self.subtitleDelay = delay;
-//                    [self.player updateSubtitleExtraDelay:delay];
-//                }
+                if (self.player) {
+                    float delay = self.player.currentSubtitleExtraDelay;
+                    delay -= 2;
+                    self.player.currentSubtitleExtraDelay = delay;
+                }
             }
                 break;
             case kVK_ANSI_Equal:
             {
-//                if (self.player) {
-//                    float delay = [self.player currentSubtitleExtraDelay];
-//                    delay += 2;
-//                    self.subtitleDelay = delay;
-//                    [self.player updateSubtitleExtraDelay:delay];
-//                }
+                if (self.player) {
+                    float delay = self.player.currentSubtitleExtraDelay;
+                    delay += 2;
+                    self.player.currentSubtitleExtraDelay = delay;
+                }
             }
                 break;
             case kVK_Escape:
@@ -717,7 +715,7 @@ static BOOL hdrAnimationShown = 0;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerSelectingStreamDidFailed:) name:IJKMoviePlayerSelectingStreamDidFailed object:self.player];
     
     self.player.shouldAutoplay = YES;
-    [self onVolumeChange:nil];
+    [self onVolumeChange];
     [self applyScalingMode];
     [self applyDAR];
     [self applyRotate];
@@ -1321,7 +1319,7 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-- (IBAction)onVolumeChange:(NSSlider *)sender
+- (void)onVolumeChange
 {
     self.player.playbackVolume = [MRCocoaBindingUserDefault volume];
 }
@@ -1336,11 +1334,6 @@ static BOOL hdrAnimationShown = 0;
 }
 
 #pragma mark 字幕设置
-
-- (IBAction)onChangeSubtitleDelay:(NSStepper *)sender
-{
-    self.player.currentSubtitleExtraDelay = sender.floatValue;
-}
 
 - (void)applySubtitlePreference
 {
@@ -1715,41 +1708,6 @@ static BOOL hdrAnimationShown = 0;
         NSLog(@"截屏:%@",filePath);
         [MRUtil saveImageToFile:img path:filePath];
     }
-}
-
-#pragma mark 解码设置
-
-- (IBAction)testMultiRenderSample:(NSButton *)sender
-{
-    NSURL *playingUrl = self.playingUrl;
-    [self doStopPlay];
-    
-    MultiRenderSample *multiRenderVC = [[MultiRenderSample alloc] initWithNibName:@"MultiRenderSample" bundle:nil];
-    
-    NSWindowStyleMask mask = NSWindowStyleMaskBorderless | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView;
-    
-    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:mask backing:NSBackingStoreBuffered defer:YES];
-    window.contentViewController = multiRenderVC;
-    window.movableByWindowBackground = YES;
-    [window makeKeyAndOrderFront:nil];
-    window.releasedWhenClosed = NO;
-    [multiRenderVC playURL:playingUrl];
-}
-
-- (IBAction)onToggleLoopMode:(id)sender
-{
-    [self retry];
-}
-
-- (IBAction)openNewInstance:(id)sender
-{
-    NSWindowStyleMask mask = NSWindowStyleMaskBorderless | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView;
-    
-    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600) styleMask:mask backing:NSBackingStoreBuffered defer:YES];
-    window.contentViewController = [[MRRootViewController alloc] init];
-    window.movableByWindowBackground = YES;
-    [window makeKeyAndOrderFront:nil];
-    window.releasedWhenClosed = NO;
 }
 
 @end
