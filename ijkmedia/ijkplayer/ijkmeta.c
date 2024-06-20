@@ -192,6 +192,12 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
     if (ic->bit_rate)
         ijkmeta_set_int64_l(meta, IJKM_KEY_BITRATE, ic->bit_rate);
     
+    //printf all ic metadata
+    AVDictionaryEntry *tag = NULL;
+    while ((tag = av_dict_get(ic->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+        if (tag->value)
+            av_log(NULL, AV_LOG_DEBUG, "ic metadata item:%s=%s\n", tag->key, tag->value);
+    
     char *ic_string_val_keys[] = {IJKM_KEY_ARTIST,IJKM_KEY_ALBUM,IJKM_KEY_TYER,IJKM_KEY_MINOR_VER,IJKM_KEY_COMPATIBLE_BRANDS,IJKM_KEY_MAJOR_BRAND,NULL};
     {
         char **ic_key_header = ic_string_val_keys;
@@ -233,11 +239,6 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         }
     }
     
-    //debug all ic metadata
-//    AVDictionaryEntry *tag = NULL;
-//    while ((tag = av_dict_get(ic->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
-//        printf("ic metadata item:%s=%s\n", tag->key, tag->value);
-    
     IjkMediaMeta *stream_meta = NULL;
     for (int i = 0; i < ic->nb_streams; i++) {
         if (!stream_meta)
@@ -247,11 +248,12 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         if (!st || !st->codecpar)
             continue;
         
-//        {
-//            AVDictionaryEntry *tag = NULL;
-//            while ((tag = av_dict_get(st->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
-//                printf("%d st metadata item:%s=%s\n", st->codecpar->codec_type, tag->key, tag->value);
-//        }
+        {
+            AVDictionaryEntry *tag = NULL;
+            while ((tag = av_dict_get(st->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
+                if (tag->value)
+                    av_log(NULL, AV_LOG_DEBUG, "%d st metadata item:%s=%s\n", st->codecpar->codec_type, tag->key, tag->value);
+        }
         
         stream_meta = ijkmeta_create();
         if (!stream_meta)
