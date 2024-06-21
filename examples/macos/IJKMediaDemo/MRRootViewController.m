@@ -564,7 +564,7 @@ static BOOL hdrAnimationShown = 0;
     if (self.playingUrl) {
         [self doStopPlay];
     }
-
+    
     self.playingUrl = url;
     self.seeking = NO;
     
@@ -579,15 +579,15 @@ static BOOL hdrAnimationShown = 0;
     [options setCodecOptionIntValue:IJK_AVDISCARD_DEFAULT forKey:@"skip_loop_filter"];
     //for mgeg-ts seek
     [options setFormatOptionIntValue:1 forKey:@"seek_flag_keyframe"];
-//    default is 5000000,but some high bit rate video probe faild cause no audio.
+    //    default is 5000000,but some high bit rate video probe faild cause no audio.
     [options setFormatOptionValue:@"10000000" forKey:@"probesize"];
-//    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
-//    [options setPlayerOptionIntValue:0      forKey:@"packet-buffering"];
-//    [options setPlayerOptionIntValue:1      forKey:@"render-wait-start"];
-//    [options setCodecOptionIntValue:1 forKey:@"allow_software"];
-//    test video decoder performance.
-//    [options setPlayerOptionIntValue:1 forKey:@"an"];
-//    [options setPlayerOptionIntValue:1 forKey:@"nodisp"];
+    //    [options setFormatOptionValue:@"1" forKey:@"flush_packets"];
+    //    [options setPlayerOptionIntValue:0      forKey:@"packet-buffering"];
+    //    [options setPlayerOptionIntValue:1      forKey:@"render-wait-start"];
+    //    [options setCodecOptionIntValue:1 forKey:@"allow_software"];
+    //    test video decoder performance.
+    //    [options setPlayerOptionIntValue:1 forKey:@"an"];
+    //    [options setPlayerOptionIntValue:1 forKey:@"nodisp"];
     
     [options setPlayerOptionIntValue:[MRCocoaBindingUserDefault copy_hw_frame] forKey:@"copy_hw_frame"];
     if ([url isFileURL]) {
@@ -601,7 +601,7 @@ static BOOL hdrAnimationShown = 0;
         }
     }
     
-//    [options setFormatOptionIntValue:0 forKey:@"http_persistent"];
+    //    [options setFormatOptionIntValue:0 forKey:@"http_persistent"];
     //请求m3u8文件里的ts出错后是否继续请求下一个ts，默认是1000
     [options setFormatOptionIntValue:1 forKey:@"max_reload"];
     
@@ -617,13 +617,13 @@ static BOOL hdrAnimationShown = 0;
         [options setPlayerOptionIntValue:1 forKey:@"packet-buffering"];
     }
     
-//    [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
-//    [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
-//    [options setPlayerOptionValue:@"fcc-argb"        forKey:@"overlay-format"];
-//    [options setPlayerOptionValue:@"fcc-0rgb"        forKey:@"overlay-format"];
-//    [options setPlayerOptionValue:@"fcc-uyvy"        forKey:@"overlay-format"];
-//    [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
-//    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
+    //    [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
+    //    [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
+    //    [options setPlayerOptionValue:@"fcc-argb"        forKey:@"overlay-format"];
+    //    [options setPlayerOptionValue:@"fcc-0rgb"        forKey:@"overlay-format"];
+    //    [options setPlayerOptionValue:@"fcc-uyvy"        forKey:@"overlay-format"];
+    //    [options setPlayerOptionValue:@"fcc-i420"        forKey:@"overlay-format"];
+    //    [options setPlayerOptionValue:@"fcc-nv12"        forKey:@"overlay-format"];
     
     //[options setPlayerOptionIntValue:1 forKey:@"subtitle-texture-reuse"];
     [options setPlayerOptionValue:[MRCocoaBindingUserDefault overlay_format] forKey:@"overlay-format"];
@@ -645,10 +645,10 @@ static BOOL hdrAnimationShown = 0;
     //决定dns的方式，大于0时使用tcp_getaddrinfo_nonblock方式
     //[options setFormatOptionIntValue:0 forKey:@"addrinfo_timeout"];
     //[options setFormatOptionIntValue:0 forKey:@"addrinfo_one_by_one"];
-//    [options setFormatOptionIntValue:1 forKey:@"http_persistent"];
-//    [options setFormatOptionValue:@"test=cookie" forKey:@"cookies"];
+    //    [options setFormatOptionIntValue:1 forKey:@"http_persistent"];
+    //    [options setFormatOptionValue:@"test=cookie" forKey:@"cookies"];
     //if you want set ts segments options only:
-//    [options setFormatOptionValue:@"fastopen=2:dns_cache_timeout=600000:addrinfo_timeout=2000000" forKey:@"seg_format_options"];
+    //    [options setFormatOptionValue:@"fastopen=2:dns_cache_timeout=600000:addrinfo_timeout=2000000" forKey:@"seg_format_options"];
     //default inherit options : "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy",you can inherit more:
     
     if ([MRCocoaBindingUserDefault open_gzip]) {
@@ -685,7 +685,7 @@ static BOOL hdrAnimationShown = 0;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.playerContainer addSubview:playerView positioned:NSWindowBelow relativeTo:self.playerCtrlPanel];
     
-    playerView.showHdrAnimation = !hdrAnimationShown;
+    playerView.showHdrAnimation = YES || !hdrAnimationShown;
     //playerView.preventDisplay = YES;
     //test
     [playerView setBackgroundColor:0 g:0 b:0];

@@ -147,15 +147,14 @@ static int vout_display_overlay_l(SDL_Vout *vout, SDL_VoutOverlay *overlay, SDL_
         IJKOverlayAttach *attach = [[IJKOverlayAttach alloc] init];
         attach.w = overlay->w;
         attach.h = overlay->h;
-      
+        
         attach.pixelW = (int)CVPixelBufferGetWidth(videoPic);
         attach.pixelH = (int)CVPixelBufferGetHeight(videoPic);
-        
-        attach.pitches = overlay->pitches;
+        attach.fps    = overlay->fps;
         attach.sarNum = overlay->sar_num;
         attach.sarDen = overlay->sar_den;
         attach.autoZRotate = overlay->auto_z_rotate_degrees;
-        //attach.bufferW = overlay->pitches[0];
+        
         attach.videoPicture = CVPixelBufferRetain(videoPic);
         attach.overlay = SDL_TextureOverlay_Retain(sub_overlay);
         return [gl_view displayAttach:attach];

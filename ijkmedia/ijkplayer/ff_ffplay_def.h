@@ -484,6 +484,7 @@ typedef struct FFTrackCacheStatistic
 typedef struct FFStatistic
 {
     float vfps;
+    float vfps_probe;
     float vdps;
     float avdelay;
     float vmdiff;

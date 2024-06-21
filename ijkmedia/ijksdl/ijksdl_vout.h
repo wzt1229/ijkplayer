@@ -45,6 +45,7 @@ struct SDL_VoutOverlay {
     Uint16 *pitches; /**< in bytes, Read-only */
     
     int is_private;
+    float fps;
     int sar_num;
     int sar_den;
     //for auto rotate video

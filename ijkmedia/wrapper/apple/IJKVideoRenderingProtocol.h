@@ -52,9 +52,7 @@ typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 @property(nonatomic) int pixelW;
 @property(nonatomic) int pixelH;
 
-@property(nonatomic) int planes;
-@property(nonatomic) UInt16 *pitches;
-@property(nonatomic) UInt8 **pixels;
+@property(nonatomic) float fps;
 @property(nonatomic) int sarNum;
 @property(nonatomic) int sarDen;
 //degrees

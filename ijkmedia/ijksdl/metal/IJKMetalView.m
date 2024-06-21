@@ -26,10 +26,6 @@
 typedef CGRect NSRect;
 #endif
 
-#define kHDRAnimationCount 90
-#define kHDRAnimationDelayCount 20
-#define kHDRAnimationMaxCount (kHDRAnimationDelayCount + kHDRAnimationCount)
-
 @interface IJKMetalView ()
 
 // The command queue used to pass commands to the device.
@@ -310,18 +306,23 @@ typedef CGRect NSRect;
     
     float hdrPer = 1.0;
     if (self.showHdrAnimation && [self.picturePipeline isHDR]) {
-        if (self.hdrAnimationFrameCount == 0) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(1)}];
-        } else if (self.hdrAnimationFrameCount == kHDRAnimationMaxCount) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(2)}];
-        }
-        if (self.hdrAnimationFrameCount <= kHDRAnimationMaxCount) {
-            self.hdrAnimationFrameCount++;
-            if (self.hdrAnimationFrameCount > kHDRAnimationDelayCount) {
-                hdrPer = 1.0 * (self.hdrAnimationFrameCount - kHDRAnimationDelayCount) / kHDRAnimationCount;
-            } else {
-                hdrPer = 0.0;
+#define _C(c) (attach.fps > 0 ? (int)ceil(attach.fps * c / 24.0) : c)
+        int delay = _C(100);
+        int maxCount = _C(100);
+#undef _C
+        int frameCount = ++self.hdrAnimationFrameCount - delay;
+        if (frameCount >= 0) {
+            if (frameCount <= maxCount) {
+                if (frameCount == 0) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(1)}];
+                } else if (frameCount == maxCount) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(2)}];
+                }
+                
+                hdrPer = 0.5 + 0.5 * frameCount / maxCount;
             }
+        } else {
+            hdrPer = 0.5;
         }
     }
     CGSize viewport = self.drawableSize;

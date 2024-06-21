@@ -1267,7 +1267,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
                     SDL_UnlockMutex(is->accurate_seek_mutex);
                     
                     int64_t delta = deviation - MAX_DEVIATION;
-                    double fps = av_q2d(is->video_st->avg_frame_rate);
+                    double fps = ffp->stat.vfps_probe;
                     int need_drop = ceil(delta * fps / AV_TIME_BASE);
                     
                     av_log(NULL, AV_LOG_INFO, "video accurate_seek start, is->seek_pos=%0.3f, first pts=%0.3f, estimate drop=%d is->accurate_seek_start_time=%lld\n", target_pos/1000000.0, pts, need_drop, is->accurate_seek_start_time);
@@ -1540,10 +1540,6 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
             return -3;
         }
         
-        if (ffp->autorotate) {
-            //fill video ratate degrees
-            vp->bmp->auto_z_rotate_degrees = - ffp->vout->z_rotate_degrees;
-        }
         /* update the bitmap content */
         SDL_VoutUnlockYUVOverlay(vp->bmp);
 
@@ -1554,7 +1550,12 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         vp->sar = src_frame->sample_aspect_ratio;
         vp->bmp->sar_num = vp->sar.num;
         vp->bmp->sar_den = vp->sar.den;
-
+        vp->bmp->fps = ffp->stat.vfps_probe;
+        if (ffp->autorotate) {
+            //fill video ratate degrees
+            vp->bmp->auto_z_rotate_degrees = - ffp->vout->z_rotate_degrees;
+        }
+        
 #ifdef FFP_MERGE
         av_frame_move_ref(vp->frame, src_frame);
 #endif
@@ -3141,8 +3142,9 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
                     is->is_video_high_fps = 1;
                     av_log(ffp, AV_LOG_WARNING, "fps: %lf (too high)\n", fps);
                 } else {
-                    av_log(ffp, AV_LOG_WARNING, "fps: %lf (normal)\n", fps);
+                    av_log(ffp, AV_LOG_DEBUG, "fps: %lf (normal)\n", fps);
                 }
+                ffp->stat.vfps_probe = fps;
             }
             if(is->video_st->r_frame_rate.den && is->video_st->r_frame_rate.num) {
                 double tbr = av_q2d(is->video_st->r_frame_rate);
@@ -3150,7 +3152,10 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
                     is->is_video_high_fps = 1;
                     av_log(ffp, AV_LOG_WARNING, "fps: %lf (too high)\n", tbr);
                 } else {
-                    av_log(ffp, AV_LOG_WARNING, "fps: %lf (normal)\n", tbr);
+                    av_log(ffp, AV_LOG_DEBUG, "fps: %lf (normal)\n", tbr);
+                }
+                if (ffp->stat.vfps_probe < 1) {
+                    ffp->stat.vfps_probe = tbr;
                 }
             }
         }
