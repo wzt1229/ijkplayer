@@ -23,17 +23,19 @@
 # 当发布新版本库时，修改对应的 TAG 值
 #----------------------------------------------------------
 LIBYUV_TAG='libyuv-main-231127113441'
-OPUS_TAG='opus-1.4-240613155640'
+
+FREETYPE_TAG='freetype-2.13.2-240624160513'
+UNIBREAK_TAG='unibreak-5.1-240624161405'
+FRIBIDI_TAG='fribidi-1.0.13-240624160528'
+HARFBUZZ_TAG='harfbuzz-8.3.0-240624162032'
+ASS_TAG='ass-0.17.1-240624163129'
+
+OPUS_TAG='opus-1.4-240624161050'
 MAC_BLURAY_TAG='bluray-1.3.4-240605103055'
-DAV1D_TAG='dav1d-1.3.0-240613162104'
-OPENSSL_TAG='openssl-1.1.1w-240613155307'
-DVDREAD_TAG='dvdread-6.1.3-240613162057'
-FREETYPE_TAG='freetype-2.13.2-240613162051'
-UNIBREAK_TAG='unibreak-5.1-240613162028'
-FRIBIDI_TAG='fribidi-1.0.13-240613162046'
-HARFBUZZ_TAG='harfbuzz-8.3.0-240613170910'
-ASS_TAG='ass-0.17.1-240613173921'
-FFMPEG_TAG='ffmpeg-5.1.4-240613175211'
+DAV1D_TAG='dav1d-1.3.0-240624161020'
+OPENSSL_TAG='openssl-1.1.1w-240624161043'
+DVDREAD_TAG='dvdread-6.1.3-240624161023'
+FFMPEG_TAG='ffmpeg-5.1.4-240624162039'
 #----------------------------------------------------------
 
 set -e
@@ -43,6 +45,61 @@ LIBS=$2
 
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 cd "$THIS_DIR"
+
+function fix_prefix(){
+    local plat=$1
+    local dir=${PWD}
+    
+    echo "fix $plat platform pc files prefix"
+    
+    if [[ "$plat" == 'all' ]];then
+        cd "build/product"
+    else
+        cd "build/product/$plat"
+    fi
+    
+    for pc in `find . -type f -name "*.pc"` ;
+    do
+        echo "$pc"
+        local pc_dir=$(dirname "$pc")
+        local lib_dir=$(dirname "$pc_dir")
+        local base_dir=$(dirname "$lib_dir")
+
+        base_dir=$(cd "$base_dir";pwd)        
+        local escaped_base_dir=$(echo $base_dir | sed 's/\//\\\//g')
+        local escaped_lib_dir=$(echo "${base_dir}/lib" | sed 's/\//\\\//g')
+        local escaped_include_dir=$(echo "${base_dir}/include" | sed 's/\//\\\//g')
+
+        sed -i "" "s/^prefix=.*/prefix=$escaped_base_dir/" "$pc"
+        sed -i "" "s/^libdir=.*/libdir=$escaped_lib_dir/" "$pc"
+        sed -i "" "s/^includedir=.*/includedir=$escaped_include_dir/" "$pc"
+        
+        # filte Libs using -L/ absolute path
+        local str=
+        for t in `cat "$pc" | grep "Libs: " | grep "\-L/"` ;
+        do
+            if [[ "$t" != -L/* ]];then
+                if [[ $str ]];then
+                    str="${str} $t"
+                else
+                    str="$t"
+                fi
+            fi
+        done
+        [[ ! -z $str ]] && sed -i "" "s/^Libs:.*/$str/" "$pc"
+    done
+    
+    if command -v tree >/dev/null 2>&1; then
+        
+        if [[ "$plat" == 'all' ]];then
+            tree -L 3 ./
+        else
+            tree -L 2 ./
+        fi
+        
+    fi
+    cd "$dir"
+}
 
 function install_lib ()
 {
@@ -128,6 +185,8 @@ if [[ "$PLAT" == 'ios' || "$PLAT" == 'macos' || "$PLAT" == 'tvos'|| "$PLAT" == '
         fi
         echo "===================================="
     done
+    
+    fix_prefix $plat
 else
     usage
 fi

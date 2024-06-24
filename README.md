@@ -61,7 +61,7 @@ git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
 git checkout -B latest k0.11.2
 
-./shell/install-pre-any.sh all
+./shell/install-pre-any.sh all 'ass ffmpeg'
 pod install --project-directory=./examples/macos
 pod install --project-directory=./examples/ios
 pod install --project-directory=./examples/tvos
