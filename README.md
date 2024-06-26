@@ -54,14 +54,19 @@ pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/relea
 
 ## Development
 
-if you need change source code, you can use git add submodule, then use cocoapod integrate ijk into your workspace by development pod.
+if you need change source code, you can use git add submodule, then use cocoapod integrate ijk into your workspace by development pod like examples.
+
+how to run examples:
 
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
 git checkout -B latest k0.11.2
 
-./shell/install-pre-any.sh all 'ass ffmpeg'
+./shell/main.sh install -p macos -l 'ass ffmpeg'
+./shell/main.sh install -p ios -l 'ass ffmpeg'
+./shell/main.sh install -p tvos -l 'ass ffmpeg'
+
 pod install --project-directory=./examples/macos
 pod install --project-directory=./examples/ios
 pod install --project-directory=./examples/tvos
