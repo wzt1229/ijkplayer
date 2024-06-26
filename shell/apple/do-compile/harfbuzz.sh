@@ -46,8 +46,6 @@ fi
 echo "----------------------"
 echo "[*] check freetype"
 
-pkg-config --libs freetype2
-
 pkg-config --libs freetype2 --silence-errors >/dev/null && enable_freetype2=1
 
 if [[ $enable_freetype2 ]];then

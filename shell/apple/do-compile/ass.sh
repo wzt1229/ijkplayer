@@ -57,76 +57,24 @@ else
     ./autogen.sh 1>/dev/null
 fi
 
-echo 
+function check_lib()
+{
+    local lib=$1
+    pkg-config --libs $lib --silence-errors >/dev/null || not_found=$?
 
-MY_PKG_CONFIG_LIBDIR=''
-# with freetype
-if [[ -f "${XC_PRODUCT_ROOT}/freetype-$XC_ARCH/lib/pkgconfig/freetype2.pc" || -f "${XC_PRODUCT_ROOT}/universal/freetype/lib/pkgconfig/freetype2.pc" ]]; then
-    echo "[*] --enable-freetype"
-    if [[ -n "$MY_PKG_CONFIG_LIBDIR" ]]; then
-        MY_PKG_CONFIG_LIBDIR="$MY_PKG_CONFIG_LIBDIR:"
-    fi
-    
-    if [[ -f "${XC_PRODUCT_ROOT}/freetype-$XC_ARCH/lib/pkgconfig/freetype2.pc" ]]; then
-        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/freetype-$XC_ARCH/lib/pkgconfig"
+    if [[ $not_found -eq 0 ]];then
+        echo "[✅] check $lib"
     else
-        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/universal/freetype/lib/pkgconfig"
+        echo "[❌] check $lib"
     fi
-else
-    echo "[*] --disable-freetype"
-fi
+}
 
-# with fribidi
-if [[ -f "${XC_PRODUCT_ROOT}/fribidi-$XC_ARCH/lib/pkgconfig/fribidi.pc" || -f "${XC_PRODUCT_ROOT}/universal/fribidi/lib/pkgconfig/fribidi.pc" ]]; then
-    echo "[*] --enable-fribidi"
-    if [[ -n "$MY_PKG_CONFIG_LIBDIR" ]]; then
-        MY_PKG_CONFIG_LIBDIR="$MY_PKG_CONFIG_LIBDIR:"
-    fi
-    
-    if [[ -f "${XC_PRODUCT_ROOT}/fribidi-$XC_ARCH/lib/pkgconfig/fribidi.pc" ]]; then
-        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/fribidi-$XC_ARCH/lib/pkgconfig"
-    else
-        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/universal/fribidi/lib/pkgconfig"
-    fi
-else
-    echo "[*] --disable-fribidi"
-fi
-
-# with harfbuzz
-if [[ -f "${XC_PRODUCT_ROOT}/harfbuzz-$XC_ARCH/lib/pkgconfig/harfbuzz.pc" || -f "${XC_PRODUCT_ROOT}/universal/harfbuzz/lib/pkgconfig/harfbuzz.pc" ]]; then
-    echo "[*] --enable-harfbuzz"
-    if [[ -n "$MY_PKG_CONFIG_LIBDIR" ]]; then
-        MY_PKG_CONFIG_LIBDIR="$MY_PKG_CONFIG_LIBDIR:"
-    fi
-    
-    if [[ -f "${XC_PRODUCT_ROOT}/harfbuzz-$XC_ARCH/lib/pkgconfig/harfbuzz.pc" ]]; then
-        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/harfbuzz-$XC_ARCH/lib/pkgconfig"
-    else
-        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/universal/harfbuzz/lib/pkgconfig"
-    fi
-else
-    echo "[*] --disable-harfbuzz"
-fi
-
-# with unibreak
-if [[ -f "${XC_PRODUCT_ROOT}/unibreak-$XC_ARCH/lib/pkgconfig/libunibreak.pc" || -f "${XC_PRODUCT_ROOT}/universal/unibreak/lib/pkgconfig/libunibreak.pc" ]]; then
-    echo "[*] --enable-unibreak"
-    if [[ -n "$MY_PKG_CONFIG_LIBDIR" ]]; then
-        MY_PKG_CONFIG_LIBDIR="$MY_PKG_CONFIG_LIBDIR:"
-    fi
-    
-    if [[ -f "${XC_PRODUCT_ROOT}/unibreak-$XC_ARCH/lib/pkgconfig/libunibreak.pc" ]]; then
-        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/unibreak-$XC_ARCH/lib/pkgconfig"
-    else
-        MY_PKG_CONFIG_LIBDIR="${MY_PKG_CONFIG_LIBDIR}${XC_PRODUCT_ROOT}/universal/unibreak/lib/pkgconfig"
-    fi
-else
-    echo "[*] --disable-unibreak"
-fi
-
-if [[ -n "$MY_PKG_CONFIG_LIBDIR" ]]; then
-    export PKG_CONFIG_LIBDIR="$MY_PKG_CONFIG_LIBDIR"
-fi
+echo "--check denpendencies--------------------"
+check_lib 'freetype2'
+check_lib 'fribidi'
+check_lib 'harfbuzz'
+check_lib 'libunibreak'
+echo "----------------------"
 
 echo
 echo "CC: $XCRUN_CC"

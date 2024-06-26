@@ -31,10 +31,10 @@ compile ijkplayer using libs for iOS and macOS and tvOS，such as libass、ffmpe
 
 OPTIONS:
    -h            Show some help
-   -p            Specify platform (ios,macos,tvos)
-   -c            Specify cmd (build,clean,rebuild,lipo) rebuild=clean+build
+   -p            Specify platform (ios,macos,tvos), can't be nil
+   -c            Specify cmd (build,clean,rebuild,lipo) rebuild=clean+build, can't be nil
    -a            Specify archs (x86_64,arm64,x86_64_simulator,arm64_simulator,all) all="x86_64,arm64,x86_64_simulator,arm64_simulator"
-   -l            Specify which libs need 'cmd' (all|libyuv|openssl|opus|bluray|dav1d|dvdread|freetype|fribidi|harfbuzz|unibreak|ass|ffmpeg)
+   -l            Specify which libs need 'cmd' (all|libyuv|openssl|opus|bluray|dav1d|dvdread|freetype|fribidi|harfbuzz|unibreak|ass|ffmpeg), can't be nil
    -d            Enable debug mode (disable by default)
    -t            Force number of cores to be used
 EOF
@@ -73,21 +73,31 @@ do
     esac
 done
 
-shift $((OPTIND-1))
-
-if [[ -z "$XC_THREAD" ]];then
-    XC_THREAD=$(sysctl -n machdep.cpu.thread_count)
-    echo "support thread count:$XC_THREAD"
+if [[ $OPTIND == 1 ]];then
+    usage
+    exit 1
 fi
 
+shift $((OPTIND-1))
+
 if [[ -z "$XC_CMD" ]];then
-    echo "cmd can't be nil. use -c specify cmd"
+    echo "cmd can't be nil, use -c specify cmd"
     exit 1
 fi
 
 if [[ -z "$LIBS" ]];then
-    echo "libs can't be nil. use -l specify libs"
+    echo "libs can't be nil, use -l specify libs"
     exit 1
+fi
+
+if [[ -z "$XC_PLAT" ]];then
+    echo "platform can't be nil, use -p specify platform"
+    exit 1
+fi
+
+if [[ -z "$XC_THREAD" ]];then
+    XC_THREAD=$(sysctl -n machdep.cpu.thread_count)
+    echo "use default thread count:$XC_THREAD"
 fi
 
 export XC_THREAD
