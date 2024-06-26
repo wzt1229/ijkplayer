@@ -26,7 +26,9 @@ jobs:
     - run: brew install tree
     - name: Download Pre Compiled Dependencies
       run: |
-        cd shell && ./install-pre-any.sh all 'ass ffmpeg' && cd -
+        ./shell/main.sh install -p ios -l 'ass ffmpeg'
+        ./shell/main.sh install -p macos -l 'ass ffmpeg'
+        ./shell/main.sh install -p tvos -l 'ass ffmpeg'
     - name: Pod Install
       run: |
         pod install --project-directory=examples/ios
