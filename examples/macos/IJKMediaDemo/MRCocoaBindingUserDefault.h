@@ -48,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)accurate_seek;
 + (int)seek_step;
 + (int)lock_screen_ratio;
++ (int)play_from_history;
 
 + (int)open_gzip;
 + (int)use_dns_cache;

@@ -59,7 +59,9 @@
 @property(nonatomic) int64_t   filesize;
 
 @property(nonatomic) int64_t   prepareStartTick;
-@property(nonatomic) int64_t   prepareDuration;
+@property(nonatomic) int64_t   findStreamInfoLatency;
+@property(nonatomic) int64_t   openInputLatency;
+@property(nonatomic) int64_t   prepareLatency;
 @property(nonatomic) int64_t   firstVideoFrameLatency;
 @property(nonatomic) int64_t   lastPrerollStartTick;
 @property(nonatomic) int64_t   lastPrerollDuration;

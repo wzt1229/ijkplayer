@@ -57,7 +57,7 @@
                                                     </constraints>
                                                     <sliderCell key="cell" controlSize="mini" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="0.20000000000000001" tickMarkPosition="above" sliderType="linear" id="kZp-Qd-mSu"/>
                                                     <connections>
-                                                        <action selector="onVolumeChange:" target="-2" id="Jmq-7B-rgt"/>
+                                                        <action selector="onVolumeChange:" target="-2" id="BKU-yQ-5hZ"/>
                                                         <binding destination="OCk-Q5-1dK" name="value" keyPath="values.volume" id="1Nd-cY-qY3"/>
                                                     </connections>
                                                 </slider>

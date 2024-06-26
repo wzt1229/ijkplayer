@@ -159,6 +159,7 @@ static BOOL hdrAnimationShown = 0;
             } else {
                 [menu addItemWithTitle:@"播放" action:@selector(pauseOrPlay:)keyEquivalent:@""];
             }
+            [menu addItemWithTitle:@"重播" action:@selector(retry) keyEquivalent:@""];
             [menu addItemWithTitle:@"停止" action:@selector(onStop) keyEquivalent:@"."];
             [menu addItemWithTitle:@"下一集" action:@selector(playNext:)keyEquivalent:@""];
             [menu addItemWithTitle:@"上一集" action:@selector(playPrevious:)keyEquivalent:@""];
@@ -483,7 +484,7 @@ static BOOL hdrAnimationShown = 0;
                     volume = .0f;
                 }
                 [MRCocoaBindingUserDefault setVolume:volume];
-                [self onVolumeChange];
+                [self onVolumeChange:nil];
             }
                 break;
             case kVK_UpArrow:
@@ -494,7 +495,7 @@ static BOOL hdrAnimationShown = 0;
                     volume = 1.0f;
                 }
                 [MRCocoaBindingUserDefault setValue:@(volume) forKey:@"volume"];
-                [self onVolumeChange];
+                [self onVolumeChange:nil];
             }
                 break;
             case kVK_Space:
@@ -692,9 +693,11 @@ static BOOL hdrAnimationShown = 0;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerOpenInput:) name:IJKMPMoviePlayerOpenInputNotification object:self.player];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerFirstVideoFrameRendered:) name:IJKMPMoviePlayerFirstVideoFrameRenderedNotification object:self.player];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerFindStreamInfo:) name:IJKMPMoviePlayerFindStreamInfoNotification object:self.player];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerPreparedToPlay:) name:IJKMPMediaPlaybackIsPreparedToPlayDidChangeNotification object:self.player];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerFirstVideoFrameRendered:) name:IJKMPMoviePlayerFirstVideoFrameRenderedNotification object:self.player];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerSelectedStreamDidChange:) name:IJKMPMoviePlayerSelectedStreamDidChangeNotification object:self.player];
     
@@ -715,7 +718,7 @@ static BOOL hdrAnimationShown = 0;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerSelectingStreamDidFailed:) name:IJKMoviePlayerSelectingStreamDidFailed object:self.player];
     
     self.player.shouldAutoplay = YES;
-    [self onVolumeChange];
+    [self onVolumeChange:nil];
     [self applyScalingMode];
     [self applyDAR];
     [self applyRotate];
@@ -724,6 +727,47 @@ static BOOL hdrAnimationShown = 0;
 }
 
 #pragma mark - ijkplayer
+
+- (void)ijkPlayerOpenInput:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        NSLog(@"[stat] stream opened:%@",notifi.userInfo[@"name"]);
+        NSLog(@"[stat] open input cost:%lldms",self.player.monitor.openInputLatency);
+    }
+}
+
+- (void)ijkPlayerFindStreamInfo:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        NSLog(@"[stat] find stream info cost:%lldms",self.player.monitor.findStreamInfoLatency);
+    }
+}
+
+- (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        NSLog(@"[stat] prepared to play cost:%lldms",self.player.monitor.prepareLatency);
+        [self updateStreams];
+        NSDictionary *dic = self.player.monitor.mediaMeta;
+        NSString *lrc = dic[k_IJKM_KEY_LYRICS];
+        if (lrc.length > 0) {
+            NSString *dir = [self dirForCurrentPlayingUrl];
+            NSString *movieName = [self.playingUrl lastPathComponent];
+            NSString *fileName = [NSString stringWithFormat:@"%@.lrc",movieName];
+            NSString *filePath = [dir stringByAppendingPathComponent:fileName];
+            NSLog(@"保存成LRC文件:%@",filePath);
+            [[lrc dataUsingEncoding:NSUTF8StringEncoding] writeToFile:filePath atomically:YES];
+        }
+    }
+}
+
+- (void)ijkPlayerFirstVideoFrameRendered:(NSNotification *)notifi
+{
+    if (self.player == notifi.object) {
+        NSLog(@"[stat] first frame cost:%lldms",self.player.monitor.firstVideoFrameLatency);
+        self.seekCostLb.stringValue = [NSString stringWithFormat:@"%lldms",self.player.monitor.firstVideoFrameLatency];
+    }
+}
 
 - (void)ijkPlayerRecvWarning:(NSNotification *)notifi
 {
@@ -759,21 +803,6 @@ static BOOL hdrAnimationShown = 0;
         
         int code = [notifi.userInfo[IJKMoviePlayerSelectingStreamErrUserInfoKey] intValue];
         NSLog(@"Selecting Stream Did Failed:%d, pre selected stream is %d,Err Code:%d",stream,preStream,code);
-    }
-}
-
-- (void)ijkPlayerOpenInput:(NSNotification *)notifi
-{
-    if (self.player == notifi.object) {
-        NSLog(@"stream opened:%@",notifi.userInfo[@"name"]);
-    }
-}
-
-- (void)ijkPlayerFirstVideoFrameRendered:(NSNotification *)notifi
-{
-    if (self.player == notifi.object) {
-        NSLog(@"first frame cost:%lldms",self.player.monitor.firstVideoFrameLatency);
-        self.seekCostLb.stringValue = [NSString stringWithFormat:@"%lldms",self.player.monitor.firstVideoFrameLatency];
     }
 }
 
@@ -934,21 +963,6 @@ static BOOL hdrAnimationShown = 0;
     [self updateStreams];
 }
 
-- (void)ijkPlayerPreparedToPlay:(NSNotification *)notifi
-{
-    [self updateStreams];
-    NSDictionary *dic = self.player.monitor.mediaMeta;
-    NSString *lrc = dic[k_IJKM_KEY_LYRICS];
-    if (lrc.length > 0) {
-        NSString *dir = [self dirForCurrentPlayingUrl];
-        NSString *movieName = [self.playingUrl lastPathComponent];
-        NSString *fileName = [NSString stringWithFormat:@"%@.lrc",movieName];
-        NSString *filePath = [dir stringByAppendingPathComponent:fileName];
-        NSLog(@"保存成LRC文件:%@",filePath);
-        [[lrc dataUsingEncoding:NSUTF8StringEncoding] writeToFile:filePath atomically:YES];
-    }
-}
-
 - (void)enableComputerSleep:(BOOL)enable
 {
     AppDelegate *delegate = NSApp.delegate;
@@ -994,8 +1008,11 @@ static BOOL hdrAnimationShown = 0;
     self.playCtrlBtn.image = [NSImage imageNamed:@"pause"];
     self.playCtrlBtn.state = NSControlStateValueOff;
     
-    int startTime = (int)([self readCurrentPlayRecord] * 1000);
-    [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
+    if ([MRCocoaBindingUserDefault play_from_history]) {
+        int startTime = (int)([self readCurrentPlayRecord] * 1000);
+        [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
+    }
+    
     [self.player prepareToPlay];
     
     if ([self.subtitles count] > 0) {
@@ -1329,7 +1346,7 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-- (void)onVolumeChange
+- (IBAction)onVolumeChange:(NSSlider *)sender
 {
     self.player.playbackVolume = [MRCocoaBindingUserDefault volume];
 }

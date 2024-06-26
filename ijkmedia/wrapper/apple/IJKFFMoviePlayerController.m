@@ -1023,7 +1023,7 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
         [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
                    forKey:@"tcp-spd"];
         
-        [self setHudValue:formatedDurationMilli(_monitor.prepareDuration) forKey:@"t-prepared"];
+        [self setHudValue:formatedDurationMilli(_monitor.prepareLatency) forKey:@"t-prepared"];
         [self setHudValue:formatedDurationMilli(_monitor.firstVideoFrameLatency) forKey:@"t-render"];
         [self setHudValue:formatedDurationMilli(_monitor.lastPrerollDuration) forKey:@"t-preroll"];
         [self setHudValue:[NSString stringWithFormat:@"%@ / %d",
@@ -1414,7 +1414,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_PREPARED: {
-            _monitor.prepareDuration = (int64_t)SDL_GetTickHR() - _monitor.prepareStartTick;
+            _monitor.prepareLatency = (int64_t)SDL_GetTickHR() - _monitor.prepareStartTick;
             //prepared not send,beacuse FFP_MSG_VIDEO_DECODER_OPEN event already send
             //int64_t vdec = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_VIDEO_DECODER, FFP_PROPV_DECODER_UNKNOWN);
             //[self updateMonitor4VideoDecoder:vdec];
@@ -1551,6 +1551,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_OPEN_INPUT: {
+            _monitor.openInputLatency = (int64_t)SDL_GetTickHR() - _monitor.prepareStartTick;
             const char *name = avmsg->obj;
             NSString *str = nil;
             if (name) {
@@ -1566,6 +1567,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_FIND_STREAM_INFO: {
+            _monitor.findStreamInfoLatency = (int64_t)SDL_GetTickHR() - _monitor.prepareStartTick;
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerFindStreamInfoNotification
              object:self];

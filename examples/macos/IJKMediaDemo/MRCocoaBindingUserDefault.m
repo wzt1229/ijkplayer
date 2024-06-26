@@ -94,6 +94,7 @@
         @"accurate_seek" : @(1),
         @"seek_step" : @(15),
         @"lock_screen_ratio" : @(1),
+        @"play_from_history" : @(1),
         
         @"open_gzip" : @(1),
         @"use_dns_cache" : @(1),
@@ -405,6 +406,11 @@
 + (int)lock_screen_ratio
 {
     return [self intForKey:@"lock_screen_ratio"];
+}
+
++ (int)play_from_history
+{
+    return [self intForKey:@"play_from_history"];
 }
 
 + (int)open_gzip

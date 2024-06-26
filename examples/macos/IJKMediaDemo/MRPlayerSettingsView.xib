@@ -18,11 +18,11 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <userDefaultsController representsSharedInstance="YES" id="A8Q-JO-gdn"/>
         <view id="ATT-6n-3iE">
-            <rect key="frame" x="0.0" y="0.0" width="300" height="1603"/>
+            <rect key="frame" x="0.0" y="0.0" width="300" height="1717"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="EGf-gl-fXh">
-                    <rect key="frame" x="6" y="1548" width="64" height="16"/>
+                    <rect key="frame" x="6" y="1662" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="日志级别：" id="xru-ob-DW4">
                         <font key="font" metaFont="systemBold"/>
@@ -31,7 +31,7 @@
                     </textFieldCell>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="N5F-Qr-zzt">
-                    <rect key="frame" x="83" y="1543" width="73" height="25"/>
+                    <rect key="frame" x="83" y="1657" width="73" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="info" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="8ym-WH-Tmj" id="laf-W2-JvL">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -67,11 +67,11 @@
                     </connections>
                 </popUpButton>
                 <box verticalHuggingPriority="750" boxType="separator" id="SAX-Tn-c39">
-                    <rect key="frame" x="8" y="1534" width="277" height="5"/>
+                    <rect key="frame" x="8" y="1648" width="277" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="d4D-Bh-0Km" userLabel="轨道设置：">
-                    <rect key="frame" x="6" y="1509" width="64" height="16"/>
+                    <rect key="frame" x="6" y="1623" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="轨道设置：" id="egn-0o-d6f">
                         <font key="font" metaFont="systemBold"/>
@@ -80,7 +80,7 @@
                     </textFieldCell>
                 </textField>
                 <box title="音轨" id="afv-o0-kZT">
-                    <rect key="frame" x="83" y="1473" width="204" height="50"/>
+                    <rect key="frame" x="83" y="1587" width="204" height="50"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="bpm-fj-9Cc">
                         <rect key="frame" x="4" y="5" width="196" height="30"/>
@@ -106,7 +106,7 @@
                     </view>
                 </box>
                 <box title="视轨" id="7ZF-mX-XcR">
-                    <rect key="frame" x="84" y="1419" width="204" height="50"/>
+                    <rect key="frame" x="84" y="1533" width="204" height="50"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="e8C-rQ-qaf">
                         <rect key="frame" x="4" y="5" width="196" height="30"/>
@@ -132,7 +132,7 @@
                     </view>
                 </box>
                 <box title="字幕轨" id="QoP-4C-xxp">
-                    <rect key="frame" x="84" y="1365" width="204" height="50"/>
+                    <rect key="frame" x="84" y="1479" width="204" height="50"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="upW-zs-28U">
                         <rect key="frame" x="4" y="5" width="196" height="30"/>
@@ -158,11 +158,11 @@
                     </view>
                 </box>
                 <box verticalHuggingPriority="750" boxType="separator" id="XeP-mF-q8i">
-                    <rect key="frame" x="8" y="1352" width="277" height="5"/>
+                    <rect key="frame" x="8" y="1466" width="277" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="lP3-FH-yIL" userLabel="渲染设置:">
-                    <rect key="frame" x="6" y="1326" width="64" height="16"/>
+                    <rect key="frame" x="6" y="1440" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="渲染设置：" id="kUm-Wv-B8I">
                         <font key="font" metaFont="systemBold"/>
@@ -171,7 +171,7 @@
                     </textFieldCell>
                 </textField>
                 <box title="色彩调节" id="NaS-8v-ckg">
-                    <rect key="frame" x="83" y="1241" width="204" height="99"/>
+                    <rect key="frame" x="83" y="1355" width="204" height="99"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="tqs-yz-AOw">
                         <rect key="frame" x="4" y="5" width="196" height="79"/>
@@ -199,7 +199,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="push" bezelStyle="rounded" imagePosition="only" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Y4h-eu-NCj">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="system" size="9"/>
+                                    <font key="font" metaFont="miniSystem"/>
                                     <imageReference key="image" image="arrow.clockwise" catalog="system" symbolScale="medium"/>
                                 </buttonCell>
                                 <connections>
@@ -268,7 +268,7 @@
                     </view>
                 </box>
                 <box title="渲染引擎" id="6hR-GB-VHo">
-                    <rect key="frame" x="83" y="1180" width="204" height="57"/>
+                    <rect key="frame" x="83" y="1294" width="204" height="57"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="8sr-6x-ZKd">
                         <rect key="frame" x="4" y="5" width="196" height="37"/>
@@ -298,7 +298,7 @@
                     </view>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="aHv-f7-XXb" userLabel="适应模式:">
-                    <rect key="frame" x="6" y="1158" width="64" height="16"/>
+                    <rect key="frame" x="6" y="1272" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="适应模式：" id="O9U-xk-P0H">
                         <font key="font" metaFont="system"/>
@@ -307,7 +307,7 @@
                     </textFieldCell>
                 </textField>
                 <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pEl-vc-9xF">
-                    <rect key="frame" x="6" y="1127" width="280" height="24"/>
+                    <rect key="frame" x="6" y="1241" width="280" height="24"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="hA6-hX-fSh">
                         <font key="font" metaFont="smallSystem"/>
@@ -322,7 +322,7 @@
                     </connections>
                 </segmentedControl>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="a03-Df-9yc" userLabel="宽高比:">
-                    <rect key="frame" x="6" y="1096" width="51" height="16"/>
+                    <rect key="frame" x="6" y="1210" width="51" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="宽高比：" id="SV4-eP-HLd">
                         <font key="font" metaFont="system"/>
@@ -331,7 +331,7 @@
                     </textFieldCell>
                 </textField>
                 <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4zk-ny-svP">
-                    <rect key="frame" x="6" y="1065" width="281" height="24"/>
+                    <rect key="frame" x="6" y="1179" width="281" height="24"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="8tp-9V-MNb">
                         <font key="font" metaFont="smallSystem"/>
@@ -347,7 +347,7 @@
                     </connections>
                 </segmentedControl>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="Gmv-O4-xx8" userLabel="旋转:">
-                    <rect key="frame" x="6" y="1037" width="38" height="16"/>
+                    <rect key="frame" x="6" y="1151" width="38" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="旋转：" id="zVv-Ex-826">
                         <font key="font" metaFont="system"/>
@@ -356,7 +356,7 @@
                     </textFieldCell>
                 </textField>
                 <segmentedControl verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pPE-bc-QLk">
-                    <rect key="frame" x="6" y="1007" width="281" height="24"/>
+                    <rect key="frame" x="6" y="1121" width="281" height="24"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="jAz-dh-ZvB">
                         <font key="font" metaFont="smallSystem"/>
@@ -372,11 +372,11 @@
                     </connections>
                 </segmentedControl>
                 <box verticalHuggingPriority="750" boxType="separator" id="pay-hL-mm2">
-                    <rect key="frame" x="7" y="989" width="277" height="5"/>
+                    <rect key="frame" x="7" y="1103" width="277" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="2Va-tP-jb3" userLabel="解码设置:">
-                    <rect key="frame" x="6" y="961" width="64" height="16"/>
+                    <rect key="frame" x="6" y="1075" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="解码设置：" id="LSY-IQ-tMG">
                         <font key="font" metaFont="systemBold"/>
@@ -385,14 +385,14 @@
                     </textFieldCell>
                 </textField>
                 <box title="色彩调节" titlePosition="noTitle" id="oTd-cP-TgH" userLabel="解码设置">
-                    <rect key="frame" x="83" y="838" width="204" height="139"/>
+                    <rect key="frame" x="83" y="955" width="204" height="141"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="uRu-AB-Ebw">
-                        <rect key="frame" x="4" y="5" width="196" height="131"/>
+                        <rect key="frame" x="4" y="5" width="196" height="133"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="kYJ-NE-MCL">
-                                <rect key="frame" x="5" y="109" width="49" height="14"/>
+                                <rect key="frame" x="5" y="111" width="49" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="硬件加速" id="3wb-Vp-aCL">
                                     <font key="font" metaFont="smallSystem"/>
@@ -401,7 +401,7 @@
                                 </textFieldCell>
                             </textField>
                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="C5m-iw-JQX">
-                                <rect key="frame" x="159" y="105" width="24" height="23"/>
+                                <rect key="frame" x="159" y="107" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="JB7-rE-EJc">
                                     <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
@@ -412,7 +412,7 @@
                                 </connections>
                             </button>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="Wms-Dn-q7E">
-                                <rect key="frame" x="5" y="56" width="38" height="14"/>
+                                <rect key="frame" x="5" y="58" width="38" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="反交错" id="WzY-x3-lNI">
                                     <font key="font" metaFont="smallSystem"/>
@@ -421,11 +421,11 @@
                                 </textFieldCell>
                             </textField>
                             <box verticalHuggingPriority="750" boxType="separator" id="SAR-94-gZf">
-                                <rect key="frame" x="8" y="48" width="178" height="5"/>
+                                <rect key="frame" x="8" y="50" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </box>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="E87-Sp-dj7">
-                                <rect key="frame" x="5" y="82" width="72" height="14"/>
+                                <rect key="frame" x="5" y="84" width="72" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="拷贝硬解数据" id="Xiv-hY-ZR8">
                                     <font key="font" metaFont="smallSystem"/>
@@ -434,7 +434,7 @@
                                 </textFieldCell>
                             </textField>
                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zpW-a0-VXu">
-                                <rect key="frame" x="158" y="81" width="24" height="23"/>
+                                <rect key="frame" x="158" y="83" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="ns0-e7-NNq">
                                     <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
@@ -445,11 +445,11 @@
                                 </connections>
                             </button>
                             <box verticalHuggingPriority="750" boxType="separator" id="qot-ud-XQ0">
-                                <rect key="frame" x="8" y="74" width="178" height="5"/>
+                                <rect key="frame" x="8" y="76" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </box>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="h4b-Wt-olk">
-                                <rect key="frame" x="5" y="30" width="38" height="14"/>
+                                <rect key="frame" x="5" y="32" width="38" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="HDR" id="OCk-ph-Z66">
                                     <font key="font" metaFont="smallSystem"/>
@@ -458,11 +458,11 @@
                                 </textFieldCell>
                             </textField>
                             <box verticalHuggingPriority="750" boxType="separator" id="0KZ-vv-SWD">
-                                <rect key="frame" x="7" y="23" width="178" height="5"/>
+                                <rect key="frame" x="7" y="25" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </box>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="y74-XE-1m6">
-                                <rect key="frame" x="6" y="7" width="72" height="14"/>
+                                <rect key="frame" x="6" y="8" width="72" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="软解像素格式" id="ZJP-FA-kvA">
                                     <font key="font" metaFont="smallSystem"/>
@@ -471,11 +471,11 @@
                                 </textFieldCell>
                             </textField>
                             <box verticalHuggingPriority="750" boxType="separator" id="v4G-Oq-hxo">
-                                <rect key="frame" x="7" y="100" width="178" height="5"/>
+                                <rect key="frame" x="7" y="102" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </box>
                             <popUpButton horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="IZY-px-MpY" userLabel="选择">
-                                <rect key="frame" x="98" y="-1" width="91" height="25"/>
+                                <rect key="frame" x="98" y="0.0" width="91" height="25"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <popUpButtonCell key="cell" type="push" title="fcc-_es2" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="LWx-gU-SSS" id="Bx8-Uc-ieE">
                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -520,7 +520,7 @@
                                 </connections>
                             </popUpButton>
                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HSO-sE-h9g">
-                                <rect key="frame" x="159" y="51" width="24" height="23"/>
+                                <rect key="frame" x="159" y="53" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="vug-W8-GG0">
                                     <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
@@ -531,7 +531,7 @@
                                 </connections>
                             </button>
                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q47-mC-P0v">
-                                <rect key="frame" x="159" y="26" width="24" height="23"/>
+                                <rect key="frame" x="159" y="28" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="vbl-cK-ASf">
                                     <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
@@ -545,11 +545,11 @@
                     </view>
                 </box>
                 <box verticalHuggingPriority="750" boxType="separator" id="JXI-5g-I8N">
-                    <rect key="frame" x="4" y="831" width="277" height="5"/>
+                    <rect key="frame" x="4" y="945" width="277" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="mTL-3L-oQ7">
-                    <rect key="frame" x="6" y="807" width="64" height="16"/>
+                    <rect key="frame" x="6" y="921" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="字幕设置：" id="Pi2-46-hbt">
                         <font key="font" metaFont="systemBold"/>
@@ -558,7 +558,7 @@
                     </textFieldCell>
                 </textField>
                 <box title="强制覆盖字幕样式" id="p7t-ru-qK7">
-                    <rect key="frame" x="83" y="577" width="204" height="244"/>
+                    <rect key="frame" x="83" y="691" width="204" height="244"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="Wzt-ep-MTO">
                         <rect key="frame" x="4" y="5" width="196" height="224"/>
@@ -728,7 +728,7 @@
                     </view>
                 </box>
                 <box title="缩放" id="pXG-mx-Jis">
-                    <rect key="frame" x="83" y="524" width="204" height="50"/>
+                    <rect key="frame" x="83" y="638" width="204" height="50"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="jbf-mI-wgl">
                         <rect key="frame" x="4" y="5" width="196" height="30"/>
@@ -746,7 +746,7 @@
                     </view>
                 </box>
                 <box title="底部位置" id="8nb-DN-SMB">
-                    <rect key="frame" x="83" y="467" width="204" height="50"/>
+                    <rect key="frame" x="83" y="581" width="204" height="50"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="mlf-8s-szr">
                         <rect key="frame" x="4" y="5" width="196" height="30"/>
@@ -764,7 +764,7 @@
                     </view>
                 </box>
                 <box title="延迟" id="ecl-30-pKe" userLabel="字幕延迟">
-                    <rect key="frame" x="85" y="410" width="204" height="50"/>
+                    <rect key="frame" x="85" y="524" width="204" height="50"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="X4H-PV-yxV">
                         <rect key="frame" x="4" y="5" width="196" height="30"/>
@@ -782,11 +782,11 @@
                     </view>
                 </box>
                 <box verticalHuggingPriority="750" boxType="separator" id="kvN-WY-Eqx">
-                    <rect key="frame" x="4" y="398" width="277" height="5"/>
+                    <rect key="frame" x="4" y="512" width="277" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="ArP-Gw-W6j">
-                    <rect key="frame" x="6" y="373" width="64" height="16"/>
+                    <rect key="frame" x="6" y="487" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="音频设置：" id="CmR-ne-wDY">
                         <font key="font" metaFont="system"/>
@@ -795,7 +795,7 @@
                     </textFieldCell>
                 </textField>
                 <box title="延迟" id="3SP-Ui-fBj" userLabel="音频延迟">
-                    <rect key="frame" x="85" y="330" width="204" height="50"/>
+                    <rect key="frame" x="85" y="444" width="204" height="50"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="oZS-4E-q99">
                         <rect key="frame" x="4" y="5" width="196" height="30"/>
@@ -813,11 +813,11 @@
                     </view>
                 </box>
                 <box verticalHuggingPriority="750" boxType="separator" id="CRV-YC-54c">
-                    <rect key="frame" x="4" y="317" width="277" height="5"/>
+                    <rect key="frame" x="4" y="428" width="277" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="73Z-vL-tK5">
-                    <rect key="frame" x="5" y="283" width="64" height="16"/>
+                    <rect key="frame" x="5" y="397" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="截屏设置：" id="EdL-9n-9nl">
                         <font key="font" metaFont="systemBold"/>
@@ -826,7 +826,7 @@
                     </textFieldCell>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cMB-iQ-WET">
-                    <rect key="frame" x="83" y="276" width="115" height="25"/>
+                    <rect key="frame" x="83" y="390" width="115" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="origin + subtitle" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="SWk-Ns-ZG0" id="FX8-Nb-XLf">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -853,7 +853,7 @@
                     </connections>
                 </popUpButton>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eE6-4w-OyA">
-                    <rect key="frame" x="217" y="272" width="57" height="32"/>
+                    <rect key="frame" x="217" y="386" width="57" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="截取" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="eZ8-af-3xv">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -864,11 +864,11 @@
                     </connections>
                 </button>
                 <box verticalHuggingPriority="750" boxType="separator" id="sWF-Rx-qUd">
-                    <rect key="frame" x="4" y="265" width="277" height="5"/>
+                    <rect key="frame" x="4" y="377" width="277" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
                 <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="1vt-rh-Fr7" userLabel="解码设置:">
-                    <rect key="frame" x="6" y="237" width="64" height="16"/>
+                    <rect key="frame" x="6" y="351" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="播放设置：" id="mIp-3F-31d">
                         <font key="font" metaFont="systemBold"/>
@@ -877,14 +877,14 @@
                     </textFieldCell>
                 </textField>
                 <box title="播放设置：" titlePosition="noTitle" id="1cf-7J-deN" userLabel="播放设置">
-                    <rect key="frame" x="83" y="158" width="204" height="97"/>
+                    <rect key="frame" x="83" y="249" width="204" height="120"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="E3p-ix-a5G">
-                        <rect key="frame" x="4" y="5" width="196" height="89"/>
+                        <rect key="frame" x="4" y="5" width="196" height="112"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="IQq-PF-KLa">
-                                <rect key="frame" x="5" y="67" width="54" height="14"/>
+                                <rect key="frame" x="5" y="90" width="54" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="精准Seek" id="2KG-2F-fx9">
                                     <font key="font" metaFont="smallSystem"/>
@@ -892,12 +892,23 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EJ2-dq-kLZ">
+                                <rect key="frame" x="159" y="85" width="24" height="23"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="LN6-sM-tgo">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.accurate_seek" id="CIe-lD-WYs"/>
+                                </connections>
+                            </button>
                             <box verticalHuggingPriority="750" boxType="separator" id="Og8-YB-98V">
-                                <rect key="frame" x="7" y="58" width="178" height="5"/>
+                                <rect key="frame" x="7" y="81" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </box>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="R3f-cT-w3K" userLabel="步长:">
-                                <rect key="frame" x="5" y="41" width="63" height="14"/>
+                                <rect key="frame" x="5" y="64" width="63" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Seek步长" id="K2H-yY-oHm">
                                     <font key="font" metaFont="smallSystem"/>
@@ -906,7 +917,7 @@
                                 </textFieldCell>
                             </textField>
                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wjZ-SA-12e">
-                                <rect key="frame" x="149" y="38" width="36" height="20"/>
+                                <rect key="frame" x="149" y="61" width="36" height="20"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" title="15" drawsBackground="YES" id="4MH-Lf-Yso">
                                     <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="wBG-qV-cX8"/>
@@ -919,11 +930,11 @@
                                 </connections>
                             </textField>
                             <box verticalHuggingPriority="750" boxType="separator" id="0LG-xo-Dpd">
-                                <rect key="frame" x="9" y="30" width="178" height="5"/>
+                                <rect key="frame" x="9" y="53" width="178" height="5"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </box>
                             <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="vRr-CB-VVi" userLabel="锁定比例">
-                                <rect key="frame" x="5" y="9" width="49" height="14"/>
+                                <rect key="frame" x="5" y="32" width="49" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="锁定比例" id="95C-Nm-vhj">
                                     <font key="font" metaFont="smallSystem"/>
@@ -931,19 +942,8 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EJ2-dq-kLZ">
-                                <rect key="frame" x="159" y="62" width="24" height="23"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="LN6-sM-tgo">
-                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                </buttonCell>
-                                <connections>
-                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.accurate_seek" id="CIe-lD-WYs"/>
-                                </connections>
-                            </button>
                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IVK-c4-Gcm">
-                                <rect key="frame" x="159" y="4" width="24" height="23"/>
+                                <rect key="frame" x="159" y="27" width="24" height="23"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="pXP-Xc-BXo">
                                     <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
@@ -953,15 +953,39 @@
                                     <binding destination="A8Q-JO-gdn" name="value" keyPath="values.lock_screen_ratio" id="bE3-bM-zwb"/>
                                 </connections>
                             </button>
+                            <box verticalHuggingPriority="750" boxType="separator" id="fSs-RN-c28">
+                                <rect key="frame" x="9" y="21" width="178" height="5"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            </box>
+                            <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="xAc-5x-p6x" userLabel="历史记录">
+                                <rect key="frame" x="5" y="1" width="49" height="14"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" title="历史记录" id="5Ak-ZC-Nmb" userLabel="历史记录">
+                                    <font key="font" metaFont="smallSystem"/>
+                                    <color key="textColor" red="0.13333332540000001" green="0.13333332540000001" blue="0.13333332540000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vcQ-no-Gbt">
+                                <rect key="frame" x="159" y="0.0" width="24" height="23"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="M8d-sB-dh2">
+                                    <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="A8Q-JO-gdn" name="value" keyPath="values.play_from_history" id="Ss1-3H-R0m"/>
+                                </connections>
+                            </button>
                         </subviews>
                     </view>
                 </box>
                 <box verticalHuggingPriority="750" boxType="separator" id="P3r-Wb-gUt">
-                    <rect key="frame" x="4" y="147" width="277" height="5"/>
+                    <rect key="frame" x="4" y="236" width="277" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
-                <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="ukS-Yf-hdy" userLabel="解码设置:">
-                    <rect key="frame" x="6" y="122" width="64" height="16"/>
+                <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="ukS-Yf-hdy" userLabel="高级设置:">
+                    <rect key="frame" x="6" y="203" width="64" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="高级设置：" id="51F-uA-Wvr">
                         <font key="font" metaFont="systemBold"/>
@@ -969,21 +993,8 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <box verticalHuggingPriority="750" boxType="separator" id="vV4-oi-1F5">
-                    <rect key="frame" x="4" y="44" width="277" height="5"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                </box>
-                <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="pIR-6U-yZ9" userLabel="解码设置:">
-                    <rect key="frame" x="6" y="20" width="64" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="恢复默认：" id="Iyk-fa-spM">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <box title="播放设置：" titlePosition="noTitle" id="dtB-fh-COb" userLabel="高级设置">
-                    <rect key="frame" x="83" y="55" width="204" height="85"/>
+                    <rect key="frame" x="83" y="143" width="204" height="85"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="6YA-p8-mfg">
                         <rect key="frame" x="4" y="5" width="196" height="77"/>
@@ -1071,8 +1082,21 @@
                         </subviews>
                     </view>
                 </box>
+                <box verticalHuggingPriority="750" boxType="separator" id="vV4-oi-1F5">
+                    <rect key="frame" x="4" y="134" width="277" height="5"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </box>
+                <textField focusRingType="none" horizontalHuggingPriority="1000" verticalHuggingPriority="750" id="pIR-6U-yZ9">
+                    <rect key="frame" x="6" y="108" width="64" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="恢复默认：" id="Iyk-fa-spM">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kdg-EZ-eRh">
-                    <rect key="frame" x="80" y="11" width="208" height="32"/>
+                    <rect key="frame" x="80" y="99" width="208" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="恢复到初始化" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="9Tr-jc-A0k">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1083,7 +1107,7 @@
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QHP-gf-js6">
-                    <rect key="frame" x="197" y="803" width="24" height="23"/>
+                    <rect key="frame" x="197" y="891" width="24" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="XTC-XY-Ibm">
                         <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>
@@ -1094,7 +1118,7 @@
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="83" y="31.5"/>
+            <point key="canvasLocation" x="133" y="115.5"/>
         </view>
     </objects>
     <resources>
