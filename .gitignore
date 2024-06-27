@@ -3,12 +3,6 @@ build/
 ffmpeg-temp/
 android/ffmpeg-*
 android/openssl-*
-ios/ffmpeg-*
-ios/openssl-*
-mac/ffmpeg-*
-mac/libass-*
-mac/libyuv-*
-.DS_Store
 ijkmedia/ijkyuv/
 ijkmedia/ijksoundtouch
 ijkprof/android-ndk-profiler/
@@ -24,10 +18,6 @@ ijkprof/android-ndk-profiler/
 *.class
 
 # generated files
-bin/
-gen/
-libs/
-obj/
 ijkmedia/ijkplayer/ijkversion.h
 
 # Local configuration file (sdk path, etc)
@@ -38,26 +28,13 @@ local.properties
 .gradle
 build/
 
+#macOS
+.DS_Store
 # Xcode
 xcuserdata
 xcshareddata
 *.xccheckout
-
-mac/openssl-x86_64
-configdata.pm
-OpenSSL_1_1_1.tar.gz
-
 # Cocopods
-/mac/IJKMediaDemo2/Pods/
-
-ios/IJKMediaDemo/Pods
-mac/IJKMediaDemo/Pods
 examples/macos/Pods
-
-# Dependencies' src
-/shell/extra/*
-!/shell/extra/patches/
-
 examples/ios/Pods
 examples/tvos/Pods
-examples/xcframewrok/IJKMediaPlayerKit.xcframework
