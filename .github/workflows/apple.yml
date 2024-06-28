@@ -15,6 +15,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+          submodules: recursive
     - name: Read Tag Version
       run: |
         grep -m 1 VERSION_NAME= version.sh | awk -F = '{printf "TAG=%s",$2}' | xargs > constants.env
@@ -26,9 +28,9 @@ jobs:
     - run: brew install tree
     - name: Download Pre Compiled Dependencies
       run: |
-        ./shell/main.sh install -p ios -l 'ass ffmpeg'
-        ./shell/main.sh install -p macos -l 'ass ffmpeg'
-        ./shell/main.sh install -p tvos -l 'ass ffmpeg'
+        ./FFToolChain/main.sh install -p ios -l 'ass ffmpeg'
+        ./FFToolChain/main.sh install -p macos -l 'ass ffmpeg'
+        ./FFToolChain/main.sh install -p tvos -l 'ass ffmpeg'
     - name: Pod Install
       run: |
         pod install --project-directory=examples/ios
@@ -46,41 +48,22 @@ jobs:
       run: cd examples/xcframewrok && ./make-podspec.sh
     - name: Zip Frameworks
       run: |
-        dst=IJKMediaPlayerKit
-        mkdir -p $dst
-        cp CHANGELOG.md $dst
-        cp README.md $dst
-        cp COPYING.LGPLv2.1 $dst
-        cp -pPR examples/xcframewrok/IJKMediaPlayerKit.xcframework $dst
-        cd $dst
+        draft=FFToolChain/build/draft
+        dist=FFToolChain/build/dist
+        mkdir -p $draft
+        mkdir -p $dist
+        cp CHANGELOG.md $draft
+        cp README.md $draft
+        cp COPYING.LGPLv2.1 $draft
+        cp -pPR examples/xcframewrok/IJKMediaPlayerKit.xcframework $draft
+        cd $draft
         mv COPYING.LGPLv2.1 LICENSE
         zip -ryq IJKMediaPlayerKit.zip ./*
+        cd -
+        mv $draft/IJKMediaPlayerKit.zip $dist
+        mv examples/xcframewrok/IJKMediaPlayerKit.spec.json $dist
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: k${{ env.TAG }}
-        release_name: 👏👏 IJKMediaPlayerKit k${{ env.TAG }}
-        draft: false
-        prerelease: false
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: IJKMediaPlayerKit/IJKMediaPlayerKit.zip
-        asset_name: "IJKMediaPlayerKit.zip"
-        asset_content_type: application/zip
-    - name: Upload PodSpec
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: examples/xcframewrok/IJKMediaPlayerKit.spec.json
-        asset_name: "IJKMediaPlayerKit.spec.json"
-        asset_content_type: application/json
-
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release create ${{ env.TAG }} -p -t "👏👏 IJKMediaPlayerKit k${{ env.TAG }}" FFToolChain/build/dist/*.*
