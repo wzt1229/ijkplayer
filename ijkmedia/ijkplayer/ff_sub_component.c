@@ -14,8 +14,7 @@
 
 #define SUB_MAX_KEEP_DU 3.0
 #define ASS_USE_PRE_RENDER 1
-#define CACHE_ASS_IMG_COUNT 6
-#define A_ASS_IMG_DURATION 0.03
+#define A_ASS_IMG_DURATION 0.035
 
 typedef struct FFSubComponent{
     int st_idx;
@@ -84,12 +83,13 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
         return -1;
     }
     
-    if (frame_queue_nb_remaining(com->frameq) >= CACHE_ASS_IMG_COUNT) {
+    int queue_size = com->frameq->max_size;
+    if (frame_queue_nb_remaining(com->frameq) >= queue_size) {
         return -1;
     }
     
     //pre load need limit range
-    if (com->pre_load_pts - com->current_pts > (SUB_MAX_KEEP_DU * CACHE_ASS_IMG_COUNT) || com->pre_load_pts > com->pkt_pts) {
+    if (com->pre_load_pts > com->pkt_pts) {
         return -1;
     }
     
@@ -98,7 +98,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
     int result = 0;
     while (com->packetq->abort_request == 0) {
         float delta = com->current_pts - com->pre_load_pts;
-        if (delta > A_ASS_IMG_DURATION) {
+        if (delta > 0.08) {
             //subtitle is slower than video, so need fast forward
             com->pre_load_pts = com->current_pts + 0.2;
             Frame *sp = frame_queue_peek_offset(com->frameq, 0);
@@ -162,7 +162,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
         
         int size = frame_queue_push(com->frameq);
         
-        if (size > CACHE_ASS_IMG_COUNT) {
+        if (size > queue_size) {
             break;
         } else {
             continue;
