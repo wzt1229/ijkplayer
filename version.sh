@@ -17,6 +17,7 @@ do_version_readme() {
     cat README.md \
     | sed "s/\(compile \'tv.danmaku.ijk.media:ijkplayer-[[:alnum:]_]*:\)[[:digit:].]*[[:digit:]]/\1$VERSION_NAME/g" \
     | sed "s/\(git checkout -B latest k\)[[:digit:]][[:digit:].]*/\1$VERSION_NAME/g" \
+    | sed "s#\(.*download/k\)\([[:digit:]][[:digit:].]*\)\(/IJKMediaPlayerKit.spec.json\)#\1$VERSION_NAME\3#g" \
     > README.md.new
 
     mv -f README.md.new README.md
