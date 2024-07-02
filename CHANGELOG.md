@@ -1,16 +1,20 @@
 tag k0.11.3
 --------------------------------
 
-- parse LYRICS meta
+- parse LYRICS meta,#22
+- parse ICY Header and update ICY meta,#28
+- use git submodule manage compile shell
+- fix http chunked transfer get wrong size cause av_read_frame can not return eof bug
+- increase ass frame cache amount
 
 tag k0.11.2
 --------------------------------
 
-- support tvOS platform
-- ass subtitle support force style
+- support tvOS platform,#20 
+- ass subtitle support force style,#17
 - support set audio delay
 - fix subtitle memory leak
-- improve ass frame cache logic
+- improve ass frame cache logic,#19
 - palettized rgb bitmap subtitle use shader blend
 - audio meta add human describe string
 - fix blu-ray iso after seek video frame is not keyframe bug
@@ -34,7 +38,7 @@ tag k0.11.0
 - support http gzip and deflate use headers
 - restore ijk dns cache and http event hook
 - enable microdvd subtitle decoder
-- meta add chapter info
+- meta add chapter info,#12
 
 tag k0.10.5
 --------------------------------

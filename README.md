@@ -61,7 +61,7 @@ how to run examples:
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.11.2
+git checkout -B latest k0.11.3
 
 ./shell/main.sh install -p macos -l 'ass ffmpeg'
 ./shell/main.sh install -p ios -l 'ass ffmpeg'
