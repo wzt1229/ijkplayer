@@ -605,6 +605,8 @@ static BOOL hdrAnimationShown = 0;
     //    [options setFormatOptionIntValue:0 forKey:@"http_persistent"];
     //请求m3u8文件里的ts出错后是否继续请求下一个ts，默认是1000
     [options setFormatOptionIntValue:1 forKey:@"max_reload"];
+    //set icy update period
+    [options setPlayerOptionValue:@"3500" forKey:@"icy-update-period"];
     
     BOOL isLive = NO;
     //isLive表示是直播还是点播
@@ -717,6 +719,8 @@ static BOOL hdrAnimationShown = 0;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerSelectingStreamDidFailed:) name:IJKMoviePlayerSelectingStreamDidFailed object:self.player];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ijkPlayerICYMetaChanged:) name:IJKMPMoviePlayerICYMetaChangedNotification object:self.player];
+    
     self.player.shouldAutoplay = YES;
     [self onVolumeChange:nil];
     [self applyScalingMode];
@@ -747,6 +751,7 @@ static BOOL hdrAnimationShown = 0;
 {
     if (self.player == notifi.object) {
         NSLog(@"[stat] prepared to play cost:%lldms",self.player.monitor.prepareLatency);
+        [self printICYMeta];
         [self updateStreams];
         NSDictionary *dic = self.player.monitor.mediaMeta;
         NSString *lrc = dic[k_IJKM_KEY_LYRICS];
@@ -961,6 +966,25 @@ static BOOL hdrAnimationShown = 0;
 - (void)ijkPlayerSelectedStreamDidChange:(NSNotification *)notifi
 {
     [self updateStreams];
+}
+
+- (void)printICYMeta
+{
+    NSDictionary *dic = self.player.monitor.mediaMeta;
+    NSLog(@"---ICY Meta Changed---------------");
+    NSLog(k_IJKM_KEY_ICY_BR@":%@",dic[k_IJKM_KEY_ICY_BR]);
+    NSLog(k_IJKM_KEY_ICY_DESC@":%@",dic[k_IJKM_KEY_ICY_DESC]);
+    NSLog(k_IJKM_KEY_ICY_GENRE@":%@",dic[k_IJKM_KEY_ICY_GENRE]);
+    NSLog(k_IJKM_KEY_ICY_NAME@":%@",dic[k_IJKM_KEY_ICY_NAME]);
+    NSLog(k_IJKM_KEY_ICY_PUB@":%@",dic[k_IJKM_KEY_ICY_PUB]);
+    NSLog(k_IJKM_KEY_ICY_URL@":%@",dic[k_IJKM_KEY_ICY_URL]);
+    NSLog(k_IJKM_KEY_ICY_ST@":%@",dic[k_IJKM_KEY_ICY_ST]);
+    NSLog(k_IJKM_KEY_ICY_SU@":%@",dic[k_IJKM_KEY_ICY_SU]);
+}
+
+- (void)ijkPlayerICYMetaChanged:(NSNotification *)notifi
+{
+    [self printICYMeta];
 }
 
 - (void)enableComputerSleep:(BOOL)enable

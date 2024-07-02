@@ -1259,7 +1259,14 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_COMPATIBLE_BRANDS, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_MAJOR_BRAND, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_LYRICS, nil);
-        
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_BR, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_DESC, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_GENRE, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_NAME, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_PUB, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_URL, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_ST, nil);
+        fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_SU, nil);        
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_VIDEO_STREAM, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_AUDIO_STREAM, nil);
         fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_TIMEDTEXT_STREAM, nil);
@@ -1635,7 +1642,13 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerVideoDecoderFatalNotification
              object:self userInfo:@{@"code" : @(code),@"msg" : [self averrToString:code]}];
-            break; 
+            break;
+        }
+        case FFP_MSG_ICY_META_CHANGED: {
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:IJKMPMoviePlayerICYMetaChangedNotification
+             object:self userInfo:nil];
+            break;
         }
         default:
             // NSLog(@"unknown FFP_MSG_xxx(%d)\n", avmsg->what);

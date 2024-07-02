@@ -77,6 +77,8 @@ NSString *const IJKMoviePlayerSelectingStreamErrUserInfoKey =
     @"err-code";
 NSString *const IJKMoviePlayerSelectingStreamDidFailed = @"IJKMoviePlayerSelectingStreamDidFailed";
 
+NSString *const IJKMPMoviePlayerICYMetaChangedNotification = @"IJKMPMoviePlayerICYMetaChangedNotification";
+
 @implementation IJKMediaUrlOpenData {
     NSString *_url;
     BOOL _handled;

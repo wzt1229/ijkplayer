@@ -203,6 +203,9 @@ IJK_EXTERN NSString *const IJKMoviePlayerPreSelectingStreamIDUserInfoKey;
 IJK_EXTERN NSString *const IJKMoviePlayerSelectingStreamErrUserInfoKey;
 //select stream failed.
 IJK_EXTERN NSString *const IJKMoviePlayerSelectingStreamDidFailed;
+//icy meta changed.
+IJK_EXTERN NSString *const IJKMPMoviePlayerICYMetaChangedNotification;
+
 @end
 
 #pragma mark IJKMediaUrlOpenDelegate

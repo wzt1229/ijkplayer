@@ -67,6 +67,15 @@
 #define IJKM_KEY_CODEC_PIXEL_FORMAT "codec_pixel_format"
 #define IJKM_KEY_CODEC_PROFILE_ID   "codec_profile_id"
 
+#define IJKM_KEY_ICY_BR             "icy-br"
+#define IJKM_KEY_ICY_DESC           "icy-description"
+#define IJKM_KEY_ICY_GENRE          "icy-genre"
+#define IJKM_KEY_ICY_NAME           "icy-name"
+#define IJKM_KEY_ICY_PUB            "icy-pub"
+#define IJKM_KEY_ICY_URL            "icy-url"
+#define IJKM_KEY_ICY_ST             "StreamTitle"
+#define IJKM_KEY_ICY_SU             "StreamUrl"
+
 // stream: video
 #define IJKM_KEY_WIDTH          "width"
 #define IJKM_KEY_HEIGHT         "height"
@@ -101,6 +110,7 @@ void ijkmeta_unlock(IjkMediaMeta *meta);
 void ijkmeta_append_child_l(IjkMediaMeta *meta, IjkMediaMeta *child);
 void ijkmeta_set_int64_l(IjkMediaMeta *meta, const char *name, int64_t value);
 void ijkmeta_set_string_l(IjkMediaMeta *meta, const char *name, const char *value);
+int ijkmeta_update_icy_from_avformat_context_l(IjkMediaMeta *meta, struct AVFormatContext *ic);
 void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, struct AVFormatContext *ic);
 
 // must be freed with free();

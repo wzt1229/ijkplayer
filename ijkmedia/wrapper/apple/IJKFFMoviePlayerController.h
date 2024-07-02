@@ -39,7 +39,16 @@
 #define k_IJKM_KEY_ARTIST               @"artist"
 #define k_IJKM_KEY_ALBUM                @"album"
 #define k_IJKM_KEY_TYER                 @"TYER"
-
+//icy header
+#define k_IJKM_KEY_ICY_BR               @"icy-br"
+#define k_IJKM_KEY_ICY_DESC             @"icy-description"
+#define k_IJKM_KEY_ICY_GENRE            @"icy-genre"
+#define k_IJKM_KEY_ICY_NAME             @"icy-name"
+#define k_IJKM_KEY_ICY_PUB              @"icy-pub"
+#define k_IJKM_KEY_ICY_URL              @"icy-url"
+//icy meta
+#define k_IJKM_KEY_ICY_ST               @"StreamTitle"
+#define k_IJKM_KEY_ICY_SU               @"StreamUrl"
 
 // stream meta
 #define k_IJKM_KEY_TYPE           @"type"

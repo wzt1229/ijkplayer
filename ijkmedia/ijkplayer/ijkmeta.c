@@ -175,6 +175,44 @@ static int64_t get_bit_rate(AVCodecParameters *codecpar)
     return bit_rate;
 }
 
+//https://stackoverflow.com/questions/15245046/how-to-retrieve-http-headers-from-a-stream-in-ffmpeg
+//https://www.ffmpeg.org/ffmpeg-protocols.html#http
+//https://cast.readme.io/docs/icy
+int ijkmeta_update_icy_from_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
+{
+    int r = 0;
+    if (!meta || !ic)
+        return r;
+    
+    char* metadata = NULL;
+    av_opt_get(ic, "icy_metadata_packet", AV_OPT_SEARCH_CHILDREN, (uint8_t**) &metadata);
+    if (!metadata) {
+        return 0;
+    }
+    
+    char *temp = NULL;
+    char *ptr = av_strtok(metadata, ";", &temp);
+    while (ptr) {
+        char *fs=ptr,*token;
+        char *colon = strchr(fs, '=');
+        if (!colon)
+            continue;
+        *colon = '\0';
+        token = colon + 2;
+        token[strlen(token)-1] = '\0';
+        //av_log(NULL, AV_LOG_DEBUG, "icy_metadata key value:%s=%s\n",fs,token);
+        
+        const char *old_value = ijkmeta_get_string_l(meta, fs);
+        if (token != old_value && (token && old_value && strcmp(token, old_value))) {
+            ijkmeta_set_string_l(meta, fs, token);
+            r++;
+        }
+        ptr = av_strtok(NULL, ";", &temp);
+    }
+    av_free(metadata);
+    return r;
+}
+
 void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
 {
     if (!meta || !ic)
@@ -198,7 +236,7 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         if (tag->value)
             av_log(NULL, AV_LOG_DEBUG, "ic metadata item:%s=%s\n", tag->key, tag->value);
     
-    char *ic_string_val_keys[] = {IJKM_KEY_ARTIST,IJKM_KEY_ALBUM,IJKM_KEY_TYER,IJKM_KEY_MINOR_VER,IJKM_KEY_COMPATIBLE_BRANDS,IJKM_KEY_MAJOR_BRAND,IJKM_KEY_LYRICS,NULL};
+    char *ic_string_val_keys[] = {IJKM_KEY_ARTIST,IJKM_KEY_ALBUM,IJKM_KEY_TYER,IJKM_KEY_MINOR_VER,IJKM_KEY_COMPATIBLE_BRANDS,IJKM_KEY_MAJOR_BRAND,IJKM_KEY_LYRICS,IJKM_KEY_ICY_BR,IJKM_KEY_ICY_DESC,IJKM_KEY_ICY_GENRE,IJKM_KEY_ICY_NAME,IJKM_KEY_ICY_PUB,IJKM_KEY_ICY_URL,IJKM_KEY_ICY_ST,IJKM_KEY_ICY_SU,NULL};
     {
         char **ic_key_header = ic_string_val_keys;
         char *ic_key;

@@ -3281,7 +3281,8 @@ static int read_thread(void *arg)
     int64_t prev_io_tick_counter = 0;
     int64_t io_tick_counter = 0;
     int init_ijkmeta = 0;
-
+    int64_t icy_last_update_time = 0;
+    
     if (!wait_mutex) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
         ret = AVERROR(ENOMEM);
@@ -3873,6 +3874,15 @@ static int read_thread(void *arg)
         }
         
         monkey_log("av_read_frame %s : %0.2f\n",pkt->stream_index == is->audio_stream ? "audio" : "video", pkt->pts * av_q2d(ic->streams[pkt->stream_index]->time_base));
+        
+        int64_t now = av_gettime_relative() / 1000;
+        if (now - icy_last_update_time > ffp->icy_update_period) {
+            icy_last_update_time = now;
+            int r = ijkmeta_update_icy_from_avformat_context_l(ffp->meta, ic);
+            if (r > 0) {
+                ffp_notify_msg1(ffp, FFP_MSG_ICY_META_CHANGED);
+            }
+        }
         
         if (pkt->flags & AV_PKT_FLAG_DISCONTINUITY) {
         #warning TESTME

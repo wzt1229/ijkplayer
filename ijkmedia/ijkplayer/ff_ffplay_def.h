@@ -714,6 +714,9 @@ typedef struct FFPlayer {
     ijk_audio_samples_callback audio_samples_callback;
     
     IJKSDLSubtitlePreference sp;
+    
+    //icy update
+    int64_t icy_update_period;//ms
 } FFPlayer;
 
 #define fftime_to_seconds(ts)      (av_rescale(ts, 1, AV_TIME_BASE))

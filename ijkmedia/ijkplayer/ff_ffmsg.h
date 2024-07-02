@@ -117,4 +117,6 @@
 #define FFP_MSG_AFTER_SEEK_FIRST_FRAME                  30003 /* arg1 = seek duration */
 
 #define FFP_MSG_VIDEO_DECODER_FATAL                     40000 /* arg1 is decoder's err code */
+
+#define FFP_MSG_ICY_META_CHANGED                        40100 /* icy meta changed */
 #endif
