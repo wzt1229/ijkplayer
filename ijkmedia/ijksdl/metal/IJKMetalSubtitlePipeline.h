@@ -25,8 +25,6 @@ NS_CLASS_AVAILABLE(10_13, 11_0)
 - (instancetype)initWithDevice:(id<MTLDevice>)device
                       inFormat:(IJKMetalSubtitleInFormat)inFormat
                      outFormat:(IJKMetalSubtitleOutFormat)outFormat;
-- (void)lock;
-- (void)unlock;
 
 - (BOOL)createRenderPipelineIfNeed;
 - (void)updateSubtitleVertexIfNeed:(CGRect)rect;

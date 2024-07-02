@@ -21,7 +21,6 @@
 @property (nonatomic, strong) id<MTLBuffer> vertices;
 @property (nonatomic, strong) id<MTLBuffer> mvp;
 @property (nonatomic, assign) CGRect lastRect;
-@property (nonatomic, strong) NSLock *pilelineLock;
 
 @end
 
@@ -37,19 +36,8 @@
         _device = device;
         _inFormat = inFormat;
         _outFormat = outFormat;
-        _pilelineLock = [[NSLock alloc] init];
     }
     return self;
-}
-
-- (void)lock
-{
-    [self.pilelineLock lock];
-}
-
-- (void)unlock
-{
-    [self.pilelineLock unlock];
 }
 
 - (BOOL)createRenderPipelineIfNeed

@@ -35,7 +35,8 @@ typedef CGRect NSRect;
 @property (atomic, strong) IJKMetalSubtitlePipeline *subPipeline;
 @property (nonatomic, strong) IJKMetalOffscreenRendering *offscreenRendering;
 @property (atomic, strong) IJKOverlayAttach *currentAttach;
-@property(assign) int hdrAnimationFrameCount;
+@property (assign) int hdrAnimationFrameCount;
+@property (atomic, strong) NSLock *pilelineLock;
 
 @end
 
@@ -66,6 +67,7 @@ typedef CGRect NSRect;
     _rotatePreference   = (IJKSDLRotatePreference){IJKSDLRotateNone, 0.0};
     _colorPreference    = (IJKSDLColorConversionPreference){1.0, 1.0, 1.0};
     _darPreference      = (IJKSDLDARPreference){0.0};
+    _pilelineLock = [[NSLock alloc]init];
     
     self.device = MTLCreateSystemDefaultDevice();
     if (!self.device) {
@@ -183,17 +185,24 @@ typedef CGRect NSRect;
 
 - (BOOL)setupSubPipelineIfNeed
 {
-    if (!self.subPipeline) {
-        self.subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:self.device inFormat:IJKMetalSubtitleInFormatBRGA outFormat:IJKMetalSubtitleOutFormatDIRECT];
+    if (self.subPipeline) {
+        return YES;
     }
     
-    if ([self.subPipeline createRenderPipelineIfNeed]) {
-        return YES;
-    } else {
-        ALOGI("create RenderPipeline failed.");
-        self.subPipeline = nil;
-        return NO;
+    IJKMetalSubtitlePipeline *subPipeline = [[IJKMetalSubtitlePipeline alloc] initWithDevice:self.device inFormat:IJKMetalSubtitleInFormatBRGA outFormat:IJKMetalSubtitleOutFormatDIRECT];
+    
+    BOOL created = [subPipeline createRenderPipelineIfNeed];
+    
+    if (!created) {
+        ALOGE("create subRenderPipeline failed.");
+        subPipeline = nil;
     }
+    
+    [self.pilelineLock lock];
+    self.subPipeline = subPipeline;
+    [self.pilelineLock unlock];
+    
+    return subPipeline != nil;
 }
 
 - (BOOL)setupPipelineIfNeed:(CVPixelBufferRef)pixelBuffer
@@ -201,22 +210,27 @@ typedef CGRect NSRect;
     if (!pixelBuffer) {
         return NO;
     }
+    
     if (self.picturePipeline) {
-        if (![self.picturePipeline matchPixelBuffer:pixelBuffer]) {
-            ALOGI("pixel format not match,need rebuild pipeline");
-            self.picturePipeline = nil;
-        } else {
+        if ([self.picturePipeline matchPixelBuffer:pixelBuffer]) {
             return YES;
         }
+        ALOGI("pixel format not match,need rebuild pipeline");
     }
-    self.picturePipeline = [[IJKMetalRenderer alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
-    if ([self.picturePipeline createRenderPipelineIfNeed:pixelBuffer]) {
-        return YES;
-    } else {
+    
+    IJKMetalRenderer *picturePipeline = [[IJKMetalRenderer alloc] initWithDevice:self.device colorPixelFormat:self.colorPixelFormat];
+    BOOL created = [picturePipeline createRenderPipelineIfNeed:pixelBuffer];
+    
+    if (!created) {
         ALOGI("create RenderPipeline failed.");
-        self.picturePipeline = nil;
-        return NO;
+        picturePipeline = nil;
     }
+    
+    [self.pilelineLock lock];
+    self.picturePipeline = picturePipeline;
+    [self.pilelineLock unlock];
+    
+    return picturePipeline != nil;
 }
 
 - (void)encodePicture:(IJKOverlayAttach *)attach
@@ -225,7 +239,7 @@ typedef CGRect NSRect;
                 ratio:(CGSize)ratio
         hdrPercentage:(float)hdrPercentage
 {
-    [self.picturePipeline lock];
+    [self.pilelineLock lock];
     self.picturePipeline.hdrPercentage = hdrPercentage;
     self.picturePipeline.autoZRotateDegrees = attach.autoZRotate;
     self.picturePipeline.rotateType = self.rotatePreference.type;
@@ -242,14 +256,14 @@ typedef CGRect NSRect;
     //upload textures
     [self.picturePipeline uploadTextureWithEncoder:renderEncoder
                                           textures:attach.videoTextures];
-    [self.picturePipeline unlock];
+    [self.pilelineLock unlock];
 }
 
 - (void)encodeSubtitle:(id<MTLRenderCommandEncoder>)renderEncoder
               viewport:(CGSize)viewport
                texture:(id<MTLTexture>)subTexture
 {
-    [self.subPipeline lock];
+    [self.pilelineLock lock];
     // Set the region of the drawable to draw into.
     [renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
     //upload textures
@@ -269,7 +283,7 @@ typedef CGRect NSRect;
 
     [self.subPipeline updateSubtitleVertexIfNeed:subRect];
     [self.subPipeline drawTexture:subTexture encoder:renderEncoder];
-    [self.subPipeline unlock];
+    [self.pilelineLock unlock];
 }
 
 /// Called whenever the view needs to render a frame.

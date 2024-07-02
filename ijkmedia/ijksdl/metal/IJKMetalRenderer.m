@@ -31,7 +31,6 @@
 
 @property (nonatomic, strong) IJKMetalPipelineMeta *pipelineMeta;
 @property (nonatomic, assign) BOOL vertexChanged;
-@property (nonatomic, strong) NSLock *pilelineLock;
 
 @end
 
@@ -46,20 +45,9 @@
         _device = device;
         _colorPixelFormat = colorPixelFormat;
         _colorAdjustment = (vector_float4){0.0};
-        _pilelineLock = [[NSLock alloc]init];
         _hdrPercentage = 0.0;
     }
     return self;
-}
-
-- (void)lock
-{
-    [self.pilelineLock lock];
-}
-
-- (void)unlock
-{
-    [self.pilelineLock unlock];
 }
 
 - (BOOL)isHDR

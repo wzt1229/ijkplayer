@@ -246,7 +246,6 @@ static void beginDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay, int ass)
             fop->renderEncoder = [fop->fbo createRenderEncoder:commandBuffer];
             fop->commandBuffer = commandBuffer;
             
-            [fop->subPipeline lock];
             // Set the region of the drawable to draw into.
             CGSize viewport = [fop->fbo size];
             [fop->renderEncoder setViewport:(MTLViewport){0.0, 0.0, viewport.width, viewport.height, -1.0, 1.0}];
@@ -287,7 +286,6 @@ static void endDraw_fbo(SDL_GPU *gpu, SDL_FBOOverlay *overlay)
     fop->renderEncoder = nil;
     fop->parallelRenderEncoder = nil;
     fop->commandBuffer = nil;
-    [fop->subPipeline unlock];
 }
 
 static void clear_fbo(SDL_FBOOverlay *overlay)
