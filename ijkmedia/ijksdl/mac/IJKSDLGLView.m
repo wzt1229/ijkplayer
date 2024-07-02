@@ -334,6 +334,13 @@ static void unlock_gl(NSOpenGLContext *ctx)
     }
 }
 
+- (void)sendHDRAnimationNotifiOnMainThread:(int)state
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(state)}];
+    });
+}
+
 - (void)doUploadVideoPicture:(IJKOverlayAttach *)attach
 {
     if (attach.videoPicture) {
@@ -348,11 +355,10 @@ static void unlock_gl(NSOpenGLContext *ctx)
                 if (frameCount >= 0) {
                     if (frameCount <= maxCount) {
                         if (frameCount == 0) {
-                            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(1)}];
+                            [self sendHDRAnimationNotifiOnMainThread:1];
                         } else if (frameCount == maxCount) {
-                            [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerHDRAnimationStateChanged object:self userInfo:@{@"state":@(2)}];
+                            [self sendHDRAnimationNotifiOnMainThread:2];
                         }
-                        
                         hdrPer = 0.5 + 0.5 * frameCount / maxCount;
                     }
                 } else {
