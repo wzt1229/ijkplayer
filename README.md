@@ -25,7 +25,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 ## Features
 
 - Common
-  - enabled ffmpeg all decoders and demuxers binary size is bigger [shell/ffconfig/module-full.sh](shell/ffconfig/module-full.sh)
+  - enabled ffmpeg all decoders and demuxers binary size is bigger [FFToolChain/ffconfig/module-full.sh](FFToolChain/ffconfig/module-full.sh)
   - workaround for some buggy online video
 - iOS/macOS/tvOS
   - video-output: Metal 2/OpenGL ES 2.0/OpenGL 3.3
@@ -64,9 +64,9 @@ cd ijkplayer
 git checkout -B latest k0.11.3
 git submodule update --init
 
-./shell/main.sh install -p macos -l 'ass ffmpeg'
-./shell/main.sh install -p ios -l 'ass ffmpeg'
-./shell/main.sh install -p tvos -l 'ass ffmpeg'
+./FFToolChain/main.sh install -p macos -l 'ass ffmpeg'
+./FFToolChain/main.sh install -p ios -l 'ass ffmpeg'
+./FFToolChain/main.sh install -p tvos -l 'ass ffmpeg'
 
 pod install --project-directory=./examples/macos
 pod install --project-directory=./examples/ios
