@@ -730,7 +730,7 @@ static BOOL hdrAnimationShown = 0;
     [self applySubtitlePreference];
 }
 
-#pragma mark - ijkplayer
+#pragma mark - ijkplayer notifi
 
 - (void)ijkPlayerOpenInput:(NSNotification *)notifi
 {
@@ -924,6 +924,16 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
+- (void)ijkPlayerSelectedStreamDidChange:(NSNotification *)notifi
+{
+    [self updateStreams];
+}
+
+- (void)ijkPlayerICYMetaChanged:(NSNotification *)notifi
+{
+    [self printICYMeta];
+}
+
 - (void)saveCurrentPlayRecord
 {
     if (self.playingUrl && self.player) {
@@ -948,7 +958,7 @@ static BOOL hdrAnimationShown = 0;
     return 0.0;
 }
 
-- (void)updateStreams 
+- (void)updateStreams
 {
     if (self.player.isPreparedToPlay) {
         NSDictionary *dic = self.player.monitor.mediaMeta;
@@ -963,11 +973,6 @@ static BOOL hdrAnimationShown = 0;
     }
 }
 
-- (void)ijkPlayerSelectedStreamDidChange:(NSNotification *)notifi
-{
-    [self updateStreams];
-}
-
 - (void)printICYMeta
 {
     NSDictionary *dic = self.player.monitor.mediaMeta;
@@ -980,11 +985,6 @@ static BOOL hdrAnimationShown = 0;
     NSLog(k_IJKM_KEY_ICY_URL@":%@",dic[k_IJKM_KEY_ICY_URL]);
     NSLog(k_IJKM_KEY_ICY_ST@":%@",dic[k_IJKM_KEY_ICY_ST]);
     NSLog(k_IJKM_KEY_ICY_SU@":%@",dic[k_IJKM_KEY_ICY_SU]);
-}
-
-- (void)ijkPlayerICYMetaChanged:(NSNotification *)notifi
-{
-    [self printICYMeta];
 }
 
 - (void)enableComputerSleep:(BOOL)enable
@@ -1081,10 +1081,12 @@ static BOOL hdrAnimationShown = 0;
         NSURL *url = dic[@"url"];
         
         if ([[[url pathExtension] lowercaseString] isEqualToString:@"xlist"]) {
-            if ([self existingInPlayList:url]) {
-                continue;
+            for (NSURL *u in [MRUtil parseXPlayList:url]) {
+                if ([self existingInPlayList:u]) {
+                    continue;
+                }
+                [videos addObject:u];
             }
-            [videos addObjectsFromArray:[MRUtil parseXPlayList:url]];
         } else if ([dic[@"type"] intValue] == 0) {
             if ([self existingInPlayList:url]) {
                 continue;

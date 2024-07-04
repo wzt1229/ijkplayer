@@ -1107,7 +1107,7 @@
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QHP-gf-js6">
-                    <rect key="frame" x="197" y="891" width="24" height="23"/>
+                    <rect key="frame" x="197" y="918" width="24" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="switch-off" imagePosition="only" alignment="center" alternateImage="switch-on" imageScaling="proportionallyDown" inset="2" id="XTC-XY-Ibm">
                         <behavior key="behavior" pushIn="YES" changeContents="YES" lightByContents="YES"/>

@@ -161,14 +161,12 @@
             continue;
         } else if ([path hasPrefix:@"#"]) {
             continue;
-        } else if ([path hasPrefix:@"--break"]) {
-            break;
         } else if ([path hasPrefix:@"--begin"]) {
             begin = (int)preLines.count;
             continue;
         } else if ([path hasPrefix:@"--end"]) {
             end = (int)preLines.count;
-            continue;
+            break;
         }
         path = [path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         [preLines addObject:path];
@@ -190,12 +188,6 @@
         NSString *path = preLines2[i];
         if (!path || [path length] == 0) {
             continue;
-        }
-        if ([path hasPrefix:@"#"]) {
-            continue;
-        }
-        if ([path hasPrefix:@"--break"]) {
-            break;
         }
         NSURL *url = [NSURL URLWithString:path];
         [playList addObject:url];
