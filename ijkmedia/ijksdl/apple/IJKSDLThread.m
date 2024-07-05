@@ -48,14 +48,16 @@
 
 - (void)start
 {
-    _shouldStop = NO;
-    _thread = [[NSThread alloc] initWithTarget:self selector:@selector(main) object:nil];
-    if (self.name) {
-        [_thread setName:self.name];
-    } else {
-        [_thread setName:[NSString stringWithFormat:@"%@",NSStringFromClass([self class])]];
+    if (!_thread) {
+        _shouldStop = NO;
+        _thread = [[NSThread alloc] initWithTarget:self selector:@selector(main) object:nil];
+        if (self.name) {
+            [_thread setName:self.name];
+        } else {
+            [_thread setName:[NSString stringWithFormat:@"%@",NSStringFromClass([self class])]];
+        }
+        [_thread start];
     }
-    [_thread start];
 }
 
 - (void)main
@@ -63,20 +65,17 @@
     [[NSRunLoop currentRunLoop] addPort:[[NSPort alloc] init] forMode:NSDefaultRunLoopMode];
 
     while (!self.shouldStop) {
-        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+        BOOL r = [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
     }
-}
-
-- (void)_stop
-{
-    self.shouldStop = YES;
+    
     CFRunLoopStop(CFRunLoopGetCurrent());
-    self.thread = nil;
 }
 
 - (void)stop
 {
-    [self performSelector:@selector(_stop) onThread:_thread withObject:nil waitUntilDone:NO];
+    self.shouldStop = YES;
+    //just let runloop runMode:beforeDate: return
+    [self performSelector:@selector(description) onThread:_thread withObject:nil waitUntilDone:YES];
 }
 
 - (void)performSelector:(SEL)aSelector
@@ -84,6 +83,9 @@
              withObject:(nullable id)arg
           waitUntilDone:(BOOL)wait
 {
+    if (self.shouldStop) {
+        return;
+    }
     [target performSelector:aSelector
                  onThread:_thread
                withObject:arg
