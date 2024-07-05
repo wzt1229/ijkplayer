@@ -1240,6 +1240,28 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
     }
 }
 
+- (void)updateICYMeta:(IjkMediaMeta*)rawMeta
+{
+    if (!rawMeta) {
+        return;
+    }
+    ijkmeta_lock(rawMeta);
+    NSMutableDictionary *newMediaMeta = [[NSMutableDictionary alloc] init];
+    fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_BR, nil);
+    fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_DESC, nil);
+    fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_GENRE, nil);
+    fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_NAME, nil);
+    fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_PUB, nil);
+    fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_URL, nil);
+    fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_ST, nil);
+    fillMetaInternal(newMediaMeta, rawMeta, IJKM_KEY_ICY_SU, nil);
+    
+    NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:_monitor.mediaMeta];
+    [dic addEntriesFromDictionary:newMediaMeta];
+    _monitor.mediaMeta = [dic copy];
+    ijkmeta_unlock(rawMeta);
+}
+
 - (void) traverseIJKMetaData:(IjkMediaMeta*)rawMeta
 {
     if (rawMeta) {
@@ -1645,6 +1667,8 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             break;
         }
         case FFP_MSG_ICY_META_CHANGED: {
+            IjkMediaMeta *rawMeta = ijkmp_get_meta_l(_mediaPlayer);
+            [self updateICYMeta:rawMeta];
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerICYMetaChangedNotification
              object:self userInfo:nil];
