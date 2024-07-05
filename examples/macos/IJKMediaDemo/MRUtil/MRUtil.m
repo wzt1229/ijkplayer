@@ -168,7 +168,7 @@
             continue;
         } else if ([path hasPrefix:@"--end"]) {
             end = (int)preLines.count;
-            continue;
+            break;
         }
         path = [path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         [preLines addObject:path];
