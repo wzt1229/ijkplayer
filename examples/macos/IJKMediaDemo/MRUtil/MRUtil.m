@@ -159,7 +159,7 @@
         NSString *path = lines[i];
         if (!path || [path length] == 0) {
             continue;
-        } else if ([path hasPrefix:@"#"]) {
+        } else if ([path hasPrefix:@"#"] || ([path hasPrefix:@"-"] && ![path hasPrefix:@"--"] )) {
             continue;
         } else if ([path hasPrefix:@"--begin"]) {
             begin = (int)preLines.count;
