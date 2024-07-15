@@ -277,6 +277,11 @@ static GLvoid updateHDRAnimation(IJK_GLES2_Renderer *renderer,float per)
     renderer->hdrAnimationPercentage = per;
 }
 
+GLboolean isHDR(IJK_GLES2_Renderer *renderer)
+{
+    return renderer->isHDR;
+}
+
 static GLboolean uploadSubtitle(IJK_GLES2_Renderer *renderer, int texture, int w, int h)
 {
     if (!texture) {
@@ -416,6 +421,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
     renderer->colorMatrix = colorMatrixType;
     renderer->isFullRange = fullRange;
     renderer->transferFun = tf;
+    renderer->isHDR = shaderType == YUV_2P_HDR_SHADER;
     
     const int samples = IJK_Sample_Count_For_Shader(shaderType);
     
@@ -441,6 +447,7 @@ IJK_GLES2_Renderer *ijk_create_common_gl_Renderer(CVPixelBufferRef videoPicture,
     renderer->func_useSubtitle    = useSubtitle;
     renderer->func_uploadSubtitle = uploadSubtitle;
     renderer->func_updateHDRAnimation = updateHDRAnimation;
+    renderer->func_isHDR = isHDR;
     renderer->opaque = calloc(1, sizeof(IJK_GLES2_Renderer_Opaque));
     if (!renderer->opaque)
         goto fail;

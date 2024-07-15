@@ -837,6 +837,13 @@ void IJK_GLES2_Renderer_updateHdrAnimationProgress(IJK_GLES2_Renderer *renderer,
     renderer->func_updateHDRAnimation(renderer, per);
 }
 
+GLboolean IJK_GLES2_Renderer_isHDR(IJK_GLES2_Renderer *renderer)
+{
+    if (!renderer || !renderer->func_isHDR)
+        return GL_FALSE;
+    return renderer->func_isHDR(renderer);
+}
+
 void IJK_GLES2_Renderer_drawArrays(void)
 {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); IJK_GLES2_checkError_TRACE("glDrawArrays");

@@ -95,6 +95,7 @@ typedef struct IJK_GLES2_Renderer
     IJK_Color_Transfer_Function transferFun;
     GLint transferFunUM;
     GLboolean isFullRange;
+    GLboolean isHDR;
     GLint fullRangeUM;
     GLfloat hdrAnimationPercentage;
     GLint hdrAnimationUM;
@@ -106,6 +107,7 @@ typedef struct IJK_GLES2_Renderer
     GLvoid    (*func_useSubtitle)(IJK_GLES2_Renderer *renderer,GLboolean subtitle);
     GLboolean (*func_uploadSubtitle)(IJK_GLES2_Renderer *renderer, int tex, int w, int h);
     GLvoid    (*func_updateHDRAnimation)(IJK_GLES2_Renderer *renderer, float per);
+    GLboolean (*func_isHDR)(IJK_GLES2_Renderer *renderer);
 #ifndef __APPLE__
     void*     (*func_getVideoImage)(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
 #endif

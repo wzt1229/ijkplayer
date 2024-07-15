@@ -345,27 +345,29 @@ static void unlock_gl(NSOpenGLContext *ctx)
 {
     if (attach.videoPicture) {
         if (IJK_GLES2_Renderer_updateVertex2(_renderer, attach.h, attach.w, attach.pixelW, attach.sarNum, attach.sarDen)) {
-            float hdrPer = 1.0;
-            if (self.showHdrAnimation) {
-        #define _C(c) (attach.fps > 0 ? (int)ceil(attach.fps * c / 24.0) : c)
-                int delay = _C(100);
-                int maxCount = _C(100);
-        #undef _C
-                int frameCount = ++self.hdrAnimationFrameCount - delay;
-                if (frameCount >= 0) {
-                    if (frameCount <= maxCount) {
-                        if (frameCount == 0) {
-                            [self sendHDRAnimationNotifiOnMainThread:1];
-                        } else if (frameCount == maxCount) {
-                            [self sendHDRAnimationNotifiOnMainThread:2];
+            if (IJK_GLES2_Renderer_isHDR(_renderer)) {
+                float hdrPer = 1.0;
+                if (self.showHdrAnimation) {
+            #define _C(c) (attach.fps > 0 ? (int)ceil(attach.fps * c / 24.0) : c)
+                    int delay = _C(100);
+                    int maxCount = _C(100);
+            #undef _C
+                    int frameCount = ++self.hdrAnimationFrameCount - delay;
+                    if (frameCount >= 0) {
+                        if (frameCount <= maxCount) {
+                            if (frameCount == 0) {
+                                [self sendHDRAnimationNotifiOnMainThread:1];
+                            } else if (frameCount == maxCount) {
+                                [self sendHDRAnimationNotifiOnMainThread:2];
+                            }
+                            hdrPer = 0.5 + 0.5 * frameCount / maxCount;
                         }
-                        hdrPer = 0.5 + 0.5 * frameCount / maxCount;
+                    } else {
+                        hdrPer = 0.5;
                     }
-                } else {
-                    hdrPer = 0.5;
                 }
+                IJK_GLES2_Renderer_updateHdrAnimationProgress(_renderer, hdrPer);
             }
-            IJK_GLES2_Renderer_updateHdrAnimationProgress(_renderer, hdrPer);
             if (IJK_GLES2_Renderer_uploadTexture(_renderer, (void *)attach.videoPicture)) {
                 IJK_GLES2_Renderer_drawArrays();
             } else {
