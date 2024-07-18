@@ -1,8 +1,17 @@
+tag k0.11.4
+--------------------------------
+
+- fix ICY meta not update bug,#28
+- fix HDR animation shown bug
+- fix Metal Renderer crash
+- modify BT.601 matrix same as Apple demo
+- improve stop runloop logic for IJKSDLThread
+
 tag k0.11.3
 --------------------------------
 
 - parse LYRICS meta,#22
-- parse ICY Header and update ICY meta,#28
+- parse ICY Header and update ICY meta
 - use git submodule manage compile shell
 - fix http chunked transfer get wrong size cause av_read_frame can not return eof bug
 - increase ass frame cache amount
