@@ -134,6 +134,7 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt)
     return NULL;
 }
 
+//https://developer.apple.com/library/archive/samplecode/AVBasicVideoOutput/Listings/AVBasicVideoOutput_APLEAGLView_m.html
 IJKConvertMatrix ijk_metal_create_color_matrix(IJKYUV2RGBColorMatrixType matrixType, int fullRange)
 {
     IJKConvertMatrix matrix = {0.0};
@@ -142,7 +143,7 @@ IJKConvertMatrix ijk_metal_create_color_matrix(IJKYUV2RGBColorMatrixType matrixT
         {
             matrix.colorMatrix = (matrix_float3x3){
                 (simd_float3){1.164,  1.164, 1.164},
-                (simd_float3){0.0,   -0.391, 2.018},
+                (simd_float3){0.0,   -0.392, 2.017},
                 (simd_float3){1.596, -0.813, 0.0},
             };
         }

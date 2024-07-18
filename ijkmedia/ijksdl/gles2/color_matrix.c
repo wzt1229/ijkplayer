@@ -45,12 +45,13 @@ const GLfloat *IJK_GLES2_getColorMatrix_bt709(void)
     return g_bt709;
 }
 
+//https://developer.apple.com/library/archive/samplecode/AVBasicVideoOutput/Listings/AVBasicVideoOutput_APLEAGLView_m.html
 const GLfloat *IJK_GLES2_getColorMatrix_bt601(void)
 {
     // BT.601, which is the standard for HDTV.
     static const GLfloat g_bt601[] = {
         1.164,  1.164, 1.164,
-        0.0,   -0.391, 2.018,
+        0.0,   -0.392, 2.017,
         1.596, -0.813, 0.0,
     };
     return g_bt601;
