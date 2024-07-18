@@ -417,6 +417,11 @@ static BOOL hdrAnimationShown = 0;
                 }
             }
                 break;
+            case kVK_ANSI_D:
+            {
+                [self retry];
+            }
+                break;
             default:
             {
                 NSLog(@"0x%X",[event keyCode]);
@@ -688,7 +693,7 @@ static BOOL hdrAnimationShown = 0;
     playerView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self.playerContainer addSubview:playerView positioned:NSWindowBelow relativeTo:self.playerCtrlPanel];
     
-    playerView.showHdrAnimation = YES || !hdrAnimationShown;
+    playerView.showHdrAnimation = !hdrAnimationShown;
     //playerView.preventDisplay = YES;
     //test
     [playerView setBackgroundColor:0 g:0 b:0];
@@ -1229,10 +1234,13 @@ static BOOL hdrAnimationShown = 0;
 
 - (void)retry
 {
+    self.usingHardwareAccelerate = [self preferHW];
+    float playbackRate = self.player.playbackRate;
+    
     NSURL *url = self.playingUrl;
     [self onStop];
-    self.usingHardwareAccelerate = [self preferHW];
     [self playURL:url];
+    self.player.playbackRate = playbackRate;
 }
 
 - (void)onStop
