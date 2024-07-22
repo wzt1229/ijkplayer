@@ -4082,11 +4082,9 @@ fail:
 // FFP_MERGE: toggle_audio_display
 // FFP_MERGE: refresh_loop_wait_event
 // FFP_MERGE: event_loop
-// FFP_MERGE: opt_frame_size
 // FFP_MERGE: opt_width
 // FFP_MERGE: opt_height
 // FFP_MERGE: opt_format
-// FFP_MERGE: opt_frame_pix_fmt
 // FFP_MERGE: opt_sync
 // FFP_MERGE: opt_seek
 // FFP_MERGE: opt_duration
