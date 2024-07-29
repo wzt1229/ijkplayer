@@ -1,5 +1,5 @@
 <div align="center">
-  <img alt="ijkplayer" src="./primay-wide.jpg">
+  <img alt="ijkplayer" src="./primary-wide.png">
   <h1>ijkplayer</h1>
   <img src="https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg">
 </div>
