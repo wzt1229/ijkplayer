@@ -196,7 +196,7 @@ static int ff_sub_upload_buffer(FFSubtitle *sub, float pts, FFSubtitleBufferPack
     }
     SDL_LockMutex(sub->mutex);
     sub->current_pts = pts;
-    pts += (sub ? sub->delay : 0.0);
+    pts -= (sub ? sub->delay : 0.0);
     int err = -20;
     if (sub->com) {
         if (subComponent_get_stream(sub->com) >= 0) {
