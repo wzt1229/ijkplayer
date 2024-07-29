@@ -5413,15 +5413,20 @@ float ffp_get_audio_extra_delay(FFPlayer *ffp)
     return get_clock_extral_delay(&is->audclk);
 }
 
-void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay)
+void ffp_set_subtitle_extra_delay(FFPlayer *ffp, const float delay, int64_t * need_seek)
 {
     SDL_LockMutex(ffp->is->play_mutex);
     VideoState *is = ffp->is;
     int64_t ms = ffp_get_current_position_l(ffp);
     int r = ff_sub_set_delay(is->ffSub, delay, ms/1000.0);
     SDL_UnlockMutex(ffp->is->play_mutex);
+    if (need_seek) {
+        *need_seek = -1;
+    }
     if (r == 1) {
-        ffp_seek_to_l(ffp, ms-500);
+        if (need_seek) {
+            *need_seek = ms > 500 ? ms - 500 : 0;
+        }
     }
 }
 

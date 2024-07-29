@@ -714,13 +714,21 @@ int ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block)
 
         case FFP_MSG_SEEK_COMPLETE:
             MPTRACE("ijkmp_get_msg: FFP_MSG_SEEK_COMPLETE\n");
-
+            long seek_msec2 = 0;
             pthread_mutex_lock(&mp->mutex);
             mp->seek_req = 0;
             mp->seek_msec = 0;
+            if (mp->seek_req2) {
+                seek_msec2 = mp->seek_msec2;
+                mp->seek_msec2 = 0;
+                mp->seek_req2 = 0;
+            }
             pthread_mutex_unlock(&mp->mutex);
+            if (seek_msec2 > 0) {
+                av_log(mp->ffplayer, AV_LOG_INFO, "apply last wanted seek pos %d\n", (int)seek_msec2);
+                ijkmp_seek_to(mp, seek_msec2);
+            }
             break;
-
         case FFP_REQ_START:
             MPTRACE("ijkmp_get_msg: FFP_REQ_START\n");
             continue_wait_next_msg = 1;
@@ -770,8 +778,14 @@ int ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block)
             pthread_mutex_lock(&mp->mutex);
             if (0 == ikjmp_chkst_seek_l(mp->mp_state)) {
                 mp->restart_from_beginning = 0;
-                if (0 == ffp_seek_to_l(mp->ffplayer, msg->arg1)) {
+                int err = ffp_seek_to_l(mp->ffplayer, msg->arg1);
+                if (0 == err) {
                     av_log(mp->ffplayer, AV_LOG_DEBUG, "ijkmp_get_msg: FFP_REQ_SEEK: seek to %d\n", (int)msg->arg1);
+                } else if (err == EIJK_FAILED) {
+                    //record last wanted seek pos.
+                    av_log(mp->ffplayer, AV_LOG_DEBUG, "record wanted seek pos %d\n", (int)msg->arg1);
+                    mp->seek_req2 = 1;
+                    mp->seek_msec2 = msg->arg1;
                 }
             }
             pthread_mutex_unlock(&mp->mutex);
@@ -803,7 +817,11 @@ float ijkmp_get_audio_extra_delay(IjkMediaPlayer *mp)
 void ijkmp_set_subtitle_extra_delay(IjkMediaPlayer* mp, const float delay)
 {
     assert(mp);
-    ffp_set_subtitle_extra_delay(mp->ffplayer, delay);
+    int64_t need_seek = -1;
+    ffp_set_subtitle_extra_delay(mp->ffplayer, delay, &need_seek);
+    if (need_seek >= 0) {
+        ijkmp_seek_to(mp, need_seek);
+    }
 }
 
 float ijkmp_get_subtitle_extra_delay(IjkMediaPlayer* mp)
