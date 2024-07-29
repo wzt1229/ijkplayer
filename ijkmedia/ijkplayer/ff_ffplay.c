@@ -3243,7 +3243,7 @@ static void reset_buffer_size(FFPlayer *ffp)
     double audio_dealy = ffp->is->audio_st ? get_clock_extral_delay(&ffp->is->audclk) : 0;
     AVFormatContext *ic = ffp->is->ic;
     if (ic->bit_rate > 0) {
-        buffer_size = ic->bit_rate * (MAX_PACKETS_CACHE_DURATION) / 8;
+        buffer_size = (int)(ic->bit_rate / 8) * (MAX_PACKETS_CACHE_DURATION);
 //        if (ic->bit_rate < 10000000) {
 //            buffer_size += ic->bit_rate/1000000 * 1024 * 1024;
 //        } else {

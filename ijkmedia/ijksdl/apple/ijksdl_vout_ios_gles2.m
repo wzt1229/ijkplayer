@@ -284,7 +284,12 @@ SDL_GPU *SDL_CreateGPU_WithContext(id context)
     if ([context isKindOfClass:[NSOpenGLContext class]]) {
         return SDL_CreateGPU_WithGLContext(context);
     } else if (context){
-        return SDL_CreateGPU_WithMTLDevice(context);
+        if (@available(macOS 10.13, iOS 11.0, tvOS 12.0, *)) {
+            return SDL_CreateGPU_WithMTLDevice(context);
+        } else {
+            ALOGE("this version can't use metal!");
+            assert(0);
+        }
     }
 #else
     return SDL_CreateGPU_WithMTLDevice(context);
@@ -429,7 +434,7 @@ void SaveIMGToFile(uint8_t *data,int width,int height,IMG_FORMAT format, char *t
                 }
                 NSString *fileName = [NSString stringWithFormat:@"%s-%d.png",tag,pts];
                 NSString *filePath = [dir stringByAppendingPathComponent:fileName];
-                NSLog(@"save img:%@",filePath);
+                ALOGI("save img:%@",filePath);
                 saveImageToFile(img, filePath);
                 CFRelease(img);
             }

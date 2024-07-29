@@ -19,7 +19,7 @@ typedef enum : NSUInteger {
     IJKMetalSubtitleInFormatA8,
 } IJKMetalSubtitleInFormat;
 
-NS_CLASS_AVAILABLE(10_13, 11_0)
+API_AVAILABLE(macos(10.13),ios(11.0),tvos(12.0))
 @interface IJKMetalSubtitlePipeline : NSObject
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
