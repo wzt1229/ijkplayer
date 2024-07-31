@@ -5,8 +5,7 @@
 
 在热心网友的提议下，我开通了这个捐助方式，如果您想要为开源社区贡献一份力量，请买杯咖啡给我提提神儿。
 
-[![donate.jpg](https://i.postimg.cc/xdVqnBLp/IMG-7481.jpg)](https://postimg.cc/mPVTSXX7)
-
+![donate.jpg](https://i.postimg.cc/xdVqnBLp/IMG-7481.jpg)
 
 ## 捐赠列表
 
