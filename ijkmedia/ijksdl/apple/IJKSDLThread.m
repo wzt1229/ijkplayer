@@ -26,7 +26,7 @@
 @interface IJKSDLThread ()
 
 @property (nonatomic, strong) NSThread *thread;
-@property (nonatomic, assign) BOOL shouldStop;
+@property (atomic, assign) BOOL shouldStop;
 
 @end
 
@@ -71,11 +71,15 @@
     CFRunLoopStop(CFRunLoopGetCurrent());
 }
 
-- (void)stop
+- (void)_stop
 {
     self.shouldStop = YES;
-    //just let runloop runMode:beforeDate: return
-    [self performSelector:@selector(description) onThread:_thread withObject:nil waitUntilDone:YES];
+}
+
+- (void)stop
+{
+    //fix crash target thread exited while waiting for the perform
+    [self performSelector:@selector(_stop) onThread:_thread withObject:nil waitUntilDone:YES];
 }
 
 - (void)performSelector:(SEL)aSelector
@@ -87,9 +91,9 @@
         return;
     }
     [target performSelector:aSelector
-                 onThread:_thread
-               withObject:arg
-            waitUntilDone:wait];
+                   onThread:_thread
+                 withObject:arg
+              waitUntilDone:wait];
 }
 
 @end
