@@ -17,7 +17,6 @@ jobs:
       uses: actions/checkout@v4
       with:
           submodules: recursive
-          ref: develop
     - name: Read Tag Version
       run: |
         grep -m 1 VERSION_NAME= version.sh | awk -F = '{printf "TAG=%s",$2}' | xargs > constants.env
@@ -67,6 +66,6 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        date=$(TZ=UTC-8 date +'%y%m%d%H%M%S')
-        tag="k${{ env.TAG }}-beta-${{ date }}"
+        r_date=$(TZ=UTC-8 date +'%y%m%d%H%M%S')
+        tag="k${{ env.TAG }}-beta-${{ r_date }}"
         gh release create ${{ tag }} -p -t "👏👏 IJKMediaPlayerKit ${{ tag }}" FFToolChain/build/dist/*.*
