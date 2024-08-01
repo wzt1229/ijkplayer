@@ -1407,7 +1407,10 @@ static BOOL hdrAnimationShown = 0;
     p.Outline = [MRCocoaBindingUserDefault Outline];
     p.BottomMargin = ([MRCocoaBindingUserDefault subtitle_bottom_margin] - 20) / 100.0;
     p.Scale = [MRCocoaBindingUserDefault subtitle_scale];
+    
+    strcpy(p.FontsDir, "/Users/matt/Pictures/ijkPro/Fonts");
     NSString *name = [MRCocoaBindingUserDefault FontName];
+    //name = @"寒蝉全圆体";
     if (name) {
         strcpy(p.FontName,[name UTF8String]);
     } else {

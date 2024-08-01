@@ -274,8 +274,12 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
     
     com->sub_width  = com->video_width;
     com->sub_height = com->video_height;
-    com->assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->sub_width, com->sub_height, NULL);
-    
+    AVDictionary *opts = NULL;
+    if (strlen(com->sp.FontsDir)) {
+        av_dict_set(&opts, "fontsdir", av_strdup(com->sp.FontsDir), 0);
+    }
+    com->assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->sub_width, com->sub_height, &opts);
+    av_dict_free(&opts);
     apply_preference(com);
     
     return NULL == com->assRenderer;

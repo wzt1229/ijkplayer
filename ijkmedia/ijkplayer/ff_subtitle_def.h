@@ -38,11 +38,12 @@ typedef struct IJKSDLSubtitlePreference {
     uint32_t BackColour;//字体阴影色
     uint32_t OutlineColour;//字体边框颜色
     float Outline;//Outline 边框宽度
+    char FontsDir[1024];//存放字体的文件夹路径（当字体没有安装到系统里时指定）
 } IJKSDLSubtitlePreference;
 
 static inline IJKSDLSubtitlePreference ijk_subtitle_default_preference(void)
 {
-    return (IJKSDLSubtitlePreference){1.0, 0.025, 0, "", 0xFFFFFF00, 0x00FFFF00, 0x00000080, 0, 1};
+    return (IJKSDLSubtitlePreference){1.0, 0.025, 0, "", 0xFFFFFF00, 0x00FFFF00, 0x00000080, 0, 1, ""};
 }
 
 static inline uint32_t str_to_uint32_color(char *token)
@@ -87,7 +88,8 @@ static inline int isIJKSDLSubtitlePreferenceEqual(IJKSDLSubtitlePreference* p1,I
         p1->OutlineColour != p2->OutlineColour ||
         p1->Outline != p2->Outline ||
         p1->BottomMargin != p2->BottomMargin ||
-        strcmp(p1->FontName, p2->FontName)
+        strcmp(p1->FontName, p2->FontName) ||
+        strcmp(p1->FontsDir, p2->FontsDir)
         ) {
         return 0;
     }
