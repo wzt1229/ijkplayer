@@ -1,4 +1,4 @@
-name: IJKMediaPlayerKit
+name: apple-ijk-framework
 
 on:
   # push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: apple-ijk-framework
+    name: build-apple-ijk-framework
     runs-on: macos-14
 
     steps:
