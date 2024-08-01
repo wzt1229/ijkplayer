@@ -44,6 +44,11 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 - upgrade FFmpeg to 6.x
 - exchange video resolution gapless
 
+## Donate
+
+- Donate to [debugly/ijkplayer](./Donate.md)
+- 捐赠 [debugly/ijkplayer](./Donate.md)
+
 ## Installation
 
 install use cocoapod:
