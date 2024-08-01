@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: apple-ijk-framework
+    name: apple-ijk-framework-beta
     runs-on: macos-14
 
     steps:
@@ -66,4 +66,6 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh release create k${{ env.TAG }} -p -t "👏👏 IJKMediaPlayerKit k${{ env.TAG }}" FFToolChain/build/dist/*.*
+        date=$(TZ=UTC-8 date +'%y%m%d%H%M%S')
+        tag="k${{ env.TAG }}-beta-${{ date }}"
+        gh release create ${{ tag }} -p -t "👏👏 IJKMediaPlayerKit ${{ tag }}" FFToolChain/build/dist/*.*
