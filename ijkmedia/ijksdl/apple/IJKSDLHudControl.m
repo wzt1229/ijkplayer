@@ -180,6 +180,7 @@ typedef UITableView HudContentView;
     tableView.dataSource = self;
     tableView.delegate = self;
     tableView.backgroundColor = [[UIColor alloc] initWithRed:.5f green:.5f blue:.5f alpha:.5f];
+    tableView.userInteractionEnabled = NO;
 #if TARGET_OS_IOS
     tableView.separatorStyle  = UITableViewCellSeparatorStyleNone;
 #endif
@@ -213,7 +214,11 @@ typedef UITableView HudContentView;
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+#if TARGET_OS_IOS
     return 16.f;
+#elif TARGET_OS_TV
+    return 36.f;
+#endif
 }
 
 #endif
