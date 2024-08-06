@@ -177,12 +177,25 @@ typedef UITableView HudContentView;
 - (UITableView *)prepareContentView
 {
     UITableView *tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, 200, 300) style:UITableViewStylePlain];
+    if (@available(tvOS 13.0, iOS 13.0, *)) {
+        tableView.automaticallyAdjustsScrollIndicatorInsets = NO;
+    }
+    tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    tableView.contentInset = UIEdgeInsetsZero;
+    tableView.scrollIndicatorInsets = tableView.contentInset;
+    tableView.layoutMargins = UIEdgeInsetsMake(10, 0, 10, 0);
     tableView.dataSource = self;
     tableView.delegate = self;
-    tableView.backgroundColor = [[UIColor alloc] initWithRed:.5f green:.5f blue:.5f alpha:.5f];
-    tableView.userInteractionEnabled = NO;
+    tableView.preservesSuperviewLayoutMargins = NO;
+    tableView.cellLayoutMarginsFollowReadableWidth = NO;
+    tableView.insetsContentViewsToSafeArea = NO;
+    tableView.insetsLayoutMarginsFromSafeArea = NO;
+    tableView.backgroundColor = [[UIColor alloc] initWithRed:.5f green:.5f blue:.5f alpha:.7f];
+    
 #if TARGET_OS_IOS
     tableView.separatorStyle  = UITableViewCellSeparatorStyleNone;
+#elif TARGET_OS_TV
+    tableView.allowsSelection = NO;
 #endif
     return tableView;
 }

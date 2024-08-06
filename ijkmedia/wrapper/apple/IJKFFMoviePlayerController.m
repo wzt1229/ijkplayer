@@ -1052,6 +1052,12 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
 #if TARGET_OS_IOS || TARGET_OS_TV
         hudView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin;
         CGFloat screenWidth = [[UIScreen mainScreen]bounds].size.width;
+#if TARGET_OS_TV
+        rect.size.width = MIN(screenWidth / 3.0, 600);
+#else
+        rect.size.width = MIN(screenWidth / 3.0, 350);
+#endif
+        
 #else
         hudView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin | NSViewMinYMargin | NSViewMaxYMargin;
         NSScreen *screen = self.view.window.screen;
@@ -1059,8 +1065,8 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
             screen = [[NSScreen screens] firstObject];
         }
         CGFloat screenWidth = [screen frame].size.width;
-#endif
         rect.size.width = MIN(screenWidth / 3.0, 350);
+#endif
         rect.origin.x = CGRectGetWidth(self.view.bounds) - rect.size.width;
         hudView.frame = rect;
         [self.view addSubview:hudView];
