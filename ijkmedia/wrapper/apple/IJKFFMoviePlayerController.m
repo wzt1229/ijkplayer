@@ -359,7 +359,8 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     
     ijkmp_set_data_source(_mediaPlayer, [filePath UTF8String]);
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", 0); // for concat demuxer
-
+    ijkmp_set_subtitle_preference(_mediaPlayer, &_subtitlePreference);
+    
     _monitor.prepareStartTick = (int64_t)SDL_GetTickHR();
     ijkmp_prepare_async(_mediaPlayer);
 }
