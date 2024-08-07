@@ -120,6 +120,7 @@ typedef enum IJKLogLevel {
 
 + (void)setLogReport:(BOOL)preferLogReport;
 + (void)setLogLevel:(IJKLogLevel)logLevel;
++ (IJKLogLevel)getLogLevel;
 + (void)setLogHandler:(void (^)(IJKLogLevel level, NSString *tag, NSString *msg))handler;
 
 + (NSDictionary *)supportedDecoders;
