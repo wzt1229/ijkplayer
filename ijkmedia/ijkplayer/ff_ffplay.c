@@ -1027,28 +1027,32 @@ retry:
             /* compute nominal last_duration */
             last_duration = vp_duration(is, lastvp, vp);
             delay = compute_target_delay(ffp, last_duration, is);
-            //video is later,so use drop frame instead of dispaly quickly
-            if (ffp->stat.vmdiff < -AV_SYNC_THRESHOLD_MAX && delay < 0.001) {
-                av_log(NULL,AV_LOG_INFO,"video is later,drop video:%0.3f,audio clk:%0.3f\n", vp->pts, get_clock_with_delay(&is->audclk));
-                SDL_LockMutex(is->pictq.mutex);
-                if (!isnan(vp->pts))
-                    update_video_pts(is, vp->pts, vp->pos, vp->serial);
-                SDL_UnlockMutex(is->pictq.mutex);
-                frame_queue_next(&is->pictq);
-                goto retry;
+            
+            //This strategy is only used when the audio track delay is set and not step and not step_on_seeking, otherwise step play failed.
+            double audio_delay = is->audio_st ? get_clock_extral_delay(&is->audclk) : 0;
+            if (!is->step && !is->step_on_seeking && audio_delay != 0) {
+                //video is later,so use drop frame instead of dispaly quickly
+                if (ffp->stat.vmdiff < -AV_SYNC_THRESHOLD_MAX && delay < 0.001) {
+                    av_log(NULL,AV_LOG_INFO,"video is later,drop video:%0.3f,audio clk:%0.3f\n", vp->pts, get_clock_with_delay(&is->audclk));
+                    SDL_LockMutex(is->pictq.mutex);
+                    if (!isnan(vp->pts))
+                        update_video_pts(is, vp->pts, vp->pos, vp->serial);
+                    SDL_UnlockMutex(is->pictq.mutex);
+                    frame_queue_next(&is->pictq);
+                    goto retry;
+                }
+                //audio is later, so keep current frame for waiting
+                else if (ffp->stat.vmdiff > AV_SYNC_THRESHOLD_MIN*2) {
+                    SDL_LockMutex(is->pictq.mutex);
+                    if (!isnan(vp->pts))
+                        update_video_pts(is, lastvp->pts, lastvp->pos, lastvp->serial);
+                    SDL_UnlockMutex(is->pictq.mutex);
+                    
+                    av_log(NULL,AV_LOG_DEBUG,"vmdiff is %0.3f, repeat video:%0.3f,audio clk:%0.3f\n", ffp->stat.vmdiff, lastvp->pts, get_clock_with_delay(&is->audclk));
+                    goto display;
+                }
             }
             
-            //audio is later, so keep current frame for waiting
-            else if (ffp->stat.vmdiff > AV_SYNC_THRESHOLD_MIN*2) {
-                SDL_LockMutex(is->pictq.mutex);
-                if (!isnan(vp->pts))
-                    update_video_pts(is, lastvp->pts, lastvp->pos, lastvp->serial);
-                SDL_UnlockMutex(is->pictq.mutex);
-                
-                av_log(NULL,AV_LOG_DEBUG,"vmdiff is %0.3f, repeat video:%0.3f,audio clk:%0.3f\n", ffp->stat.vmdiff, lastvp->pts, get_clock_with_delay(&is->audclk));
-                goto display;
-            }
-
             time= av_gettime_relative() / 1000000.0;
             if (isnan(is->frame_timer) || time < is->frame_timer)
                 is->frame_timer = time;
@@ -1241,8 +1245,8 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
     if (ffp->enable_accurate_seek && is->video_accurate_seek_req && !is->seek_req) {
         if (!isnan(pts)) {
             int64_t video_seek_pos = is->seek_pos;
-            double audio_dealy = is->audio_st ? get_clock_extral_delay(&is->audclk) : 0;
-            int64_t target_pos = is->seek_pos + audio_dealy * 1000 * 1000;
+            double audio_delay = is->audio_st ? get_clock_extral_delay(&is->audclk) : 0;
+            int64_t target_pos = is->seek_pos + audio_delay * 1000 * 1000;
             int64_t deviation = target_pos - (int64_t)(pts * 1000 * 1000);
             is->accurate_seek_vframe_pts = pts * 1000 * 1000;
             if (deviation > MAX_DEVIATION) {
@@ -1923,7 +1927,7 @@ static int audio_thread(void *arg)
                         audio_clock = frame_pts + samples_duration;
                         is->accurate_seek_aframe_pts = audio_clock * 1000 * 1000;
                         int64_t deviation = is->seek_pos - (int64_t)(audio_clock * 1000 * 1000);
-                        double audio_dealy = is->audio_st ? get_clock_extral_delay(&is->audclk) : 0;
+                        double audio_delay = is->audio_st ? get_clock_extral_delay(&is->audclk) : 0;
                         if (deviation > MAX_DEVIATION) {
                             /*
                              fix fast rewind and fast forward continually,however accurate seek may not ended,cause accurate seek timeout.
@@ -1948,14 +1952,14 @@ static int audio_thread(void *arg)
                                 double fps = 1.0 / samples_duration;
                                 int need_drop = ceil(delta * fps / 1000 / 1000);
                                 
-                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, target_pos=%0.3f, audio_clock=%0.3f, delay:%0.3f, estimate drop=%d, is->accurate_seek_start_time=%lld\n", is->seek_pos/1000000.0, audio_clock, audio_dealy, need_drop, is->accurate_seek_start_time);
+                                av_log(NULL, AV_LOG_INFO, "audio accurate_seek start, target_pos=%0.3f, audio_clock=%0.3f, delay:%0.3f, estimate drop=%d, is->accurate_seek_start_time=%lld\n", is->seek_pos/1000000.0, audio_clock, audio_delay, need_drop, is->accurate_seek_start_time);
                             }
                             is->drop_aframe_count++;
 /*
  decode audio stream is faster, audio accurate seek finished in a flash.
  some video stream decode is slow, accurate seek maybe timeout, thus video picture display in a flash, because video clock is later, so dropping frames need keep a safe distance.
  */
-                            while (audio_dealy == 0 && is->video_accurate_seek_req && !is->abort_request) {
+                            while (audio_delay == 0 && is->video_accurate_seek_req && !is->abort_request) {
                                 int64_t vpts = is->accurate_seek_vframe_pts;
                                 int64_t deviation2 = vpts - audio_clock * 1000 * 1000;
                                 int64_t deviation3 = vpts - is->seek_pos;
@@ -3240,7 +3244,7 @@ static void reset_buffer_size(FFPlayer *ffp)
         return;
     }
     int buffer_size = DEFAULT_QUEUE_SIZE;
-    double audio_dealy = ffp->is->audio_st ? get_clock_extral_delay(&ffp->is->audclk) : 0;
+    double audio_delay = ffp->is->audio_st ? get_clock_extral_delay(&ffp->is->audclk) : 0;
     AVFormatContext *ic = ffp->is->ic;
     if (ic->bit_rate > 0) {
         buffer_size = (int)(ic->bit_rate / 8) * (MAX_PACKETS_CACHE_DURATION);
@@ -3254,10 +3258,10 @@ static void reset_buffer_size(FFPlayer *ffp)
         buffer_size = FFMAX(DEFAULT_QUEUE_SIZE, buffer_size);
         buffer_size = FFMIN(MAX_QUEUE_SIZE, buffer_size);
     } else {
-        buffer_size = (DEFAULT_QUEUE_SIZE + MAX_QUEUE_SIZE) / 2 + fabs(audio_dealy) * 1024 * 1024;
+        buffer_size = (DEFAULT_QUEUE_SIZE + MAX_QUEUE_SIZE) / 2 + fabs(audio_delay) * 1024 * 1024;
     }
     
-    ffp->dcc.max_buffer_size = buffer_size + fabs(audio_dealy) * DEFAULT_QUEUE_SIZE;
+    ffp->dcc.max_buffer_size = buffer_size + fabs(audio_delay) * DEFAULT_QUEUE_SIZE;
     av_log(NULL, AV_LOG_INFO, "auto decision max buffer size:%dMB\n",ffp->dcc.max_buffer_size/1024/1024);
 }
 
