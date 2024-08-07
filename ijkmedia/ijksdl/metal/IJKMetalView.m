@@ -654,21 +654,22 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
     self.clearColor = (MTLClearColor){r/255.0, g/255.0, b/255.0, 1.0f};
     
     id<CAMetalDrawable> drawable = self.currentDrawable;
-    id<MTLTexture> texture = drawable.texture;
+    if (drawable) {
+        id<MTLTexture> texture = drawable.texture;
 
-    MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-    passDescriptor.colorAttachments[0].texture = texture;
-    passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-    passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-    passDescriptor.colorAttachments[0].clearColor = self.clearColor;
+        MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+        passDescriptor.colorAttachments[0].texture = texture;
+        passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+        passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+        passDescriptor.colorAttachments[0].clearColor = self.clearColor;
+        
+        id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
+        id <MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
     
-    id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
-    id <MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
-    
-    [commandEncoder endEncoding];
-
-    [commandBuffer presentDrawable:drawable];
-    [commandBuffer commit];
+        [commandEncoder endEncoding];
+        [commandBuffer presentDrawable:drawable];
+        [commandBuffer commit];
+    }
 }
 
 - (id)context
