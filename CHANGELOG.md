@@ -3,7 +3,6 @@ tag k0.11.5
 
 - upgrade FFmpeg to n6.1.1
 - The subtitle delay API is incompatible, the value is need reverse: the positive value means subtitle put off, the negative value means subtitle advanced
-- optimized the continuous seek logic
 - fix crash: target thread exited while waiting for the perform
 - support specify fonts dir for subtitle,#37
 
