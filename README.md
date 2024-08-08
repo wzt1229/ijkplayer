@@ -25,6 +25,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 ## Features
 
 - Common
+  - using FFmpeg 6.1.1
   - enabled ffmpeg all decoders and demuxers binary size is bigger [FFToolChain/ffconfig/module-full.sh](FFToolChain/ffconfig/module-full.sh)
   - workaround for some buggy online video
 - iOS/macOS/tvOS
@@ -41,7 +42,6 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 
 ## ON-PLAN
 
-- upgrade FFmpeg to 6.x
 - exchange video resolution gapless
 
 ## Donate
