@@ -194,7 +194,7 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
             ass->force_changed = 0;
         }
         SDL_UnlockMutex(ass->mutex);
-        return -1;
+        return -2;
     }
     
     if (!ignore_change && changed == 0 && !ass->force_changed) {
