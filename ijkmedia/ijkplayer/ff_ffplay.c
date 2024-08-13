@@ -5119,7 +5119,7 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
         case AVMEDIA_TYPE_VIDEO:
         {
             if (selected && stream == is->video_stream) {
-                av_log(ffp, AV_LOG_INFO, "can't reselected video stream : %d\n", stream);
+                av_log(ffp, AV_LOG_INFO, "video stream has already been selected: %d\n", stream);
                 return 0;
             }
             if (is->video_stream >= 0) {
@@ -5136,7 +5136,7 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
         case AVMEDIA_TYPE_AUDIO:
         {
             if (selected && stream == is->audio_stream) {
-                av_log(ffp, AV_LOG_INFO, "can't reselected auido stream : %d\n", stream);
+                av_log(ffp, AV_LOG_INFO, "auido stream has already been selected: %d\n", stream);
                 return 0;
             }
             if (is->audio_stream >= 0) {
@@ -5157,7 +5157,7 @@ static int ffp_set_internal_stream_selected(FFPlayer *ffp, int stream, int selec
         {
             int current = ff_sub_get_current_stream(is->ffSub, NULL);
             if (selected && stream == current) {
-                av_log(ffp, AV_LOG_INFO, "can't reselected subtitle stream : %d\n", stream);
+                av_log(ffp, AV_LOG_INFO, "subtitle stream has already been selected: %d\n", stream);
                 return 0;
             }
             
