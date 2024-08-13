@@ -13,7 +13,6 @@
 #include "ff_subtitle_def_internal.h"
 
 #define SUB_MAX_KEEP_DU 3.0
-#define ASS_USE_PRE_RENDER 1
 #define A_ASS_IMG_DURATION 0.035
 
 typedef struct FFSubComponent{
@@ -52,7 +51,6 @@ static void apply_preference(FFSubComponent *com)
     }
 }
 
-#if ASS_USE_PRE_RENDER
 static int pre_render_ass_frame(FFSubComponent *com, int serial)
 {
     if (com->bitmapRenderer || com->previous_uploading < 0) {
@@ -174,7 +172,6 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
     ff_ass_render_release(&assRenderer);
     return result;
 }
-#endif
 
 static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
 {
@@ -312,11 +309,8 @@ static int subtitle_thread(void *arg)
         } else if (result < 0) {
             break;
         } else if (result == 0) {
-            int r = 1;
-#if ASS_USE_PRE_RENDER
-            r = pre_render_ass_frame(com, com->decoder.pkt_serial);
+            int r = pre_render_ass_frame(com, com->decoder.pkt_serial);
             got_counter = 0;
-#endif
             if (r) {
                 av_usleep(1000 * 15);
             }
@@ -394,13 +388,9 @@ static int subtitle_thread(void *arg)
                         bzero(sp->sub_list, sizeof(sp->sub_list));
                     }
                     frame_queue_push(com->frameq);
-                } else {
-#if ASS_USE_PRE_RENDER
-                    if (++got_counter >= 3) {
-                        pre_render_ass_frame(com, com->decoder.pkt_serial);
-                        got_counter = 0;
-                    }
-#endif
+                } else if (++got_counter >= 3) {
+                    pre_render_ass_frame(com, com->decoder.pkt_serial);
+                    got_counter = 0;
                 }
             } else {
                 //av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
@@ -506,24 +496,6 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
     }
 }
 
-#if ! ASS_USE_PRE_RENDER
-static int subComponent_packet_from_ass_render(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
-{
-    if (!com || !packet) {
-        return -1;
-    }
-    
-    FFSubtitleBuffer *sb = NULL;
-    FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-    int r = ff_ass_upload_buffer(com->assRenderer, pts, &sb, 0);
-    ff_ass_render_release(&assRenderer);
-    if (r > 0) {
-        packet->e[packet->len++] = sb;
-    }
-    return r;
-}
-#endif
-
 static int subComponent_packet_ass_from_frame_queue(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
     if (com->sp_changed) {
@@ -534,11 +506,7 @@ static int subComponent_packet_ass_from_frame_queue(FFSubComponent *com, float p
 
 static int subComponent_packet_for_ass(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
-#if ASS_USE_PRE_RENDER
     return subComponent_packet_ass_from_frame_queue(com, pts, packet);
-#else
-    return subComponent_packet_from_ass_render(com, pts, packet);
-#endif
 }
 
 int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
