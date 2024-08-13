@@ -246,7 +246,6 @@ static BOOL hdrAnimationShown = 0;
 - (void)showPlayerSettingsSideBar
 {
     if (self.siderBarWidthConstraint.constant > 0) {
-        
         __weakSelf__
         [NSAnimationContext runAnimationGroup:^(NSAnimationContext * _Nonnull context) {
             context.duration = 0.35;
@@ -565,7 +564,7 @@ static BOOL hdrAnimationShown = 0;
     return _subtitles;
 }
 
-- (void)perpareIJKPlayer:(NSURL *)url hwaccel:(BOOL)hwaccel
+- (void)perpareIJKPlayer:(NSURL *)url hwaccel:(BOOL)hwaccel isLive:(BOOL)isLive
 {
     if (self.playingUrl) {
         [self doStopPlay];
@@ -575,6 +574,18 @@ static BOOL hdrAnimationShown = 0;
     self.seeking = NO;
     
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
+    
+    //isLive表示是直播还是点播
+    if (isLive) {
+        // Param for living
+        [options setPlayerOptionIntValue:1 forKey:@"infbuf"];
+        [options setPlayerOptionIntValue:0 forKey:@"packet-buffering"];
+    } else {
+        // Param for playback
+        [options setPlayerOptionIntValue:0 forKey:@"infbuf"];
+        [options setPlayerOptionIntValue:1 forKey:@"packet-buffering"];
+    }
+    
     //视频帧处理不过来的时候丢弃一些帧达到同步的效果
     [options setPlayerOptionIntValue:1 forKey:@"framedrop"];
     [options setPlayerOptionIntValue:6      forKey:@"video-pictq-size"];
@@ -613,17 +624,6 @@ static BOOL hdrAnimationShown = 0;
     //set icy update period
     [options setPlayerOptionValue:@"3500" forKey:@"icy-update-period"];
     
-    BOOL isLive = NO;
-    //isLive表示是直播还是点播
-    if (isLive) {
-        // Param for living
-        [options setPlayerOptionIntValue:1 forKey:@"infbuf"];
-        [options setPlayerOptionIntValue:0 forKey:@"packet-buffering"];
-    } else {
-        // Param for playback
-        [options setPlayerOptionIntValue:0 forKey:@"infbuf"];
-        [options setPlayerOptionIntValue:1 forKey:@"packet-buffering"];
-    }
     
     //    [options setPlayerOptionValue:@"fcc-bgra"        forKey:@"overlay-format"];
     //    [options setPlayerOptionValue:@"fcc-bgr0"        forKey:@"overlay-format"];
@@ -1024,7 +1024,9 @@ static BOOL hdrAnimationShown = 0;
         return;
     }
     [self destroyPlayer];
-    [self perpareIJKPlayer:url hwaccel:self.isUsingHardwareAccelerate];
+#warning 根据地址，动态修改
+    BOOL isLive = NO;
+    [self perpareIJKPlayer:url hwaccel:self.isUsingHardwareAccelerate isLive:isLive];
     NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     
     NSInteger idx = [self.playList indexOfObject:self.playingUrl] + 1;
@@ -1037,7 +1039,7 @@ static BOOL hdrAnimationShown = 0;
     self.playCtrlBtn.image = [NSImage imageNamed:@"pause"];
     self.playCtrlBtn.state = NSControlStateValueOff;
     
-    if ([MRCocoaBindingUserDefault play_from_history]) {
+    if (!isLive && [MRCocoaBindingUserDefault play_from_history]) {
         int startTime = (int)([self readCurrentPlayRecord] * 1000);
         [self.player setPlayerOptionIntValue:startTime forKey:@"seek-at-start"];
     }
