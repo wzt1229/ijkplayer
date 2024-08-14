@@ -975,6 +975,8 @@ static BOOL hdrAnimationShown = 0;
         if (!self.tickTimer) {
             self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
         }
+        //test
+        //[self.player exchangeSelectedStream:48];
     }
 }
 
@@ -1000,11 +1002,11 @@ static BOOL hdrAnimationShown = 0;
 
 - (void)onTick:(NSTimer *)sender
 {
-    long interval = (long)self.player.currentPlaybackTime;
-    long duration = self.player.monitor.duration / 1000;
-    self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(interval/60),(int)(interval%60)];
-    self.durationTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(duration/60),(int)(duration%60)];
-    self.playerSlider.playedValue = interval;
+    double currentPosition = self.player.currentPlaybackTime;
+    double duration = self.player.monitor.duration / 1000.0;
+    self.playedTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)(currentPosition/60),(int)currentPosition%60];
+    self.durationTimeLb.stringValue = [NSString stringWithFormat:@"%02d:%02d",(int)duration/60,(int)duration%60];
+    self.playerSlider.playedValue = currentPosition;
     self.playerSlider.minValue = 0;
     self.playerSlider.maxValue = duration;
     self.playerSlider.preloadValue = self.player.playableDuration;
