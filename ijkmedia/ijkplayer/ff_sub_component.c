@@ -13,7 +13,6 @@
 #include "ff_subtitle_def_internal.h"
 
 #define SUB_MAX_KEEP_DU 3.0
-#define ASS_USE_PRE_RENDER 1
 #define A_ASS_IMG_DURATION 0.035
 
 typedef struct FFSubComponent{
@@ -30,10 +29,12 @@ typedef struct FFSubComponent{
     FFSubtitleBufferPacket sub_buffer_array;
     IJKSDLSubtitlePreference sp;
     int sp_changed;
-    float current_pts;
-    float pkt_pts;
-    float pre_load_pts;
     float startTime;
+    
+    float previous_uploading;
+    float ass_processed;
+    float pre_loading;
+
 }FFSubComponent;
 
 static void apply_preference(FFSubComponent *com)
@@ -50,16 +51,15 @@ static void apply_preference(FFSubComponent *com)
     }
 }
 
-#if ASS_USE_PRE_RENDER
 static int pre_render_ass_frame(FFSubComponent *com, int serial)
 {
-    if (com->bitmapRenderer || com->current_pts < 0) {
+    if (com->bitmapRenderer || com->previous_uploading < 0) {
         return -1;
     }
     
-    if (com->pre_load_pts < 0) {
-        if (com->current_pts >= 0) {
-            com->pre_load_pts = com->current_pts;
+    if (com->pre_loading < 0) {
+        if (com->previous_uploading >= 0) {
+            com->pre_loading = com->previous_uploading;
         }
     }
     
@@ -72,24 +72,18 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
                 break;
             }
         }
-        if (com->current_pts >= 0) {
+        if (com->previous_uploading >= 0) {
             //let the pts can display right now.
-            com->pre_load_pts = com->current_pts;
+            com->pre_loading = com->previous_uploading;
         }
         apply_preference(com);
     }
     
-    if (com->pre_load_pts < 0) {
+    if (com->pre_loading < 0) {
         return -1;
     }
     
-    int queue_size = com->frameq->max_size;
-    if (frame_queue_nb_remaining(com->frameq) >= queue_size) {
-        return -1;
-    }
-    
-    //pre load need limit range
-    if (com->pre_load_pts > com->pkt_pts) {
+    if (frame_queue_is_full(com->frameq)) {
         return -1;
     }
     
@@ -97,15 +91,21 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
     FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
     int result = 0;
     while (com->packetq->abort_request == 0) {
-        float delta = com->current_pts - com->pre_load_pts;
+        
+        //prevent pre load overflow
+        if (com->pre_loading >= com->ass_processed) {
+            return -1;
+        }
+        
+        float delta = com->previous_uploading - com->pre_loading;
         if (delta > 0.08) {
             //subtitle is slower than video, so need fast forward
-            com->pre_load_pts = com->current_pts + 0.2;
+            com->pre_loading = com->previous_uploading + 0.2;
             Frame *sp = frame_queue_peek_offset(com->frameq, 0);
             double pts = sp ? sp->pts : -1;
             av_log(NULL, AV_LOG_WARNING, "subtitle is slower than video:%0.3fs,cached frame:%d,pts:%f",delta,frame_queue_nb_remaining(com->frameq),pts);
         }
-        double pts = com->pre_load_pts;
+        double pts = com->pre_loading;
         FFSubtitleBuffer *buffer = NULL;
         int r = ff_ass_upload_buffer(com->assRenderer, pts, &buffer, 0);
         if (r == 0) {
@@ -113,7 +113,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             Frame *preFrame = frame_queue_peek_pre_writable(com->frameq);
             if (preFrame) {
                 if (preFrame->sub_list[0]) {
-                    com->pre_load_pts  += A_ASS_IMG_DURATION;
+                    com->pre_loading  += A_ASS_IMG_DURATION;
                     preFrame->duration += A_ASS_IMG_DURATION;
                     preFrame->shown = 0;
                     continue;
@@ -135,12 +135,12 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             pre_buffer = ff_subtitle_buffer_retain(buffer);
         } else {
             //clean
-            com->pre_load_pts += A_ASS_IMG_DURATION;
+            com->pre_loading += A_ASS_IMG_DURATION;
             result = -1;
             break;
         }
         if (!buffer) {
-            com->pre_load_pts += A_ASS_IMG_DURATION;
+            com->pre_loading += A_ASS_IMG_DURATION;
             result = -1;
             break;
         }
@@ -151,7 +151,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             result = -2;
             break;
         }
-        com->pre_load_pts += A_ASS_IMG_DURATION;
+        com->pre_loading += A_ASS_IMG_DURATION;
         sp->pts = pts;
         sp->duration = A_ASS_IMG_DURATION;
         sp->serial = serial;
@@ -162,7 +162,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
         
         int size = frame_queue_push(com->frameq);
         
-        if (size > queue_size) {
+        if (size > com->frameq->max_size) {
             break;
         } else {
             continue;
@@ -172,7 +172,6 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
     ff_ass_render_release(&assRenderer);
     return result;
 }
-#endif
 
 static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
 {
@@ -188,16 +187,8 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
             //av_log(NULL, AV_LOG_ERROR, "sub packet_queue_get:%d\n",get_pkt);
             if (get_pkt < 0)
                 return -1;
-            if (get_pkt == 0) {
-                int r = 1;
-#if ASS_USE_PRE_RENDER
-                r = pre_render_ass_frame(com, old_serial);
-#endif
-                if (r) {
-                    av_usleep(1000 * 10);
-                }
-                continue;
-            }
+            else if (get_pkt == 0)
+                return 0;
             
             if (d->pkt->stream_index != com->st_idx) {
                 av_packet_unref(d->pkt);
@@ -217,14 +208,14 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
                         break;
                     }
                 }
-                com->pre_load_pts = -1;
-                com->pkt_pts = -1;
-                com->current_pts = -1;
+                com->pre_loading = -1;
+                com->ass_processed = -1;
+                com->previous_uploading = -1;
                 av_log(NULL, AV_LOG_INFO, "sub flush serial:%d\n",d->pkt_serial);
             }
         }
-        if (d->queue->serial != d->pkt_serial)
-        {
+        
+        if (d->queue->serial != d->pkt_serial) {
             av_packet_unref(d->pkt);
             continue;
         }
@@ -274,8 +265,12 @@ static int create_ass_renderer_if_need(FFSubComponent *com)
     
     com->sub_width  = com->video_width;
     com->sub_height = com->video_height;
-    com->assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->sub_width, com->sub_height, NULL);
-    
+    AVDictionary *opts = NULL;
+    if (strlen(com->sp.FontsDir)) {
+        av_dict_set(&opts, "fontsdir", av_strdup(com->sp.FontsDir), 0);
+    }
+    com->assRenderer = ff_ass_render_create_default(com->decoder.avctx->subtitle_header, com->decoder.avctx->subtitle_header_size, com->sub_width, com->sub_height, &opts);
+    av_dict_free(&opts);
     apply_preference(com);
     
     return NULL == com->assRenderer;
@@ -299,33 +294,36 @@ static int create_bitmap_renderer_if_need(FFSubComponent *com)
 static int subtitle_thread(void *arg)
 {
     FFSubComponent *com = arg;
-    int got_subtitle;
+    int got_counter = 0;
     
     for (;com->packetq->abort_request == 0;) {
         AVSubtitle sub;
-        got_subtitle = decode_a_frame(com, &com->decoder, &sub);
+        int result = decode_a_frame(com, &com->decoder, &sub);
         
-        if (got_subtitle == -1000) {
+        if (result == -1000) {
             if (com->retry_callback) {
                 com->retry_callback(com->retry_opaque);
                 return -1;
             }
             break;
-        }
-        
-        if (got_subtitle < 0)
+        } else if (result < 0) {
             break;
-        
-        if (got_subtitle) {
+        } else if (result == 0) {
+            int r = pre_render_ass_frame(com, com->decoder.pkt_serial);
+            got_counter = 0;
+            if (r) {
+                av_usleep(1000 * 15);
+            }
+            continue;
+        } else if (result) {
             //av_log(NULL, AV_LOG_ERROR,"sub received frame:%f\n",pts);
             int serial = com->decoder.pkt_serial;
             if (com->packetq->serial == serial) {
-                
                 double pts = 0;
                 if (sub.pts != AV_NOPTS_VALUE)
                     pts = sub.pts / (double)AV_TIME_BASE + com->startTime;
                 
-                int count = 0;
+                int num_rect = 0;
                 FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
                 for (int i = 0; i < sub.num_rects; i++) {
                     AVSubtitleRect *rect = sub.rects[i];
@@ -338,7 +336,7 @@ static int subtitle_thread(void *arg)
                         if (!create_bitmap_renderer_if_need(com)) {
                             FFSubtitleBuffer* sb = packet_pal8(rect);
                             if (sb) {
-                                buffers[count++] = sb;
+                                buffers[num_rect++] = sb;
                             } else {
                                 break;
                             }
@@ -351,13 +349,13 @@ static int subtitle_thread(void *arg)
                             const float begin = pts + (float)sub.start_display_time / 1000.0;
                             float end = sub.end_display_time - sub.start_display_time;
                             ff_ass_process_chunk(com->assRenderer, ass_line, begin * 1000, end);
-                            com->pkt_pts = begin;
-                            count++;
+                            com->ass_processed = begin + end/1000.0;
+                            num_rect++;
                         }
                     }
                 }
                 
-                if (count == 0) {
+                if (num_rect == 0) {
                     avsubtitle_free(&sub);
                     continue;
                 }
@@ -384,12 +382,15 @@ static int subtitle_thread(void *arg)
                     sp->height = com->sub_height;
                     sp->shown = 0;
                     
-                    if (count > 0) {
-                        memcpy(sp->sub_list, buffers, count * sizeof(buffers[0]));
+                    if (num_rect > 0) {
+                        memcpy(sp->sub_list, buffers, num_rect * sizeof(buffers[0]));
                     } else {
                         bzero(sp->sub_list, sizeof(sp->sub_list));
                     }
                     frame_queue_push(com->frameq);
+                } else if (++got_counter >= 3) {
+                    pre_render_ass_frame(com, com->decoder.pkt_serial);
+                    got_counter = 0;
                 }
             } else {
                 //av_log(NULL, AV_LOG_DEBUG,"sub stream push old frame:%d\n",serial);
@@ -495,24 +496,6 @@ static int subComponent_packet_from_frame_queue(FFSubComponent *com, float pts, 
     }
 }
 
-#if ! ASS_USE_PRE_RENDER
-static int subComponent_packet_from_ass_render(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
-{
-    if (!com || !packet) {
-        return -1;
-    }
-    
-    FFSubtitleBuffer *sb = NULL;
-    FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-    int r = ff_ass_upload_buffer(com->assRenderer, pts, &sb, 0);
-    ff_ass_render_release(&assRenderer);
-    if (r > 0) {
-        packet->e[packet->len++] = sb;
-    }
-    return r;
-}
-#endif
-
 static int subComponent_packet_ass_from_frame_queue(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
     if (com->sp_changed) {
@@ -523,11 +506,7 @@ static int subComponent_packet_ass_from_frame_queue(FFSubComponent *com, float p
 
 static int subComponent_packet_for_ass(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
 {
-#if ASS_USE_PRE_RENDER
     return subComponent_packet_ass_from_frame_queue(com, pts, packet);
-#else
-    return subComponent_packet_from_ass_render(com, pts, packet);
-#endif
 }
 
 int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferPacket *packet)
@@ -536,7 +515,7 @@ int subComponent_upload_buffer(FFSubComponent *com, float pts, FFSubtitleBufferP
         return -1;
     }
     
-    com->current_pts = pts;
+    com->previous_uploading = pts;
     
     if (com->assRenderer) {
         FFSubtitleBufferPacket myPacket = {0};
@@ -626,8 +605,8 @@ int subComponent_open(FFSubComponent **cp, int stream_index, AVStream* stream, P
     com->retry_opaque = opaque;
     com->st_idx = stream_index;
     com->sp = ijk_subtitle_default_preference();
-    com->current_pts = -1;
-    com->pre_load_pts = -1;
+    com->previous_uploading = -1;
+    com->pre_loading = -1;
     com->startTime = startTime;
     
     int ret = decoder_init(&com->decoder, avctx, com->packetq, NULL);

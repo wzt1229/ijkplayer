@@ -180,10 +180,12 @@ static CVPixelBufferRef createCVPixelBufferFromAVFrame(const AVFrame *frame,CVPi
     
     if (poolRef) {
         result = CVPixelBufferPoolCreatePixelBuffer(NULL, poolRef, &pixelBuffer);
+        if (kCVReturnSuccess != result) {
+            ALOGE("Overly FFmpeg Create CVPixelBuffer Failed using pool:%d\n", result);
+        }
     }
     
     if (kCVReturnSuccess != result) {
-        ALOGE("Overly FFmpeg Create CVPixelBuffer Failed:%d\n", result);
         //AVCOL_RANGE_MPEG对应tv，AVCOL_RANGE_JPEG对应pc
         //Y′ values are conventionally shifted and scaled to the range [16, 235] (referred to as studio swing or "TV levels") rather than using the full range of [0, 255] (referred to as full swing or "PC levels").
         //https://en.wikipedia.org/wiki/YUV#Numerical_approximations

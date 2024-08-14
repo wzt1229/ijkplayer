@@ -16,13 +16,25 @@
 #if TARGET_OS_OSX
 + (UIView<IJKVideoRenderingProtocol> *)createGLRenderView
 {
-    return [[IJKSDLGLView alloc] init];
+#if TARGET_OS_IOS || TARGET_OS_TV
+    CGRect rect = [[UIScreen mainScreen] bounds];
+#else
+    CGRect rect = [[[NSScreen screens] firstObject]frame];
+#endif
+    rect.origin = CGPointZero;
+    return [[IJKSDLGLView alloc] initWithFrame:rect];
 }
 #endif
 
 + (UIView<IJKVideoRenderingProtocol> *)createMetalRenderView
 {
-    return [[IJKMetalView alloc] init];
+#if TARGET_OS_IOS || TARGET_OS_TV
+    CGRect rect = [[UIScreen mainScreen] bounds];
+#else
+    CGRect rect = [[[NSScreen screens] firstObject]frame];
+#endif
+    rect.origin = CGPointZero;
+    return [[IJKMetalView alloc] initWithFrame:rect];
 }
 
 @end

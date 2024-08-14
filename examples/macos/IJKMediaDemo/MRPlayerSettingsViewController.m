@@ -135,7 +135,7 @@
     self.captureShot = block;
 }
 
-#pragma mark 音轨设置
+#pragma mark 轨道设置
 
 - (void)onSelectTrack:(NSPopUpButton*)sender
 {

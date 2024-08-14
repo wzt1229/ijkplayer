@@ -388,6 +388,12 @@ static void unlock_gl(NSOpenGLContext *ctx)
     [self doDisplayVideoPicAndSubtitle:currentAttach];
 }
 
+- (void)viewDidEndLiveResize
+{
+    [super viewDidEndLiveResize];
+    [self doRefreshCurrentAttach:self.currentAttach];
+}
+
 - (void)doDisplayVideoPicAndSubtitle:(IJKOverlayAttach *)attach
 {
     if (!attach) {

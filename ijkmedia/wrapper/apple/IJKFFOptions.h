@@ -45,13 +45,15 @@ typedef enum IJKAVDiscard {
 
 struct IjkMediaPlayer;
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface IJKFFOptions : NSObject
 
 + (IJKFFOptions *)optionsByDefault;
 
 - (void)applyTo:(struct IjkMediaPlayer *)mediaPlayer;
 
-- (void)setOptionValue:(NSString *)value
+- (void)setOptionValue:(NSString * _Nullable)value
                 forKey:(NSString *)key
             ofCategory:(IJKFFOptionCategory)category;
 
@@ -60,10 +62,10 @@ struct IjkMediaPlayer;
                ofCategory:(IJKFFOptionCategory)category;
 
 
-- (void)setFormatOptionValue:       (NSString *)value forKey:(NSString *)key;
-- (void)setCodecOptionValue:        (NSString *)value forKey:(NSString *)key;
-- (void)setSwsOptionValue:          (NSString *)value forKey:(NSString *)key;
-- (void)setPlayerOptionValue:       (NSString *)value forKey:(NSString *)key;
+- (void)setFormatOptionValue:       (NSString * _Nullable)value forKey:(NSString *)key;
+- (void)setCodecOptionValue:        (NSString * _Nullable)value forKey:(NSString *)key;
+- (void)setSwsOptionValue:          (NSString * _Nullable)value forKey:(NSString *)key;
+- (void)setPlayerOptionValue:       (NSString * _Nullable)value forKey:(NSString *)key;
 
 - (void)setFormatOptionIntValue:    (int64_t)value forKey:(NSString *)key;
 - (void)setCodecOptionIntValue:     (int64_t)value forKey:(NSString *)key;
@@ -75,3 +77,4 @@ struct IjkMediaPlayer;
 @property(nonatomic) BOOL metalRenderer;
 
 @end
+NS_ASSUME_NONNULL_END

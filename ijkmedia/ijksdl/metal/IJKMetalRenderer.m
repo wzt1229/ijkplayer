@@ -305,7 +305,7 @@
         
         // Indicate to Metal that the GPU accesses these resources, so they need
         // to map to the GPU's address space.
-        if (@available(macOS 10.15, ios 13.0, *)) {
+        if (@available(macOS 10.15, ios 13.0, tvOS 13.0, *)) {
             [encoder useResource:t usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
         } else {
             // Fallback on earlier versions
@@ -315,7 +315,7 @@
     [self.argumentEncoder setBuffer:self.convertMatrixBuff offset:0 atIndex:IJKFragmentMatrixIndexConvert];
     
     // to map to the GPU's address space.
-    if (@available(macOS 10.15, ios 13.0, *)) {
+    if (@available(macOS 10.15, ios 13.0, tvOS 13.0, *)) {
         [encoder useResource:self.convertMatrixBuff usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
     } else {
         // Fallback on earlier versions

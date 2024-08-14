@@ -42,7 +42,7 @@
 #include "../ijkmedia/ijkplayer/ijkmeta.h"
 #include "../ijkmedia/ijkplayer/ff_ffmsg_queue.h"
 
-static const char *kIJKFFRequiredFFmpegVersion = "n5.1.4-18"; //"n5.1.4-18-g68b3171";
+static const char *kIJKFFRequiredFFmpegVersion = "n6.1.1-19";
 
 static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 
@@ -359,7 +359,8 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     
     ijkmp_set_data_source(_mediaPlayer, [filePath UTF8String]);
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", 0); // for concat demuxer
-
+    ijkmp_set_subtitle_preference(_mediaPlayer, &_subtitlePreference);
+    
     _monitor.prepareStartTick = (int64_t)SDL_GetTickHR();
     ijkmp_prepare_async(_mediaPlayer);
 }
@@ -1052,6 +1053,12 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
 #if TARGET_OS_IOS || TARGET_OS_TV
         hudView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin;
         CGFloat screenWidth = [[UIScreen mainScreen]bounds].size.width;
+#if TARGET_OS_TV
+        rect.size.width = MIN(screenWidth / 3.0, 600);
+#else
+        rect.size.width = MIN(screenWidth / 3.0, 350);
+#endif
+        
 #else
         hudView.autoresizingMask = NSViewHeightSizable | NSViewMinXMargin | NSViewMinYMargin | NSViewMaxYMargin;
         NSScreen *screen = self.view.window.screen;
@@ -1059,8 +1066,8 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
             screen = [[NSScreen screens] firstObject];
         }
         CGFloat screenWidth = [screen frame].size.width;
-#endif
         rect.size.width = MIN(screenWidth / 3.0, 350);
+#endif
         rect.origin.x = CGRectGetWidth(self.view.bounds) - rect.size.width;
         hudView.frame = rect;
         [self.view addSubview:hudView];

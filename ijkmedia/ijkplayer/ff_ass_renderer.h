@@ -38,7 +38,7 @@ typedef struct FF_ASS_Renderer {
     int refCount;
 } FF_ASS_Renderer;
 
-FF_ASS_Renderer *ff_ass_render_create_default(uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h, AVDictionary *opts);
+FF_ASS_Renderer *ff_ass_render_create_default(uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h, AVDictionary **opts);
 
 FF_ASS_Renderer * ff_ass_render_retain(FF_ASS_Renderer *ar);
 void ff_ass_render_release(FF_ASS_Renderer **arp);

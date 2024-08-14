@@ -783,9 +783,9 @@ int ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block)
                     av_log(mp->ffplayer, AV_LOG_DEBUG, "ijkmp_get_msg: FFP_REQ_SEEK: seek to %d\n", (int)msg->arg1);
                 } else if (err == EIJK_FAILED) {
                     //record last wanted seek pos.
-                    av_log(mp->ffplayer, AV_LOG_DEBUG, "record wanted seek pos %d\n", (int)msg->arg1);
-                    mp->seek_req2 = 1;
-                    mp->seek_msec2 = msg->arg1;
+//                    av_log(mp->ffplayer, AV_LOG_DEBUG, "record wanted seek pos %d\n", (int)msg->arg1);
+//                    mp->seek_req2 = 1;
+//                    mp->seek_msec2 = msg->arg1;
                 }
             }
             pthread_mutex_unlock(&mp->mutex);

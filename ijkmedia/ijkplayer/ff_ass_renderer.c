@@ -194,7 +194,7 @@ static int upload_buffer(FF_ASS_Renderer *s, double time_ms, FFSubtitleBuffer **
             ass->force_changed = 0;
         }
         SDL_UnlockMutex(ass->mutex);
-        return -1;
+        return -2;
     }
     
     if (!ignore_change && changed == 0 && !ass->force_changed) {
@@ -497,7 +497,7 @@ FF_ASS_Renderer_Format ff_ass_default_format = {
     .uninit             = uninit,
 };
 
-static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format, AVDictionary *opts)
+static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format, AVDictionary **opts)
 {
     FF_ASS_Renderer *r = av_mallocz(sizeof(FF_ASS_Renderer));
     r->priv_data = av_mallocz(format->priv_data_size);
@@ -512,7 +512,7 @@ static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format,
         av_opt_set_defaults(r->priv_data);
     }
     if (opts) {
-        av_opt_set_dict(r->priv_data, &opts);
+        av_opt_set_dict(r->priv_data, opts);
     }
     
     if (format->init(r)) {
@@ -523,7 +523,7 @@ static FF_ASS_Renderer *ffAss_create_with_format(FF_ASS_Renderer_Format* format,
     return r;
 }
 
-FF_ASS_Renderer *ff_ass_render_create_default(uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h, AVDictionary *opts)
+FF_ASS_Renderer *ff_ass_render_create_default(uint8_t *subtitle_header, int subtitle_header_size, int video_w, int video_h, AVDictionary **opts)
 {
     FF_ASS_Renderer_Format* format = &ff_ass_default_format;
     FF_ASS_Renderer* r = ffAss_create_with_format(format, opts);

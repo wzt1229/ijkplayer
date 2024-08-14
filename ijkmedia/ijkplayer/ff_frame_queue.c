@@ -201,6 +201,11 @@ int frame_queue_nb_remaining(FrameQueue *f)
     return f->size - f->rindex_shown;
 }
 
+int frame_queue_is_full(FrameQueue *f)
+{
+    return frame_queue_nb_remaining(f) >= f->max_size;
+}
+
 /* return last shown position */
 #ifdef FFP_MERGE
 static int64_t frame_queue_last_pos(FrameQueue *f)

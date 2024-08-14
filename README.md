@@ -25,6 +25,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 ## Features
 
 - Common
+  - using FFmpeg 6.1.1
   - enabled ffmpeg all decoders and demuxers binary size is bigger [FFToolChain/ffconfig/module-full.sh](FFToolChain/ffconfig/module-full.sh)
   - workaround for some buggy online video
 - iOS/macOS/tvOS
@@ -41,7 +42,6 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 
 ## ON-PLAN
 
-- upgrade FFmpeg to 6.x
 - exchange video resolution gapless
 
 ## Donate
@@ -54,7 +54,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 install use cocoapod:
 
 ```
-pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.4/IJKMediaPlayerKit.spec.json'
+pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.5/IJKMediaPlayerKit.spec.json'
 ```
 
 ## Development
@@ -66,7 +66,7 @@ how to run examples:
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.11.4
+git checkout -B latest k0.11.5
 git submodule update --init
 
 ./FFToolChain/main.sh install -p macos -l 'ass ffmpeg'

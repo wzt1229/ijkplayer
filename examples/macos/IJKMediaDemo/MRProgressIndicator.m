@@ -234,7 +234,7 @@ IB_DESIGNABLE
     }
    
     const CGFloat indicatorRadius = _indicatorWidth / 2.0;
-    const CGFloat maxWidth = slideRect.size.width - 2 * indicatorRadius;
+    const CGFloat maxWidth = slideRect.size.width;// - 2 * indicatorRadius;
     const CGFloat denominator = (_maxValue - _minValue);
     
     // stop state
