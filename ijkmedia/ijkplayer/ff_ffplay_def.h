@@ -228,6 +228,7 @@ typedef struct FrameQueue {
     SDL_mutex *mutex;
     SDL_cond *cond;
     PacketQueue *pktq;
+    double duration;//s
 } FrameQueue;
 
 enum {
@@ -476,7 +477,7 @@ static SDL_Renderer *renderer;
  ****************************************************************************/
 typedef struct FFTrackCacheStatistic
 {
-    int64_t duration;
+    int64_t duration;//ms
     int64_t bytes;
     int64_t packets;
 } FFTrackCacheStatistic;

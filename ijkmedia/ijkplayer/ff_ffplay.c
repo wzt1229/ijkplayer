@@ -1587,6 +1587,46 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
     return 0;
 }
 
+static void ffp_track_statistic_l(FFPlayer *ffp, AVStream *st, PacketQueue *q, FrameQueue *fq, FFTrackCacheStatistic *cache)
+{
+    assert(cache);
+
+    if (q) {
+        cache->bytes   = q->size;
+        cache->packets = q->nb_packets;
+    }
+
+    if (q && st && st->time_base.den > 0 && st->time_base.num > 0) {
+        cache->duration = q->duration * av_q2d(st->time_base) * 1000 + (fq ? fq->duration * 1000 : 0);
+    }
+}
+
+static void ffp_audio_statistic_l(FFPlayer *ffp)
+{
+    VideoState *is = ffp->is;
+    
+    ffp_track_statistic_l(ffp, is->audio_st, &is->audioq, &is->sampq, &ffp->stat.audio_cache);
+
+    if (ffp->is_manifest) {
+          las_set_audio_cached_duration_ms(&ffp->las_player_statistic, ffp->stat.audio_cache.duration);
+    }
+}
+
+static void ffp_video_statistic_l(FFPlayer *ffp)
+{
+    VideoState *is = ffp->is;
+    ffp_track_statistic_l(ffp, is->video_st, &is->videoq, &is->pictq, &ffp->stat.video_cache);
+    if (ffp->is_manifest) {
+        las_set_video_cached_duration_ms(&ffp->las_player_statistic, ffp->stat.video_cache.duration);
+    }
+}
+
+static void ffp_statistic_l(FFPlayer *ffp)
+{
+    ffp_audio_statistic_l(ffp);
+    ffp_video_statistic_l(ffp);
+}
+
 static int get_video_frame(FFPlayer *ffp, AVFrame *frame)
 {
     VideoState *is = ffp->is;
@@ -4867,45 +4907,6 @@ void ffp_toggle_buffering(FFPlayer *ffp, int start_buffering)
     SDL_LockMutex(ffp->is->play_mutex);
     ffp_toggle_buffering_l(ffp, start_buffering);
     SDL_UnlockMutex(ffp->is->play_mutex);
-}
-
-void ffp_track_statistic_l(FFPlayer *ffp, AVStream *st, PacketQueue *q, FFTrackCacheStatistic *cache)
-{
-    assert(cache);
-
-    if (q) {
-        cache->bytes   = q->size;
-        cache->packets = q->nb_packets;
-    }
-
-    if (q && st && st->time_base.den > 0 && st->time_base.num > 0) {
-        cache->duration = q->duration * av_q2d(st->time_base) * 1000;
-    }
-}
-
-void ffp_audio_statistic_l(FFPlayer *ffp)
-{
-    VideoState *is = ffp->is;
-    ffp_track_statistic_l(ffp, is->audio_st, &is->audioq, &ffp->stat.audio_cache);
-
-    if (ffp->is_manifest) {
-          las_set_audio_cached_duration_ms(&ffp->las_player_statistic, ffp->stat.audio_cache.duration);
-    }
-}
-
-void ffp_video_statistic_l(FFPlayer *ffp)
-{
-    VideoState *is = ffp->is;
-    ffp_track_statistic_l(ffp, is->video_st, &is->videoq, &ffp->stat.video_cache);
-    if (ffp->is_manifest) {
-        las_set_video_cached_duration_ms(&ffp->las_player_statistic, ffp->stat.video_cache.duration);
-    }
-}
-
-void ffp_statistic_l(FFPlayer *ffp)
-{
-    ffp_audio_statistic_l(ffp);
-    ffp_video_statistic_l(ffp);
 }
 
 void ffp_check_buffering_l(FFPlayer *ffp)
