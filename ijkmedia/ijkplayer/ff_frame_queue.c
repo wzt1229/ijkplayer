@@ -57,6 +57,7 @@ void frame_queue_destory(FrameQueue *f)
             vp->bmp = NULL;
         }
     }
+    f->duration = 0;
     SDL_DestroyMutex(f->mutex);
     SDL_DestroyCond(f->cond);
 }
@@ -170,10 +171,14 @@ Frame *frame_queue_peek_readable_noblock(FrameQueue *f)
 
 int frame_queue_push(FrameQueue *f)
 {
+    Frame *frame = &f->queue[f->windex];
+    double du = frame->duration;
+    
     if (++f->windex == f->max_size)
         f->windex = 0;
     int size;
     SDL_LockMutex(f->mutex);
+    f->duration += du;
     size = ++f->size;
     SDL_CondSignal(f->cond);
     SDL_UnlockMutex(f->mutex);
@@ -186,11 +191,15 @@ void frame_queue_next(FrameQueue *f)
         f->rindex_shown = 1;
         return;
     }
-    frame_queue_unref_item(&f->queue[f->rindex]);
+    
+    Frame *frame = &f->queue[f->rindex];
+    double du = frame->duration;
+    frame_queue_unref_item(frame);
     if (++f->rindex == f->max_size)
         f->rindex = 0;
     SDL_LockMutex(f->mutex);
     f->size--;
+    f->duration -= du;
     SDL_CondSignal(f->cond);
     SDL_UnlockMutex(f->mutex);
 }
