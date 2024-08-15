@@ -116,7 +116,7 @@ static BOOL hdrAnimationShown = 0;
         if (isEndDrag) {
             [self seekTo:progress * indicator.maxValue];
             if (!self.tickTimer) {
-                self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
+                self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:0.03 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
             }
         } else {
             if (self.tickTimer) {
@@ -973,7 +973,7 @@ static BOOL hdrAnimationShown = 0;
         MRPlayerSettingsViewController *settings = [self findSettingViewController];
         [settings updateTracks:dic];
         if (!self.tickTimer) {
-            self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
+            self.tickTimer = [NSTimer scheduledTimerWithTimeInterval:0.03 target:self selector:@selector(onTick:) userInfo:nil repeats:YES];
         }
         //test
         //[self.player exchangeSelectedStream:48];
@@ -1013,7 +1013,7 @@ static BOOL hdrAnimationShown = 0;
     
     if ([self.player isPlaying]) {
         self.tickCount ++;
-        if (self.tickCount % 60 == 0) {
+        if (self.tickCount % 1980 == 0) {
             [self saveCurrentPlayRecord];
         }
         [self enableComputerSleep:NO];
