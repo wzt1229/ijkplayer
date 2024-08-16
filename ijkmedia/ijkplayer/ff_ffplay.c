@@ -4837,7 +4837,10 @@ long ffp_get_playable_duration_l(FFPlayer *ffp)
     assert(ffp);
     if (!ffp)
         return 0;
-
+    //when read frame eof,the palyable duration is close to but less than the total duration,cause the palyable progress bar is never full.
+    if (ffp->is && ffp->is->eof) {
+        return ffp_get_duration_l(ffp);
+    }
     return (long)ffp->playable_duration_ms;
 }
 
