@@ -655,7 +655,7 @@ static void set_clock_at(Clock *c, double pts, int serial, double time)
     c->pts_drift = c->pts - time;
     c->serial = serial;
 #ifdef FFP_SHOW_SYNC_CLOCK
-    av_log(NULL,AV_LOG_INFO,"clock %s %0.3f\n",c->name,c->pts);
+    av_log(NULL,AV_LOG_INFO,"set %s clock %f\n",c->name,c->pts);
 #endif
 }
 
@@ -819,10 +819,14 @@ static void toggle_pause_l(FFPlayer *ffp, int pause_on)
         return;
     }
     
-    if (is->pause_req && !pause_on) {
+    //pause->play and play->pause update clock;
+    //we konw the get_clock return pts after pause.
+    //during the period from last update clock to the current pause event, no one has updated the clock (pts),so after pause get_positon is on average 50ms slow(my test movie,audio pts update every 100ms)
+    if ((is->pause_req && !pause_on) || (!is->pause_req && pause_on)) {
         set_clock(&is->vidclk, get_clock(&is->vidclk), is->vidclk.serial);
         set_clock(&is->audclk, get_clock(&is->audclk), is->audclk.serial);
     }
+    
     is->pause_req = pause_on;
     ffp->auto_resume = !pause_on;
     stream_update_pause_l(ffp);
@@ -3671,8 +3675,8 @@ static int read_thread(void *arg)
                 }
             }
             
-            int64_t seek_min    = is->seek_rel > 0 ? seek_target - is->seek_rel + 2: INT64_MIN;
-            int64_t seek_max    = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
+            int64_t seek_min = is->seek_rel > 0 ? seek_target - is->seek_rel + 2: INT64_MIN;
+            int64_t seek_max = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
 // FIXME the +-2 is due to rounding being not done in the correct direction in generation
 //      of the seek_pos/seek_rel variables
 
