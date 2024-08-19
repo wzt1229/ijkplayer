@@ -54,7 +54,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 install use cocoapod:
 
 ```
-pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.5/IJKMediaPlayerKit.spec.json'
+pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.6/IJKMediaPlayerKit.spec.json'
 ```
 
 ## Development
@@ -66,7 +66,7 @@ how to run examples:
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.11.5
+git checkout -B latest k0.11.6
 git submodule update --init
 
 ./FFToolChain/main.sh install -p macos -l 'ass ffmpeg'
@@ -78,11 +78,11 @@ pod install --project-directory=./examples/ios
 pod install --project-directory=./examples/tvos
 
 # run iOS demo
-open ./examples/macos/IJKMediaDemo.xcworkspace
+open ./examples/ios/IJKMediaDemo.xcworkspace
 # run macOS demo
 open ./examples/macos/IJKMediaMacDemo.xcworkspace
 # run tvOS demo
-open ./examples/macos/IJKMediaTVDemo.xcworkspace
+open ./examples/tvos/IJKMediaTVDemo.xcworkspace
 ```
 
 if you want build your IJKMediaPlayerKit.framework, you need enter examples/{plat} folder, then exec `./build-framework.sh`

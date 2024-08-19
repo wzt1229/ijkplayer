@@ -37,6 +37,7 @@ typedef CGRect NSRect;
 @property (atomic, strong) IJKOverlayAttach *currentAttach;
 @property (assign) int hdrAnimationFrameCount;
 @property (atomic, strong) NSLock *pilelineLock;
+@property (assign) BOOL needCleanBackgroundColor;
 
 @end
 
@@ -91,7 +92,7 @@ typedef CGRect NSRect;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidEndLiveResize:) name:NSWindowDidEndLiveResizeNotification object:nil];
 #endif
     //set default bg color.
-    [self setBackgroundColor:1.0 g:1.0 b:1.0];
+    [self setBackgroundColor:0 g:0 b:0];
     return YES;
 }
 
@@ -298,6 +299,26 @@ typedef CGRect NSRect;
 {
     IJKOverlayAttach * attach = self.currentAttach;
     if (attach.videoTextures.count == 0) {
+        if (self.needCleanBackgroundColor) {
+            id<CAMetalDrawable> drawable = self.currentDrawable;
+            if (drawable) {
+                id<MTLTexture> texture = drawable.texture;
+
+                MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+                passDescriptor.colorAttachments[0].texture = texture;
+                passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+                passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+                passDescriptor.colorAttachments[0].clearColor = self.clearColor;
+                
+                id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
+                id <MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+            
+                [commandEncoder endEncoding];
+                [commandBuffer presentDrawable:drawable];
+                [commandBuffer commit];
+                self.needCleanBackgroundColor = NO;
+            }
+        }
         return;
     }
     
@@ -652,24 +673,8 @@ mp_format * mp_get_metal_format(uint32_t cvpixfmt);
 - (void)setBackgroundColor:(uint8_t)r g:(uint8_t)g b:(uint8_t)b
 {
     self.clearColor = (MTLClearColor){r/255.0, g/255.0, b/255.0, 1.0f};
-    
-    id<CAMetalDrawable> drawable = self.currentDrawable;
-    if (drawable) {
-        id<MTLTexture> texture = drawable.texture;
-
-        MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-        passDescriptor.colorAttachments[0].texture = texture;
-        passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-        passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-        passDescriptor.colorAttachments[0].clearColor = self.clearColor;
-        
-        id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
-        id <MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
-    
-        [commandEncoder endEncoding];
-        [commandBuffer presentDrawable:drawable];
-        [commandBuffer commit];
-    }
+    self.needCleanBackgroundColor = YES;
+    [self setNeedsRefreshCurrentPic];
 }
 
 - (id)context

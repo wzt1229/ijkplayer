@@ -1,3 +1,8 @@
+tag k0.11.6
+--------------------------------
+
+- fix real iOS device does not display picture and keeps showing a pink color,#42
+
 tag k0.11.5
 --------------------------------
 
