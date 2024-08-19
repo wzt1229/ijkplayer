@@ -75,7 +75,7 @@
     }
     
     self.convertMatrixChanged = YES;
-    ALOGI("render pipeline:%s",[[self.pipelineMeta description]UTF8String]);
+    ALOGI("render pipeline:%s\n",[[self.pipelineMeta description]UTF8String]);
     
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
     NSURL * libURL = [bundle URLForResource:@"default" withExtension:@"metallib"];
