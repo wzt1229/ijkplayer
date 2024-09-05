@@ -49,7 +49,7 @@ xcodebuild -workspace ${WORKSPACE_NAME} -scheme ${TARGET_NAME} \
 -destination 'generic/platform=tvOS Simulator' \
 -destination 'generic/platform=tvOS' \
 BUILD_DIR=. \
-clean build >/dev/null
+clean build
 
 echo "tvos framework dir:$WORK_DIR"
 echo "tvos simulator framework dir: $SIM_WORK_DIR"

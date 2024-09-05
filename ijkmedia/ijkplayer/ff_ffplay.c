@@ -3422,7 +3422,8 @@ static int read_thread(void *arg)
     err = avformat_open_input(&ic, is->filename, is->iformat, &ffp->format_opts);
     if (err < 0) {
         ret = -1;
-        av_log(NULL, AV_LOG_ERROR, "open input failed:%s,err:%d\n", is->filename, err);
+        
+        av_log(NULL, AV_LOG_ERROR, "open [%s] failed:%s,err:%d\n", is->filename, av_err2str(err), err);
         last_error = err;
         goto fail;
     }

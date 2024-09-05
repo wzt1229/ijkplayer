@@ -43,6 +43,6 @@ xcodebuild -workspace ${WORKSPACE_NAME} -scheme ${TARGET_NAME} \
 -configuration Release  \
 -destination 'generic/platform=macOS' \
 BUILD_DIR=. \
-clean build >/dev/null
+clean build
 
 echo "framework dir: ${WORK_DIR}"
