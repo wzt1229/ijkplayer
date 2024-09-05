@@ -51,7 +51,7 @@ xcodebuild -workspace ${WORKSPACE_NAME} -scheme ${TARGET_NAME} \
 -destination 'generic/platform=iOS' \
 -destination 'generic/platform=iOS Simulator' \
 BUILD_DIR=. \
-clean build >/dev/null
+clean build
 
 echo "ios framework dir:$WORK_DIR"
 echo "ios simulator framework dir: $SIM_WORK_DIR"
