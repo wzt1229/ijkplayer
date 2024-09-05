@@ -1625,10 +1625,50 @@ static void ffp_video_statistic_l(FFPlayer *ffp)
     }
 }
 
+static void update_playable_duration(FFPlayer *ffp)
+{
+    if (!ffp) {
+        return;
+    }
+    VideoState *is           = ffp->is;
+    if (!is) {
+        return;
+    }
+    int     cached_duration_in_ms = -1;
+    int64_t audio_cached_duration = -1;
+    int64_t video_cached_duration = -1;
+    
+    if (is->audio_st) {
+        audio_cached_duration = ffp->stat.audio_cache.duration;
+    }
+    
+    if (is->video_st) {
+        video_cached_duration = ffp->stat.video_cache.duration;
+    }
+    
+    if (video_cached_duration > 0 && audio_cached_duration > 0) {
+        cached_duration_in_ms = (int)IJKMIN(video_cached_duration, audio_cached_duration);
+    } else if (video_cached_duration > 0) {
+        cached_duration_in_ms = (int)video_cached_duration;
+    } else if (audio_cached_duration > 0) {
+        cached_duration_in_ms = (int)audio_cached_duration;
+    }
+    
+    if (cached_duration_in_ms >= 0) {
+        int64_t buf_time_position = ffp_get_current_position_l(ffp) + cached_duration_in_ms;
+        if (ffp->playable_duration_ms != buf_time_position) {
+            av_log(ffp, AV_LOG_DEBUG, "set playable_duration_ms:%lld,cached_duration_in_ms:%d\n", buf_time_position,cached_duration_in_ms);
+            ffp->playable_duration_ms = buf_time_position;
+        }
+    }
+}
+
 static void ffp_statistic_l(FFPlayer *ffp)
 {
     ffp_audio_statistic_l(ffp);
     ffp_video_statistic_l(ffp);
+    //when paused player,need update playable statistics after seek
+    update_playable_duration(ffp);
 }
 
 static int get_video_frame(FFPlayer *ffp, AVFrame *frame)
@@ -3309,44 +3349,6 @@ static void reset_buffer_size(FFPlayer *ffp)
     av_log(NULL, AV_LOG_INFO, "auto decision max buffer size:%dMB\n",ffp->dcc.max_buffer_size/1024/1024);
 }
 
-static void update_playable_duration(FFPlayer *ffp)
-{
-    if (!ffp) {
-        return;
-    }
-    VideoState *is           = ffp->is;
-    if (!is) {
-        return;
-    }
-    int     cached_duration_in_ms = -1;
-    int64_t audio_cached_duration = -1;
-    int64_t video_cached_duration = -1;
-    
-    if (is->audio_st) {
-        audio_cached_duration = ffp->stat.audio_cache.duration;
-    }
-    
-    if (is->video_st) {
-        video_cached_duration = ffp->stat.video_cache.duration;
-    }
-    
-    if (video_cached_duration > 0 && audio_cached_duration > 0) {
-        cached_duration_in_ms = (int)IJKMIN(video_cached_duration, audio_cached_duration);
-    } else if (video_cached_duration > 0) {
-        cached_duration_in_ms = (int)video_cached_duration;
-    } else if (audio_cached_duration > 0) {
-        cached_duration_in_ms = (int)audio_cached_duration;
-    }
-    
-    if (cached_duration_in_ms >= 0) {
-        int64_t buf_time_position = ffp_get_current_position_l(ffp) + cached_duration_in_ms;
-        if (ffp->playable_duration_ms != buf_time_position) {
-            //av_log(ffp, AV_LOG_DEBUG, "set playable_duration_ms:%lld\n", buf_time_position);
-            ffp->playable_duration_ms = buf_time_position;
-        }
-    }
-}
-
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
 {
@@ -4939,12 +4941,6 @@ void ffp_toggle_buffering_l(FFPlayer *ffp, int buffering_on)
         av_log(ffp, AV_LOG_DEBUG, "ffp_toggle_buffering_l: end\n");
         is->buffering_on = 0;
         stream_update_pause_l(ffp);
-        
-        //when paused player,need update playable statistics after seek
-        if (is->pause_req) {
-            ffp_statistic_l(ffp);
-            update_playable_duration(ffp);
-        }
         
         if (is->seek_buffering) {
             is->seek_buffering = 0;

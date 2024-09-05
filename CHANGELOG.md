@@ -2,7 +2,7 @@ tag k0.11.7
 --------------------------------
 
 - support avs3 video decoder,#45
-- update playable statistics after seek,#44
+- update playable statistics after seek,#46
 - fix the palyable progress bar is never full bug
 - fix ffp_get_current_position_l is on average 50ms slow after pause
 - add the duration of the decoded frames to statistics
