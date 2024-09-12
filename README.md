@@ -69,9 +69,9 @@ cd ijkplayer
 git checkout -B latest k0.11.7
 git submodule update --init
 
-./FFToolChain/main.sh install -p macos -l 'ass ffmpeg'
-./FFToolChain/main.sh install -p ios -l 'ass ffmpeg'
-./FFToolChain/main.sh install -p tvos -l 'ass ffmpeg'
+./FFToolChain/main.sh install -p macos -l 'ass ffmpeg smb2'
+./FFToolChain/main.sh install -p ios -l 'ass ffmpeg smb2'
+./FFToolChain/main.sh install -p tvos -l 'ass ffmpeg smb2'
 
 pod install --project-directory=./examples/macos
 pod install --project-directory=./examples/ios
