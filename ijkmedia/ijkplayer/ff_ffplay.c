@@ -110,7 +110,7 @@
 
 // static const AVOption ffp_context_options[] = ...
 #include "ff_ffplay_options.h"
-
+#include "ijk_custom_avio.h"
 #if CONFIG_AVFILTER
 // FFP_MERGE: opt_add_vfilter
 #endif
@@ -607,6 +607,9 @@ static void stream_close(FFPlayer *ffp)
         ijk_soundtouch_destroy(is->handle);
     }
 #endif
+    if (is->ijk_io) {
+        ijk_custom_io_destroy(&is->ijk_io);
+    }
     av_free(is->filename);
     av_free(is);
     ffp->is = NULL;
@@ -3420,7 +3423,20 @@ static int read_thread(void *arg)
         av_dict_set_int(&ffp->format_opts, "las_player_statistic", (intptr_t) (&ffp->las_player_statistic), 0);
         ffp->find_stream_info = false;
     }
-
+    
+    //is->filename = "smb2://user:password@host/share/video/4.mp4";
+    
+    if (ijk_custom_io_protocol_matched(is->filename)) {
+        IJKCustomIOContext ijk_io = ijk_custom_io_create(is->filename);
+        if (ijk_io) {
+            is->ijk_io = ijk_io;
+            ic->pb = ijk_custom_io_get_avio(ijk_io);
+            is->filename = ijk_custom_io_get_dummy_url(ijk_io);
+        } else {
+            av_log(NULL, AV_LOG_ERROR, "ijk custom io create failed:%s\n", is->filename);
+        }
+    }
+    
     err = avformat_open_input(&ic, is->filename, is->iformat, &ffp->format_opts);
     if (err < 0) {
         ret = -1;

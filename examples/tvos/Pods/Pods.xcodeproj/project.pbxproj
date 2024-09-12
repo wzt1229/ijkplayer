@@ -13,7 +13,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		57E0EB894181A56AA9D18730DCBDD5A9 /* PBXContainerItemProxy */ = {
+		044E80B0615634745F7EA868C2B9970D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = D17FCEEFF1EB15C96F1E04932EAAD12C /* IJKMediaPlayerKit.xcodeproj */;
 			proxyType = 1;
@@ -144,7 +144,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				62E72094BAFC51F425C33EF4A04E1D45 /* PBXTargetDependency */,
+				B1E12748F05278D9A7B2D2E27A1426B7 /* PBXTargetDependency */,
 			);
 			name = "Pods-IJKMediaTVDemo";
 			productName = Pods_IJKMediaTVDemo;
@@ -205,10 +205,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		62E72094BAFC51F425C33EF4A04E1D45 /* PBXTargetDependency */ = {
+		B1E12748F05278D9A7B2D2E27A1426B7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = IJKMediaPlayerKit;
-			targetProxy = 57E0EB894181A56AA9D18730DCBDD5A9 /* PBXContainerItemProxy */;
+			targetProxy = 044E80B0615634745F7EA868C2B9970D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
