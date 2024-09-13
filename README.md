@@ -4,6 +4,8 @@
   <img src="https://github.com/debugly/ijkplayer/actions/workflows/apple.yml/badge.svg">
 </div>
 
+[![Stargazers repo roster for @debugly/ijkplayer](https://reporoster.com/stars/debugly/ijkplayer)](https://github.com/debugly/ijkplayer/stargazers)
+
 ijk media player based on [ffplay](http://ffmpeg.org)
 
 | Platform    | Archs                                   |
