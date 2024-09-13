@@ -265,7 +265,7 @@ typedef struct Decoder {
 } Decoder;
 
 typedef struct FFSubtitle FFSubtitle;
-typedef void * IJKCustomIOContext;
+typedef struct ijk_custom_avio_protocol ijk_custom_avio_protocol;
 
 typedef struct VideoState {
     SDL_Thread *read_tid;
@@ -412,8 +412,7 @@ typedef struct VideoState {
     volatile int initialized_decoder;
     int seek_buffering;
     FFSubtitle *ffSub;
-    
-    IJKCustomIOContext ijk_io;
+    ijk_custom_avio_protocol * ijk_io;
 } VideoState;
 
 /* options specified by the user */

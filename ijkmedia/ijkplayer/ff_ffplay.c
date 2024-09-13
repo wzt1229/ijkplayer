@@ -608,7 +608,7 @@ static void stream_close(FFPlayer *ffp)
     }
 #endif
     if (is->ijk_io) {
-        ijk_custom_io_destroy(&is->ijk_io);
+        ijk_custom_avio_destroy(&is->ijk_io);
     }
     av_free(is->filename);
     av_free(is);
@@ -3427,11 +3427,11 @@ static int read_thread(void *arg)
     //is->filename = "smb2://user:password@host/share/video/4.mp4";
     
     if (ijk_custom_io_protocol_matched(is->filename)) {
-        IJKCustomIOContext ijk_io = ijk_custom_io_create(is->filename);
+        ijk_custom_avio_protocol * ijk_io = ijk_custom_io_create(is->filename);
         if (ijk_io) {
             is->ijk_io = ijk_io;
             ic->pb = ijk_custom_io_get_avio(ijk_io);
-            is->filename = ijk_custom_io_get_dummy_url(ijk_io);
+            is->filename = av_strdup(ijk_io->dummy_url);
         } else {
             av_log(NULL, AV_LOG_ERROR, "ijk custom io create failed:%s\n", is->filename);
         }
