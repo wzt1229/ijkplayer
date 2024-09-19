@@ -10,19 +10,14 @@
 
 #include <stdio.h>
 
-#define avio_ctx_buffer_size 128*1024
-
 typedef struct AVIOContext AVIOContext;
+typedef struct ijk_custom_avio_protocol ijk_custom_avio_protocol;
+
 typedef struct ijk_custom_avio_protocol {
     void *opaque;
-    AVIOContext *avio_ctx;
-    unsigned char *io_buffer;
-    char *dummy_url;
-    
-    int (*read_packet)(void *, uint8_t *buf, int buf_size);
-    int (*write_packet)(void *, uint8_t *buf, int buf_size);
-    int64_t (*seek_packet)(void *, int64_t offset, int whence);
-    void (*destroy)(void *opaque);
+    AVIOContext * (*get_avio)(ijk_custom_avio_protocol *);
+    char * (*get_dummy_url)(ijk_custom_avio_protocol *);
+    void (*destroy)(ijk_custom_avio_protocol **);
 } ijk_custom_avio_protocol;
 
 #endif /* ijk_custom_avio_protocol_h */
