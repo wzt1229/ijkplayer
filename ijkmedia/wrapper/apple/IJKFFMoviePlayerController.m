@@ -354,7 +354,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     } else if ([self.contentURL.scheme isEqualToString:@"bluray"]) {
         filePath = [[self.contentURL absoluteString] stringByRemovingPercentEncoding];
     } else {
-        filePath = [self.contentURL absoluteString];
+        filePath = [[self.contentURL absoluteString] stringByRemovingPercentEncoding];
     }
     
     ijkmp_set_data_source(_mediaPlayer, [filePath UTF8String]);
