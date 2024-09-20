@@ -35,10 +35,10 @@ static void destroy(ijk_custom_avio_protocol **pp) {
                 
                 //malloc: double free for ptr 0x148008000
                 //wtf?who freed my buffer?
-//                if (avio->io_buffer) {
-//                    av_free(avio->io_buffer);
-//                    avio->io_buffer = NULL;
-//                }
+                //                if (avio->io_buffer) {
+                //                    av_free(avio->io_buffer);
+                //                    avio->io_buffer = NULL;
+                //                }
                 
                 if (avio->dummy_url) {
                     av_free(avio->dummy_url);
@@ -141,7 +141,7 @@ static ijk_custom_avio_protocol * create_avio_protocol(ijk_custom_io_protocol *i
     
     io_opaque->io_buffer = io_buffer;
     io_opaque->dummy_url = av_strdup(dummy_url);
-
+    
     protocol = av_malloc(sizeof(ijk_custom_avio_protocol));
     if (!protocol) {
         goto failed;
@@ -153,7 +153,7 @@ static ijk_custom_avio_protocol * create_avio_protocol(ijk_custom_io_protocol *i
     protocol->destroy = &destroy;
     
     avio_ctx = avio_alloc_context(io_buffer, avio_ctx_buffer_size,
-                                               0, protocol, &read, &write, &seek);
+                                  0, protocol, &read, &write, &seek);
     if (!avio_ctx) {
         goto failed;
     }
@@ -178,12 +178,8 @@ failed:
 
 ijk_custom_avio_protocol * ijk_custom_avio_create(const char *url)
 {
-    const char *diskname = url;
-    ijk_custom_avio_protocol *protocol = NULL;
-    
-    if (av_strstart(url, "smb2", &diskname)) {
-        const char *smb_url = av_strireplace(url, "smb2", "smb");
-        ijk_custom_io_protocol *io = ijk_custom_io_create_smb2(smb_url);
+    if (av_strstart(url, "smb2", NULL)) {
+        ijk_custom_io_protocol *io = ijk_custom_io_create_smb2(url);
         return create_avio_protocol(io, av_strireplace(url, "smb2", "http"));
     }
     return NULL;

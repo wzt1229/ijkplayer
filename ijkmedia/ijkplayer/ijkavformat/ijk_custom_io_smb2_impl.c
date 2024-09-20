@@ -4,9 +4,11 @@
 //
 //  Created by Reach Matt on 2024/9/19.
 //
-#include "ijk_custom_io.h"
 #include "ijk_custom_io_smb2_impl.h"
 #include <libavutil/mem.h>
+#include <libavutil/avstring.h>
+#include <libavformat/urldecode.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <strings.h>
@@ -210,8 +212,16 @@ failed:
 ijk_custom_io_protocol * ijk_custom_io_create_smb2(const char *url)
 {
     ijk_custom_io_smb2_opaque * smb2_opaque = av_malloc(sizeof(ijk_custom_io_smb2_opaque));
-    if (0 != init(smb2_opaque, url)) {
+    if (!smb2_opaque) {
+        return NULL;
+    }
+    
+    const char *smb_url = av_strireplace(url, "smb2", "smb");
+    smb_url = ff_urldecode(smb_url, 0);
+    
+    if (0 != init(smb2_opaque, smb_url)) {
         destroy_opaque(smb2_opaque);
+        av_free(smb2_opaque);
         return NULL;
     }
     
