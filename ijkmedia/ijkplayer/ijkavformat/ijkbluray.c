@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#if TARGET_OS_OSX
 #include <libbluray/bluray.h>
 
 #include "libavutil/avstring.h"
@@ -339,3 +340,4 @@ const URLProtocol ijkimp_ff_ijkbluray2_protocol = {
     .priv_data_size  = sizeof(IJKBlurayContext),
     .priv_data_class = &ijk_bluray_context_class,
 };
+#endif
