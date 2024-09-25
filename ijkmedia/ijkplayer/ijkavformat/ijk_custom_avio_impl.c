@@ -113,7 +113,7 @@ static int64_t seek(void *opaque, int64_t offset, int whence)
     if (whence == AVSEEK_SIZE) {
         return avio->custom_io->file_size(avio->custom_io);
     } else {
-        return avio->custom_io->seek(avio->custom_io, offset, SEEK_SET);
+        return avio->custom_io->seek(avio->custom_io, offset, whence);
     }
 }
 

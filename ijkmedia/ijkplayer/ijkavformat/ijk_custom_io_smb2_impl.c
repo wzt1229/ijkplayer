@@ -31,24 +31,30 @@ static int read(ijk_custom_io_protocol *p, uint8_t *buf, int buf_size)
         return 0;
     }
     ijk_custom_io_smb2_opaque *smb2 = (ijk_custom_io_smb2_opaque *)p->opaque;
-    int count = 0,total = 0;
     
-    while ((count = smb2_pread(smb2->smb2, smb2->fh, buf, buf_size, smb2->offset)) != 0) {
-        if (count == -EAGAIN) {
+    uint8_t *buf1 = buf;
+    int buf_size1 = buf_size;
+    
+    while (buf_size1 > 0) {
+        int read = smb2_read(smb2->smb2, smb2->fh, buf1, buf_size1);
+        if (read == -EAGAIN) {
             continue;
         }
-        if (count < 0) {
+        if (read < 0) {
             fprintf(stderr, "Failed to read file. %s\n",
                     smb2_get_error(smb2->smb2));
             break;
         }
-        total += count;
-        if (total >= buf_size) {
+        if (read == 0) {
+            //eof
             break;
         }
+        smb2->offset += read;
+        buf1 += read;
+        buf_size1 -= read;
     }
-    smb2->offset += count;
-    return total;
+    
+    return buf_size - buf_size1;
 }
 
 static int write(ijk_custom_io_protocol *p, uint8_t *buf, int buf_size)
@@ -92,32 +98,15 @@ static int eof(ijk_custom_io_protocol *p) {
     return smb2->offset == file_size(p);
 }
 
-static int64_t seek(ijk_custom_io_protocol *p, int64_t offset, int origin) 
+static int64_t seek(ijk_custom_io_protocol *p, int64_t offset, int whence)
 {
     if (!p || !p->opaque) {
         return 0;
     }
     ijk_custom_io_smb2_opaque *smb2 = (ijk_custom_io_smb2_opaque *)p->opaque;
-    int64_t length = file_size(p);
-    switch (origin) {
-        case SEEK_SET:
-            smb2->offset = offset;
-            break;
-        case SEEK_CUR:
-            smb2->offset += offset;
-            break;
-        case SEEK_END:
-        {
-            smb2->offset = length + offset;
-        }
-            break;
-        default:
-            return -1;
-    }
-    if (smb2->offset > length) {
-        return -1;
-    }
-    return (int64_t)smb2->offset;
+    int64_t seeked = smb2_lseek(smb2->smb2, smb2->fh, offset, whence, NULL);
+    smb2->offset = seeked;
+    return seeked;
 }
 
 static void destroy_opaque(ijk_custom_io_smb2_opaque *opaque) {
@@ -185,6 +174,9 @@ static int init(ijk_custom_io_smb2_opaque *app, const char *aUrl)
             if (strlen(password) > 0) {
                 smb2_set_password(app->smb2, password);
             }
+        }
+        if (url->domain) {
+            smb2_set_domain(app->smb2, url->domain);
         }
         app->url = url;
     }

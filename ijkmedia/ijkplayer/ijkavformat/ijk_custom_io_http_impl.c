@@ -40,14 +40,12 @@ static int read(ijk_custom_io_protocol *p, uint8_t *buf, int buf_size)
             break;
         }
         
+        http_opaque->offset += read;
         buf1 += read;
         buf_size1 -= read;
     }
     
-    int read = buf_size - buf_size1;
-    http_opaque->offset += read;
-    
-    return read;
+    return buf_size - buf_size1;
 }
 
 static int write(ijk_custom_io_protocol *p, uint8_t *buf, int buf_size)
