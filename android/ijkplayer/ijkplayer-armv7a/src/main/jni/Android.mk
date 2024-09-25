@@ -23,6 +23,8 @@ MY_APP_JNI_ROOT := $(realpath $(LOCAL_PATH))
 MY_APP_PRJ_ROOT := $(realpath $(MY_APP_JNI_ROOT)/..)
 MY_APP_ANDROID_ROOT := $(realpath $(MY_APP_PRJ_ROOT)/../../../..)
 
+APP_ALLOW_MISSING_DEPS=true
+
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 MY_APP_FFMPEG_OUTPUT_PATH := $(realpath $(MY_APP_ANDROID_ROOT)/contrib/build/ffmpeg-armv7a/output)
 MY_APP_FFMPEG_INCLUDE_PATH := $(realpath $(MY_APP_FFMPEG_OUTPUT_PATH)/include)
