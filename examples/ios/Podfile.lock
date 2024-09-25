@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../../"
 
 SPEC CHECKSUMS:
-  IJKMediaPlayerKit: 6aa25584a1952b0a3bce400889932ee5e5530b52
+  IJKMediaPlayerKit: eb269251f11da3fcfcb8212beeee1c315d0f2077
 
 PODFILE CHECKSUM: cd296d63e0523ffeac3abedb895edb14934a2d48
 

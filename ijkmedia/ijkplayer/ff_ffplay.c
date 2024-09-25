@@ -3424,12 +3424,12 @@ static int read_thread(void *arg)
         ffp->find_stream_info = false;
     }
     
-    ijk_custom_avio_protocol * ijk_io = ijk_custom_avio_create(is->filename);
-    if (ijk_io) {
-        is->ijk_io = ijk_io;
-        ic->pb = ijk_io->get_avio(ijk_io);
-        is->filename = av_strdup(ijk_io->get_dummy_url(ijk_io));
-    }
+//    ijk_custom_avio_protocol * ijk_io = ijk_custom_avio_create(is->filename);
+//    if (ijk_io) {
+//        is->ijk_io = ijk_io;
+//        ic->pb = ijk_io->get_avio(ijk_io);
+//        is->filename = av_strdup(ijk_io->get_dummy_url(ijk_io));
+//    }
     
     err = avformat_open_input(&ic, is->filename, is->iformat, &ffp->format_opts);
     if (err < 0) {

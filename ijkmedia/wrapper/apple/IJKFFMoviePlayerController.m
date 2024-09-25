@@ -214,7 +214,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"safe", 0);
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_PLAYER,"protocol_whitelist","ffconcat,file,http,https");
     //httpproxy
-    ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray2,dvd,rtmp,rtsp,rtp,srtp,udp");
+    ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray2,smb2,dvd,rtmp,rtsp,rtp,srtp,udp");
     
     _subtitlePreference = ijk_subtitle_default_preference();
     // init hud
