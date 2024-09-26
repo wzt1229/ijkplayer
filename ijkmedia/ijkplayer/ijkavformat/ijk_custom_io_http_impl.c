@@ -142,7 +142,7 @@ static int init(ijk_custom_io_http_opaque *app, const char *url)
     //        if (extra)
     //            av_dict_copy(&inner_options, extra, 0);
     
-    const char *protocol_whitelist = "ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray2,dvd,rtmp,rtsp,rtp,srtp,udp";
+    const char *protocol_whitelist = "ijkio,ijkhttphook,concat,http,tcp,https,tls,file,smb2,bluray2,dvd,rtmp,rtsp,rtp,srtp,udp";
     
     AVIOInterruptCB cb = {&interrupt_cb, app};
     
@@ -157,7 +157,7 @@ static int init(ijk_custom_io_http_opaque *app, const char *url)
     return ret < 0;
 }
 
-ijk_custom_io_protocol * ijk_custom_io_create_http(const char *url)
+ijk_custom_io_protocol * ijk_custom_io_create_builtin(const char *url)
 {
     ijk_custom_io_http_opaque * http_opaque = av_malloc(sizeof(ijk_custom_io_http_opaque));
     if (!http_opaque) {

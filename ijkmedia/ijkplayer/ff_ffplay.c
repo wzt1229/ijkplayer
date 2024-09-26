@@ -110,7 +110,6 @@
 
 // static const AVOption ffp_context_options[] = ...
 #include "ff_ffplay_options.h"
-#include "ijk_custom_avio_impl.h"
 #if CONFIG_AVFILTER
 // FFP_MERGE: opt_add_vfilter
 #endif
@@ -607,9 +606,6 @@ static void stream_close(FFPlayer *ffp)
         ijk_soundtouch_destroy(is->handle);
     }
 #endif
-    if (is->ijk_io) {
-        is->ijk_io->destroy(&is->ijk_io);
-    }
     av_free(is->filename);
     av_free(is);
     ffp->is = NULL;

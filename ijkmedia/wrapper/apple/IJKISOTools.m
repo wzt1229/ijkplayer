@@ -6,14 +6,13 @@
 //
 
 #import "IJKISOTools.h"
-#if TARGET_OS_OSX
-#include <libbluray/bluray.h>
-#include "../../ijkplayer/ijkavformat/ijkblurayfsprotocol.h"
+
 #include <libavutil/avstring.h>
 #include <libavformat/urldecode.h>
-#include "../../ijkplayer/ijkavformat/ijkbluray_custom_fs.h"
-#endif
+#include <libbluray/bluray.h>
 #include <dvdread/dvd_reader.h>
+#include "../../ijkplayer/ijkavformat/ijkblurayfsprotocol.h"
+#include "../../ijkplayer/ijkavformat/ijkbluray_custom_fs.h"
 #include "../../ijksdl/ijksdl_log.h"
 
 @implementation IJKISOTools
@@ -45,7 +44,6 @@
     }
 }
 
-#if TARGET_OS_OSX
 + (BOOL)isBlurayVideo:(NSString *)discRoot keyFile:(NSString *)keyFile
 {
     const char *diskname = [discRoot UTF8String];
@@ -55,12 +53,10 @@
     }
     
     fs_access *access = NULL;
-    if (av_strstart(diskname, "smb2://", NULL) || av_strstart(diskname, "http://", NULL) || av_strstart(diskname, "https://", NULL)) {
-        access =  ijk_create_bluray_custom_access(diskname);
-    } else if (av_strstart(diskname, "file://", NULL) || av_strstart(diskname, "/", NULL)) {
+    if (av_strstart(diskname, "file://", NULL) || av_strstart(diskname, "/", NULL)) {
         access = NULL;
     } else {
-        
+        access = ijk_create_bluray_custom_access(diskname);
     }
     
     const char *keyfile = keyFile ? [keyFile UTF8String] : NULL;
@@ -73,11 +69,5 @@
     ijk_destroy_bluray_custom_access(&access);
     return YES;
 }
-#else
-+ (BOOL)isBlurayVideo:(NSString *)discRoot keyFile:(NSString *)keyFile
-{
-    return NO;
-}
-#endif
 
 @end

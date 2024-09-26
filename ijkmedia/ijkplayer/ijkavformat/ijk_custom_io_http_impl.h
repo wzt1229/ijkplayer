@@ -10,6 +10,6 @@
 
 #include "ijk_custom_io.h"
 
-ijk_custom_io_protocol * ijk_custom_io_create_http(const char *url);
+ijk_custom_io_protocol * ijk_custom_io_create_builtin(const char *url);
 
 #endif /* ijk_custom_io_http_impl_h */

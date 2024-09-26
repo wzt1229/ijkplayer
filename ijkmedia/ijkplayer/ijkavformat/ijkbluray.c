@@ -20,7 +20,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#if TARGET_OS_OSX
 #include <libbluray/bluray.h>
 
 #include "libavutil/avstring.h"
@@ -142,12 +141,10 @@ static int bluray_open(URLContext *h, const char *path, int flags)
     const char *diskname = path;
     av_strstart(diskname, BLURAY_PROTO_PREFIX, &diskname);
     fs_access *access = NULL;
-    if (av_strstart(diskname, "smb2://", NULL) || av_strstart(diskname, "http://", NULL) || av_strstart(diskname, "https://", NULL)) {
-        access =  ijk_create_bluray_custom_access(diskname);
-    } else if (av_strstart(diskname, "file://", NULL) || av_strstart(diskname, "/", NULL)) {
+    if (av_strstart(diskname, "file://", NULL) || av_strstart(diskname, "/", NULL)) {
         access = NULL;
     } else {
-        
+        access = ijk_create_bluray_custom_access(diskname);
     }
     
     bd->bd = bd_open_fs(diskname, NULL, access);
@@ -340,4 +337,3 @@ const URLProtocol ijkimp_ff_ijkbluray2_protocol = {
     .priv_data_size  = sizeof(IJKBlurayContext),
     .priv_data_class = &ijk_bluray_context_class,
 };
-#endif

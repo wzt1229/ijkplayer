@@ -345,7 +345,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         filePath = [self.contentURL absoluteString];
     }
     
-#if TARGET_OS_OSX
     //针对 iso 格式特殊处理
     if ([@"iso" isEqualToString:[[filePath pathExtension] lowercaseString]]) {
         //如果是蓝光原盘则使用 bluray:// 协议打开
@@ -359,7 +358,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
             //use origin protocol
         }
     }
-#endif
+
     ijkmp_set_data_source(_mediaPlayer, [filePath UTF8String]);
     ijkmp_set_option_int(_mediaPlayer, IJKMP_OPT_CATEGORY_FORMAT, "safe", 0); // for concat demuxer
     ijkmp_set_subtitle_preference(_mediaPlayer, &_subtitlePreference);

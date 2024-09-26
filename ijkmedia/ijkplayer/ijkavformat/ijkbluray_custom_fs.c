@@ -7,7 +7,6 @@
 
 #include "ijkbluray_custom_fs.h"
 #include "ijkblurayfsprotocol.h"
-#include "ijk_custom_io_smb2_impl.h"
 #include "ijk_custom_io_http_impl.h"
 
 #include <libavutil/mem.h>
@@ -49,12 +48,7 @@ void ijk_destroy_bluray_custom_access(fs_access **p)
 // 构建fs_access结构体
 fs_access * ijk_create_bluray_custom_access(const char *url) 
 {
-    ijk_custom_io_protocol *io = NULL;
-    if (av_strstart(url, "smb2", NULL)) {
-        io = ijk_custom_io_create_smb2(url);
-    } else if (av_strstart(url, "http", NULL) || av_strstart(url, "https", NULL)) {
-        io = ijk_custom_io_create_http(url);
-    }
+    ijk_custom_io_protocol *io = ijk_custom_io_create_builtin(url);
     
     if (io) {
         fs_access *access = av_malloc(sizeof(fs_access));
