@@ -116,16 +116,12 @@ static int init(ff_builtin_io *app, const char *url, AVDictionary **opts)
     bzero(app, sizeof(ff_builtin_io));
     
     int ret = 0;
-    char *protocol_whitelist = "ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray2,smb2,dvd,rtmp,rtsp,rtp,srtp,udp";
     
+    char *protocol_whitelist = NULL;
+
     if (opts) {
         const AVDictionary *dict = *opts;
-        
-        AVDictionaryEntry *proto_dict = av_dict_get(dict, "protocol_whitelist", NULL, 0);
-        if (proto_dict) {
-            protocol_whitelist = av_strdup(proto_dict->value);
-        }
-        
+
         if (!av_strstart(url, "http", NULL)) {
             AVDictionaryEntry *app_dict = av_dict_get(dict, "ijkapplication", NULL, 0);
             if (app_dict) {
@@ -133,11 +129,19 @@ static int init(ff_builtin_io *app, const char *url, AVDictionary **opts)
             }
         }
         
+        AVDictionaryEntry *proto_dict = av_dict_get(dict, "protocol_whitelist", NULL, 0);
+        if (proto_dict) {
+            protocol_whitelist = av_strdup(proto_dict->value);
+        }
         
 //        AVDictionaryEntry *t = NULL;
 //        while ((t = av_dict_get(dict, "", t, AV_DICT_IGNORE_SUFFIX))) {
 //            av_log(NULL, AV_LOG_INFO, "%-*s: %-*s = %s\n", 12, "test", 28, t->key, t->value);
 //        }
+    }
+    
+    if (protocol_whitelist == NULL || strlen(protocol_whitelist) == 0) {
+        protocol_whitelist = "ijkio,ijkhttphook,http,tcp,https,tls,file,smb2";
     }
     
     AVIOInterruptCB cb = {&interrupt_cb, app};
