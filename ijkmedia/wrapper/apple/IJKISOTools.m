@@ -56,7 +56,7 @@
     if (av_strstart(diskname, "file://", NULL) || av_strstart(diskname, "/", NULL)) {
         access = NULL;
     } else {
-        access = ijk_create_bluray_custom_access(diskname);
+        access = ijk_create_bluray_custom_access(diskname, NULL);
     }
     
     const char *keyfile = keyFile ? [keyFile UTF8String] : NULL;

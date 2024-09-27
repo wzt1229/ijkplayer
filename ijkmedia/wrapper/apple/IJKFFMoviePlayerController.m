@@ -311,8 +311,11 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     [self setScreenOn:_keepScreenOnWhilePlaying];
     NSString *render = [self.view name];
     [self setHudValue:render forKey:@"v-renderer"];
+    NSString *scheme = [[_contentURL scheme] lowercaseString];
     
-    if (![_contentURL isFileURL]) {
+    if ([_contentURL isFileURL]) {
+        [self setHudValue:nil forKey:@"path"];
+    } else if ([scheme hasPrefix:@"http"]){
         [self setHudValue:nil forKey:@"scheme"];
         [self setHudValue:nil forKey:@"host"];
         [self setHudValue:nil forKey:@"path"];
@@ -326,7 +329,10 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         [self setHudValue:nil forKey:@"t-http-open"];
         [self setHudValue:nil forKey:@"t-http-seek"];
     } else {
+        [self setHudValue:nil forKey:@"scheme"];
+        [self setHudValue:nil forKey:@"host"];
         [self setHudValue:nil forKey:@"path"];
+        [self setHudValue:nil forKey:@"tcp-spd"];
     }
 
     [self setHudUrl:_contentURL];
@@ -1022,9 +1028,6 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
                               formatedSize(_asyncStat.buf_forwards),
                               formatedDurationBytesAndBitrate(_asyncStat.buf_forwards, bitRate)]
                       forKey:@"async-forward"];
-        int64_t tcpSpeed = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
-        [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
-                   forKey:@"tcp-spd"];
         
         [self setHudValue:formatedDurationMilli(_monitor.prepareLatency) forKey:@"t-prepared"];
         [self setHudValue:formatedDurationMilli(_monitor.firstVideoFrameLatency) forKey:@"t-render"];
@@ -1038,6 +1041,11 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
                            _monitor.httpSeekCount]
                    forKey:@"t-http-seek"];
     }
+    
+    int64_t tcpSpeed = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
+    [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
+               forKey:@"tcp-spd"];
+    
 }
 
 - (void)startHudTimer

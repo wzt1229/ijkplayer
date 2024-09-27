@@ -130,7 +130,7 @@ static void bluray_DebugHandler(const char *psz)
 }
 #endif
 
-static int bluray_open(URLContext *h, const char *path, int flags)
+static int bluray_open(URLContext *h, const char *path, int flags, AVDictionary **options)
 {
 #ifdef DEBUG_BLURAY
     bd_set_debug_mask(BLURAY_DEBUG_MASK);
@@ -144,7 +144,7 @@ static int bluray_open(URLContext *h, const char *path, int flags)
     if (av_strstart(diskname, "file://", NULL) || av_strstart(diskname, "/", NULL)) {
         access = NULL;
     } else {
-        access = ijk_create_bluray_custom_access(diskname);
+        access = ijk_create_bluray_custom_access(diskname, options);
     }
     
     bd->bd = bd_open_fs(diskname, NULL, access);
@@ -330,7 +330,7 @@ fail:
 const URLProtocol ijkimp_ff_ijkbluray2_protocol = {
     .name            = "bluray2",
     .url_close       = bluray_close,
-    .url_open        = bluray_open,
+    .url_open2       = bluray_open,
     .url_read        = bluray_read,
     .url_seek        = bluray_seek,
     .url_parse_priv  = bluray_parse_priv,

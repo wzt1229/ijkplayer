@@ -11,6 +11,7 @@
 #include <stdio.h>
 
 typedef struct fs_access fs_access;
+typedef struct AVDictionary AVDictionary;
 void ijk_destroy_bluray_custom_access(fs_access **p);
-fs_access * ijk_create_bluray_custom_access(const char *url);
+fs_access * ijk_create_bluray_custom_access(const char *url, AVDictionary **options);
 #endif /* ijkbluray_custom_fs_smb2_h */
