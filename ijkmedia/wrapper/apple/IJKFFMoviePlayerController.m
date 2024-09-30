@@ -214,7 +214,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"safe", 0);
     //ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_PLAYER,"protocol_whitelist","ffconcat,file,http,https");
     //httpproxy
-    ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray2,smb2,dvd,rtmp,rtsp,rtp,srtp,udp");
+    ijkmp_set_option(_mediaPlayer,IJKMP_OPT_CATEGORY_FORMAT,"protocol_whitelist","ijkio,ijkhttphook,concat,http,tcp,https,tls,file,bluray,smb2,dvd,rtmp,rtsp,rtp,srtp,udp");
     
     _subtitlePreference = ijk_subtitle_default_preference();
     // init hud
@@ -338,7 +338,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     [self setHudUrl:_contentURL];
     
     //bluray://  不会自动解码，不存在中文编码/打不开流问题
-    //bluray2://  smb2:// 会自动解码，不存在中文编码/打不开流问题
+    //bluray://  smb2:// 会自动解码，不存在中文编码/打不开流问题
     //[absoluteString] 遇到中文，不会解码，因此需要 stringByRemovingPercentEncoding
     //[path] 遇到中文，会解码，因此不需要 stringByRemovingPercentEncoding
     //http 等网络协议请求中的编码不应该移除，需要保留
@@ -355,7 +355,7 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     if ([@"iso" isEqualToString:[[filePath pathExtension] lowercaseString]]) {
         //如果是蓝光原盘则使用 bluray:// 协议打开
         if ([IJKISOTools isBlurayVideo:filePath keyFile:nil]) {
-            filePath = [@"bluray2://" stringByAppendingString:filePath];
+            filePath = [@"bluray://" stringByAppendingString:filePath];
         } 
         //如果是dvd则使用 dvd:// 协议打开
         else if ([IJKISOTools isDVDVideo:filePath]) {

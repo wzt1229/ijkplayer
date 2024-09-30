@@ -8,12 +8,10 @@
 #import "IJKISOTools.h"
 
 #include <libavutil/avstring.h>
-#include <libavformat/urldecode.h>
 #include <libbluray/bluray.h>
 #include <dvdread/dvd_reader.h>
-#include "../../ijkplayer/ijkavformat/ijkblurayfsprotocol.h"
-#include "../../ijkplayer/ijkavformat/ijkbluray_custom_fs.h"
 #include "../../ijksdl/ijksdl_log.h"
+#include <libavformat/bluray_util.h>
 
 @implementation IJKISOTools
 
@@ -52,22 +50,7 @@
         return NO;
     }
     
-    fs_access *access = NULL;
-    if (av_strstart(diskname, "file://", NULL) || av_strstart(diskname, "/", NULL)) {
-        access = NULL;
-    } else {
-        access = ijk_create_bluray_custom_access(diskname, NULL);
-    }
-    
-    const char *keyfile = keyFile ? [keyFile UTF8String] : NULL;
-    BLURAY *bd = bd_open_fs(diskname, keyfile, access);
-    if (!bd) {
-        return NO;
-    }
-    
-    bd_close(bd);
-    ijk_destroy_bluray_custom_access(&access);
-    return YES;
+    return ff_is_bluray_video(diskname, NULL);
 }
 
 @end
