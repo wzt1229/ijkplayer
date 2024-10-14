@@ -334,14 +334,13 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
         [self setHudValue:nil forKey:@"path"];
         [self setHudValue:nil forKey:@"tcp-spd"];
     }
-
+    
     [self setHudUrl:_contentURL];
     
-    //bluray://  不会自动解码，不存在中文编码/打不开流问题
-    //bluray://  smb2:// 会自动解码，不存在中文编码/打不开流问题
     //[absoluteString] 遇到中文，不会解码，因此需要 stringByRemovingPercentEncoding
     //[path] 遇到中文，会解码，因此不需要 stringByRemovingPercentEncoding
-    //http 等网络协议请求中的编码不应该移除，需要保留
+    //http、smb2 等网络协议，请求时会自定对path百分号编码，所以移除与否不影响
+    //bluray: 会自动解码，不存在中文编码/打不开流问题
     
     NSString *filePath = nil;
     
