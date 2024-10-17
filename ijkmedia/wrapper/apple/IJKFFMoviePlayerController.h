@@ -98,13 +98,14 @@ typedef enum IJKLogLevel {
     k_IJK_LOG_SILENT  = 8,
 } IJKLogLevel;
 
+NS_ASSUME_NONNULL_BEGIN
 @interface IJKFFMoviePlayerController : NSObject <IJKMediaPlayback>
 
 - (id)initWithContentURL:(NSURL *)aUrl
-             withOptions:(IJKFFOptions *)options;
+             withOptions:(IJKFFOptions * _Nullable)options;
 
 - (id)initWithMoreContent:(NSURL *)aUrl
-              withOptions:(IJKFFOptions *)options
+              withOptions:(IJKFFOptions * _Nullable)options
                withGLView:(UIView<IJKVideoRenderingProtocol> *)glView;
 
 - (void)prepareToPlay;
@@ -116,7 +117,7 @@ typedef enum IJKLogLevel {
 - (float)dropFrameRate;
 - (int)dropFrameCount;
 - (void)setPauseInBackground:(BOOL)pause;
-- (void)setHudValue:(NSString *)value forKey:(NSString *)key;
+- (void)setHudValue:(NSString * _Nullable)value forKey:(NSString *)key;
 
 + (void)setLogReport:(BOOL)preferLogReport;
 + (void)setLogLevel:(IJKLogLevel)logLevel;
@@ -126,13 +127,13 @@ typedef enum IJKLogLevel {
 + (NSDictionary *)supportedDecoders;
 + (BOOL)checkIfFFmpegVersionMatch:(BOOL)showAlert;
 + (BOOL)checkIfPlayerVersionMatch:(BOOL)showAlert
-                            version:(NSString *)version;
+                          version:(NSString *)version;
 
 @property(nonatomic, readonly) CGFloat fpsInMeta;
 @property(nonatomic, readonly) CGFloat fpsAtOutput;
 @property(nonatomic) BOOL shouldShowHudView;
-//when sampleSize is -1,means needs reset and refresh ui.
-@property(nonatomic, copy) void (^audioSamplesCallback)(int16_t *samples, int sampleSize, int sampleRate, int channels);
+//when sampleSize is -1,the samples is NULL,means needs reset and refresh ui.
+@property(nonatomic, copy) void (^audioSamplesCallback)(int16_t * _Nullable samples, int sampleSize, int sampleRate, int channels);
 
 - (NSDictionary *)allHudItem;
 
@@ -144,8 +145,6 @@ typedef enum IJKLogLevel {
                    forKey:(NSString *)key
                ofCategory:(IJKFFOptionCategory)category;
 
-
-
 - (void)setFormatOptionValue:       (NSString *)value forKey:(NSString *)key;
 - (void)setCodecOptionValue:        (NSString *)value forKey:(NSString *)key;
 - (void)setSwsOptionValue:          (NSString *)value forKey:(NSString *)key;
@@ -156,12 +155,11 @@ typedef enum IJKLogLevel {
 - (void)setSwsOptionIntValue:       (int64_t)value forKey:(NSString *)key;
 - (void)setPlayerOptionIntValue:    (int64_t)value forKey:(NSString *)key;
 
-@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> segmentOpenDelegate;
-@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> tcpOpenDelegate;
-@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> httpOpenDelegate;
-@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> liveOpenDelegate;
-
-@property (nonatomic, retain) id<IJKMediaNativeInvokeDelegate> nativeInvokeDelegate;
+@property (nonatomic, retain, nullable) id<IJKMediaUrlOpenDelegate> segmentOpenDelegate;
+@property (nonatomic, retain, nullable) id<IJKMediaUrlOpenDelegate> tcpOpenDelegate;
+@property (nonatomic, retain, nullable) id<IJKMediaUrlOpenDelegate> httpOpenDelegate;
+@property (nonatomic, retain, nullable) id<IJKMediaUrlOpenDelegate> liveOpenDelegate;
+@property (nonatomic, retain, nullable) id<IJKMediaNativeInvokeDelegate> nativeInvokeDelegate;
 
 - (void)didShutdown;
 
@@ -175,14 +173,4 @@ typedef enum IJKLogLevel {
 - (void)stepToNextFrame;
 
 @end
-
-#define IJK_FF_IO_TYPE_READ (1)
-void IJKFFIOStatDebugCallback(const char *url, int type, int bytes);
-void IJKFFIOStatRegister(void (*cb)(const char *url, int type, int bytes));
-
-void IJKFFIOStatCompleteDebugCallback(const char *url,
-                                      int64_t read_bytes, int64_t total_size,
-                                      int64_t elpased_time, int64_t total_duration);
-void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
-                                            int64_t read_bytes, int64_t total_size,
-                                            int64_t elpased_time, int64_t total_duration));
+NS_ASSUME_NONNULL_END
