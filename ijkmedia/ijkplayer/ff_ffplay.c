@@ -4348,23 +4348,10 @@ void ffp_global_set_inject_callback(ijk_inject_callback cb)
     s_inject_callback = cb;
 }
 
-void ffp_io_stat_register(void (*cb)(const char *url, int type, int bytes))
-{
-    // avijk_io_stat_register(cb);
-}
-
-void ffp_io_stat_complete_register(void (*cb)(const char *url,
-                                              int64_t read_bytes, int64_t total_size,
-                                              int64_t elpased_time, int64_t total_duration))
-{
-    // avijk_io_stat_complete_register(cb);
-}
-
 static const char *ffp_context_to_name(void *ptr)
 {
     return "FFPlayer";
 }
-
 
 static void *ffp_context_child_next(void *obj, void *prev)
 {

@@ -158,10 +158,6 @@ void            ijkmp_global_set_log_level(int log_level);   // log_level = AV_L
 int             ijkmp_global_get_log_level(void);
 void            ijkmp_global_set_inject_callback(ijk_inject_callback cb);
 const char     *ijkmp_version(void);
-void            ijkmp_io_stat_register(void (*cb)(const char *url, int type, int bytes));
-void            ijkmp_io_stat_complete_register(void (*cb)(const char *url,
-                                                           int64_t read_bytes, int64_t total_size,
-                                                           int64_t elpased_time, int64_t total_duration));
 
 // ref_count is 1 after open
 IjkMediaPlayer *ijkmp_create(int (*msg_loop)(void*));

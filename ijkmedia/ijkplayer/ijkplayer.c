@@ -101,18 +101,6 @@ const char *ijkmp_version(void)
     return IJKPLAYER_VERSION;
 }
 
-void ijkmp_io_stat_register(void (*cb)(const char *url, int type, int bytes))
-{
-    ffp_io_stat_register(cb);
-}
-
-void ijkmp_io_stat_complete_register(void (*cb)(const char *url,
-                                                int64_t read_bytes, int64_t total_size,
-                                                int64_t elpased_time, int64_t total_duration))
-{
-    ffp_io_stat_complete_register(cb);
-}
-
 void ijkmp_change_state_l(IjkMediaPlayer *mp, int new_state)
 {
     mp->mp_state = new_state;

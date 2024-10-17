@@ -116,56 +116,6 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
 @synthesize isVideoSync = _isVideoSync;
 @synthesize subtitlePreference = _subtitlePreference;
 
-#define FFP_IO_STAT_STEP (50 * 1024)
-
-// as an example
-void IJKFFIOStatDebugCallback(const char *url, int type, int bytes)
-{
-    static int64_t s_ff_io_stat_check_points = 0;
-    static int64_t s_ff_io_stat_bytes = 0;
-    if (!url)
-        return;
-
-    if (type != IJKMP_IO_STAT_READ)
-        return;
-
-    if (!av_strstart(url, "http:", NULL))
-        return;
-
-    s_ff_io_stat_bytes += bytes;
-    if (s_ff_io_stat_bytes < s_ff_io_stat_check_points ||
-        s_ff_io_stat_bytes > s_ff_io_stat_check_points + FFP_IO_STAT_STEP) {
-        s_ff_io_stat_check_points = s_ff_io_stat_bytes;
-        NSLog(@"io-stat: %s, +%d = %"PRId64"\n", url, bytes, s_ff_io_stat_bytes);
-    }
-}
-
-void IJKFFIOStatRegister(void (*cb)(const char *url, int type, int bytes))
-{
-    ijkmp_io_stat_register(cb);
-}
-
-void IJKFFIOStatCompleteDebugCallback(const char *url,
-                                      int64_t read_bytes, int64_t total_size,
-                                      int64_t elpased_time, int64_t total_duration)
-{
-    if (!url)
-        return;
-
-    if (!av_strstart(url, "http:", NULL))
-        return;
-
-    NSLog(@"io-stat-complete: %s, %"PRId64"/%"PRId64", %"PRId64"/%"PRId64"\n",
-          url, read_bytes, total_size, elpased_time, total_duration);
-}
-
-void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
-                                            int64_t read_bytes, int64_t total_size,
-                                            int64_t elpased_time, int64_t total_duration))
-{
-    ijkmp_io_stat_complete_register(cb);
-}
-
 - (void)setScreenOn: (BOOL)on
 {
     [IJKMediaModule sharedModule].mediaModuleIdleTimerDisabled = on;
@@ -184,9 +134,6 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
 
     if (options == nil)
         options = [IJKFFOptions optionsByDefault];
-
-    // IJKFFIOStatRegister(IJKFFIOStatDebugCallback);
-    // IJKFFIOStatCompleteRegister(IJKFFIOStatCompleteDebugCallback);
 
     // init fields
     _scalingMode = IJKMPMovieScalingModeAspectFit;
