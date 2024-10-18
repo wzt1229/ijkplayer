@@ -31,7 +31,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
   - enabled ffmpeg all decoders and demuxers binary size is bigger [FFToolChain/ffconfig/module-full.sh](FFToolChain/ffconfig/module-full.sh)
   - workaround for some buggy online video
 - iOS/macOS/tvOS
-  - video-output: Metal 2/OpenGL ES 2.0/OpenGL 3.3
+  - video-output: Metal 2/OpenGL 3.3
   - audio-output: AudioQueue, AudioUnit
   - hardware acceleration: auto choose VideoToolbox by default
   - subtitle:
@@ -40,6 +40,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
     - text subtitle support force style
     - adjust position y and scale
   - 4k/HDR/HDR10/HDR10+/Dolby Vision Compatible
+  - support Network or Local Blu-ray Disc/BDMV
   - set audio or subtitle extra delay
 
 ## ON-PLAN
@@ -56,7 +57,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 install use cocoapod:
 
 ```
-pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.7/IJKMediaPlayerKit.spec.json'
+pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.8/IJKMediaPlayerKit.spec.json'
 ```
 
 ## Development
@@ -68,7 +69,7 @@ how to run examples:
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.11.7
+git checkout -B latest k0.11.8
 git submodule update --init
 
 ./FFToolChain/main.sh install -p macos -l 'ass ffmpeg smb2'
@@ -146,3 +147,7 @@ ijkplayer is licensed under LGPLv2.1 or later, so itself is free for commercial 
 But ijkplayer is also based on other different projects under various licenses, which I have no idea whether they are compatible to each other or to your product.
 
 [IANAL](https://en.wikipedia.org/wiki/IANAL), you should always ask your lawyer for these stuffs before use it in your product.
+
+## Icon
+
+Primay icon was made by my friend 小星.

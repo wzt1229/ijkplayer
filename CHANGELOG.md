@@ -1,7 +1,9 @@
 tag k0.11.8
 --------------------------------
 
-- support smb2 protocol
+- add builtin smb2 protocol
+- move “application.h” to “libavformat” directory
+- support Network or Local Blu-ray Disc/BDMV
 
 tag k0.11.7
 --------------------------------
