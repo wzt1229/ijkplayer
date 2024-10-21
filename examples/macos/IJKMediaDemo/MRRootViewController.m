@@ -640,6 +640,8 @@ static BOOL hdrAnimationShown = 0;
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
     options.metalRenderer = ![MRCocoaBindingUserDefault use_opengl];
     options.showHudView = self.shouldShowHudView;
+    //作用有限，重定向后就失效了，变成了自动判断
+    [options setFormatOptionValue:@"1" forKey:@"auth_type"];
     
     //默认不使用dns缓存，指定超时时间才会使用；
     if ([MRCocoaBindingUserDefault use_dns_cache]) {
@@ -663,7 +665,7 @@ static BOOL hdrAnimationShown = 0;
         [options setFormatOptionValue:@"Accept-Encoding: gzip, deflate" forKey:@"headers"];
     }
     //protocol_whitelist need add httpproxy
-    //[options setFormatOptionValue:@"http://10.7.36.42:8888" forKey:@"http_proxy"];
+    //[options setFormatOptionValue:@"http://10.7.36.40:8888" forKey:@"http_proxy"];
     
     NSMutableArray *dus = [NSMutableArray array];
     if ([url.scheme isEqualToString:@"file"] && [url.absoluteString.pathExtension isEqualToString:@"m3u8"]) {

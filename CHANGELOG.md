@@ -4,6 +4,7 @@ tag k0.11.8
 - add builtin smb2 protocol
 - move “application.h” to “libavformat” directory
 - support Network or Local Blu-ray Disc/BDMV
+- fix http_seek cause 401 authentication bug,#52
 
 tag k0.11.7
 --------------------------------
