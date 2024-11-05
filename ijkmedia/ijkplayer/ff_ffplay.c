@@ -3330,6 +3330,7 @@ static void reset_buffer_size(FFPlayer *ffp)
     if (!ffp->is) {
         return;
     }
+    SDL_LockMutex(ffp->is->play_mutex);
     int buffer_size = DEFAULT_QUEUE_SIZE;
     double audio_delay = ffp->is->audio_st ? get_clock_extral_delay(&ffp->is->audclk) : 0;
     AVFormatContext *ic = ffp->is->ic;
@@ -3349,6 +3350,7 @@ static void reset_buffer_size(FFPlayer *ffp)
     }
     
     ffp->dcc.max_buffer_size = buffer_size + fabs(audio_delay) * DEFAULT_QUEUE_SIZE;
+    SDL_UnlockMutex(ffp->is->play_mutex);
     av_log(NULL, AV_LOG_INFO, "auto decision max buffer size:%dMB\n",ffp->dcc.max_buffer_size/1024/1024);
 }
 
