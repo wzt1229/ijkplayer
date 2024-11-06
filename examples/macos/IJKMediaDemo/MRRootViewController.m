@@ -640,8 +640,8 @@ static BOOL hdrAnimationShown = 0;
     [options setPlayerOptionIntValue:1500 forKey:@"accurate-seek-timeout"];
     options.metalRenderer = ![MRCocoaBindingUserDefault use_opengl];
     options.showHudView = self.shouldShowHudView;
-    //作用有限，重定向后就失效了，变成了自动判断
-    [options setFormatOptionValue:@"1" forKey:@"auth_type"];
+    //指定使用 HTTP 1.0 Basic auth 授权认证，可避免一次试探请求。重定向后仍旧有效
+    [options setFormatOptionValue:@"1" forKey:@"auth_type2"];
     
     //默认不使用dns缓存，指定超时时间才会使用；
     if ([MRCocoaBindingUserDefault use_dns_cache]) {
