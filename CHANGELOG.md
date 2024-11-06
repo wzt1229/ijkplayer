@@ -1,10 +1,13 @@
 tag k0.11.8
 --------------------------------
 
+- adapt to Xcode16(clang 16)
 - add builtin smb2 protocol
 - move “application.h” to “libavformat” directory
 - support Network or Local Blu-ray Disc/BDMV
-- fix http_seek cause 401 authentication bug,#52
+- http add auth_type2 option, specify http auth type, reduce the number of requests
+- fix http open and http_seek (redirect) authentication bug,#52
+- fix some hls stream can't seek back to 00:00 bug
 
 tag k0.11.7
 --------------------------------
