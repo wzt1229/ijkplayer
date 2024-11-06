@@ -16,9 +16,9 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 
 ## My Build Environment
 
-- macOS Sonoma(14.3)
-- Xcode Version 15.4 (15F31d)
-- cocoapods 1.15.2
+- macOS Sequoia(15.1)
+- Xcode Version 16.1 (15F31d)
+- cocoapods 1.16.1
 
 ## Latest Changes
 
