@@ -123,6 +123,8 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 
 //subtitle preference
 @property(nonatomic) IJKSDLSubtitlePreference subtitlePreference;
+//load spped (byte)
+- (int64_t)currentDownloadSpeed;
 
 #pragma mark Notifications
 

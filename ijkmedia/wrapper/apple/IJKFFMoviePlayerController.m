@@ -919,6 +919,11 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
     }
 }
 
+- (int64_t)currentDownloadSpeed
+{
+    return ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
+}
+
 - (void)refreshHudView
 {
     if (_mediaPlayer == nil)
@@ -988,10 +993,9 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
                    forKey:@"t-http-seek"];
     }
     
-    int64_t tcpSpeed = ijkmp_get_property_int64(_mediaPlayer, FFP_PROP_INT64_TCP_SPEED, 0);
+    int64_t tcpSpeed = [self currentDownloadSpeed];
     [self setHudValue:[NSString stringWithFormat:@"%@", formatedSpeed(tcpSpeed, 1000)]
                forKey:@"tcp-spd"];
-    
 }
 
 - (void)startHudTimer
