@@ -1658,7 +1658,6 @@ static void update_playable_duration(FFPlayer *ffp)
     if (cached_duration_in_ms >= 0) {
         int64_t buf_time_position = ffp_get_current_position_l(ffp) + cached_duration_in_ms;
         if (ffp->playable_duration_ms != buf_time_position) {
-            av_log(ffp, AV_LOG_DEBUG, "set playable_duration_ms:%lld,cached_duration_in_ms:%d\n", buf_time_position,cached_duration_in_ms);
             ffp->playable_duration_ms = buf_time_position;
         }
     }
