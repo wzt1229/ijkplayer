@@ -28,7 +28,6 @@
 #import "IJKMediaPlayback.h"
 #import "IJKMediaModule.h"
 #import "IJKNotificationManager.h"
-#import "NSString+IJKMedia.h"
 #import "ijkioapplication.h"
 #import "IJKISOTools.h"
 #include "string.h"
@@ -1836,8 +1835,8 @@ static int onInjectOnHttpEvent(IJKFFMoviePlayerController *mpc, int type, void *
             [mpc setHudUrl:nsurl];
 
             if (delegate != nil) {
-                dict[IJKMediaEventAttrKey_host]         = [NSString ijk_stringBeEmptyIfNil:host];
-                dict[IJKMediaEventAttrKey_url]          = [NSString ijk_stringBeEmptyIfNil:monitor.httpUrl];
+                dict[IJKMediaEventAttrKey_host]         = host ?: @"";
+                dict[IJKMediaEventAttrKey_url]          = monitor.httpUrl ?: @"";
                 [delegate invoke:type attributes:dict];
             }
             break;
@@ -1853,8 +1852,8 @@ static int onInjectOnHttpEvent(IJKFFMoviePlayerController *mpc, int type, void *
 
             if (delegate != nil) {
                 dict[IJKMediaEventAttrKey_time_of_event]    = @(elapsed).stringValue;
-                dict[IJKMediaEventAttrKey_url]              = [NSString ijk_stringBeEmptyIfNil:monitor.httpUrl];
-                dict[IJKMediaEventAttrKey_host]             = [NSString ijk_stringBeEmptyIfNil:host];
+                dict[IJKMediaEventAttrKey_url]              = monitor.httpUrl ?: @"";
+                dict[IJKMediaEventAttrKey_host]             = host ?: @"";
                 dict[IJKMediaEventAttrKey_error]            = @(realData->error).stringValue;
                 dict[IJKMediaEventAttrKey_http_code]        = @(realData->http_code).stringValue;
                 dict[IJKMediaEventAttrKey_file_size]        = @(realData->filesize).stringValue;
@@ -1865,7 +1864,7 @@ static int onInjectOnHttpEvent(IJKFFMoviePlayerController *mpc, int type, void *
             monitor.httpSeekTick = SDL_GetTickHR();
 
             if (delegate != nil) {
-                dict[IJKMediaEventAttrKey_host]         = [NSString ijk_stringBeEmptyIfNil:host];
+                dict[IJKMediaEventAttrKey_host]         = host ?: @"";
                 dict[IJKMediaEventAttrKey_offset]       = @(realData->offset).stringValue;
                 [delegate invoke:type attributes:dict];
             }
@@ -1881,8 +1880,8 @@ static int onInjectOnHttpEvent(IJKFFMoviePlayerController *mpc, int type, void *
 
             if (delegate != nil) {
                 dict[IJKMediaEventAttrKey_time_of_event]    = @(elapsed).stringValue;
-                dict[IJKMediaEventAttrKey_url]              = [NSString ijk_stringBeEmptyIfNil:monitor.httpUrl];
-                dict[IJKMediaEventAttrKey_host]             = [NSString ijk_stringBeEmptyIfNil:host];
+                dict[IJKMediaEventAttrKey_url]              = monitor.httpUrl ?: @"";
+                dict[IJKMediaEventAttrKey_host]             = host ?: @"";
                 dict[IJKMediaEventAttrKey_offset]           = @(realData->offset).stringValue;
                 dict[IJKMediaEventAttrKey_error]            = @(realData->error).stringValue;
                 dict[IJKMediaEventAttrKey_http_code]        = @(realData->http_code).stringValue;

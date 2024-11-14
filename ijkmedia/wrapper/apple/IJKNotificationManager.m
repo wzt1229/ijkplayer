@@ -37,10 +37,10 @@
     return self;
 }
 
-- (void)addObserver:(nonnull id)observer
-           selector:(nonnull SEL)aSelector
-               name:(nullable NSString *)aName
-             object:(nullable id)anObject
+- (void)addObserver:(id)observer
+           selector:(SEL)aSelector
+               name:(NSString *)aName
+             object:(id)anObject
 {
     [[NSNotificationCenter defaultCenter] addObserver:observer
                                              selector:aSelector

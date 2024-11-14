@@ -22,16 +22,17 @@
  */
 
 #import <Foundation/Foundation.h>
-
+NS_ASSUME_NONNULL_BEGIN
 @interface IJKNotificationManager : NSObject
 
-- (nullable instancetype)init;
+- (instancetype)init;
 
-- (void)addObserver:(nonnull id)observer
-           selector:(nonnull SEL)aSelector
-               name:(nullable NSString *)aName
+- (void)addObserver:(id)observer
+           selector:(SEL)aSelector
+               name:(NSString *)aName
              object:(nullable id)anObject;
 
-- (void)removeAllObservers:(nonnull id)observer;
+- (void)removeAllObservers:(id)observer;
 
 @end
+NS_ASSUME_NONNULL_END
