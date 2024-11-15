@@ -241,7 +241,7 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         char **ic_key_header = ic_string_val_keys;
         char *ic_key;
         while ((ic_key = *ic_key_header)) {
-            AVDictionaryEntry *entry = av_dict_get(ic->metadata, ic_key, NULL, 0);
+            AVDictionaryEntry *entry = av_dict_get(ic->metadata, ic_key, NULL, AV_DICT_IGNORE_SUFFIX);
             if (entry && entry->value)
                 ijkmeta_set_string_l(meta, ic_key, entry->value);
             ic_key_header++;
@@ -349,24 +349,24 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
                 if (codecpar->sample_rate)
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_SAMPLE_RATE, codecpar->sample_rate);
 
-                AVDictionaryEntry *lang = av_dict_get(st->metadata, IJKM_KEY_LANGUAGE, NULL, 0);
+                AVDictionaryEntry *lang = av_dict_get(st->metadata, IJKM_KEY_LANGUAGE, NULL, AV_DICT_IGNORE_SUFFIX);
                 if (lang && lang->value)
                     ijkmeta_set_string_l(stream_meta, IJKM_KEY_LANGUAGE, lang->value);
                 char describe[64];
                 if (av_channel_layout_describe(&codecpar->ch_layout, describe, sizeof(describe)) > 0) {
                     ijkmeta_set_string_l(stream_meta, IJKM_KEY_DESCRIBE, describe);
                 }
-                AVDictionaryEntry *title = av_dict_get(st->metadata, IJKM_KEY_TITLE, NULL, 0);
+                AVDictionaryEntry *title = av_dict_get(st->metadata, IJKM_KEY_TITLE, NULL, AV_DICT_IGNORE_SUFFIX);
                 if (title && title->value)
                     ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title->value);
                 break;
             }
             case AVMEDIA_TYPE_SUBTITLE: {
                 ijkmeta_set_string_l(stream_meta, IJKM_KEY_TYPE, IJKM_VAL_TYPE__TIMEDTEXT);
-                AVDictionaryEntry *lang = av_dict_get(st->metadata, IJKM_KEY_LANGUAGE, NULL, 0);
+                AVDictionaryEntry *lang = av_dict_get(st->metadata, IJKM_KEY_LANGUAGE, NULL, AV_DICT_IGNORE_SUFFIX);
                 if (lang && lang->value)
                     ijkmeta_set_string_l(stream_meta, IJKM_KEY_LANGUAGE, lang->value);
-                AVDictionaryEntry *title = av_dict_get(st->metadata, IJKM_KEY_TITLE, NULL, 0);
+                AVDictionaryEntry *title = av_dict_get(st->metadata, IJKM_KEY_TITLE, NULL, AV_DICT_IGNORE_SUFFIX);
                 if (title && title->value)
                     ijkmeta_set_string_l(stream_meta, IJKM_KEY_TITLE, title->value);
                 break;
