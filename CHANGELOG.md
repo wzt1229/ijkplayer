@@ -1,3 +1,9 @@
+tag k0.11.9
+--------------------------------
+
+- all libs using macOS 14 and remove bitcode support
+- fix smb2 url not allow longer than 1024 characters question
+
 tag k0.11.8
 --------------------------------
 
