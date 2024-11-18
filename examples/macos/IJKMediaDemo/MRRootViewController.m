@@ -1029,7 +1029,8 @@ static BOOL hdrAnimationShown = 0;
     }
     [self destroyPlayer];
 #warning 根据地址，动态修改
-    BOOL isLive = NO;
+    BOOL isLive = [@[@"rtmp",@"rtsp"] containsObject:url.scheme];
+    
     [self perpareIJKPlayer:url hwaccel:self.isUsingHardwareAccelerate isLive:isLive];
     NSString *videoName = [url isFileURL] ? [url path] : [[url resourceSpecifier] lastPathComponent];
     
