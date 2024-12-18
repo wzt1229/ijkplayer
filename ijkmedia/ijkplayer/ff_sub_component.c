@@ -80,11 +80,11 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
     }
     
     if (com->pre_loading < 0) {
-        return -1;
+        return -2;
     }
     
     if (frame_queue_is_full(com->frameq)) {
-        return -1;
+        return -3;
     }
     
     FFSubtitleBuffer *pre_buffer = NULL;
@@ -94,7 +94,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
         
         //prevent pre load overflow
         if (com->pre_loading >= com->ass_processed) {
-            return -1;
+            return -4;
         }
         
         float delta = com->previous_uploading - com->pre_loading;
@@ -103,7 +103,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             com->pre_loading = com->previous_uploading + 0.2;
             Frame *sp = frame_queue_peek_offset(com->frameq, 0);
             double pts = sp ? sp->pts : -1;
-            av_log(NULL, AV_LOG_WARNING, "subtitle is slower than video:%0.3fs,cached frame:%d,pts:%f",delta,frame_queue_nb_remaining(com->frameq),pts);
+            av_log(NULL, AV_LOG_WARNING, "sub is slower than video:%0.3fs,cached frame:%d,pts:%f",delta,frame_queue_nb_remaining(com->frameq),pts);
         }
         double pts = com->pre_loading;
         FFSubtitleBuffer *buffer = NULL;
@@ -123,7 +123,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             if (!pre_buffer) {
                 ff_ass_upload_buffer(com->assRenderer, pts, &pre_buffer, 1);
                 if (pre_buffer) {
-                    av_log(NULL, AV_LOG_DEBUG, "pre frame is nil, uploaded from ass render.\n");
+                    av_log(NULL, AV_LOG_DEBUG, "sub pre frame is nil, uploaded from ass render.\n");
                 }
             }
             buffer = ff_subtitle_buffer_retain(pre_buffer);
@@ -136,19 +136,19 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
         } else {
             //clean
             com->pre_loading += A_ASS_IMG_DURATION;
-            result = -1;
+            result = -5;
             break;
         }
         if (!buffer) {
             com->pre_loading += A_ASS_IMG_DURATION;
-            result = -1;
+            result = -6;
             break;
         }
         
         Frame *sp = frame_queue_peek_writable_noblock(com->frameq);
         if (!sp) {
             ff_subtitle_buffer_release(&buffer);
-            result = -2;
+            result = -7;
             break;
         }
         com->pre_loading += A_ASS_IMG_DURATION;
@@ -161,7 +161,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
         sp->sub_list[0] = buffer;
         
         int size = frame_queue_push(com->frameq);
-        
+        av_log(NULL, AV_LOG_DEBUG, "sub put frame:%0.3f\n",pts);
         if (size > com->frameq->max_size) {
             break;
         } else {
@@ -221,8 +221,6 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
         }
 
         int got_frame = 0;
-        
-        //av_log(NULL, AV_LOG_ERROR, "sub stream decoder pkt serial:%d,pts:%lld\n",d->pkt_serial,pkt->pts/1000);
         ret = avcodec_decode_subtitle2(d->avctx, pkt, &got_frame, d->pkt);
         if (ret >= 0) {
             if (got_frame && !d->pkt->data) {
@@ -231,6 +229,7 @@ static int decode_a_frame(FFSubComponent *com, Decoder *d, AVSubtitle *pkt)
             ret = got_frame ? 0 : (d->pkt->data ? AVERROR(EAGAIN) : AVERROR_EOF);
         }
         av_packet_unref(d->pkt);
+        //av_log(NULL, AV_LOG_DEBUG, "sub stream decoder pkt serial:%d,pts:%lld\n",d->pkt_serial,pkt->pts/1000);
         //Invalid UTF-8 in decoded subtitles text; maybe missing -sub_charenc option
         if (ret == AVERROR_INVALIDDATA) {
             return -1000;
@@ -316,13 +315,11 @@ static int subtitle_thread(void *arg)
             }
             continue;
         } else if (result) {
-            //av_log(NULL, AV_LOG_ERROR,"sub received frame:%f\n",pts);
             int serial = com->decoder.pkt_serial;
             if (com->packetq->serial == serial) {
                 double pts = 0;
                 if (sub.pts != AV_NOPTS_VALUE)
                     pts = sub.pts / (double)AV_TIME_BASE + com->startTime;
-                
                 int num_rect = 0;
                 FFSubtitleBuffer* buffers [SUB_REF_MAX_LEN] = { 0 };
                 for (int i = 0; i < sub.num_rects; i++) {
