@@ -87,7 +87,12 @@ int exSub_seek_to(FFExSubtitle *sub, float sec)
     if (sec < 0) {
         sec = 0;
     }
-    sub->seek_req = seconds_to_fftime(sec) - sub->startTime;
+    //startTime unit is second!!
+    sec -= sub->startTime;
+    if (sec < 0) {
+        sec = 0;
+    }
+    sub->seek_req = seconds_to_fftime(sec);
     return 0;
 }
 
