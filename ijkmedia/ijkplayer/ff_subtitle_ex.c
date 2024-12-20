@@ -19,6 +19,7 @@ typedef struct FFExSubtitle {
     int eof;
     int64_t seek_req;
     float startTime;
+    AVDictionary *opts;
 }FFExSubtitle;
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -110,8 +111,8 @@ static int exSub_open_filepath(FFExSubtitle *sub, const char *file_name)
     
     int ret = 0;
     AVFormatContext* ic = NULL;
-    
-    if (avformat_open_input(&ic, file_name, NULL, NULL) < 0) {
+
+    if (avformat_open_input(&ic, file_name, NULL, &sub->opts) < 0) {
         ret = -1;
         goto fail;
     }
@@ -171,7 +172,7 @@ static int exSub_create(FFExSubtitle **subp, PacketQueue * pktq)
     return 0;
 }
 
-int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_name, float startTime)
+int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_name, float startTime, AVDictionary *opts)
 {
     if (!subp) {
         return -1;
@@ -182,6 +183,7 @@ int exSub_open_input(FFExSubtitle **subp, PacketQueue * pktq, const char *file_n
         return -2;
     }
     
+    av_dict_copy(&mySub->opts, opts, 0);
     if (exSub_open_filepath(mySub, file_name) != 0) {
         exSub_close_input(&mySub);
         return -3;
@@ -212,6 +214,7 @@ void exSub_close_input(FFExSubtitle **subp)
         sub->read_thread = NULL;
     }
     
+    av_dict_free(&sub->opts);
     if (sub->ic)
         avformat_close_input(&sub->ic);
     av_freep(subp);

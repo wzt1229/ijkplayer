@@ -17,9 +17,9 @@ typedef struct IjkMediaMeta IjkMediaMeta;
 typedef struct AVFormatContext AVFormatContext;
 typedef struct SDL_TextureOverlay SDL_TextureOverlay;
 typedef struct SDL_GPU SDL_GPU;
-
+typedef struct AVDictionary AVDictionary;
 // lifecycle
-int ff_sub_init(FFSubtitle **subp);
+int ff_sub_init(FFSubtitle **subp, AVDictionary *opts);
 //call in vout thread,because internal fbo and texture were created in vout thread!
 void ff_sub_desctoy_objs(FFSubtitle *sub);
 void ff_sub_abort(FFSubtitle *sub);

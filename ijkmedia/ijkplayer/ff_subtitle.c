@@ -55,11 +55,13 @@ typedef struct FFSubtitle {
     //当前使用的哪个备选字符
     int backup_charenc_idx;
     SDL_Thread tmp_retry_thread;
+    
+    AVDictionary *opts;
 }FFSubtitle;
 
 //---------------------------Public Common Functions--------------------------------------------------//
 
-int ff_sub_init(FFSubtitle **subp)
+int ff_sub_init(FFSubtitle **subp, AVDictionary *opts)
 {
     int r = 0;
     if (!subp) {
@@ -103,6 +105,8 @@ int ff_sub_init(FFSubtitle **subp)
     sub->last_stream = IJK_SUBTITLE_STREAM_UNDEF;
     sub->need_update_preference = 0;
     sub->sp = ijk_subtitle_default_preference();
+    av_dict_copy(&sub->opts, opts, 0);
+    
     *subp = sub;
     
     return 0;
@@ -121,6 +125,7 @@ void ff_sub_desctoy_objs(FFSubtitle *sub)
     SDL_TextureOverlay_Release(&sub->assTexture);
     SDL_TextureOverlay_Release(&sub->preTexture);
     SDL_FBOOverlayFreeP(&sub->fbo);
+    av_dict_free(&sub->opts);
 }
 
 void ff_sub_abort(FFSubtitle *sub)
@@ -442,7 +447,7 @@ static int open_any_stream(FFSubtitle *sub, int stream, const char *enc)
     } else {
         const char *file = ext_file_path_for_idx(sub, stream);
         if (file) {
-            if (!exSub_open_input(&sub->exSub, &sub->packetq, file, sub->streamStartTime)) {
+            if (!exSub_open_input(&sub->exSub, &sub->packetq, file, sub->streamStartTime, sub->opts)) {
                 AVStream *st = exSub_get_stream(sub->exSub);
                 int st_id = exSub_get_stream_id(sub->exSub);
                 int r = subComponent_open(&sub->com, st_id, st, &sub->packetq, &sub->frameq, enc, &retry_callback, (void *)sub, sub->video_w, sub->video_h, sub->streamStartTime);

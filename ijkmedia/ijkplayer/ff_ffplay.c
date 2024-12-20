@@ -4107,10 +4107,15 @@ static VideoState *stream_open(FFPlayer *ffp, const char *filename, AVInputForma
         packet_queue_init(&is->audioq) < 0)
         goto fail;
     
-    if (ff_sub_init(&is->ffSub) < 0) {
+    
+    AVDictionary *opts = NULL;
+//    av_dict_set(&opts, "http_proxy", "http://127.0.0.1:8888", 0);
+    av_dict_set_intptr(&opts, "ijkapplication", (intptr_t)ffp->app_ctx, 0);
+    if (ff_sub_init(&is->ffSub, opts) < 0) {
+        av_dict_free(&opts);
         goto fail;
     }
-    
+    av_dict_free(&opts);
     if (!(is->continue_read_thread = SDL_CreateCond())) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
         goto fail;
