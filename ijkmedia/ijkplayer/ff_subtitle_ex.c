@@ -20,6 +20,7 @@ typedef struct FFExSubtitle {
     int64_t seek_req;
     float startTime;
     AVDictionary *opts;
+    int abort_request;
 }FFExSubtitle;
 
 static int stream_has_enough_packets(PacketQueue *queue, int min_frames)
@@ -70,11 +71,13 @@ static int ex_read_thread(void *opaque)
                 packet_queue_put_nullpacket(sub->pktq, pkt, sub->stream_id);
                 sub->eof = 1;
                 continue;
+            } else if (ret == AVERROR_EXIT) {
+                break;
             } else {
                 av_usleep(3 * 1000);
                 continue;
             }
-        } while (sub->pktq->abort_request == 0);
+        } while (sub->pktq->abort_request == 0 && sub->abort_request == 0);
     }
     av_packet_free(&pkt);
     return 0;
@@ -97,6 +100,12 @@ int exSub_seek_to(FFExSubtitle *sub, float sec)
     return 0;
 }
 
+static int ex_read_interrupt_cb(void *ctx)
+{
+    FFExSubtitle *sub = ctx;
+    return sub->abort_request;
+}
+
 static int exSub_open_filepath(FFExSubtitle *sub, const char *file_name)
 {
     if (!sub) {
@@ -110,8 +119,16 @@ static int exSub_open_filepath(FFExSubtitle *sub, const char *file_name)
     assert(!sub->ic);
     
     int ret = 0;
-    AVFormatContext* ic = NULL;
-
+    AVFormatContext* ic = avformat_alloc_context();
+    
+    if (ic) {
+        ic->interrupt_callback.callback = ex_read_interrupt_cb;
+        ic->interrupt_callback.opaque = sub;
+    } else {
+        ret = AVERROR(ENOMEM);
+        goto fail;
+    }
+    
     if (avformat_open_input(&ic, file_name, NULL, &sub->opts) < 0) {
         ret = -1;
         goto fail;
@@ -208,6 +225,7 @@ void exSub_close_input(FFExSubtitle **subp)
     if (!sub) {
         return;
     }
+    sub->abort_request = 1;
     //maybe open input failed, read_thread is NULL.
     if (sub->read_thread) {
         SDL_WaitThread(sub->read_thread, NULL);
