@@ -453,8 +453,8 @@ void ffp_apple_log_extra_vprint(int level, const char *tag, const char *fmt, va_
             if (0 == strcmp("\n", fmt)) {
                 //_logHandler(level, @"", @"\n");
             } else {
-                char buffer[1024];
-                vsnprintf(buffer, sizeof(buffer), fmt, ap);
+                char buffer[1024] = {0};
+                vsnprintf(buffer, sizeof(buffer) -1, fmt, ap);
                 
                 NSString *tagStr = tag ? [[NSString alloc] initWithUTF8String:tag] : @"";
                 NSString *msgStr = [[NSString alloc] initWithUTF8String:buffer];
