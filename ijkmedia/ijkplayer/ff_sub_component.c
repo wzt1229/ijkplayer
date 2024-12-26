@@ -53,8 +53,13 @@ static void apply_preference(FFSubComponent *com)
 
 static int pre_render_ass_frame(FFSubComponent *com, int serial)
 {
+    FFSubtitleBuffer *pre_buffer = NULL;
+    FF_ASS_Renderer *assRenderer = NULL;
+    int result = 0;
+    
     if (com->bitmapRenderer || com->previous_uploading < 0) {
-        return -1;
+        result = -1;
+        goto end;
     }
     
     if (com->pre_loading < 0) {
@@ -80,21 +85,23 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
     }
     
     if (com->pre_loading < 0) {
-        return -2;
+        result = -2;
+        goto end;
     }
     
     if (frame_queue_is_full(com->frameq)) {
-        return -3;
+        result = -3;
+        goto end;
     }
     
-    FFSubtitleBuffer *pre_buffer = NULL;
-    FF_ASS_Renderer *assRenderer = ff_ass_render_retain(com->assRenderer);
-    int result = 0;
+    assRenderer = ff_ass_render_retain(com->assRenderer);
+    
     while (com->packetq->abort_request == 0) {
         
         //prevent pre load overflow
         if (com->pre_loading >= com->ass_processed) {
-            return -4;
+            result = -4;
+            break;
         }
         
         float delta = com->previous_uploading - com->pre_loading;
@@ -168,6 +175,7 @@ static int pre_render_ass_frame(FFSubComponent *com, int serial)
             continue;
         }
     }
+end:
     ff_subtitle_buffer_release(&pre_buffer);
     ff_ass_render_release(&assRenderer);
     return result;
