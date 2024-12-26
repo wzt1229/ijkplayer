@@ -4109,8 +4109,21 @@ static VideoState *stream_open(FFPlayer *ffp, const char *filename, AVInputForma
     
     
     AVDictionary *opts = NULL;
+    
+    char *ic_string_val_keys[] = {"user_agent", "http_proxy", NULL};
+    {
+        char **ic_key_header = ic_string_val_keys;
+        const char *ic_key;
+        while ((ic_key = *ic_key_header)) {
+            AVDictionaryEntry *entry = av_dict_get(ffp->format_opts, ic_key, NULL, AV_DICT_IGNORE_SUFFIX);
+            if (entry && entry->value)
+                av_dict_set(&opts, ic_key, entry->value, 0);
+            ic_key_header++;
+        }
+    }
 //    av_dict_set(&opts, "http_proxy", "http://127.0.0.1:8888", 0);
     av_dict_set_intptr(&opts, "ijkapplication", (intptr_t)ffp->app_ctx, 0);
+    
     if (ff_sub_init(&is->ffSub, opts) < 0) {
         av_dict_free(&opts);
         goto fail;
