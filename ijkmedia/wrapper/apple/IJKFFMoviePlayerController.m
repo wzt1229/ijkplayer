@@ -86,6 +86,7 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
     IJKNotificationManager *_notificationManager;
 #endif
     int _enableAccurateSeek;
+    BOOL _canUpdateAccurateSeek;
 }
 
 @synthesize view = _view;
@@ -137,7 +138,8 @@ static void (^_logHandler)(IJKLogLevel level, NSString *tag, NSString *msg);
     // init fields
     _scalingMode = IJKMPMovieScalingModeAspectFit;
     _shouldAutoplay = YES;
-
+    _canUpdateAccurateSeek = YES;
+    
     memset(&_asyncStat, 0, sizeof(_asyncStat));
     memset(&_cacheStat, 0, sizeof(_cacheStat));
 
@@ -698,6 +700,8 @@ void ffp_apple_log_extra_print(int level, const char *tag, const char *fmt, ...)
         return;
 
     _seeking = YES;
+    _canUpdateAccurateSeek = NO;
+    
     [[NSNotificationCenter defaultCenter]
      postNotificationName:IJKMPMoviePlayerPlaybackStateDidChangeNotification
      object:self];
@@ -1098,12 +1102,12 @@ inline static NSString *formatedSpeed(int64_t bytes, int64_t elapsed_milli) {
 
 - (void)enableAccurateSeek:(BOOL)open
 {
-    if (_seeking) {
-        //record it
-        _enableAccurateSeek = open ? 1 : 2;
-    } else {
+    if (_canUpdateAccurateSeek) {
         _enableAccurateSeek = 0;
         ijkmp_set_enable_accurate_seek(_mediaPlayer, open);
+    } else {
+        //record it
+        _enableAccurateSeek = open ? 1 : 2;
     }
 }
 
@@ -1510,7 +1514,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
              object:self
              userInfo:@{IJKMPMoviePlayerDidSeekCompleteTargetKey: @(avmsg->arg1),
                         IJKMPMoviePlayerDidSeekCompleteErrorKey: @(avmsg->arg2)}];
-//            _seeking = NO;
+            _seeking = NO;
             break;
         }
         case FFP_MSG_VIDEO_DECODER_OPEN: {
@@ -1622,7 +1626,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerAfterSeekFirstVideoFrameDisplayNotification
              object:self userInfo:@{@"du" : @(du)}];
-            _seeking = NO;
+            _canUpdateAccurateSeek = YES;
             break;
         }
         case FFP_MSG_VIDEO_DECODER_FATAL: {
