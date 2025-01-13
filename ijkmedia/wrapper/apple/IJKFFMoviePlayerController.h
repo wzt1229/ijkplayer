@@ -51,44 +51,43 @@
 #define k_IJKM_KEY_ICY_SU               @"StreamUrl"
 
 // stream meta
-#define k_IJKM_KEY_TYPE           @"type"
-#define k_IJKM_VAL_TYPE__VIDEO    @"video"
-#define k_IJKM_VAL_TYPE__AUDIO    @"audio"
-#define k_IJKM_VAL_TYPE__SUBTITLE @"timedtext"
-#define k_IJKM_VAL_TYPE__UNKNOWN  @"unknown"
+#define k_IJKM_KEY_TYPE                 @"type"
+#define k_IJKM_VAL_TYPE__VIDEO          @"video"
+#define k_IJKM_VAL_TYPE__AUDIO          @"audio"
+#define k_IJKM_VAL_TYPE__SUBTITLE       @"timedtext"
+#define k_IJKM_VAL_TYPE__UNKNOWN        @"unknown"
 
-#define k_IJKM_KEY_CODEC_NAME      @"codec_name"
-#define k_IJKM_KEY_CODEC_PROFILE   @"codec_profile"
-#define k_IJKM_KEY_CODEC_LONG_NAME @"codec_long_name"
-#define k_IJKM_KEY_STREAM_IDX      @"stream_idx"
+#define k_IJKM_KEY_CODEC_NAME           @"codec_name"
+#define k_IJKM_KEY_CODEC_PROFILE        @"codec_profile"
+#define k_IJKM_KEY_CODEC_LONG_NAME      @"codec_long_name"
+#define k_IJKM_KEY_STREAM_IDX           @"stream_idx"
 
 // stream: video
-#define k_IJKM_KEY_WIDTH          @"width"
-#define k_IJKM_KEY_HEIGHT         @"height"
-#define k_IJKM_KEY_FPS_NUM        @"fps_num"
-#define k_IJKM_KEY_FPS_DEN        @"fps_den"
-#define k_IJKM_KEY_TBR_NUM        @"tbr_num"
-#define k_IJKM_KEY_TBR_DEN        @"tbr_den"
-#define k_IJKM_KEY_SAR_NUM        @"sar_num"
-#define k_IJKM_KEY_SAR_DEN        @"sar_den"
+#define k_IJKM_KEY_WIDTH                @"width"
+#define k_IJKM_KEY_HEIGHT               @"height"
+#define k_IJKM_KEY_FPS_NUM              @"fps_num"
+#define k_IJKM_KEY_FPS_DEN              @"fps_den"
+#define k_IJKM_KEY_TBR_NUM              @"tbr_num"
+#define k_IJKM_KEY_TBR_DEN              @"tbr_den"
+#define k_IJKM_KEY_SAR_NUM              @"sar_num"
+#define k_IJKM_KEY_SAR_DEN              @"sar_den"
+
 // stream: audio
-#define k_IJKM_KEY_SAMPLE_RATE    @"sample_rate"
-#define k_IJKM_KEY_DESCRIBE       @"describe"
+#define k_IJKM_KEY_SAMPLE_RATE          @"sample_rate"
+#define k_IJKM_KEY_DESCRIBE             @"describe"
 //audio meta also has "title" and "language" key
 //#define k_IJKM_KEY_TITLE          @"title"
 //#define k_IJKM_KEY_LANGUAGE       @"language"
 
 // stream: subtitle
-#define k_IJKM_KEY_TITLE          @"title"
-#define k_IJKM_KEY_LANGUAGE       @"language"
-#define k_IJKM_KEY_EX_SUBTITLE_URL @"ex_subtile_url"
-
-#define kk_IJKM_KEY_STREAMS       @"streams"
+#define k_IJKM_KEY_TITLE                @"title"
+#define k_IJKM_KEY_LANGUAGE             @"language"
+#define k_IJKM_KEY_EX_SUBTITLE_URL      @"ex_subtile_url"
+#define kk_IJKM_KEY_STREAMS             @"streams"
 
 typedef enum IJKLogLevel {
     k_IJK_LOG_UNKNOWN = 0,
     k_IJK_LOG_DEFAULT = 1,
-
     k_IJK_LOG_VERBOSE = 2,
     k_IJK_LOG_DEBUG   = 3,
     k_IJK_LOG_INFO    = 4,
