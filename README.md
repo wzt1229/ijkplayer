@@ -54,7 +54,13 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 
 ## Installation
 
-install use cocoapod:
+- integration via Swift Package Manger:
+
+```
+https://github.com/debugly/IJKMediaPlayer-SPM.git
+```
+
+- integration via Cocoapods:
 
 ```
 pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.9/IJKMediaPlayerKit.spec.json'
