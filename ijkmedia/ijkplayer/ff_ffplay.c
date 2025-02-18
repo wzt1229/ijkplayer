@@ -55,7 +55,7 @@
 #include "libavcodec/avfft.h"
 #include "libswresample/swresample.h"
 
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER || CONFIG_VIDEO_AVFILTER
 # include "libavcodec/avcodec.h"
 # include "libavfilter/avfilter.h"
 # include "libavfilter/buffersink.h"
@@ -110,15 +110,12 @@
 
 // static const AVOption ffp_context_options[] = ...
 #include "ff_ffplay_options.h"
-#if CONFIG_AVFILTER
-// FFP_MERGE: opt_add_vfilter
-#endif
 
 #define IJKVERSION_GET_MAJOR(x)     ((x >> 16) & 0xFF)
 #define IJKVERSION_GET_MINOR(x)     ((x >>  8) & 0xFF)
 #define IJKVERSION_GET_MICRO(x)     ((x      ) & 0xFF)
 
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER
 static inline
 int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1,
                    enum AVSampleFormat fmt2, int64_t channel_count2)
@@ -595,12 +592,6 @@ static void stream_close(FFPlayer *ffp)
     SDL_DestroyCond(is->continue_read_thread);
     SDL_DestroyMutex(is->accurate_seek_mutex);
     SDL_DestroyMutex(is->play_mutex);
-#if !CONFIG_AVFILTER
-    sws_freeContext(is->img_convert_ctx);
-#endif
-#ifdef FFP_MERGE
-    sws_freeContext(is->sub_convert_ctx);
-#endif
 
 #if defined(__ANDROID__)
     if (ffp->soundtouch_enable && is->handle != NULL) {
@@ -1732,7 +1723,7 @@ static double get_rotation(int32_t *displaymatrix)
     return theta;
 }
 
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER || CONFIG_VIDEO_AVFILTER
 static int configure_filtergraph(AVFilterGraph *graph, const char *filtergraph,
                                  AVFilterContext *source_ctx, AVFilterContext *sink_ctx)
 {
@@ -1776,7 +1767,9 @@ fail:
     avfilter_inout_free(&inputs);
     return ret;
 }
+#endif
 
+#if CONFIG_VIDEO_AVFILTER
 static int configure_video_filters(FFPlayer *ffp, AVFilterGraph *graph, VideoState *is, const char *vfilters, AVFrame *frame)
 {
     static const enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_YUV420P, AV_PIX_FMT_BGRA, AV_PIX_FMT_NONE };
@@ -1881,7 +1874,9 @@ static int configure_video_filters(FFPlayer *ffp, AVFilterGraph *graph, VideoSta
 fail:
     return ret;
 }
+#endif
 
+#if CONFIG_AUDIO_AVFILTER
 static int configure_audio_filters(FFPlayer *ffp, const char *afilters, int force_output_format)
 {
     VideoState *is = ffp->is;
@@ -1972,7 +1967,7 @@ end:
     av_bprint_finalize(&bp, NULL);
     return ret;
 }
-#endif  /* CONFIG_AVFILTER */
+#endif  /* CONFIG_AUDIO_AVFILTER */
 
 static int audio_thread(void *arg)
 {
@@ -1980,7 +1975,7 @@ static int audio_thread(void *arg)
     VideoState *is = ffp->is;
     AVFrame *frame = av_frame_alloc();
     Frame *af;
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER
     int last_serial = -1;
     int reconfigure;
 #endif
@@ -2124,7 +2119,7 @@ static int audio_thread(void *arg)
                     audio_accurate_seek_fail = 0;
                 }
 
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER
             reconfigure =
                 cmp_audio_fmts(is->audio_filter_src.fmt, is->audio_filter_src.ch_layout.nb_channels,
                                frame->format, frame->ch_layout.nb_channels)    ||
@@ -2176,7 +2171,7 @@ static int audio_thread(void *arg)
                 if (is->audioq.serial != af->serial) {
                     ALOGD("push old audio frame:%d\n",af->serial);
                 }
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER
                 if (is->audioq.serial != is->auddec.pkt_serial)
                     break;
             }
@@ -2186,7 +2181,7 @@ static int audio_thread(void *arg)
         }
     } while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
  the_end:
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER
     avfilter_graph_free(&is->agraph);
 #endif
     av_frame_free(&frame);
@@ -2205,7 +2200,7 @@ static int ffplay_video_thread(void *arg)
     AVRational frame_rate = av_guess_frame_rate(is->ic, is->video_st, NULL);
     int convert_frame_count = 0;
 
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
     AVFilterGraph *graph = NULL;
     AVFilterContext *filt_out = NULL, *filt_in = NULL;
     int last_w = 0;
@@ -2228,7 +2223,7 @@ static int ffplay_video_thread(void *arg)
         if (!ret)
             continue;
 
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
         if (   last_w != frame->width
             || last_h != frame->height
             || last_format != frame->format
@@ -2289,7 +2284,7 @@ static int ffplay_video_thread(void *arg)
             pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
             ret = queue_picture(ffp, frame, pts, duration, frame->pkt_pos, is->viddec.pkt_serial);
             av_frame_unref(frame);
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
             if (is->videoq.serial != is->viddec.pkt_serial)
                 break;
         }
@@ -2299,7 +2294,7 @@ static int ffplay_video_thread(void *arg)
             goto the_end;
     }
  the_end:
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
     avfilter_graph_free(&graph);
 #endif
     av_log(NULL, AV_LOG_INFO, "convert image convert_frame_count = %d,err = %d\n", convert_frame_count,ret);
@@ -3136,7 +3131,7 @@ static int stream_component_open(FFPlayer *ffp, int stream_index)
     st->discard = AVDISCARD_DEFAULT;
     switch (avctx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER
         {
             AVFilterContext *sink;
 
@@ -4632,7 +4627,7 @@ static void ffp_show_version_int(FFPlayer *ffp, const char *module, unsigned ver
            (unsigned int)IJKVERSION_GET_MICRO(version));
 }
 
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
 static void *grow_array(void *array, int elem_size, int *size, int new_size)
 {
     if (new_size >= INT_MAX / elem_size) {
@@ -4714,7 +4709,7 @@ int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
     
     ffp->vout->cvpixelbufferpool = ffp->cvpixelbufferpool;
     ffp->vout->overlay_format    = ffp->overlay_format;
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
     resetVideoFilter(ffp, ffp->vfilter0);
 #endif
 
@@ -5515,7 +5510,7 @@ float ffp_get_subtitle_extra_delay(FFPlayer *ffp)
 //add + active
 int ffp_add_active_external_subtitle(FFPlayer *ffp, const char *file_name)
 {
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER && 0
     //use subtitles filter
     char buffer[1024] = { 0 };
     sprintf(buffer, "subtitles=%s", file_name);

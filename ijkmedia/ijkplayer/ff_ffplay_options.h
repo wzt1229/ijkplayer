@@ -85,9 +85,11 @@ static const AVOption ffp_context_options[] = {
     { "subtitle",                       "decode subtitle stream",
         OPTION_OFFSET(subtitle),        OPTION_INT(1, 0, 1) },
     // FFP_MERGE: window_title
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER
     { "af",                             "audio filters",
         OPTION_OFFSET(afilters),        OPTION_STR(NULL) },
+#endif
+#if CONFIG_VIDEO_AVFILTER
     { "vf0",                            "video filters 0",
         OPTION_OFFSET(vfilter0),        OPTION_STR(NULL) },
 #endif

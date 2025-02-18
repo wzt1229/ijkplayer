@@ -52,7 +52,7 @@
 #include "libavcodec/avfft.h"
 #include "libswresample/swresample.h"
 
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER || CONFIG_VIDEO_AVFILTER
 # include "libavfilter/avfilter.h"
 # include "libavfilter/buffersink.h"
 # include "libavfilter/buffersrc.h"
@@ -321,7 +321,7 @@ typedef struct VideoState {
     int audio_volume;
     int muted;
     struct AudioParams audio_src;
-#if CONFIG_AVFILTER
+#if CONFIG_AUDIO_AVFILTER
     struct AudioParams audio_filter_src;
 #endif
     struct AudioParams audio_tgt;
@@ -355,23 +355,20 @@ typedef struct VideoState {
     AVStream *video_st;
     PacketQueue videoq;
     double max_frame_duration;      // maximum duration of a frame - above this, we consider the jump a timestamp discontinuity
-    struct SwsContext *img_convert_ctx;
-#ifdef FFP_SUB
-    struct SwsContext *sub_convert_ctx;
-#endif
     int eof;
-
     char *filename;
     int width, height, xleft, ytop;
     int step;//for step mode
     int step_on_seeking;//for seeking display a frame
-#if CONFIG_AVFILTER
-    int vfilter_idx;
-    AVFilterContext *in_video_filter;   // the first filter in the video chain
-    AVFilterContext *out_video_filter;  // the last filter in the video chain
+#if CONFIG_AUDIO_AVFILTER
     AVFilterContext *in_audio_filter;   // the first filter in the audio chain
     AVFilterContext *out_audio_filter;  // the last filter in the audio chain
     AVFilterGraph *agraph;              // audio filter graph
+#endif
+#if CONFIG_VIDEO_AVFILTER
+    int vfilter_idx;
+    AVFilterContext *in_video_filter;   // the first filter in the video chain
+    AVFilterContext *out_video_filter;  // the last filter in the video chain
 #endif
 
     SDL_cond *continue_read_thread;
@@ -451,9 +448,11 @@ static const char *video_codec_name;
 double rdftspeed = 0.02;
 static int64_t cursor_last_shown;
 static int cursor_hidden = 0;
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
 static const char **vfilters_list = NULL;
 static int nb_vfilters = 0;
+#endif
+#if CONFIG_AUDIO_AVFILTER
 static char *afilters = NULL;
 #endif
 static int autorotate = 1;
@@ -606,11 +605,13 @@ typedef struct FFPlayer {
     int64_t cursor_last_shown;
     int cursor_hidden;
 #endif
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
     const char **vfilters_list;
     int nb_vfilters;
-    char *afilters;
     char *vfilter0;
+#endif
+#if CONFIG_AUDIO_AVFILTER
+    char *afilters;
 #endif
     int autorotate;
     int find_stream_info;
@@ -764,12 +765,15 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     av_freep(&ffp->audio_codec_name);
     av_freep(&ffp->video_codec_name);
     ffp->rdftspeed              = 0.02;
-#if CONFIG_AVFILTER
+#if CONFIG_VIDEO_AVFILTER
     av_freep(&ffp->vfilters_list);
     ffp->nb_vfilters            = 0;
-    ffp->afilters               = NULL;
     ffp->vfilter0               = NULL;
 #endif
+#if CONFIG_AUDIO_AVFILTER
+    ffp->afilters               = NULL;
+#endif
+    
     ffp->autorotate             = 1;
     ffp->find_stream_info       = 1;
 
