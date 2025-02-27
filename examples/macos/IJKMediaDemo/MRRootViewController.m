@@ -651,34 +651,37 @@ static BOOL hdrAnimationShown = 0;
         [options setFormatOptionValue:@"ijkapplication" forKey:@"seg_inherit_options"];
     }
     
+    if ([MRCocoaBindingUserDefault open_gzip]) {
+        [options setFormatOptionValue:@"Accept-Encoding: gzip, deflate" forKey:@"headers"];
+    }
+    
+//    [options setFormatOptionIntValue:1 forKey:@"multiple_requests"];
+//    [options setFormatOptionIntValue:1 forKey:@"http_persistent"];
     //实际测试效果不好，容易导致域名解析失败，谨慎使用;没有fallback逻辑
     //决定dns的方式，大于0时使用tcp_getaddrinfo_nonblock方式
     //[options setFormatOptionIntValue:0 forKey:@"addrinfo_timeout"];
     //[options setFormatOptionIntValue:0 forKey:@"addrinfo_one_by_one"];
-    //    [options setFormatOptionIntValue:1 forKey:@"http_persistent"];
+       
     //    [options setFormatOptionValue:@"test=cookie" forKey:@"cookies"];
     //if you want set ts segments options only:
     //    [options setFormatOptionValue:@"fastopen=2:dns_cache_timeout=600000:addrinfo_timeout=2000000" forKey:@"seg_format_options"];
     //default inherit options : "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy",you can inherit more:
     
-    if ([MRCocoaBindingUserDefault open_gzip]) {
-        [options setFormatOptionValue:@"Accept-Encoding: gzip, deflate" forKey:@"headers"];
-    }
     //protocol_whitelist need add httpproxy
     //[options setFormatOptionValue:@"http://127.0.0.1:8888" forKey:@"http_proxy"];
     
     //[options setFormatOptionIntValue:1 forKey:@"use_n516_configure_mov_pkt_buffer"];
 
-    NSString *cacheDir = [NSFileManager mr_DirWithType:NSCachesDirectory WithPathComponent:@"ijk-cache"];
-    long timeInterval = [NSDate timeIntervalSinceReferenceDate];
-    
-    NSString *cacheFile = [cacheDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%ld",timeInterval]];
-    NSString *mapFile = [cacheDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%ld-map.txt",timeInterval]];
-    
-    [options setFormatOptionValue:cacheFile forKey:@"cache_file_path"];
-    [options setFormatOptionValue:mapFile forKey:@"cache_map_path"];
-    [options setFormatOptionValue:@"1" forKey:@"auto_save_map"];
-    [options setFormatOptionValue:@"1" forKey:@"parse_cache_map"];
+//    NSString *cacheDir = [NSFileManager mr_DirWithType:NSCachesDirectory WithPathComponent:@"ijk-cache"];
+//    long timeInterval = [NSDate timeIntervalSinceReferenceDate];
+//    
+//    NSString *cacheFile = [cacheDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%ld",timeInterval]];
+//    NSString *mapFile = [cacheDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%ld-map.txt",timeInterval]];
+//    
+//    [options setFormatOptionValue:cacheFile forKey:@"cache_file_path"];
+//    [options setFormatOptionValue:mapFile forKey:@"cache_map_path"];
+//    [options setFormatOptionValue:@"1" forKey:@"auto_save_map"];
+//    [options setFormatOptionValue:@"1" forKey:@"parse_cache_map"];
     
     NSMutableArray *dus = [NSMutableArray array];
     if ([url.scheme isEqualToString:@"file"] && [url.absoluteString.pathExtension isEqualToString:@"m3u8"]) {
