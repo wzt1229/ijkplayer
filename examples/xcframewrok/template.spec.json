@@ -19,7 +19,7 @@
     "tvos": "12.0"
   },
   "source": {
-    "http": "https://github.com/debugly/ijkplayer/releases/download/k__VERSION__/IJKMediaPlayerKit.zip"
+    "http": "https://github.com/debugly/ijkplayer/releases/download/__VERSION__/IJKMediaPlayerKit.zip"
   },
   "preserve_paths": [
     "IJKMediaPlayerKit/README.md",

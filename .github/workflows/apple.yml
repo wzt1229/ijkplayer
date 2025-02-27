@@ -6,7 +6,12 @@ on:
   # pull_request:
   #   branches: [master]
   workflow_dispatch:
-
+    inputs:
+      beta:
+        type: boolean
+        description: publish beta edition
+        default: true
+        required: false
 jobs:
   build:
     name: build-apple-ijk-framework
@@ -17,9 +22,17 @@ jobs:
       uses: actions/checkout@v3
       with:
           submodules: recursive
-    - name: Read Tag Version
+    - name: Prepare Beta Version
+      if: ${{ inputs.beta == true }}
       run: |
-        grep -m 1 VERSION_NAME= version.sh | awk -F = '{printf "TAG=%s",$2}' | xargs > constants.env
+        grep -m 1 VERSION_NAME= version.sh | awk -F = '{printf "VERSION=%s",$2}' | xargs > constants.env
+        echo "RELEAE_DATE=$(TZ=UTC-8 date +'%y%m%d%H%M%S')" >> constants.env
+        echo "TAG=k"$(grep "VERSION" constants.env | cut -d'=' -f2)"-beta-"$(grep "RELEAE_DATE" constants.env | cut -d'=' -f2) >> constants.env
+        cat constants.env
+    - name: Prepare Normal Version
+      if: ${{ inputs.beta == false }}
+      run: |
+        grep -m 1 VERSION_NAME= version.sh | awk -F = '{printf "TAG=k%s",$2}' | xargs > constants.env
         cat constants.env
     - name: Export Env
       uses: cardinalby/export-env-action@v2
@@ -45,25 +58,19 @@ jobs:
     - name: Make xcframework
       run: cd examples/xcframewrok && ./make-xcframework.sh
     - name: Make podspec
-      run: cd examples/xcframewrok && ./make-podspec.sh
+      run: cd examples/xcframewrok && ./make-podspec.sh "${{ env.TAG }}"
     - name: Zip Frameworks
       run: |
-        draft=FFToolChain/build/draft
-        dist=FFToolChain/build/dist
-        mkdir -p $draft
-        mkdir -p $dist
-        cp CHANGELOG.md $draft
-        cp README.md $draft
-        cp COPYING.LGPLv2.1 $draft
-        cp -pPR examples/xcframewrok/IJKMediaPlayerKit.xcframework $draft
-        cd $draft
-        mv COPYING.LGPLv2.1 LICENSE
-        zip -ryq IJKMediaPlayerKit.zip ./*
-        cd -
-        mv $draft/IJKMediaPlayerKit.zip $dist
-        mv examples/xcframewrok/IJKMediaPlayerKit.spec.json $dist
+        mkdir dist
+        cp CHANGELOG.md dist 
+        cp README.md dist
+        cp COPYING.LGPLv2.1 dist/LICENSE
+        cp -pPR examples/xcframewrok/IJKMediaPlayerKit.xcframework dist
+        cd dist
+        zip -ryq IJKMediaPlayerKit.zip ./*  
     - name: Create Release
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh release create k${{ env.TAG }} -p -t "👏👏 IJKMediaPlayerKit k${{ env.TAG }}" FFToolChain/build/dist/*.*
+        branch=$(git branch --show-current)
+        gh release create ${{ env.TAG }} --target $branch -t "👏👏 IJKMediaPlayerKit ${{ env.TAG }}" dist/IJKMediaPlayerKit.zip examples/xcframewrok/IJKMediaPlayerKit.spec.json
