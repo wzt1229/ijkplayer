@@ -1,10 +1,11 @@
 tag k0.12.0
 --------------------------------
-- upgrade all libs,FFmpeg use n6.1.2
-- not link c++
+- upgrade all third libs,FFmpeg use n6.1.2
+- not need link c++
 - fix copy_hw_frame memory leak
 - fix ass log memory leak
 - support dash demuxer,#31
+- auto refresh screen when drawable size changed,#75
 
 tag k0.11.9
 --------------------------------
