@@ -27,7 +27,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
 ## Features
 
 - Common
-  - using FFmpeg 6.1.1
+  - using FFmpeg 6.1.2
   - enabled ffmpeg all decoders and demuxers binary size is bigger [FFToolChain/ffconfig/module-full.sh](FFToolChain/ffconfig/module-full.sh)
   - workaround for some buggy online video
 - iOS/macOS/tvOS
@@ -42,10 +42,7 @@ ijk media player based on [ffplay](http://ffmpeg.org)
   - 4k/HDR/HDR10/HDR10+/Dolby Vision Compatible
   - support Network or Local Blu-ray Disc/BDMV
   - set audio or subtitle extra delay
-
-## ON-PLAN
-
-- exchange video resolution gapless
+  - support dash demuxer
 
 ## Donate
 
@@ -63,7 +60,7 @@ https://github.com/debugly/IJKMediaPlayer-SPM.git
 - integration via Cocoapods:
 
 ```
-pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.11.9/IJKMediaPlayerKit.spec.json'
+pod "IJKMediaPlayerKit", :podspec => 'https://github.com/debugly/ijkplayer/releases/download/k0.12.0/IJKMediaPlayerKit.spec.json'
 ```
 
 ## Development
@@ -75,7 +72,7 @@ how to run examples:
 ```
 git clone https://github.com/debugly/ijkplayer.git ijkplayer
 cd ijkplayer
-git checkout -B latest k0.11.9
+git checkout -B latest k0.12.0
 git submodule update --init
 
 ./FFToolChain/main.sh install -p macos -l 'ass ffmpeg'
