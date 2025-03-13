@@ -230,6 +230,8 @@ https://www.jianshu.com/p/d6a5d8756eec
                 set_playback_rate(ffp, NORMAL_PLAYBACK_RATE);
             }
 ```
+4.直播内容保存为本地视频
+https://www.jianshu.com/p/a346f93ddaff
 
                         
 参考链接：https://blog.csdn.net/u011686167/article/details/85256101
