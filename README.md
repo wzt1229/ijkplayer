@@ -158,7 +158,8 @@ Primay icon was made by my friend 小星.
 
 
 
-###在局域网rtsp直播流场景下，播放延迟1~2s的问题，问题已解决，小结一下备忘：
+### 在局域网rtsp直播流场景下，播放延迟1~2s的问题
+问题已解决，小结一下备忘：
 1.播放器IJKFFOptions参数的设置
 ```
 //丢帧阈值
@@ -213,6 +214,7 @@ codec_ctx->flags |= CODEC_FLAG_LOW_DELAY;
 3.简书-暴走大牙：ijkplay播放直播流延时控制小结
 https://www.jianshu.com/p/d6a5d8756eec
 4.ff_ffplay文件，read_thread函数中，ret = av_read_frame(ic, pkt);后添加根据缓存大小，倍速播放的逻辑
+```
 //延迟优化：根据缓存大小设置倍速播放
             // 计算当前缓存大小，通过 audioq 和 videoq 的 size 来计算缓存大小
             int current_cache_size = is->audioq.size + is->videoq.size;
@@ -227,6 +229,7 @@ https://www.jianshu.com/p/d6a5d8756eec
                 av_log(ffp, AV_LOG_INFO, "wzt read_thread normal speed play size%d\n", current_cache_size);
                 set_playback_rate(ffp, NORMAL_PLAYBACK_RATE);
             }
+```
 
                         
 参考链接：https://blog.csdn.net/u011686167/article/details/85256101
