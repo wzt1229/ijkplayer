@@ -154,3 +154,82 @@ But ijkplayer is also based on other different projects under various licenses, 
 ## Icon
 
 Primay icon was made by my friend 小星.
+
+
+
+
+###在局域网rtsp直播流场景下，播放延迟1~2s的问题，问题已解决，小结一下备忘：
+1.播放器IJKFFOptions参数的设置
+```
+//丢帧阈值
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 30);
+//视频帧率
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "fps", 30);
+//环路滤波
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 48);
+//设置无packet缓存
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "packet-buffering", 0);
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "fflags", "nobuffer");
+//不限制拉流缓存大小
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", 1);
+//设置最大缓存数量
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "max-buffer-size", 1024);
+//设置最小解码帧数
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "min-frames", 3);
+//启动预加载
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 1);
+//设置探测包数量
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "probsize", "4096");
+//设置分析流时长
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "analyzeduration", "2000000");
+```
+
+值得注意的是，ijkPlayer默认使用udp拉流，因为速度比较快。如果需要可靠且减少丢包，可以改为tcp协议：
+```mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "rtsp_transport", "tcp");```
+
+另外，可以这样开启硬解码，如果打开硬解码失败，再自动切换到软解码：
+```
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 0);
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 0);
+mediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 0);
+```
+
+2.解码器设为零延时
+大家应该听过编码器的零延时（zerolatency），但可能没听过解码器零延时。其实解码器内部默认会缓存几帧数据，用于后续关联帧的解码，大概是3-5帧。经过反复测试，发现解码器的缓存帧会带来100多ms延时。也就是说，假如能够去掉缓存帧，就可以减少100多ms的延时。而在avcodec.h文件的AVCodecContext结构体有一个参数（flags）用来设置解码器延时：
+```
+typedef struct AVCodecContext {
+......
+int flags;
+......
+}
+```
+为了去掉解码器缓存帧，我们可以把flags设置为CODEC_FLAG_LOW_DELAY。在初始化解码器时进行设置：
+```
+//set decoder as low deday
+codec_ctx->flags |= CODEC_FLAG_LOW_DELAY;
+```
+
+通过以上1、2点的设置，我已经将延迟控制在200ms左右的范围，我们要求暂时没有那么高，效果是可以接受的。还有中间过程中遇到的其他解决方案，这里也备忘下
+3.简书-暴走大牙：ijkplay播放直播流延时控制小结
+https://www.jianshu.com/p/d6a5d8756eec
+4.ff_ffplay文件，read_thread函数中，ret = av_read_frame(ic, pkt);后添加根据缓存大小，倍速播放的逻辑
+//延迟优化：根据缓存大小设置倍速播放
+            // 计算当前缓存大小，通过 audioq 和 videoq 的 size 来计算缓存大小
+            int current_cache_size = is->audioq.size + is->videoq.size;
+            if (current_cache_size > CACHE_THRESHOLD*3) {
+                av_log(ffp, AV_LOG_INFO, "wzt read_thread trible speed play size=%d\n", current_cache_size);
+                set_playback_rate(ffp, Trible_PLAYBACK_RATE);
+            } else
+            if (current_cache_size > CACHE_THRESHOLD) {
+                av_log(ffp, AV_LOG_INFO, "wzt read_thread double speed play size=%d\n", current_cache_size);
+                set_playback_rate(ffp, DOUBLE_PLAYBACK_RATE);
+            } else {
+                av_log(ffp, AV_LOG_INFO, "wzt read_thread normal speed play size%d\n", current_cache_size);
+                set_playback_rate(ffp, NORMAL_PLAYBACK_RATE);
+            }
+
+                        
+参考链接：https://blog.csdn.net/u011686167/article/details/85256101
+https://www.jianshu.com/p/d6a5d8756eec
+
+
