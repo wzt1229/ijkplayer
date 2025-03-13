@@ -233,6 +233,9 @@ https://www.jianshu.com/p/d6a5d8756eec
 4.直播内容保存为本地视频
 https://www.jianshu.com/p/a346f93ddaff
 
+5.Android IjkPlayer内核编译记（二）RTMP追帧优化
+https://juejin.cn/post/7395456322433105958
+
                         
 参考链接：https://blog.csdn.net/u011686167/article/details/85256101
 https://www.jianshu.com/p/d6a5d8756eec
